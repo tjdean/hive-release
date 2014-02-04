@@ -23,13 +23,8 @@
   xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
 
   <id>bin</id>
-
-  <formats>
-    <format>dir</format>
-    <format>tar.gz</format>
-  </formats>
-
-  <baseDirectory>apache-hive-${project.version}-bin</baseDirectory>
+  
+  <baseDirectory>${final.name}-${project.version}-bin</baseDirectory>
 
   <dependencySets>
     <dependencySet>
@@ -126,8 +121,8 @@
         <include>schematool</include>
         <include>beeline</include>
         <include>hiveserver2</include>
-        <include>hive-config.sh</include>
-        <include>ext/**/*</include>
+        <include>*.${file.extension}</include>
+        <include>ext/**/*.${file.extension}</include>
       </includes>
       <outputDirectory>bin</outputDirectory>
     </fileSet>
@@ -248,10 +243,10 @@
       <fileMode>755</fileMode>
       <includes>
         <include>hcat</include>
+        <include>hcat_server.py</include>
         <include>hcatcfg.py</include>
         <include>hcat.py</include>
-        <include>templeton.cmd</include>
-        <include>common.sh</include>
+        <include>*.${file.extension}</include>
       </includes>
       <outputDirectory>hcatalog/bin</outputDirectory>
     </fileSet>
