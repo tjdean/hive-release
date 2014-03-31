@@ -13,7 +13,7 @@ POSTHOOK: query: desc formatted k1
 POSTHOOK: type: DESCTABLE
 # col_name            	data_type           	comment             
 	 	 
-a                   	string              	None                
+a                   	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -55,7 +55,7 @@ POSTHOOK: query: desc formatted k1
 POSTHOOK: type: DESCTABLE
 # col_name            	data_type           	comment             
 	 	 
-a                   	string              	None                
+a                   	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -97,7 +97,7 @@ POSTHOOK: query: desc formatted k1
 POSTHOOK: type: DESCTABLE
 # col_name            	data_type           	comment             
 	 	 
-a                   	string              	None                
+a                   	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 

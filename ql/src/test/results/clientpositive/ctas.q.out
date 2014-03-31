@@ -146,8 +146,8 @@ POSTHOOK: query: describe formatted nzhang_CTAS1
 POSTHOOK: type: DESCTABLE
 # col_name            	data_type           	comment             
 	 	 
-k                   	string              	None                
-value               	string              	None                
+k                   	string              	                    
+value               	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -305,8 +305,8 @@ POSTHOOK: query: describe formatted nzhang_CTAS2
 POSTHOOK: type: DESCTABLE
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-value               	string              	None                
+key                 	string              	                    
+value               	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -465,8 +465,8 @@ POSTHOOK: query: describe formatted nzhang_CTAS3
 POSTHOOK: type: DESCTABLE
 # col_name            	data_type           	comment             
 	 	 
-half_key            	double              	None                
-conb                	string              	None                
+half_key            	double              	                    
+conb                	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -532,8 +532,8 @@ POSTHOOK: query: describe formatted nzhang_CTAS3
 POSTHOOK: type: DESCTABLE
 # col_name            	data_type           	comment             
 	 	 
-half_key            	double              	None                
-conb                	string              	None                
+half_key            	double              	                    
+conb                	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -692,8 +692,8 @@ POSTHOOK: query: describe formatted nzhang_CTAS4
 POSTHOOK: type: DESCTABLE
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-value               	string              	None                
+key                 	string              	                    
+value               	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 

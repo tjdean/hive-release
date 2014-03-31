@@ -110,6 +110,8 @@ public final class SerDeUtils {
     nativeSerDeNames
         .add(org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe.class.getName());
     nativeSerDeNames.add(org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe.class.getName());
+    nativeSerDeNames.add(org.apache.hadoop.hive.serde2.columnar.LazyBinaryColumnarSerDe.class.getName());
+    nativeSerDeNames.add("org.apache.hadoop.hive.ql.io.orc.OrcSerde");
   }
 
   public static boolean shouldGetColsFromSerDe(String serde) {

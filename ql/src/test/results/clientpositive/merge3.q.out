@@ -2314,8 +2314,8 @@ POSTHOOK: Lineage: merge_src_part PARTITION(ds=2008-04-09).key SIMPLE [(srcpart)
 POSTHOOK: Lineage: merge_src_part PARTITION(ds=2008-04-09).value SIMPLE [(srcpart)srcpart.FieldSchema(name:value, type:string, comment:default), ]
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-value               	string              	None                
+key                 	string              	                    
+value               	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 

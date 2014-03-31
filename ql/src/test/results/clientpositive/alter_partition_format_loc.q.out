@@ -7,8 +7,8 @@ PREHOOK: query: desc extended alter_partition_format_test
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: desc extended alter_partition_format_test
 POSTHOOK: type: DESCTABLE
-key                 	int                 	None                
-value               	string              	None                
+key                 	int                 	                    
+value               	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: alter table alter_partition_format_test set fileformat rcfile
@@ -23,8 +23,8 @@ PREHOOK: query: desc extended alter_partition_format_test
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: desc extended alter_partition_format_test
 POSTHOOK: type: DESCTABLE
-key                 	int                 	None                
-value               	string              	None                
+key                 	int                 	                    
+value               	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: type: ALTERTABLE_LOCATION
@@ -38,8 +38,8 @@ PREHOOK: query: desc extended alter_partition_format_test
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: desc extended alter_partition_format_test
 POSTHOOK: type: DESCTABLE
-key                 	int                 	None                
-value               	string              	None                
+key                 	int                 	                    
+value               	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: drop table alter_partition_format_test
@@ -68,14 +68,14 @@ PREHOOK: query: desc extended alter_partition_format_test partition(ds='2010')
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: desc extended alter_partition_format_test partition(ds='2010')
 POSTHOOK: type: DESCTABLE
-key                 	int                 	None                
-value               	string              	None                
-ds                  	string              	None                
+key                 	int                 	                    
+value               	string              	                    
+ds                  	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
+ds                  	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: alter table alter_partition_format_test partition(ds='2010') set fileformat rcfile
@@ -91,14 +91,14 @@ PREHOOK: query: desc extended alter_partition_format_test partition(ds='2010')
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: desc extended alter_partition_format_test partition(ds='2010')
 POSTHOOK: type: DESCTABLE
-key                 	int                 	None                
-value               	string              	None                
-ds                  	string              	None                
+key                 	int                 	                    
+value               	string              	                    
+ds                  	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
+ds                  	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: type: ALTERPARTITION_LOCATION
@@ -113,28 +113,28 @@ PREHOOK: query: desc extended alter_partition_format_test partition(ds='2010')
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: desc extended alter_partition_format_test partition(ds='2010')
 POSTHOOK: type: DESCTABLE
-key                 	int                 	None                
-value               	string              	None                
-ds                  	string              	None                
+key                 	int                 	                    
+value               	string              	                    
+ds                  	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
+ds                  	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: desc extended alter_partition_format_test
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: desc extended alter_partition_format_test
 POSTHOOK: type: DESCTABLE
-key                 	int                 	None                
-value               	string              	None                
-ds                  	string              	None                
+key                 	int                 	                    
+value               	string              	                    
+ds                  	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
+ds                  	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: alter table alter_partition_format_test set fileformat rcfile
@@ -149,14 +149,14 @@ PREHOOK: query: desc extended alter_partition_format_test
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: desc extended alter_partition_format_test
 POSTHOOK: type: DESCTABLE
-key                 	int                 	None                
-value               	string              	None                
-ds                  	string              	None                
+key                 	int                 	                    
+value               	string              	                    
+ds                  	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
+ds                  	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: type: ALTERTABLE_LOCATION
@@ -170,14 +170,14 @@ PREHOOK: query: desc extended alter_partition_format_test
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: desc extended alter_partition_format_test
 POSTHOOK: type: DESCTABLE
-key                 	int                 	None                
-value               	string              	None                
-ds                  	string              	None                
+key                 	int                 	                    
+value               	string              	                    
+ds                  	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
+ds                  	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: drop table alter_partition_format_test

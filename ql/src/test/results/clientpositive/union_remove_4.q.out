@@ -264,8 +264,8 @@ POSTHOOK: Lineage: outputtbl1.key EXPRESSION [(inputtbl1)inputtbl1.FieldSchema(n
 POSTHOOK: Lineage: outputtbl1.values EXPRESSION [(inputtbl1)inputtbl1.null, (inputtbl1)inputtbl1.null, ]
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-values              	bigint              	None                
+key                 	string              	                    
+values              	bigint              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 

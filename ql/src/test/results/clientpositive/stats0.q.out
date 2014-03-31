@@ -151,8 +151,8 @@ POSTHOOK: query: desc extended stats_non_partitioned
 POSTHOOK: type: DESCTABLE
 POSTHOOK: Lineage: stats_non_partitioned.key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 POSTHOOK: Lineage: stats_non_partitioned.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
-key                 	string              	None                
-value               	string              	None                
+key                 	string              	                    
+value               	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: select * from stats_non_partitioned
@@ -1274,14 +1274,14 @@ POSTHOOK: Lineage: stats_non_partitioned.key SIMPLE [(src)src.FieldSchema(name:k
 POSTHOOK: Lineage: stats_non_partitioned.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 POSTHOOK: Lineage: stats_partitioned PARTITION(ds=1).key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 POSTHOOK: Lineage: stats_partitioned PARTITION(ds=1).value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
-key                 	string              	None                
-value               	string              	None                
-ds                  	string              	None                
+key                 	string              	                    
+value               	string              	                    
+ds                  	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
+ds                  	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: describe extended stats_partitioned
@@ -1292,14 +1292,14 @@ POSTHOOK: Lineage: stats_non_partitioned.key SIMPLE [(src)src.FieldSchema(name:k
 POSTHOOK: Lineage: stats_non_partitioned.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 POSTHOOK: Lineage: stats_partitioned PARTITION(ds=1).key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 POSTHOOK: Lineage: stats_partitioned PARTITION(ds=1).value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
-key                 	string              	None                
-value               	string              	None                
-ds                  	string              	None                
+key                 	string              	                    
+value               	string              	                    
+ds                  	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
+ds                  	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: drop table stats_non_partitioned
@@ -1645,8 +1645,8 @@ POSTHOOK: Lineage: stats_non_partitioned.value SIMPLE [(src)src.FieldSchema(name
 POSTHOOK: Lineage: stats_non_partitioned.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 POSTHOOK: Lineage: stats_partitioned PARTITION(ds=1).key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 POSTHOOK: Lineage: stats_partitioned PARTITION(ds=1).value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
-key                 	string              	None                
-value               	string              	None                
+key                 	string              	                    
+value               	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: select * from stats_non_partitioned
@@ -2842,14 +2842,14 @@ POSTHOOK: Lineage: stats_partitioned PARTITION(ds=1).key SIMPLE [(src)src.FieldS
 POSTHOOK: Lineage: stats_partitioned PARTITION(ds=1).value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 POSTHOOK: Lineage: stats_partitioned PARTITION(ds=1).key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 POSTHOOK: Lineage: stats_partitioned PARTITION(ds=1).value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
-key                 	string              	None                
-value               	string              	None                
-ds                  	string              	None                
+key                 	string              	                    
+value               	string              	                    
+ds                  	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
+ds                  	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: describe extended stats_partitioned
@@ -2864,13 +2864,13 @@ POSTHOOK: Lineage: stats_partitioned PARTITION(ds=1).key SIMPLE [(src)src.FieldS
 POSTHOOK: Lineage: stats_partitioned PARTITION(ds=1).value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 POSTHOOK: Lineage: stats_partitioned PARTITION(ds=1).key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 POSTHOOK: Lineage: stats_partitioned PARTITION(ds=1).value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
-key                 	string              	None                
-value               	string              	None                
-ds                  	string              	None                
+key                 	string              	                    
+value               	string              	                    
+ds                  	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
+ds                  	string              	                    
 	 	 
 #### A masked pattern was here ####

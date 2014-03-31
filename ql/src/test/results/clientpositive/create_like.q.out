@@ -9,8 +9,8 @@ POSTHOOK: query: DESCRIBE FORMATTED table1
 POSTHOOK: type: DESCTABLE
 # col_name            	data_type           	comment             
 	 	 
-a                   	string              	None                
-b                   	string              	None                
+a                   	string              	                    
+b                   	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -43,8 +43,8 @@ POSTHOOK: query: DESCRIBE FORMATTED table2
 POSTHOOK: type: DESCTABLE
 # col_name            	data_type           	comment             
 	 	 
-a                   	string              	None                
-b                   	string              	None                
+a                   	string              	                    
+b                   	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -85,8 +85,8 @@ POSTHOOK: query: DESCRIBE FORMATTED table3
 POSTHOOK: type: DESCTABLE
 # col_name            	data_type           	comment             
 	 	 
-a                   	string              	None                
-b                   	string              	None                
+a                   	string              	                    
+b                   	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 

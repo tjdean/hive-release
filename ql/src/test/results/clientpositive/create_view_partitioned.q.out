@@ -33,13 +33,13 @@ PREHOOK: query: DESCRIBE EXTENDED vp1
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: DESCRIBE EXTENDED vp1
 POSTHOOK: type: DESCTABLE
-key                 	string              	None                
-value               	string              	None                
+key                 	string              	                    
+value               	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-value               	string              	None                
+value               	string              	                    
 	 	 
 #### A masked pattern was here ####
 FROM src	 	 
@@ -52,12 +52,12 @@ POSTHOOK: query: DESCRIBE FORMATTED vp1
 POSTHOOK: type: DESCTABLE
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
+key                 	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-value               	string              	None                
+value               	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -241,14 +241,14 @@ POSTHOOK: query: DESCRIBE FORMATTED vp2
 POSTHOOK: type: DESCTABLE
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-value               	string              	None                
-ds                  	string              	None                
+key                 	string              	                    
+value               	string              	                    
+ds                  	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-hr                  	string              	None                
+hr                  	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -348,12 +348,12 @@ POSTHOOK: query: DESCRIBE FORMATTED vp3
 POSTHOOK: type: DESCTABLE
 # col_name            	data_type           	comment             
 	 	 
-k                   	string              	None                
+k                   	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-v                   	string              	None                
+v                   	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 

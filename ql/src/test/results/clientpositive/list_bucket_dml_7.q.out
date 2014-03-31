@@ -273,14 +273,14 @@ POSTHOOK: Lineage: list_bucketing_dynamic_part PARTITION(ds=2008-04-08,hr=b1).ke
 POSTHOOK: Lineage: list_bucketing_dynamic_part PARTITION(ds=2008-04-08,hr=b1).value SIMPLE [(srcpart)srcpart.FieldSchema(name:value, type:string, comment:default), ]
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-value               	string              	None                
+key                 	string              	                    
+value               	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
-hr                  	string              	None                
+ds                  	string              	                    
+hr                  	string              	                    
 	 	 
 # Detailed Partition Information	 	 
 Partition Value:    	[2008-04-08, a1]    	 
@@ -319,14 +319,14 @@ POSTHOOK: Lineage: list_bucketing_dynamic_part PARTITION(ds=2008-04-08,hr=b1).ke
 POSTHOOK: Lineage: list_bucketing_dynamic_part PARTITION(ds=2008-04-08,hr=b1).value SIMPLE [(srcpart)srcpart.FieldSchema(name:value, type:string, comment:default), ]
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-value               	string              	None                
+key                 	string              	                    
+value               	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
-hr                  	string              	None                
+ds                  	string              	                    
+hr                  	string              	                    
 	 	 
 # Detailed Partition Information	 	 
 Partition Value:    	[2008-04-08, b1]    	 
@@ -737,14 +737,14 @@ POSTHOOK: Lineage: list_bucketing_dynamic_part PARTITION(ds=2008-04-08,hr=b1).ke
 POSTHOOK: Lineage: list_bucketing_dynamic_part PARTITION(ds=2008-04-08,hr=b1).value SIMPLE [(srcpart)srcpart.FieldSchema(name:value, type:string, comment:default), ]
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-value               	string              	None                
+key                 	string              	                    
+value               	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
-hr                  	string              	None                
+ds                  	string              	                    
+hr                  	string              	                    
 	 	 
 # Detailed Partition Information	 	 
 Partition Value:    	[2008-04-08, a1]    	 
@@ -787,14 +787,14 @@ POSTHOOK: Lineage: list_bucketing_dynamic_part PARTITION(ds=2008-04-08,hr=b1).ke
 POSTHOOK: Lineage: list_bucketing_dynamic_part PARTITION(ds=2008-04-08,hr=b1).value SIMPLE [(srcpart)srcpart.FieldSchema(name:value, type:string, comment:default), ]
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-value               	string              	None                
+key                 	string              	                    
+value               	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
-hr                  	string              	None                
+ds                  	string              	                    
+hr                  	string              	                    
 	 	 
 # Detailed Partition Information	 	 
 Partition Value:    	[2008-04-08, b1]    	 

@@ -57,14 +57,14 @@ POSTHOOK: Lineage: fact_daily PARTITION(ds=1,hr=1).key SIMPLE [(src)src.FieldSch
 POSTHOOK: Lineage: fact_daily PARTITION(ds=1,hr=1).value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-value               	string              	None                
+key                 	string              	                    
+value               	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
-hr                  	string              	None                
+ds                  	string              	                    
+hr                  	string              	                    
 	 	 
 # Detailed Partition Information	 	 
 Partition Value:    	[1, 1]              	 
@@ -126,14 +126,14 @@ POSTHOOK: Lineage: fact_daily PARTITION(ds=1,hr=2).key SIMPLE [(src)src.FieldSch
 POSTHOOK: Lineage: fact_daily PARTITION(ds=1,hr=2).value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-value               	string              	None                
+key                 	string              	                    
+value               	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
-hr                  	string              	None                
+ds                  	string              	                    
+hr                  	string              	                    
 	 	 
 # Detailed Partition Information	 	 
 Partition Value:    	[1, 2]              	 
@@ -206,14 +206,14 @@ POSTHOOK: Lineage: fact_daily PARTITION(ds=1,hr=3).key SIMPLE [(src)src.FieldSch
 POSTHOOK: Lineage: fact_daily PARTITION(ds=1,hr=3).value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-value               	string              	None                
+key                 	string              	                    
+value               	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
-hr                  	string              	None                
+ds                  	string              	                    
+hr                  	string              	                    
 	 	 
 # Detailed Partition Information	 	 
 Partition Value:    	[1, 3]              	 

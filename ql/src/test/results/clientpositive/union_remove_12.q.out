@@ -217,8 +217,8 @@ POSTHOOK: Lineage: outputtbl1.key EXPRESSION [(inputtbl1)a.FieldSchema(name:key,
 POSTHOOK: Lineage: outputtbl1.values EXPRESSION [(inputtbl1)b.FieldSchema(name:val, type:string, comment:null), ]
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-values              	bigint              	None                
+key                 	string              	                    
+values              	bigint              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 

@@ -121,10 +121,10 @@ PREHOOK: type: DESCTABLE
 POSTHOOK: query: describe extended exim_employee partition (emp_country='in', emp_state='tn')
 POSTHOOK: type: DESCTABLE
 emp_id              	int                 	employee id         
-emp_name            	string              	None                
+emp_name            	string              	                    
 emp_dob             	string              	employee date of birth
 emp_sex             	string              	M/F                 
-emp_dept            	int                 	None                
+emp_dept            	int                 	                    
 emp_country         	string              	2-char code         
 emp_state           	string              	2-char code         
 	 	 

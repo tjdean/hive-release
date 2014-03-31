@@ -203,17 +203,17 @@ POSTHOOK: Lineage: list_bucketing_mul_col PARTITION(ds=2008-04-08,hr=11).col4 SI
 POSTHOOK: Lineage: list_bucketing_mul_col PARTITION(ds=2008-04-08,hr=11).col5 EXPRESSION []
 # col_name            	data_type           	comment             
 	 	 
-col1                	string              	None                
-col2                	string              	None                
-col3                	string              	None                
-col4                	string              	None                
-col5                	string              	None                
+col1                	string              	                    
+col2                	string              	                    
+col3                	string              	                    
+col4                	string              	                    
+col5                	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
-hr                  	string              	None                
+ds                  	string              	                    
+hr                  	string              	                    
 	 	 
 # Detailed Partition Information	 	 
 Partition Value:    	[2008-04-08, 11]    	 
