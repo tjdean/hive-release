@@ -59,9 +59,11 @@ class TextMetaDataFormatter implements MetaDataFormatter {
      * If -1, then the current terminal width is auto-detected and used.
      */
     private final int prettyOutputNumCols;
-
-    public TextMetaDataFormatter(int prettyOutputNumCols) {
+    private final boolean showPartColsSeparately;
+    
+    public TextMetaDataFormatter(int prettyOutputNumCols, boolean showPartColsSeparately) {
       this.prettyOutputNumCols = prettyOutputNumCols;
+      this.showPartColsSeparately = showPartColsSeparately;
     }
 
     /**
@@ -128,7 +130,7 @@ class TextMetaDataFormatter implements MetaDataFormatter {
                     cols, partCols, prettyOutputNumCols)
                 :
                 MetaDataFormatUtils.getAllColumnsInformation(cols, partCols, 
-                    isFormatted, humanFriendly);
+                    isFormatted, humanFriendly, showPartColsSeparately);
           } else {
             output = MetaDataFormatUtils.getAllColumnsInformation(cols,
                        isFormatted, humanFriendly);
