@@ -35,7 +35,6 @@
     <module>beeline</module>
     <module>cli</module>
     <module>common</module>
-    <module>contrib</module>
     <module>hbase-handler</module>
     <module>hcatalog</module>
     <module>hwi</module>
