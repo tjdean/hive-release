@@ -19,6 +19,8 @@
 package org.apache.hadoop.hive.ql.parse;
 
 import org.antlr.runtime.tree.Tree;
+import org.apache.commons.httpclient.URIException;
+import org.apache.commons.httpclient.util.URIUtil;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -35,7 +37,6 @@ import org.apache.hadoop.hive.ql.hooks.WriteEntity;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
-import org.apache.hadoop.hive.ql.plan.CopyWork;
 import org.apache.hadoop.hive.ql.plan.LoadTableDesc;
 import org.apache.hadoop.hive.ql.plan.MoveWork;
 import org.apache.hadoop.hive.ql.plan.StatsWork;
@@ -96,7 +97,8 @@ public class LoadSemanticAnalyzer extends BaseSemanticAnalyzer {
     // directory
     if (!path.startsWith("/")) {
       if (isLocal) {
-        path = new Path(System.getProperty("user.dir"), fromPath).toString();
+        path = URIUtil.decode(
+            new Path(System.getProperty("user.dir"), fromPath).toUri().toString());
       } else {
         path = new Path(new Path("/user/" + System.getProperty("user.name")),
           path).toString();
@@ -234,18 +236,6 @@ public class LoadSemanticAnalyzer extends BaseSemanticAnalyzer {
     inputs.add(new ReadEntity(new Path(fromURI), isLocal));
     Task<? extends Serializable> rTask = null;
 
-    // create copy work
-    if (isLocal) {
-      // if the local keyword is specified - we will always make a copy. this
-      // might seem redundant in the case
-      // that the hive warehouse is also located in the local file system - but
-      // that's just a test case.
-      String copyURIStr = ctx.getExternalTmpPath(toURI).toString();
-      URI copyURI = URI.create(copyURIStr);
-      rTask = TaskFactory.get(new CopyWork(new Path(fromURI), new Path(copyURI)), conf);
-      fromURI = copyURI;
-    }
-
     // create final load/move work
 
     Map<String, String> partSpec = ts.getPartSpec();
@@ -281,7 +271,7 @@ public class LoadSemanticAnalyzer extends BaseSemanticAnalyzer {
       Utilities.getTableDesc(ts.tableHandle), partSpec, isOverWrite);
 
     Task<? extends Serializable> childTask = TaskFactory.get(new MoveWork(getInputs(),
-        getOutputs(), loadTableWork, null, true), conf);
+        getOutputs(), loadTableWork, null, true, isLocal), conf);
     if (rTask != null) {
       rTask.addDependentTask(childTask);
     } else {

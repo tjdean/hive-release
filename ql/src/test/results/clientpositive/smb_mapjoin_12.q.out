@@ -186,10 +186,12 @@ STAGE PLANS:
                         bucket_count 16
                         bucket_field_name key
                         columns key,value
+                        columns.comments  
                         columns.types int:string
 #### A masked pattern was here ####
                         name default.test_table3
                         partition_columns ds
+                        partition_columns.types string
                         serialization.ddl struct test_table3 { i32 key, string value}
                         serialization.format 1
                         serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -214,12 +216,14 @@ STAGE PLANS:
               bucket_count 16
               bucket_field_name key
               columns key,value
+              columns.comments  
               columns.types int:string
 #### A masked pattern was here ####
               name default.test_table1
               numFiles 16
               numRows 500
               partition_columns ds
+              partition_columns.types string
               rawDataSize 5312
               serialization.ddl struct test_table1 { i32 key, string value}
               serialization.format 1
@@ -235,10 +239,12 @@ STAGE PLANS:
                 bucket_count 16
                 bucket_field_name key
                 columns key,value
+                columns.comments  
                 columns.types int:string
 #### A masked pattern was here ####
                 name default.test_table1
                 partition_columns ds
+                partition_columns.types string
                 serialization.ddl struct test_table1 { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -264,10 +270,12 @@ STAGE PLANS:
                 bucket_count 16
                 bucket_field_name key
                 columns key,value
+                columns.comments  
                 columns.types int:string
 #### A masked pattern was here ####
                 name default.test_table3
                 partition_columns ds
+                partition_columns.types string
                 serialization.ddl struct test_table3 { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -465,10 +473,12 @@ STAGE PLANS:
                         bucket_count 16
                         bucket_field_name key
                         columns key,value
+                        columns.comments  
                         columns.types int:string
 #### A masked pattern was here ####
                         name default.test_table3
                         partition_columns ds
+                        partition_columns.types string
                         serialization.ddl struct test_table3 { i32 key, string value}
                         serialization.format 1
                         serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -493,12 +503,14 @@ STAGE PLANS:
               bucket_count 16
               bucket_field_name key
               columns key,value
+              columns.comments  
               columns.types int:string
 #### A masked pattern was here ####
               name default.test_table3
               numFiles 16
               numRows 3084
               partition_columns ds
+              partition_columns.types string
               rawDataSize 32904
               serialization.ddl struct test_table3 { i32 key, string value}
               serialization.format 1
@@ -514,10 +526,12 @@ STAGE PLANS:
                 bucket_count 16
                 bucket_field_name key
                 columns key,value
+                columns.comments  
                 columns.types int:string
 #### A masked pattern was here ####
                 name default.test_table3
                 partition_columns ds
+                partition_columns.types string
                 serialization.ddl struct test_table3 { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -543,10 +557,12 @@ STAGE PLANS:
                 bucket_count 16
                 bucket_field_name key
                 columns key,value
+                columns.comments  
                 columns.types int:string
 #### A masked pattern was here ####
                 name default.test_table3
                 partition_columns ds
+                partition_columns.types string
                 serialization.ddl struct test_table3 { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe

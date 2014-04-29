@@ -36,14 +36,22 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.hive.common.ValidTxnList;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
-import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Schema;
-import org.apache.hadoop.hive.ql.exec.*;
+import org.apache.hadoop.hive.ql.exec.ConditionalTask;
+import org.apache.hadoop.hive.ql.exec.FetchTask;
+import org.apache.hadoop.hive.ql.exec.Operator;
+import org.apache.hadoop.hive.ql.exec.TableScanOperator;
+import org.apache.hadoop.hive.ql.exec.Task;
+import org.apache.hadoop.hive.ql.exec.TaskFactory;
+import org.apache.hadoop.hive.ql.exec.TaskResult;
+import org.apache.hadoop.hive.ql.exec.TaskRunner;
+import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.history.HiveHistory.Keys;
 import org.apache.hadoop.hive.ql.hooks.Entity;
 import org.apache.hadoop.hive.ql.hooks.ExecuteWithHookContext;
@@ -54,15 +62,39 @@ import org.apache.hadoop.hive.ql.hooks.PostExecute;
 import org.apache.hadoop.hive.ql.hooks.PreExecute;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity;
-import org.apache.hadoop.hive.ql.lockmgr.*;
+import org.apache.hadoop.hive.ql.lockmgr.HiveLock;
+import org.apache.hadoop.hive.ql.lockmgr.HiveLockMode;
+import org.apache.hadoop.hive.ql.lockmgr.HiveLockObj;
+import org.apache.hadoop.hive.ql.lockmgr.HiveLockObject;
 import org.apache.hadoop.hive.ql.lockmgr.HiveLockObject.HiveLockObjectData;
+import org.apache.hadoop.hive.ql.lockmgr.HiveTxnManager;
+import org.apache.hadoop.hive.ql.lockmgr.LockException;
+import org.apache.hadoop.hive.ql.lockmgr.TxnManagerFactory;
 import org.apache.hadoop.hive.ql.log.PerfLogger;
-import org.apache.hadoop.hive.ql.metadata.*;
+import org.apache.hadoop.hive.ql.metadata.AuthorizationException;
+import org.apache.hadoop.hive.ql.metadata.DummyPartition;
+import org.apache.hadoop.hive.ql.metadata.Hive;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.metadata.Partition;
+import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.metadata.formatting.JsonMetaDataFormatter;
 import org.apache.hadoop.hive.ql.metadata.formatting.MetaDataFormatUtils;
 import org.apache.hadoop.hive.ql.metadata.formatting.MetaDataFormatter;
 import org.apache.hadoop.hive.ql.optimizer.ppr.PartitionPruner;
-import org.apache.hadoop.hive.ql.parse.*;
+import org.apache.hadoop.hive.ql.parse.ASTNode;
+import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer;
+import org.apache.hadoop.hive.ql.parse.HiveSemanticAnalyzerHook;
+import org.apache.hadoop.hive.ql.parse.HiveSemanticAnalyzerHookContext;
+import org.apache.hadoop.hive.ql.parse.HiveSemanticAnalyzerHookContextImpl;
+import org.apache.hadoop.hive.ql.parse.ImportSemanticAnalyzer;
+import org.apache.hadoop.hive.ql.parse.ParseContext;
+import org.apache.hadoop.hive.ql.parse.ParseDriver;
+import org.apache.hadoop.hive.ql.parse.ParseUtils;
+import org.apache.hadoop.hive.ql.parse.PrunedPartitionList;
+import org.apache.hadoop.hive.ql.parse.SemanticAnalyzer;
+import org.apache.hadoop.hive.ql.parse.SemanticAnalyzerFactory;
+import org.apache.hadoop.hive.ql.parse.SemanticException;
+import org.apache.hadoop.hive.ql.parse.VariableSubstitution;
 import org.apache.hadoop.hive.ql.plan.HiveOperation;
 import org.apache.hadoop.hive.ql.plan.OperatorDesc;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
@@ -118,10 +150,6 @@ public class Driver implements CommandProcessor {
         throw new SemanticException(e.getMessage(), e);
       }
     }
-    // the reason that we set the txn manager for the cxt here is because each
-    // query has its own ctx object. The txn mgr is shared across the
-    // same instance of Driver, which can run multiple queries.
-    ctx.setHiveTxnManager(txnMgr);
   }
 
   private boolean checkConcurrency() throws SemanticException {
@@ -707,7 +735,7 @@ public class Driver implements CommandProcessor {
       case DUMMYPARTITION:
       case PARTITION:
         // not currently handled
-        break;
+        continue;
         default:
           throw new AssertionError("Unexpected object type");
       }
@@ -812,8 +840,8 @@ public class Driver implements CommandProcessor {
   // the input format.
   private int recordValidTxns() {
     try {
-      IMetaStoreClient.ValidTxnList txns = txnMgr.getValidTxns();
-      ctx.getConf().set(IMetaStoreClient.ValidTxnList.VALID_TXNS_KEY, txns.toString());
+      ValidTxnList txns = txnMgr.getValidTxns();
+      conf.set(ValidTxnList.VALID_TXNS_KEY, txns.toString());
       return 0;
     } catch (LockException e) {
       errorMessage = "FAILED: Error in determing valid transactions: " + e.getMessage();
@@ -992,13 +1020,6 @@ public class Driver implements CommandProcessor {
     perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.TIME_TO_SUBMIT);
 
     int ret;
-    if (!alreadyCompiled) {
-      ret = compileInternal(command);
-      if (ret != 0) {
-        return new CommandProcessorResponse(ret, errorMessage, SQLState);
-      }
-    }
-
     boolean requireLock = false;
     boolean ckLock = false;
     try {
@@ -1013,6 +1034,20 @@ public class Driver implements CommandProcessor {
       ret = 10;
       return new CommandProcessorResponse(ret, errorMessage, SQLState);
     }
+    ret = recordValidTxns();
+    if (ret != 0) return new CommandProcessorResponse(ret, errorMessage, SQLState);
+
+    if (!alreadyCompiled) {
+      ret = compileInternal(command);
+      if (ret != 0) {
+        return new CommandProcessorResponse(ret, errorMessage, SQLState);
+      }
+    }
+
+    // the reason that we set the txn manager for the cxt here is because each
+    // query has its own ctx object. The txn mgr is shared across the
+    // same instance of Driver, which can run multiple queries.
+    ctx.setHiveTxnManager(txnMgr);
 
     if (ckLock) {
       boolean lockOnlyMapred = HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_LOCK_MAPRED_ONLY);
@@ -1038,9 +1073,6 @@ public class Driver implements CommandProcessor {
         requireLock = true;
       }
     }
-
-    ret = recordValidTxns();
-    if (ret != 0) return new CommandProcessorResponse(ret, errorMessage, SQLState);
 
     if (requireLock) {
       ret = acquireReadWriteLocks();

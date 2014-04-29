@@ -264,12 +264,14 @@ STAGE PLANS:
               COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns key,keymap
+              columns.comments  
               columns.types string:string
 #### A masked pattern was here ####
               name default.t1_mapping
               numFiles 1
               numRows 1
               partition_columns ds
+              partition_columns.types string
               rawDataSize 12
               serialization.ddl struct t1_mapping { string key, string keymap}
               serialization.format 1
@@ -283,10 +285,12 @@ STAGE PLANS:
               properties:
                 bucket_count -1
                 columns key,keymap
+                columns.comments  
                 columns.types string:string
 #### A masked pattern was here ####
                 name default.t1_mapping
                 partition_columns ds
+                partition_columns.types string
                 serialization.ddl struct t1_mapping { string key, string keymap}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -305,12 +309,14 @@ STAGE PLANS:
               COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns keymap,value
+              columns.comments  
               columns.types string:string
 #### A masked pattern was here ####
               name default.t1_old
               numFiles 1
               numRows 1
               partition_columns ds
+              partition_columns.types string
               rawDataSize 14
               serialization.ddl struct t1_old { string keymap, string value}
               serialization.format 1
@@ -324,10 +330,12 @@ STAGE PLANS:
               properties:
                 bucket_count -1
                 columns keymap,value
+                columns.comments  
                 columns.types string:string
 #### A masked pattern was here ####
                 name default.t1_old
                 partition_columns ds
+                partition_columns.types string
                 serialization.ddl struct t1_old { string keymap, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -674,12 +682,14 @@ STAGE PLANS:
               COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns key,value
+              columns.comments  
               columns.types string:string
 #### A masked pattern was here ####
               name default.t1_new
               numFiles 1
               numRows 1
               partition_columns ds
+              partition_columns.types string
               rawDataSize 11
               serialization.ddl struct t1_new { string key, string value}
               serialization.format 1
@@ -693,10 +703,12 @@ STAGE PLANS:
               properties:
                 bucket_count -1
                 columns key,value
+                columns.comments  
                 columns.types string:string
 #### A masked pattern was here ####
                 name default.t1_new
                 partition_columns ds
+                partition_columns.types string
                 serialization.ddl struct t1_new { string key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe

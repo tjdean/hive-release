@@ -37,10 +37,12 @@ POSTHOOK: Output: database:default
 POSTHOOK: Output: default@base64_test
 PREHOOK: query: DESCRIBE EXTENDED base64_test
 PREHOOK: type: DESCTABLE
+PREHOOK: Input: default@base64_test
 POSTHOOK: query: DESCRIBE EXTENDED base64_test
 POSTHOOK: type: DESCTABLE
-key                 	int                 	None                
-value               	string              	None                
+POSTHOOK: Input: default@base64_test
+key                 	int                 	                    
+value               	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: FROM src

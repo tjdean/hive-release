@@ -19,6 +19,7 @@ package org.apache.hadoop.hive.ql.lockmgr;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.common.ValidTxnList;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.LockComponentBuilder;
@@ -134,13 +135,13 @@ public class DbTxnManager extends HiveTxnManagerImpl {
       Table t = null;
       LOG.debug("output is null " + (output == null));
       switch (output.getWriteType()) {
-        case DDL:
+        case DDL_EXCLUSIVE:
         case INSERT_OVERWRITE:
           compBuilder.setExclusive();
           break;
 
         case INSERT:
-        case DDL_METADATA_ONLY:
+        case DDL_SHARED:
           compBuilder.setShared();
           break;
 
@@ -148,6 +149,9 @@ public class DbTxnManager extends HiveTxnManagerImpl {
         case DELETE:
           compBuilder.setSemiShared();
           break;
+
+        case DDL_NO_LOCK:
+          continue; // No lock required here
 
         default:
           throw new RuntimeException("Unknown write type " +
@@ -269,7 +273,7 @@ public class DbTxnManager extends HiveTxnManagerImpl {
   }
 
   @Override
-  public IMetaStoreClient.ValidTxnList getValidTxns() throws LockException {
+  public ValidTxnList getValidTxns() throws LockException {
     init();
     try {
       return client.getValidTxns();

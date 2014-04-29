@@ -36,6 +36,7 @@ import java.util.regex.Pattern;
 
 import javax.ws.rs.core.UriBuilder;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -89,7 +90,7 @@ public class TempletonUtils {
   public static final Pattern JAR_COMPLETE = Pattern.compile(" map \\d+%\\s+reduce \\d+%$");
   public static final Pattern PIG_COMPLETE = Pattern.compile(" \\d+% complete$");
   //looking for map = 100%,  reduce = 100%
-  public static final Pattern HIVE_COMPLETE = Pattern.compile(" map = \\d+%,\\s+reduce = \\d+%$");
+  public static final Pattern HIVE_COMPLETE = Pattern.compile(" map = (\\d+%),\\s+reduce = (\\d+%).*$");
 
   /**
    * Extract the percent complete line from Pig or Jar jobs.
@@ -105,15 +106,7 @@ public class TempletonUtils {
     
     Matcher hive = HIVE_COMPLETE.matcher(line);
     if(hive.find()) {
-      StringBuilder sb = new StringBuilder(hive.group().trim());
-      String[] toRemove = {"= ", ", "};
-      for(String pattern : toRemove) {
-        int pos;
-        while((pos = sb.indexOf(pattern)) >= 0) {
-          sb.delete(pos, pos + pattern.length());
-        }
-      }
-      return sb.toString();//normalized to look like JAR_COMPLETE
+      return "map " + hive.group(1) + " reduce " + hive.group(2);
     }
     return null;
   }
@@ -353,5 +346,9 @@ public class TempletonUtils {
       args.add("/c");
       args.add("call");
     }
+  }
+
+  public static String unEscape(String input) {
+    return StringEscapeUtils.unescapeJava(input);
   }
 }

@@ -29,14 +29,16 @@ POSTHOOK: Lineage: stats_invalid.key SIMPLE [(src)src.FieldSchema(name:key, type
 POSTHOOK: Lineage: stats_invalid.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: desc formatted stats_invalid
 PREHOOK: type: DESCTABLE
+PREHOOK: Input: default@stats_invalid
 POSTHOOK: query: desc formatted stats_invalid
 POSTHOOK: type: DESCTABLE
+POSTHOOK: Input: default@stats_invalid
 POSTHOOK: Lineage: stats_invalid.key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 POSTHOOK: Lineage: stats_invalid.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-value               	string              	None                
+key                 	string              	                    
+value               	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -75,15 +77,17 @@ POSTHOOK: Lineage: stats_invalid.key SIMPLE [(src)src.FieldSchema(name:key, type
 POSTHOOK: Lineage: stats_invalid.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: desc formatted stats_invalid
 PREHOOK: type: DESCTABLE
+PREHOOK: Input: default@stats_invalid
 POSTHOOK: query: desc formatted stats_invalid
 POSTHOOK: type: DESCTABLE
+POSTHOOK: Input: default@stats_invalid
 POSTHOOK: Lineage: stats_invalid.key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 POSTHOOK: Lineage: stats_invalid.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-value               	string              	None                
-new_col             	string              	None                
+key                 	string              	                    
+value               	string              	                    
+new_col             	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 

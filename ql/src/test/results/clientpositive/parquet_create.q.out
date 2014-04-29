@@ -52,15 +52,17 @@ POSTHOOK: Output: database:default
 POSTHOOK: Output: default@parquet_create
 PREHOOK: query: DESCRIBE FORMATTED parquet_create
 PREHOOK: type: DESCTABLE
+PREHOOK: Input: default@parquet_create
 POSTHOOK: query: DESCRIBE FORMATTED parquet_create
 POSTHOOK: type: DESCTABLE
+POSTHOOK: Input: default@parquet_create
 # col_name            	data_type           	comment             
 	 	 
-id                  	int                 	from deserializer   
-str                 	string              	from deserializer   
-mp                  	map<string,string>  	from deserializer   
-lst                 	array<string>       	from deserializer   
-strct               	struct<A:string,B:string>	from deserializer   
+id                  	int                 	                    
+str                 	string              	                    
+mp                  	map<string,string>  	                    
+lst                 	array<string>       	                    
+strct               	struct<A:string,B:string>	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 

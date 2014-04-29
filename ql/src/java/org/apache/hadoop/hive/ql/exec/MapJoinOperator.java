@@ -38,6 +38,7 @@ import org.apache.hadoop.hive.ql.plan.api.OperatorType;
 import org.apache.hadoop.hive.serde2.ByteStream.Output;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
+import org.apache.hadoop.hive.serde2.SerDeUtils;
 import org.apache.hadoop.util.ReflectionUtils;
 
 /**
@@ -100,8 +101,10 @@ public class MapJoinOperator extends AbstractMapJoinOperator<MapJoinDesc> implem
     mapJoinTables = (MapJoinTableContainer[]) cache.retrieve(tableKey);
     mapJoinTableSerdes = (MapJoinTableContainerSerDe[]) cache.retrieve(serdeKey);
     hashTblInitedOnce = true;
+    LOG.info("Try to retrieve from cache");
 
     if (mapJoinTables == null || mapJoinTableSerdes == null) {
+      LOG.info("Did not find tables in cache");
       mapJoinTables = new MapJoinTableContainer[tagLen];
       mapJoinTableSerdes = new MapJoinTableContainerSerDe[tagLen];
       hashTblInitedOnce = false;
@@ -115,7 +118,7 @@ public class MapJoinOperator extends AbstractMapJoinOperator<MapJoinDesc> implem
     TableDesc keyTableDesc = conf.getKeyTblDesc();
     SerDe keySerializer = (SerDe) ReflectionUtils.newInstance(keyTableDesc.getDeserializerClass(),
         null);
-    keySerializer.initialize(null, keyTableDesc.getProperties());
+    SerDeUtils.initializeSerDe(keySerializer, null, keyTableDesc.getProperties(), null);
     MapJoinObjectSerDeContext keyContext = new MapJoinObjectSerDeContext(keySerializer, false);
     for (int pos = 0; pos < order.length; pos++) {
       if (pos == posBigTable) {
@@ -129,7 +132,7 @@ public class MapJoinOperator extends AbstractMapJoinOperator<MapJoinDesc> implem
       }
       SerDe valueSerDe = (SerDe) ReflectionUtils.newInstance(valueTableDesc.getDeserializerClass(),
           null);
-      valueSerDe.initialize(null, valueTableDesc.getProperties());
+      SerDeUtils.initializeSerDe(valueSerDe, null, valueTableDesc.getProperties(), null);
       MapJoinObjectSerDeContext valueContext = new MapJoinObjectSerDeContext(valueSerDe, hasFilter(pos));
       mapJoinTableSerdes[pos] = new MapJoinTableContainerSerDe(keyContext, valueContext);
     }
@@ -148,8 +151,19 @@ public class MapJoinOperator extends AbstractMapJoinOperator<MapJoinDesc> implem
     perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.LOAD_HASHTABLE);
     loader.init(getExecContext(), hconf, this);
     loader.load(mapJoinTables, mapJoinTableSerdes);
-    cache.cache(tableKey, mapJoinTables);
-    cache.cache(serdeKey, mapJoinTableSerdes);
+    if (conf.isBucketMapJoin() == false) {
+      /*
+       * The issue with caching in case of bucket map join is that different tasks
+       * process different buckets and if the container is reused to join a different bucket,
+       * join results can be incorrect. The cache is keyed on operator id and for bucket map join
+       * the operator does not change but data needed is different. For a proper fix, this
+       * requires changes in the Tez API with regard to finding bucket id and 
+       * also ability to schedule tasks to re-use containers that have cached the specific bucket.
+       */
+      LOG.info("This is not bucket map join, so cache");
+      cache.cache(tableKey, mapJoinTables);
+      cache.cache(serdeKey, mapJoinTableSerdes);
+    }
     perfLogger.PerfLogEnd(CLASS_NAME, PerfLogger.LOAD_HASHTABLE);
   }
 
@@ -170,10 +184,24 @@ public class MapJoinOperator extends AbstractMapJoinOperator<MapJoinDesc> implem
 
   protected transient final Output outputForMapJoinKey = new Output();
   protected MapJoinKey computeMapJoinKey(Object row, byte alias) throws HiveException {
-    MapJoinKey refKey = (key == null ? loader.getKeyType() : key);
+    MapJoinKey refKey = getRefKey(key, alias);
     return MapJoinKey.readFromRow(outputForMapJoinKey,
         refKey, row, joinKeys[alias], joinKeysObjectInspectors[alias], key == refKey);
   }
+
+  protected MapJoinKey getRefKey(MapJoinKey prevKey, byte alias) {
+    if (prevKey != null) return prevKey;
+    // We assume that since we are joining on the same key, all tables would have either
+    // optimized or non-optimized key; hence, we can pass any key in any table as reference.
+    // We do it so that MJKB could determine whether it can use optimized keys.
+    for (byte pos = 0; pos < order.length; pos++) {
+      if (pos == alias) continue;
+      MapJoinKey refKey = mapJoinTables[pos].getAnyKey();
+      if (refKey != null) return refKey;
+    }
+    return null; // All join tables have 0 keys, doesn't matter what we generate.
+  }
+
 
   @Override
   public void processOp(Object row, int tag) throws HiveException {
@@ -221,8 +249,10 @@ public class MapJoinOperator extends AbstractMapJoinOperator<MapJoinDesc> implem
           storage[pos] = null;
         }
       }
-    } catch (SerDeException e) {
-      throw new HiveException(e);
+    } catch (Exception e) {
+      String msg = "Unxpected exception: " + e.getMessage();
+      LOG.error(msg, e);
+      throw new HiveException(msg, e);
     }
   }
 

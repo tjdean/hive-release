@@ -70,9 +70,6 @@ import java.util.Properties;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-import java.util.zip.Deflater;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.InflaterInputStream;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -81,6 +78,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
+
+import javax.security.auth.login.LoginException;
 
 import org.antlr.runtime.CommonToken;
 import org.apache.commons.codec.binary.Base64;
@@ -95,6 +97,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hive.common.HiveInterruptCallback;
 import org.apache.hadoop.hive.common.HiveInterruptUtils;
 import org.apache.hadoop.hive.common.HiveStatsUtils;
@@ -107,13 +110,13 @@ import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
 import org.apache.hadoop.hive.ql.Context;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.QueryPlan;
+import org.apache.hadoop.hive.ql.exec.FileSinkOperator.RecordWriter;
 import org.apache.hadoop.hive.ql.exec.mr.ExecDriver;
 import org.apache.hadoop.hive.ql.exec.mr.ExecMapper;
 import org.apache.hadoop.hive.ql.exec.mr.ExecReducer;
 import org.apache.hadoop.hive.ql.exec.mr.MapRedTask;
 import org.apache.hadoop.hive.ql.exec.tez.TezTask;
 import org.apache.hadoop.hive.ql.io.ContentSummaryInputFormat;
-import org.apache.hadoop.hive.ql.io.FSRecordWriter;
 import org.apache.hadoop.hive.ql.io.HiveFileFormatUtils;
 import org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat;
 import org.apache.hadoop.hive.ql.io.HiveInputFormat;
@@ -156,6 +159,7 @@ import org.apache.hadoop.hive.ql.stats.StatsFactory;
 import org.apache.hadoop.hive.ql.stats.StatsPublisher;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.SerDeException;
+import org.apache.hadoop.hive.serde2.SerDeUtils;
 import org.apache.hadoop.hive.serde2.Serializer;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
 import org.apache.hadoop.hive.shims.ShimLoader;
@@ -175,6 +179,7 @@ import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapred.SequenceFileInputFormat;
 import org.apache.hadoop.mapred.SequenceFileOutputFormat;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.Shell;
 
@@ -317,7 +322,7 @@ public final class Utilities {
           LOG.debug("Loading plan from string: "+path.toUri().getPath());
           String planString = conf.get(path.toUri().getPath());
           if (planString == null) {
-            LOG.debug("Could not find plan string in conf");
+            LOG.info("Could not find plan string in conf");
             return null;
           }
           byte[] planBytes = Base64.decodeBase64(planString);
@@ -356,7 +361,7 @@ public final class Utilities {
       return gWork;
     } catch (FileNotFoundException fnf) {
       // happens. e.g.: no reduce work.
-      LOG.debug("No plan file found: "+path);
+      LOG.info("No plan file found: "+path);
       return null;
     } catch (Exception e) {
       LOG.error("Failed to load plan: "+path, e);
@@ -1769,7 +1774,7 @@ public final class Utilities {
 
     for (String p : paths) {
       Path path = new Path(p);
-      FSRecordWriter writer = HiveFileFormatUtils.getRecordWriter(
+      RecordWriter writer = HiveFileFormatUtils.getRecordWriter(
           jc, hiveOutputFormat, outputClass, isCompressed,
           tableInfo.getProperties(), path, reporter);
       writer.close(false);
@@ -1993,6 +1998,14 @@ public final class Utilities {
     return names;
   }
 
+  public static List<String> getInternalColumnNamesFromSignature(List<ColumnInfo> colInfos) {
+    List<String> names = new ArrayList<String>();
+    for (ColumnInfo ci : colInfos) {
+      names.add(ci.getInternalName());
+    }
+    return names;
+  }
+
   public static List<String> getColumnNames(Properties props) {
     List<String> names = new ArrayList<String>();
     String colNames = props.getProperty(serdeConstants.LIST_COLUMNS);
@@ -2029,6 +2042,9 @@ public final class Utilities {
    * @throws HiveException
    */
   public static String[] getDbTableName(String dbtable) throws HiveException{
+    if(dbtable == null){
+      return new String[2];
+    }
     String[] names =  dbtable.split("\\.");
     switch (names.length) {
     case 2:
@@ -2091,6 +2107,13 @@ public final class Utilities {
    *          configuration which receives configured properties
    */
   public static void copyTableJobPropertiesToConf(TableDesc tbl, JobConf job) {
+    String bucketString = tbl.getProperties()
+        .getProperty(hive_metastoreConstants.BUCKET_COUNT);
+    // copy the bucket count
+    if (bucketString != null) {
+      job.set(hive_metastoreConstants.BUCKET_COUNT, bucketString);
+    }
+
     Map<String, String> jobProperties = tbl.getJobProperties();
     if (jobProperties == null) {
       return;
@@ -2098,9 +2121,6 @@ public final class Utilities {
     for (Map.Entry<String, String> entry : jobProperties.entrySet()) {
       job.set(entry.getKey(), entry.getValue());
     }
-    // copy the bucket count
-    job.set(hive_metastoreConstants.BUCKET_COUNT,
-        tbl.getProperties().getProperty(hive_metastoreConstants.BUCKET_COUNT));
   }
 
   private static final Object INPUT_SUMMARY_LOCK = new Object();
@@ -2117,14 +2137,14 @@ public final class Utilities {
    * @return the summary of all the input paths.
    * @throws IOException
    */
-  public static ContentSummary getInputSummary(Context ctx, MapWork work, PathFilter filter)
+  public static ContentSummary getInputSummary(final Context ctx, MapWork work, PathFilter filter)
       throws IOException {
     PerfLogger perfLogger = PerfLogger.getPerfLogger();
     perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.INPUT_SUMMARY);
 
     long[] summary = {0, 0, 0};
 
-    List<String> pathNeedProcess = new ArrayList<String>();
+    final List<String> pathNeedProcess = new ArrayList<String>();
 
     // Since multiple threads could call this method concurrently, locking
     // this method will avoid number of threads out of control.
@@ -2167,6 +2187,13 @@ public final class Utilities {
       HiveInterruptCallback interrup = HiveInterruptUtils.add(new HiveInterruptCallback() {
         @Override
         public void interrupt() {
+          for (String path : pathNeedProcess) {
+            try {
+              new Path(path).getFileSystem(ctx.getConf()).close();
+            } catch (IOException ignore) {
+                LOG.debug(ignore);
+            }
+          }
           if (executor != null) {
             executor.shutdownNow();
           }
@@ -2204,8 +2231,10 @@ public final class Utilities {
                   return;
                 }
                 HiveStorageHandler handler = HiveUtils.getStorageHandler(myConf,
-                    partDesc.getOverlayedProperties().getProperty(
-                    hive_metastoreConstants.META_TABLE_STORAGE));
+                    SerDeUtils.createOverlayedProperties(
+                        partDesc.getTableDesc().getProperties(),
+                        partDesc.getProperties())
+                        .getProperty(hive_metastoreConstants.META_TABLE_STORAGE));
                 if (handler instanceof InputEstimator) {
                   long total = 0;
                   TableDesc tableDesc = partDesc.getTableDesc();
@@ -3031,7 +3060,7 @@ public final class Utilities {
     String newFile = newDir + File.separator + "emptyFile";
     Path newFilePath = new Path(newFile);
 
-    FSRecordWriter recWriter = outFileFormat.newInstance().getHiveRecordWriter(job, newFilePath,
+    RecordWriter recWriter = outFileFormat.newInstance().getHiveRecordWriter(job, newFilePath,
         Text.class, false, props, null);
     if (dummyRow) {
       // empty files are omitted at CombineHiveInputFormat.
@@ -3213,6 +3242,7 @@ public final class Utilities {
   private static void createTmpDirs(Configuration conf,
       List<Operator<? extends OperatorDesc>> ops) throws IOException {
 
+    FsPermission fsPermission = new FsPermission((short)00777);
     while (!ops.isEmpty()) {
       Operator<? extends OperatorDesc> op = ops.remove(0);
 
@@ -3222,8 +3252,7 @@ public final class Utilities {
 
         if (tempDir != null) {
           Path tempPath = Utilities.toTempPath(tempDir);
-          FileSystem fs = tempPath.getFileSystem(conf);
-          fs.mkdirs(tempPath);
+          createDirsWithPermission(conf, tempPath, fsPermission);
         }
       }
 
@@ -3344,5 +3373,50 @@ public final class Utilities {
       throw new IOException(nfe);
     }
     return footerCount;
+  }
+
+  /**
+   * @param conf the configuration used to derive the filesystem to create the path
+   * @param mkdir the path to be created
+   * @param fsPermission ignored if it is hive server session and doAs is enabled
+   * @return true if successfully created the directory else false
+   * @throws IOException if hdfs experiences any error conditions
+   */
+  public static boolean createDirsWithPermission(Configuration conf, Path mkdir,
+      FsPermission fsPermission) throws IOException {
+    // this umask is required because by default the hdfs mask is 022 resulting in
+    // all parents getting the fsPermission & !(022) permission instead of fsPermission
+    boolean recursive = false;
+    if (SessionState.get() != null) {
+      recursive = SessionState.get().isHiveServerQuery() &&
+          conf.getBoolean(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.varname,
+              HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.defaultBoolVal);
+      // we reset the permission in case of hive server and doAs enabled because
+      // currently scratch directory uses /tmp/hive-hive as the scratch directory.
+      // However, with doAs enabled, the first user to create this directory would
+      // own the directory and subsequent users cannot access the scratch directory.
+      // The right fix is to have scratch dir per user.
+      fsPermission = new FsPermission((short)00777);
+    }
+
+    // if we made it so far without exception we are good!
+    return createDirsWithPermission(conf, mkdir, fsPermission, recursive);
+  }
+
+  public static boolean createDirsWithPermission(Configuration conf, Path mkdir,
+      FsPermission fsPermission, boolean recursive) throws IOException {
+    String origUmask = null;
+    if (recursive) {
+      origUmask = conf.get("fs.permissions.umask-mode");
+      conf.set("fs.permissions.umask-mode", "000");
+    }
+    FileSystem fs = mkdir.getFileSystem(conf);
+    boolean retval = fs.mkdirs(mkdir, fsPermission);
+    if (origUmask != null) {
+      conf.set("fs.permissions.umask-mode", origUmask);
+    } else {
+      conf.unset("fs.permissions.umask-mode");
+    }
+    return retval;
   }
 }

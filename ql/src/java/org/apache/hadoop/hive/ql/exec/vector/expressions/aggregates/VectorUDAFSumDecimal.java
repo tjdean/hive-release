@@ -64,6 +64,12 @@ public class VectorUDAFSumDecimal extends VectorAggregateExpression {
       public int getVariableSize() {
         throw new UnsupportedOperationException();
       }
+
+      @Override
+      public void reset() {
+        isNull = true;
+        sum.zeroClear();
+      }
     }
 
     private VectorExpression inputExpression;
@@ -303,15 +309,15 @@ public class VectorUDAFSumDecimal extends VectorAggregateExpression {
       Decimal128[] vector = inputVector.vector;
 
       if (inputVector.isRepeating) {
-        if (inputVector.noNulls) {
-        if (myagg.isNull) {
-          myagg.isNull = false;
-          myagg.sum.zeroClear();
+        if ((inputVector.noNulls) || !inputVector.isNull[0]) {
+          if (myagg.isNull) {
+            myagg.isNull = false;
+            myagg.sum.zeroClear();
+          }
+          scratchDecimal.update(batchSize);
+          scratchDecimal.multiplyDestructive(vector[0], inputVector.scale);
+          myagg.sum.addDestructive(scratchDecimal, inputVector.scale);
         }
-        scratchDecimal.update(batchSize);
-        scratchDecimal.multiplyDestructive(vector[0], inputVector.scale);
-        myagg.sum.update(scratchDecimal);
-      }
         return;
       }
 
@@ -411,7 +417,7 @@ public class VectorUDAFSumDecimal extends VectorAggregateExpression {
     @Override
     public void reset(AggregationBuffer agg) throws HiveException {
       Aggregation myAgg = (Aggregation) agg;
-      myAgg.isNull = true;
+      myAgg.reset();
     }
 
     @Override

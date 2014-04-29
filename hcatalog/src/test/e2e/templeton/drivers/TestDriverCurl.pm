@@ -188,6 +188,9 @@ sub globalSetup
 
     $globalHash->{'inpdir_local'} = $ENV{'TH_INPDIR_LOCAL'};
     $globalHash->{'inpdir_hdfs'} = $ENV{'TH_INPDIR_HDFS'};
+    $globalHash->{'db_connection_string'} = $ENV{'DB_CONNECTION_STRING'};
+    $globalHash->{'db_user_name'} = $ENV{'DB_USER_NAME'};
+    $globalHash->{'db_password'} = $ENV{'DB_PASSWORD'};
 
     $globalHash->{'is_secure_mode'} = $ENV{'SECURE_MODE'};
 
@@ -355,6 +358,9 @@ sub replaceParametersInArg
     $arg =~ s/:OUTDIR:/$outdir/g;
     $arg =~ s/:INPDIR_HDFS:/$testCmd->{'inpdir_hdfs'}/g;
     $arg =~ s/:INPDIR_LOCAL:/$testCmd->{'inpdir_local'}/g;
+    $arg =~ s/:DB_CONNECTION_STRING:/$testCmd->{'db_connection_string'}/g;
+    $arg =~ s/:DB_USER_NAME:/$testCmd->{'db_user_name'}/g;
+    $arg =~ s/:DB_PASSWORD:/$testCmd->{'db_password'}/g;
     $arg =~ s/:TNUM:/$testCmd->{'num'}/g;
     return $arg;
   }
@@ -457,6 +463,11 @@ sub execCurlCmd(){
   my $method = $testCmd->{ $argPrefix . 'method'};
 
   my $url = $testCmd->{ $argPrefix . 'url'};
+
+  #allow curl to make insecure ssl connections and transfers
+  if ($url =~ /^https:/) {
+    push @curl_cmd, '-k';
+  }
 
   my @options = ();
   if (defined $testCmd->{$argPrefix . 'post_options'}) {
@@ -1112,7 +1123,7 @@ sub getJobResult{
   my $testCmdBasics = $self->copyTestBasicConfig($testCmd);
   $testCmdBasics->{'method'} = 'GET';
   $testCmdBasics->{'num'} = $testCmdBasics->{'num'} . "_jobStatusCheck";
-  $testCmdBasics->{'url'} = ':TEMPLETON_URL:/templeton/v1/queue/' 
+  $testCmdBasics->{'url'} = ':TEMPLETON_URL:/templeton/v1/jobs/'
     . $jobid . '?' . "user.name=:UNAME:" ;
   return $self->execCurlCmd($testCmdBasics, "", $log);
 }
@@ -1122,7 +1133,7 @@ sub killJob{
   my $testCmdBasics = $self->copyTestBasicConfig($testCmd);
   $testCmdBasics->{'method'} = 'DELETE';
   $testCmdBasics->{'num'} = $testCmdBasics->{'num'} . "_killJob";
-  $testCmdBasics->{'url'} = ':TEMPLETON_URL:/templeton/v1/queue/' 
+  $testCmdBasics->{'url'} = ':TEMPLETON_URL:/templeton/v1/jobs/'
     . $jobid . '?' . "user.name=:UNAME:" ;
   return $self->execCurlCmd($testCmdBasics, "", $log);
 }

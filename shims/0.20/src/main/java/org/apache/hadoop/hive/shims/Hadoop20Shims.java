@@ -28,6 +28,7 @@ import java.net.URL;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -43,6 +44,7 @@ import javax.security.auth.login.LoginException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -96,6 +98,12 @@ public class Hadoop20Shims implements HadoopShims {
   public MiniMrShim getMiniMrCluster(Configuration conf, int numberOfTaskTrackers,
                                      String nameNode, int numDir) throws IOException {
     return new MiniMrShim(conf, numberOfTaskTrackers, nameNode, numDir);
+  }
+
+  @Override
+  public MiniMrShim getMiniTezCluster(Configuration conf, int numberOfTaskTrackers,
+                                     String nameNode, int numDir) throws IOException {
+    throw new IOException("Cannot run tez on current hadoop, Version: " + VersionInfo.getVersion());
   }
 
   /**
@@ -591,6 +599,13 @@ public class Hadoop20Shims implements HadoopShims {
   }
 
   @Override
+  public UserGroupInformation loginUserFromKeytabAndReturnUGI(
+      String principal, String keytabFile) throws IOException {
+    throwKerberosUnsupportedError();
+    return null;
+  }
+
+  @Override
   public void reLoginUserFromKeytab() throws IOException{
     throwKerberosUnsupportedError();
   }
@@ -611,35 +626,22 @@ public class Hadoop20Shims implements HadoopShims {
   }
 
   @Override
-  public Iterator<FileStatus> listLocatedStatus(final FileSystem fs,
+  public List<FileStatus> listLocatedStatus(final FileSystem fs,
                                                 final Path path,
                                                 final PathFilter filter
                                                ) throws IOException {
-    return new Iterator<FileStatus>() {
-      private final FileStatus[] result = fs.listStatus(path, filter);
-      private int current = 0;
-
-      @Override
-      public boolean hasNext() {
-        return current < result.length;
-      }
-
-      @Override
-      public FileStatus next() {
-        return result[current++];
-      }
-
-      @Override
-      public void remove() {
-        throw new IllegalArgumentException("Not supported");
-      }
-    };
+    return Arrays.asList(fs.listStatus(path, filter));
   }
 
   @Override
   public BlockLocation[] getLocations(FileSystem fs,
                                       FileStatus status) throws IOException {
     return fs.getFileBlockLocations(status, 0, status.getLen());
+  }
+
+  @Override
+  public void hflush(FSDataOutputStream stream) throws IOException {
+    stream.sync();
   }
 
   @Override
@@ -778,8 +780,8 @@ public class Hadoop20Shims implements HadoopShims {
     ret.put("HADOOPMAPREDINPUTDIRRECURSIVE", "mapred.input.dir.recursive");
     ret.put("MAPREDMAXSPLITSIZE", "mapred.max.split.size");
     ret.put("MAPREDMINSPLITSIZE", "mapred.min.split.size");
-    ret.put("MAPREDMINSPLITSIZEPERNODE", "mapred.min.split.size.per.rack");
-    ret.put("MAPREDMINSPLITSIZEPERRACK", "mapred.min.split.size.per.node");
+    ret.put("MAPREDMINSPLITSIZEPERRACK", "mapred.min.split.size.per.rack");
+    ret.put("MAPREDMINSPLITSIZEPERNODE", "mapred.min.split.size.per.node");
     ret.put("HADOOPNUMREDUCERS", "mapred.reduce.tasks");
     ret.put("HADOOPJOBNAME", "mapred.job.name");
     ret.put("HADOOPSPECULATIVEEXECREDUCERS", "mapred.reduce.tasks.speculative.execution");

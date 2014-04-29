@@ -39,7 +39,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.MapRedStats;
@@ -56,7 +58,6 @@ import org.apache.hadoop.hive.ql.metadata.HiveUtils;
 import org.apache.hadoop.hive.ql.plan.HiveOperation;
 import org.apache.hadoop.hive.ql.security.HiveAuthenticationProvider;
 import org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProvider;
-import org.apache.hadoop.hive.ql.security.authorization.plugin.DisallowTransformHook;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAuthorizer;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAuthorizerFactory;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveMetastoreClientFactoryImpl;
@@ -73,6 +74,8 @@ import org.apache.hadoop.util.ReflectionUtils;
  */
 public class SessionState {
   private static final Log LOG = LogFactory.getLog(SessionState.class);
+
+  protected ClassLoader parentLoader;
 
   /**
    * current configuration.
@@ -157,6 +160,11 @@ public class SessionState {
 
   private String currentDatabase;
 
+  private final String CONFIG_AUTHZ_SETTINGS_APPLIED_MARKER =
+      "hive.internal.ss.authz.settings.applied.marker";
+
+  private boolean addedResource;
+
   /**
    * Lineage state.
    */
@@ -237,6 +245,7 @@ public class SessionState {
     if (StringUtils.isEmpty(conf.getVar(HiveConf.ConfVars.HIVESESSIONID))) {
       conf.setVar(HiveConf.ConfVars.HIVESESSIONID, makeSessionId());
     }
+    parentLoader = JavaUtils.getClassLoader();
   }
 
   private static final SimpleDateFormat DATE_FORMAT =
@@ -286,8 +295,13 @@ public class SessionState {
   /**
    * Sets the given session state in the thread local var for sessions.
    */
-  public static void setCurrentSessionState(SessionState session) {
-    tss.set(session);
+  public static void setCurrentSessionState(SessionState startSs) {
+    tss.set(startSs);
+    Thread.currentThread().setContextClassLoader(startSs.getConf().getClassLoader());
+  }
+
+  public static void detachSession() {
+    tss.remove();
   }
 
   /**
@@ -337,9 +351,9 @@ public class SessionState {
         .equals("tez") && (startSs.isHiveServerQuery == false)) {
       try {
         if (startSs.tezSessionState == null) {
-          startSs.tezSessionState = new TezSessionState();
+          startSs.tezSessionState = new TezSessionState(startSs.getSessionId());
         }
-        startSs.tezSessionState.open(startSs.getSessionId(), startSs.conf);
+        startSs.tezSessionState.open(startSs.conf);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -361,34 +375,26 @@ public class SessionState {
     }
 
     try {
-      authenticator = HiveUtils.getAuthenticator(getConf(),
+      authenticator = HiveUtils.getAuthenticator(conf,
           HiveConf.ConfVars.HIVE_AUTHENTICATOR_MANAGER);
       authenticator.setSessionState(this);
 
-      authorizer = HiveUtils.getAuthorizeProviderManager(getConf(),
+      authorizer = HiveUtils.getAuthorizeProviderManager(conf,
           HiveConf.ConfVars.HIVE_AUTHORIZATION_MANAGER, authenticator, true);
 
       if (authorizer == null) {
         // if it was null, the new authorization plugin must be specified in
         // config
-        HiveAuthorizerFactory authorizerFactory = HiveUtils.getAuthorizerFactory(getConf(),
+        HiveAuthorizerFactory authorizerFactory = HiveUtils.getAuthorizerFactory(conf,
             HiveConf.ConfVars.HIVE_AUTHORIZATION_MANAGER);
 
         authorizerV2 = authorizerFactory.createHiveAuthorizer(new HiveMetastoreClientFactoryImpl(),
-            getConf(), authenticator);
-        // grant all privileges for table to its owner
-        getConf().setVar(ConfVars.HIVE_AUTHORIZATION_TABLE_OWNER_GRANTS, "insert,select,update,delete");
-        String hooks = getConf().getVar(ConfVars.PREEXECHOOKS).trim();
-        if (hooks.isEmpty()) {
-          hooks = DisallowTransformHook.class.getName();
-        } else {
-          hooks = hooks + "," +DisallowTransformHook.class.getName();
-        }
-        LOG.debug("Configuring hooks : " + hooks);
-        getConf().setVar(ConfVars.PREEXECHOOKS, hooks);
-      }
+            conf, authenticator);
 
-      createTableGrants = CreateTableAutomaticGrant.create(getConf());
+        authorizerV2.applyAuthorizationConfigPolicy(conf);
+        // create the create table grants with new config
+        createTableGrants = CreateTableAutomaticGrant.create(conf);
+      }
 
     } catch (HiveException e) {
       throw new RuntimeException(e);
@@ -732,6 +738,7 @@ public class SessionState {
     getConsole().printInfo("Added resource: " + fnlVal);
     resourceMap.add(fnlVal);
 
+    addedResource = true;
     return fnlVal;
   }
 
@@ -774,6 +781,9 @@ public class SessionState {
         FileSystem fs = FileSystem.get(new URI(value), conf);
         fs.copyToLocalFile(new Path(value), new Path(destinationFile.getCanonicalPath()));
         value = destinationFile.getCanonicalPath();
+
+        // add "execute" permission to downloaded resource file (needed when loading dll file)
+        FileUtil.chmod(value, "ugo+rx", true);
         if (convertToUnix && DosToUnix.isWindowsScript(destinationFile)) {
           try {
             DosToUnix.convertWindowsScriptToUnix(destinationFile);
@@ -802,10 +812,10 @@ public class SessionState {
   }
 
   public Set<String> list_resource(ResourceType t, List<String> filter) {
-    if (resource_map.get(t) == null) {
+    Set<String> orig = resource_map.get(t);
+    if (orig == null) {
       return null;
     }
-    Set<String> orig = resource_map.get(t);
     if (filter == null) {
       return orig;
     } else {
@@ -930,6 +940,7 @@ public class SessionState {
   }
 
   public void close() throws IOException {
+    JavaUtils.closeClassLoadersTo(conf.getClassLoader(), parentLoader);
     File resourceDir =
         new File(getConf().getVar(HiveConf.ConfVars.DOWNLOADED_RESOURCES_DIR));
     LOG.debug("Removing resource dir " + resourceDir);
@@ -939,6 +950,8 @@ public class SessionState {
       }
     } catch (IOException e) {
       LOG.info("Error removing session resource dir " + resourceDir, e);
+    } finally {
+      detachSession();
     }
 
     try {
@@ -999,4 +1012,35 @@ public class SessionState {
     return userName;
   }
 
+  /**
+   * If authorization mode is v2, then pass it through authorizer so that it can apply
+   * any security configuration changes.
+   * @param hiveConf
+   * @return
+   * @throws HiveException
+   */
+  public void applyAuthorizationPolicy() throws HiveException {
+    if(!isAuthorizationModeV2()){
+      // auth v1 interface does not have this functionality
+      return;
+    }
+
+    // avoid processing the same config multiple times, check marker
+    if (conf.get(CONFIG_AUTHZ_SETTINGS_APPLIED_MARKER, "").equals(Boolean.TRUE.toString())) {
+      return;
+    }
+
+    authorizerV2.applyAuthorizationConfigPolicy(conf);
+    // set a marker that this conf has been processed.
+    conf.set(CONFIG_AUTHZ_SETTINGS_APPLIED_MARKER, Boolean.TRUE.toString());
+
+  }
+
+  public boolean hasAddedResource() {
+    return addedResource;
+  }
+
+  public void setAddedResource(boolean addedResouce) {
+    this.addedResource = addedResouce;
+  }
 }

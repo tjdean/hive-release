@@ -889,6 +889,48 @@ public class TestTxnHandler {
   }
 
   @Test
+  public void heartbeatTxnRange() throws Exception {
+    long txnid = openTxn();
+    assertEquals(1, txnid);
+    txnid = openTxn();
+    txnid = openTxn();
+    HeartbeatTxnRangeResponse rsp =
+        txnHandler.heartbeatTxnRange(new HeartbeatTxnRangeRequest(1, 3));
+    assertEquals(0, rsp.getAborted().size());
+    assertEquals(0, rsp.getNosuch().size());
+  }
+
+  @Test
+  public void heartbeatTxnRangeOneCommitted() throws Exception {
+    long txnid = openTxn();
+    assertEquals(1, txnid);
+    txnHandler.commitTxn(new CommitTxnRequest(1));
+    txnid = openTxn();
+    txnid = openTxn();
+    HeartbeatTxnRangeResponse rsp =
+      txnHandler.heartbeatTxnRange(new HeartbeatTxnRangeRequest(1, 3));
+    assertEquals(1, rsp.getNosuchSize());
+    Long txn = rsp.getNosuch().iterator().next();
+    assertEquals(1L, (long)txn);
+    assertEquals(0, rsp.getAborted().size());
+  }
+
+  @Test
+  public void heartbeatTxnRangeOneAborted() throws Exception {
+    long txnid = openTxn();
+    assertEquals(1, txnid);
+    txnid = openTxn();
+    txnid = openTxn();
+    txnHandler.abortTxn(new AbortTxnRequest(3));
+    HeartbeatTxnRangeResponse rsp =
+      txnHandler.heartbeatTxnRange(new HeartbeatTxnRangeRequest(1, 3));
+    assertEquals(1, rsp.getAbortedSize());
+    Long txn = rsp.getAborted().iterator().next();
+    assertEquals(3L, (long)txn);
+    assertEquals(0, rsp.getNosuch().size());
+  }
+
+  @Test
   public void testLockTimeout() throws Exception {
     long timeout = txnHandler.setTimeout(1);
     LockComponent comp = new LockComponent(LockType.EXCLUSIVE, LockLevel.DB, "mydb");
@@ -918,25 +960,6 @@ public class TestTxnHandler {
       fail("Told there was a lock, when there wasn't.");
     } catch (NoSuchLockException e) {
     }
-  }
-
-  @Ignore // This test breaks the others when it unsets the value
-  @Test
-  public void testNoJDBCDriver() throws Exception {
-    HiveConf confCopy = new HiveConf(conf);
-    confCopy.unset(HiveConf.ConfVars.HIVE_TXN_JDBC_DRIVER.varname);
-    boolean sawException = false;
-    try {
-      TxnHandler tt = new TxnHandler(confCopy);
-    } catch (Exception e) {
-      if (e instanceof RuntimeException && e.getMessage().contains("JDBC " +
-          "driver for transaction db not set")) {
-        sawException = true;
-      } else {
-        throw e;
-      }
-    }
-    assertTrue(sawException);
   }
 
   @Test

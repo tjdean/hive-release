@@ -134,12 +134,14 @@ STAGE PLANS:
               COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns intcol
+              columns.comments 
               columns.types string
 #### A masked pattern was here ####
               name default.dynamic_part_table
               numFiles 1
               numRows 1
               partition_columns partcol1/partcol2
+              partition_columns.types string:string
               rawDataSize 1
               serialization.ddl struct dynamic_part_table { string intcol}
               serialization.format 1
@@ -153,10 +155,12 @@ STAGE PLANS:
               properties:
                 bucket_count -1
                 columns intcol
+                columns.comments 
                 columns.types string
 #### A masked pattern was here ####
                 name default.dynamic_part_table
                 partition_columns partcol1/partcol2
+                partition_columns.types string:string
                 serialization.ddl struct dynamic_part_table { string intcol}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -258,12 +262,14 @@ STAGE PLANS:
               COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns intcol
+              columns.comments 
               columns.types string
 #### A masked pattern was here ####
               name default.dynamic_part_table
               numFiles 1
               numRows 1
               partition_columns partcol1/partcol2
+              partition_columns.types string:string
               rawDataSize 1
               serialization.ddl struct dynamic_part_table { string intcol}
               serialization.format 1
@@ -277,10 +283,12 @@ STAGE PLANS:
               properties:
                 bucket_count -1
                 columns intcol
+                columns.comments 
                 columns.types string
 #### A masked pattern was here ####
                 name default.dynamic_part_table
                 partition_columns partcol1/partcol2
+                partition_columns.types string:string
                 serialization.ddl struct dynamic_part_table { string intcol}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -392,12 +400,14 @@ STAGE PLANS:
               COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns intcol
+              columns.comments 
               columns.types string
 #### A masked pattern was here ####
               name default.dynamic_part_table
               numFiles 1
               numRows 1
               partition_columns partcol1/partcol2
+              partition_columns.types string:string
               rawDataSize 1
               serialization.ddl struct dynamic_part_table { string intcol}
               serialization.format 1
@@ -411,10 +421,12 @@ STAGE PLANS:
               properties:
                 bucket_count -1
                 columns intcol
+                columns.comments 
                 columns.types string
 #### A masked pattern was here ####
                 name default.dynamic_part_table
                 partition_columns partcol1/partcol2
+                partition_columns.types string:string
                 serialization.ddl struct dynamic_part_table { string intcol}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -434,12 +446,14 @@ STAGE PLANS:
               COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns intcol
+              columns.comments 
               columns.types string
 #### A masked pattern was here ####
               name default.dynamic_part_table
               numFiles 1
               numRows 1
               partition_columns partcol1/partcol2
+              partition_columns.types string:string
               rawDataSize 1
               serialization.ddl struct dynamic_part_table { string intcol}
               serialization.format 1
@@ -453,10 +467,12 @@ STAGE PLANS:
               properties:
                 bucket_count -1
                 columns intcol
+                columns.comments 
                 columns.types string
 #### A masked pattern was here ####
                 name default.dynamic_part_table
                 partition_columns partcol1/partcol2
+                partition_columns.types string:string
                 serialization.ddl struct dynamic_part_table { string intcol}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe

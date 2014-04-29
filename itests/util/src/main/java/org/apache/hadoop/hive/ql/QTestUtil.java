@@ -87,7 +87,6 @@ import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.thrift.ThriftDeserializer;
 import org.apache.hadoop.hive.serde2.thrift.test.Complex;
-import org.apache.hadoop.hive.shims.Hadoop23Shims;
 import org.apache.hadoop.hive.shims.HadoopShims;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.mapred.SequenceFileInputFormat;
@@ -288,9 +287,6 @@ public class QTestUtil {
     String orgTestTempDir = System.getProperty("test.tmp.dir");
     System.setProperty("test.tmp.dir", getHdfsUriString(orgTestTempDir));
 
-    String orgTestDataDir = System.getProperty("test.src.data.dir");
-    System.setProperty("test.src.data.dir", getHdfsUriString(orgTestDataDir));
-
     String orgScratchDir = conf.getVar(HiveConf.ConfVars.SCRATCHDIR);
     conf.setVar(HiveConf.ConfVars.SCRATCHDIR, getHdfsUriString(orgScratchDir));
 
@@ -365,13 +361,11 @@ public class QTestUtil {
     if (clusterType != MiniClusterType.none) {
       dfs = shims.getMiniDfs(conf, numberOfDataNodes, true, null);
       FileSystem fs = dfs.getFileSystem();
+      String uriString = getHdfsUriString(fs.getUri().toString());
       if (clusterType == MiniClusterType.tez) {
-        if (!(shims instanceof Hadoop23Shims)) {
-          throw new Exception("Cannot run tez on hadoop-1, Version: "+this.hadoopVer);
-        }
-        mr = ((Hadoop23Shims)shims).getMiniTezCluster(conf, 4, getHdfsUriString(fs.getUri().toString()), 1);
+        mr = shims.getMiniTezCluster(conf, 4, uriString, 1);
       } else {
-        mr = shims.getMiniMrCluster(conf, 4, getHdfsUriString(fs.getUri().toString()), 1);
+        mr = shims.getMiniMrCluster(conf, 4, uriString, 1);
       }
     }
 

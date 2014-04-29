@@ -35,7 +35,6 @@ import org.apache.hadoop.hive.ql.exec.FetchFormatter;
 import org.apache.hadoop.hive.ql.exec.ListSinkOperator;
 import org.apache.hadoop.hive.ql.history.HiveHistory;
 import org.apache.hadoop.hive.ql.session.SessionState;
-import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hive.common.util.HiveVersionInfo;
 import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.hive.service.cli.FetchOrientation;
@@ -92,7 +91,7 @@ public class HiveSessionImpl implements HiveSession {
     //set conf properties specified by user from client side
     if (sessionConfMap != null) {
       for (Map.Entry<String, String> entry : sessionConfMap.entrySet()) {
-        hiveConf.set(entry.getKey(), entry.getValue());
+        hiveConf.verifyAndSet(entry.getKey(), entry.getValue());
       }
     }
     // set an explicit session name to control the download directory name
@@ -131,6 +130,11 @@ public class HiveSessionImpl implements HiveSession {
     this.operationManager = operationManager;
   }
 
+  @Override
+  public void open() {
+    SessionState.start(sessionState);
+  }
+
   protected synchronized void acquire() throws HiveSQLException {
     // need to make sure that the this connections session state is
     // stored in the thread local for sessions.
@@ -139,7 +143,7 @@ public class HiveSessionImpl implements HiveSession {
 
   protected synchronized void release() {
     assert sessionState != null;
-    // no need to release sessionState...
+    SessionState.detachSession();
   }
 
   @Override
@@ -406,10 +410,10 @@ public class HiveSessionImpl implements HiveSession {
         hiveHist.closeStream();
       }
       sessionState.close();
-      release();
     } catch (IOException ioe) {
-      release();
       throw new HiveSQLException("Failure to close", ioe);
+    } finally {
+      release();
     }
   }
 

@@ -15,6 +15,7 @@ PREHOOK: query: -- INCLUDE_HADOOP_MAJOR_VERSIONS(0.23)
 -- fact_tz is a table used to prepare data and test directories	
 CREATE TABLE fact_daily(x int, y STRING, z STRING) PARTITIONED BY (ds STRING)
 PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
 POSTHOOK: query: -- INCLUDE_HADOOP_MAJOR_VERSIONS(0.23)	
 
 -- List bucketing query logic test case. 
@@ -32,13 +33,18 @@ POSTHOOK: query: -- INCLUDE_HADOOP_MAJOR_VERSIONS(0.23)
 -- fact_tz is a table used to prepare data and test directories	
 CREATE TABLE fact_daily(x int, y STRING, z STRING) PARTITIONED BY (ds STRING)
 POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
 POSTHOOK: Output: default@fact_daily
 PREHOOK: query: CREATE TABLE fact_tz(x int, y STRING, z STRING) PARTITIONED BY (ds STRING, hr STRING)	
 #### A masked pattern was here ####
 PREHOOK: type: CREATETABLE
+#### A masked pattern was here ####
+PREHOOK: Output: database:default
 POSTHOOK: query: CREATE TABLE fact_tz(x int, y STRING, z STRING) PARTITIONED BY (ds STRING, hr STRING)	
 #### A masked pattern was here ####
 POSTHOOK: type: CREATETABLE
+#### A masked pattern was here ####
+POSTHOOK: Output: database:default
 POSTHOOK: Output: default@fact_tz
 PREHOOK: query: -- create /fact_tz/ds=1/hr=1 directory	
 INSERT OVERWRITE TABLE fact_tz PARTITION (ds='1', hr='1')	
@@ -134,11 +140,13 @@ POSTHOOK: Lineage: fact_tz PARTITION(ds=1,hr=3).z SIMPLE [(src)src.FieldSchema(n
 PREHOOK: query: ALTER TABLE fact_daily ADD PARTITION (ds='1')	
 #### A masked pattern was here ####
 PREHOOK: type: ALTERTABLE_ADDPARTS
-PREHOOK: Input: default@fact_daily
+#### A masked pattern was here ####
+PREHOOK: Output: default@fact_daily
 POSTHOOK: query: ALTER TABLE fact_daily ADD PARTITION (ds='1')	
 #### A masked pattern was here ####
 POSTHOOK: type: ALTERTABLE_ADDPARTS
-POSTHOOK: Input: default@fact_daily
+#### A masked pattern was here ####
+POSTHOOK: Output: default@fact_daily
 POSTHOOK: Output: default@fact_daily@ds=1
 POSTHOOK: Lineage: fact_tz PARTITION(ds=1,hr=1).x EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 POSTHOOK: Lineage: fact_tz PARTITION(ds=1,hr=1).y SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
@@ -154,12 +162,14 @@ PREHOOK: query: -- set List Bucketing location map
 PREHOOK: type: ALTERTBLPART_SKEWED_LOCATION
 PREHOOK: Input: default@fact_daily
 PREHOOK: Output: default@fact_daily@ds=1
+#### A masked pattern was here ####
 POSTHOOK: query: -- set List Bucketing location map
 #### A masked pattern was here ####
 POSTHOOK: type: ALTERTBLPART_SKEWED_LOCATION
 POSTHOOK: Input: default@fact_daily
 POSTHOOK: Input: default@fact_daily@ds=1
 POSTHOOK: Output: default@fact_daily@ds=1
+#### A masked pattern was here ####
 POSTHOOK: Lineage: fact_tz PARTITION(ds=1,hr=1).x EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 POSTHOOK: Lineage: fact_tz PARTITION(ds=1,hr=1).y SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 POSTHOOK: Lineage: fact_tz PARTITION(ds=1,hr=1).z SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
@@ -171,8 +181,10 @@ POSTHOOK: Lineage: fact_tz PARTITION(ds=1,hr=3).y SIMPLE [(src)src.FieldSchema(n
 POSTHOOK: Lineage: fact_tz PARTITION(ds=1,hr=3).z SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: describe formatted fact_daily PARTITION (ds = '1')
 PREHOOK: type: DESCTABLE
+PREHOOK: Input: default@fact_daily
 POSTHOOK: query: describe formatted fact_daily PARTITION (ds = '1')
 POSTHOOK: type: DESCTABLE
+POSTHOOK: Input: default@fact_daily
 POSTHOOK: Lineage: fact_tz PARTITION(ds=1,hr=1).x EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 POSTHOOK: Lineage: fact_tz PARTITION(ds=1,hr=1).y SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 POSTHOOK: Lineage: fact_tz PARTITION(ds=1,hr=1).z SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
@@ -184,14 +196,14 @@ POSTHOOK: Lineage: fact_tz PARTITION(ds=1,hr=3).y SIMPLE [(src)src.FieldSchema(n
 POSTHOOK: Lineage: fact_tz PARTITION(ds=1,hr=3).z SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 # col_name            	data_type           	comment             
 	 	 
-x                   	int                 	None                
-y                   	string              	None                
-z                   	string              	None                
+x                   	int                 	                    
+y                   	string              	                    
+z                   	string              	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-ds                  	string              	None                
+ds                  	string              	                    
 	 	 
 # Detailed Partition Information	 	 
 Partition Value:    	[1]                 	 
@@ -336,12 +348,14 @@ STAGE PLANS:
               COLUMN_STATS_ACCURATE false
               bucket_count -1
               columns x,y,z
+              columns.comments   
               columns.types int:string:string
 #### A masked pattern was here ####
               name default.fact_daily
               numFiles 3
               numRows -1
               partition_columns ds
+              partition_columns.types string
               rawDataSize -1
               serialization.ddl struct fact_daily { i32 x, string y, string z}
               serialization.format 1
@@ -356,10 +370,12 @@ STAGE PLANS:
                 EXTERNAL TRUE
                 bucket_count -1
                 columns x,y,z
+                columns.comments   
                 columns.types int:string:string
 #### A masked pattern was here ####
                 name default.fact_daily
                 partition_columns ds
+                partition_columns.types string
                 serialization.ddl struct fact_daily { i32 x, string y, string z}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -378,12 +394,14 @@ STAGE PLANS:
               COLUMN_STATS_ACCURATE false
               bucket_count -1
               columns x,y,z
+              columns.comments   
               columns.types int:string:string
 #### A masked pattern was here ####
               name default.fact_daily
               numFiles 3
               numRows -1
               partition_columns ds
+              partition_columns.types string
               rawDataSize -1
               serialization.ddl struct fact_daily { i32 x, string y, string z}
               serialization.format 1
@@ -398,10 +416,12 @@ STAGE PLANS:
                 EXTERNAL TRUE
                 bucket_count -1
                 columns x,y,z
+                columns.comments   
                 columns.types int:string:string
 #### A masked pattern was here ####
                 name default.fact_daily
                 partition_columns ds
+                partition_columns.types string
                 serialization.ddl struct fact_daily { i32 x, string y, string z}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -420,12 +440,14 @@ STAGE PLANS:
               COLUMN_STATS_ACCURATE false
               bucket_count -1
               columns x,y,z
+              columns.comments   
               columns.types int:string:string
 #### A masked pattern was here ####
               name default.fact_daily
               numFiles 3
               numRows -1
               partition_columns ds
+              partition_columns.types string
               rawDataSize -1
               serialization.ddl struct fact_daily { i32 x, string y, string z}
               serialization.format 1
@@ -440,10 +462,12 @@ STAGE PLANS:
                 EXTERNAL TRUE
                 bucket_count -1
                 columns x,y,z
+                columns.comments   
                 columns.types int:string:string
 #### A masked pattern was here ####
                 name default.fact_daily
                 partition_columns ds
+                partition_columns.types string
                 serialization.ddl struct fact_daily { i32 x, string y, string z}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe

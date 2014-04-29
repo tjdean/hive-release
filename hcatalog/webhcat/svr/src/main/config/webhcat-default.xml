@@ -136,8 +136,15 @@
 
   <property>
     <name>templeton.hive.properties</name>
-    <value>hive.metastore.local=false,hive.metastore.uris=thrift://localhost:9933,hive.metastore.sasl.enabled=false</value>
-    <description>Properties to set when running hive.</description>
+    <value>hive.metastore.uris=thrift://localhost:9933,hive.metastore.sasl.enabled=false</value>
+    <description>Properties to set when running hive.  This is expected to be a comma-separated prop=value list.
+        If some value is itself a comma-separated list the escape character is '\'</description>
+  </property>
+
+  <property>
+    <name>templeton.sqoop.path</name>
+    <value>${env.SQOOP_HOME}/bin/sqoop.cmd</value>
+    <description>The path to the Sqoop executable.</description>
   </property>
 
   <property>

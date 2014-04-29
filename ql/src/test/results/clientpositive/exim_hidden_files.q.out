@@ -46,16 +46,18 @@ POSTHOOK: Output: importer@exim_employee
 POSTHOOK: Output: importer@exim_employee@emp_country=in
 PREHOOK: query: describe formatted exim_employee
 PREHOOK: type: DESCTABLE
+PREHOOK: Input: importer@exim_employee
 POSTHOOK: query: describe formatted exim_employee
 POSTHOOK: type: DESCTABLE
+POSTHOOK: Input: importer@exim_employee
 # col_name            	data_type           	comment             
 	 	 
-emp_id              	int                 	None                
+emp_id              	int                 	                    
 	 	 
 # Partition Information	 	 
 # col_name            	data_type           	comment             
 	 	 
-emp_country         	string              	None                
+emp_country         	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	importer            	 

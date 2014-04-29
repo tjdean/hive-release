@@ -83,14 +83,16 @@ POSTHOOK: Input: default@src
 POSTHOOK: Output: default@summary
 PREHOOK: query: describe formatted summary
 PREHOOK: type: DESCTABLE
+PREHOOK: Input: default@summary
 POSTHOOK: query: describe formatted summary
 POSTHOOK: type: DESCTABLE
+POSTHOOK: Input: default@summary
 # col_name            	data_type           	comment             
 	 	 
-_col0               	double              	None                
-_col1               	bigint              	None                
-_c1                 	double              	None                
-_c2                 	bigint              	None                
+_col0               	double              	                    
+_col1               	bigint              	                    
+_c1                 	double              	                    
+_c2                 	bigint              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -197,13 +199,15 @@ POSTHOOK: Input: default@src1
 POSTHOOK: Output: default@x4
 PREHOOK: query: describe formatted x4
 PREHOOK: type: DESCTABLE
+PREHOOK: Input: default@x4
 POSTHOOK: query: describe formatted x4
 POSTHOOK: type: DESCTABLE
+POSTHOOK: Input: default@x4
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-value               	string              	None                
-rr                  	int                 	None                
+key                 	string              	                    
+value               	string              	                    
+rr                  	int                 	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -357,13 +361,15 @@ POSTHOOK: Input: default@src
 POSTHOOK: Output: default@x5
 PREHOOK: query: describe formatted x5
 PREHOOK: type: DESCTABLE
+PREHOOK: Input: default@x5
 POSTHOOK: query: describe formatted x5
 POSTHOOK: type: DESCTABLE
+POSTHOOK: Input: default@x5
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	None                
-value               	string              	None                
-lead1               	string              	None                
+key                 	string              	                    
+value               	string              	                    
+lead1               	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -497,12 +503,14 @@ POSTHOOK: Input: default@src1
 POSTHOOK: Output: default@x6
 PREHOOK: query: describe formatted x6
 PREHOOK: type: DESCTABLE
+PREHOOK: Input: default@x6
 POSTHOOK: query: describe formatted x6
 POSTHOOK: type: DESCTABLE
+POSTHOOK: Input: default@x6
 # col_name            	data_type           	comment             
 	 	 
-_col0               	string              	None                
-_c1                 	string              	None                
+_col0               	string              	                    
+_c1                 	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -616,11 +624,13 @@ POSTHOOK: Input: default@src
 POSTHOOK: Output: default@x7
 PREHOOK: query: describe formatted x7
 PREHOOK: type: DESCTABLE
+PREHOOK: Input: default@x7
 POSTHOOK: query: describe formatted x7
 POSTHOOK: type: DESCTABLE
+POSTHOOK: Input: default@x7
 # col_name            	data_type           	comment             
 	 	 
-_col0               	string              	None                
+_col0               	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -1045,11 +1055,13 @@ POSTHOOK: Input: default@src
 POSTHOOK: Output: default@x8
 PREHOOK: query: describe formatted x8
 PREHOOK: type: DESCTABLE
+PREHOOK: Input: default@x8
 POSTHOOK: query: describe formatted x8
 POSTHOOK: type: DESCTABLE
+POSTHOOK: Input: default@x8
 # col_name            	data_type           	comment             
 	 	 
-_col0               	string              	None                
+_col0               	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -1135,15 +1147,15 @@ STAGE PLANS:
           outputColumnNames: _col0, _col1
           Statistics: Num rows: 4 Data size: 801 Basic stats: COMPLETE Column stats: NONE
           Filter Operator
-            predicate: ((_col0 < 9) and _col1 is not null) (type: boolean)
-            Statistics: Num rows: 1 Data size: 200 Basic stats: COMPLETE Column stats: NONE
+            predicate: _col1 is not null (type: boolean)
+            Statistics: Num rows: 4 Data size: 801 Basic stats: COMPLETE Column stats: NONE
             Select Operator
               expressions: _col1 (type: string), _col0 (type: string)
               outputColumnNames: _col0, _col1
-              Statistics: Num rows: 1 Data size: 200 Basic stats: COMPLETE Column stats: NONE
+              Statistics: Num rows: 4 Data size: 801 Basic stats: COMPLETE Column stats: NONE
               File Output Operator
                 compressed: false
-                Statistics: Num rows: 1 Data size: 200 Basic stats: COMPLETE Column stats: NONE
+                Statistics: Num rows: 4 Data size: 801 Basic stats: COMPLETE Column stats: NONE
                 table:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
@@ -1176,12 +1188,14 @@ POSTHOOK: Input: default@src
 POSTHOOK: Output: default@x9
 PREHOOK: query: describe formatted x9
 PREHOOK: type: DESCTABLE
+PREHOOK: Input: default@x9
 POSTHOOK: query: describe formatted x9
 POSTHOOK: type: DESCTABLE
+POSTHOOK: Input: default@x9
 # col_name            	data_type           	comment             
 	 	 
-_c0                 	string              	None                
-key                 	string              	None                
+_c0                 	string              	                    
+key                 	string              	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 

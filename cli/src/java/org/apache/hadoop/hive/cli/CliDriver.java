@@ -115,6 +115,7 @@ public class CliDriver {
 
     } else if (tokens[0].equalsIgnoreCase("source")) {
       String cmd_1 = getFirstCmd(cmd_trimmed, tokens[0].length());
+      cmd_1 = new VariableSubstitution().substitute(ss.getConf(), cmd_1);
 
       File sourceFile = new File(cmd_1);
       if (! sourceFile.isFile()){
@@ -400,7 +401,6 @@ public class CliDriver {
           // First, kill any running MR jobs
           HadoopJobExecHelper.killRunningJobs();
           HiveInterruptUtils.interrupt();
-          this.cliThread.interrupt();
         }
       });
     }

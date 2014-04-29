@@ -794,8 +794,6 @@ CREATE TABLE IF NOT EXISTS `FUNC_RU` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 
-INSERT INTO VERSION (VER_ID, SCHEMA_VERSION, VERSION_COMMENT) VALUES (1, '0.13.0', 'Hive release version 0.13.0');
-
 -- -----------------------------------------------------------------------------------------------------------------------------------------------
 -- Transaction and Lock Tables
 -- These are not part of package jdo, so if you are going to regenerate this file you need to manually add the following section back to the file.
@@ -808,7 +806,7 @@ CREATE TABLE TXNS (
   TXN_LAST_HEARTBEAT bigint NOT NULL,
   TXN_USER varchar(128) NOT NULL,
   TXN_HOST varchar(128) NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 CREATE TABLE TXN_COMPONENTS (
   TC_TXNID bigint,
@@ -816,18 +814,18 @@ CREATE TABLE TXN_COMPONENTS (
   TC_TABLE varchar(128),
   TC_PARTITION varchar(767),
   FOREIGN KEY (TC_TXNID) REFERENCES TXNS (TXN_ID)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 CREATE TABLE COMPLETED_TXN_COMPONENTS (
   CTC_TXNID bigint,
   CTC_DATABASE varchar(128) NOT NULL,
   CTC_TABLE varchar(128),
   CTC_PARTITION varchar(767)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 CREATE TABLE NEXT_TXN_ID (
   NTXN_NEXT bigint NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 INSERT INTO NEXT_TXN_ID VALUES(1);
 
 CREATE TABLE HIVE_LOCKS (
@@ -845,13 +843,13 @@ CREATE TABLE HIVE_LOCKS (
   HL_HOST varchar(128) NOT NULL,
   PRIMARY KEY(HL_LOCK_EXT_ID, HL_LOCK_INT_ID),
   KEY HIVE_LOCK_TXNID_INDEX (HL_TXNID)
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-CREATE INDEX HL_TXNID_IDX ON HIVE_LOCKS (HL_TXNID) USING HASH;
+CREATE INDEX HL_TXNID_IDX ON HIVE_LOCKS (HL_TXNID);
 
 CREATE TABLE NEXT_LOCK_ID (
   NL_NEXT bigint NOT NULL
-) ENGINE=InnoDB;
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 INSERT INTO NEXT_LOCK_ID VALUES(1);
 
 CREATE TABLE COMPACTION_QUEUE (
@@ -864,13 +862,18 @@ CREATE TABLE COMPACTION_QUEUE (
   CQ_WORKER_ID varchar(128),
   CQ_START bigint,
   CQ_RUN_AS varchar(128)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 CREATE TABLE NEXT_COMPACTION_QUEUE_ID (
   NCQ_NEXT bigint NOT NULL
-);
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 INSERT INTO NEXT_COMPACTION_QUEUE_ID VALUES(1);
 
+
+-- -----------------------------------------------------------------
+-- Record schema version. Should be the last step in the init script
+-- -----------------------------------------------------------------
+INSERT INTO VERSION (VER_ID, SCHEMA_VERSION, VERSION_COMMENT) VALUES (1, '0.13.0', 'Hive release version 0.13.0');
 
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

@@ -55,10 +55,11 @@
     <!-- Build Properties -->
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.useIncrementalCompilation>false</maven.compiler.useIncrementalCompilation>
-    <maven.repo.local>${user.home}/.m2/repository</maven.repo.local>
+    <maven.repo.local>${settings.localRepository}</maven.repo.local>
     <hive.path.to.root>.</hive.path.to.root>
 
     <!-- Test Properties -->
+    <test.hive.hadoop.classpath>${maven.test.classpath}</test.hive.hadoop.classpath>
     <test.tmp.dir>${project.build.directory}/tmp</test.tmp.dir>
     <test.warehouse.dir>${project.build.directory}/warehouse</test.warehouse.dir>
     <test.warehouse.scheme>pfile://</test.warehouse.scheme>
@@ -106,8 +107,8 @@
     <hbase.hadoop1.version>0.96.0-hadoop1</hbase.hadoop1.version>
     <hbase.hadoop2.version>0.96.0-hadoop2</hbase.hadoop2.version>
     <!-- httpcomponents are not always in version sync -->
-    <httpcomponents.client.version>4.3.2</httpcomponents.client.version>
-    <httpcomponents.core.version>4.3.1</httpcomponents.core.version>
+    <httpcomponents.client.version>4.2.5</httpcomponents.client.version>
+    <httpcomponents.core.version>4.2.5</httpcomponents.core.version>
     <jackson.version>1.9.2</jackson.version>
     <javaewah.version>0.3.2</javaewah.version>
     <javolution.version>5.5.1</javolution.version>
@@ -125,20 +126,20 @@
     <libfb303.version>0.9.0</libfb303.version>
     <libthrift.version>0.9.0</libthrift.version>
     <log4j.version>1.2.16</log4j.version>
-    <mockito-all.version>1.8.2</mockito-all.version>
+    <mockito-all.version>1.9.5</mockito-all.version>
     <mina.version>2.0.0-M5</mina.version>
     <!--netty is not a direct dependency but due to a change
         in artifact name and given that zookeeper < 3.5
         requires netty < 3.6.0 we force hadoops version
       -->
     <netty.version>3.4.0.Final</netty.version>
-    <parquet.version>1.3.2</parquet.version>
+    <parquet.version>1.4.0</parquet.version>
     <pig.version>0.12.0</pig.version>
     <protobuf.version>2.5.0</protobuf.version>
     <stax.version>1.0.1</stax.version>
     <slf4j.version>1.7.5</slf4j.version>
     <ST4.version>4.0.4</ST4.version>
-    <tez.version>0.3.0-incubating</tez.version>
+    <tez.version>0.4.0-incubating</tez.version>
     <tempus-fugit.version>1.1</tempus-fugit.version>
     <snappy.version>0.2</snappy.version>
     <wadl-resourcedoc-doclet.version>1.4</wadl-resourcedoc-doclet.version>
@@ -146,6 +147,7 @@
     <xerces.version>2.9.1</xerces.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <jpam.version>1.1</jpam.version>
+    <felix.version>2.4.0</felix.version>
   </properties>
 
   <repositories>
@@ -629,6 +631,11 @@
             </dependency>
           </dependencies>
         </plugin>
+        <plugin>
+          <groupId>org.apache.felix</groupId>
+          <artifactId>maven-bundle-plugin</artifactId>
+          <version>${felix.version}</version>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -719,7 +726,7 @@
             <TZ>US/Pacific</TZ>
             <LANG>en_US.UTF-8</LANG>
             <HADOOP_CLASSPATH>${test.tmp.dir}/conf:${basedir}/${hive.path.to.root}/conf</HADOOP_CLASSPATH>
-            <HIVE_HADOOP_TEST_CLASSPATH>${maven.test.classpath}</HIVE_HADOOP_TEST_CLASSPATH>
+            <HIVE_HADOOP_TEST_CLASSPATH>${test.hive.hadoop.classpath}</HIVE_HADOOP_TEST_CLASSPATH>
           </environmentVariables>
           <systemPropertyVariables>
             <build.dir>${project.build.directory}</build.dir>
@@ -749,8 +756,10 @@
             <test.dfs.mkdir>${test.dfs.mkdir}</test.dfs.mkdir>
             <test.output.overwrite>${test.output.overwrite}</test.output.overwrite>
             <test.warehouse.dir>${test.warehouse.scheme}${test.warehouse.dir}</test.warehouse.dir>
+            <java.net.preferIPv4Stack>true</java.net.preferIPv4Stack>
             <!-- EnforceReadOnlyTables hook and QTestUtil -->
             <test.src.tables>src,src1,srcbucket,srcbucket2,src_json,src_thrift,src_sequencefile,srcpart,alltypesorc</test.src.tables>
+            <java.security.krb5.conf>${test.tmp.dir}/conf/krb5.conf</java.security.krb5.conf>
           </systemPropertyVariables>
         </configuration>
       </plugin>
@@ -962,6 +971,11 @@
             <version>${hadoop-23.version}</version>
           </dependency>
           <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-minikdc</artifactId>
+            <version>${hadoop-23.version}</version>
+          </dependency>
+          <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-common</artifactId>
             <version>${hbase.hadoop2.version}</version>
@@ -988,6 +1002,47 @@
           </dependency>
         </dependencies>
       </dependencyManagement>
+    </profile>
+    <profile>
+      <!-- Windows-specific settings to allow unit tests to work -->
+      <id>windows-test</id>
+      <activation>
+        <os>
+          <family>Windows</family>
+       </os>
+      </activation>
+      <build>
+        <plugins>
+          <!-- maven.test.classpath (used for HIVE_HADOOP_TEST_CLASSPATH) exceeds the 8K Windows -->
+          <!-- command shell limit which causes tests which call hadoop command to fail.         -->
+          <!-- Workaround is to copy all necessary jars to a single location to shorten the      -->
+          <!-- the length of the environment variable.                                           -->
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.8</version>
+            <executions>
+              <execution>
+                <id>copy-dependencies</id>
+                <phase>package</phase>
+                <goals>
+                  <goal>copy-dependencies</goal>
+                </goals>
+                <configuration>
+                  <outputDirectory>${project.build.directory}/deplibs/</outputDirectory>
+                  <overWriteReleases>false</overWriteReleases>
+                  <overWriteSnapshots>false</overWriteSnapshots>
+                  <overWriteIfNewer>true</overWriteIfNewer>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+      <properties>
+        <hadoop.bin.path>${basedir}/${hive.path.to.root}/testutils/hadoop.cmd</hadoop.bin.path>
+        <test.hive.hadoop.classpath>${project.build.directory}/deplibs/*</test.hive.hadoop.classpath>
+      </properties>
     </profile>
   </profiles>
   <distributionManagement>

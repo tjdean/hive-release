@@ -40,6 +40,7 @@ import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.io.CachingPrintStream;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.Context;
 import org.apache.hadoop.hive.ql.DriverContext;
 import org.apache.hadoop.hive.ql.QueryPlan;
@@ -81,7 +82,7 @@ import org.apache.hadoop.util.ReflectionUtils;
  */
 public class MapredLocalTask extends Task<MapredLocalWork> implements Serializable {
 
-  private Map<String, FetchOperator> fetchOperators = new HashMap<String, FetchOperator>();
+  private final Map<String, FetchOperator> fetchOperators = new HashMap<String, FetchOperator>();
   protected HadoopJobExecHelper jobExecHelper;
   private JobConf job;
   public static transient final Log l4j = LogFactory.getLog(MapredLocalTask.class);
@@ -138,7 +139,7 @@ public class MapredLocalTask extends Task<MapredLocalWork> implements Serializab
       String hiveJar = conf.getJar();
 
       String hadoopExec = conf.getVar(HiveConf.ConfVars.HADOOPBIN);
-
+      conf.setVar(ConfVars.HIVEADDEDJARS, Utilities.getResourceFiles(conf, SessionState.ResourceType.JAR));
       // write out the plan to a local file
       Path planPath = new Path(ctx.getLocalTmpPath(), "plan.xml");
       OutputStream out = FileSystem.getLocal(conf).create(planPath);
@@ -348,14 +349,15 @@ public class MapredLocalTask extends Task<MapredLocalWork> implements Serializab
         setUpFetchOpContext(fetchOp, alias, bigTableBucket);
       }
 
+      // get the root operator
+      Operator<? extends OperatorDesc> forwardOp = work.getAliasToWork().get(alias);
       if (fetchOp.isEmptyTable()) {
         //generate empty hashtable for empty table
         this.generateDummyHashTable(alias, bigTableBucket);
+        forwardOp.close(false);
         continue;
       }
 
-      // get the root operator
-      Operator<? extends OperatorDesc> forwardOp = work.getAliasToWork().get(alias);
       // walk through the operator tree
       while (!forwardOp.getDone()) {
         InspectableObject row = fetchOp.getNextRow();
@@ -374,6 +376,9 @@ public class MapredLocalTask extends Task<MapredLocalWork> implements Serializab
 
   private void initializeOperators(Map<FetchOperator, JobConf> fetchOpJobConfMap)
       throws HiveException {
+    for (Map.Entry<String, Operator<? extends OperatorDesc>> entry : work.getAliasToWork().entrySet()) {
+      LOG.debug("initializeOperators: " +  entry.getKey() + ", children = "  + entry.getValue().getChildOperators());
+    }
     // this mapper operator is used to initialize all the operators
     for (Map.Entry<String, FetchWork> entry : work.getAliasToFetchWork().entrySet()) {
       if (entry.getValue() == null) {
@@ -418,6 +423,7 @@ public class MapredLocalTask extends Task<MapredLocalWork> implements Serializab
 
   private void generateDummyHashTable(String alias, String bigBucketFileName)
       throws HiveException,IOException {
+    LOG.debug("generating dummy for " + alias);
     // find the (byte)tag for the map join(HashTableSinkOperator)
     Operator<? extends OperatorDesc> parentOp = work.getAliasToWork().get(alias);
     Operator<? extends OperatorDesc> childOp = parentOp.getChildOperators().get(0);
@@ -458,7 +464,7 @@ public class MapredLocalTask extends Task<MapredLocalWork> implements Serializab
     BucketMapJoinContext bucketMatcherCxt = this.work.getBucketMapjoinContext();
 
     Class<? extends BucketMatcher> bucketMatcherCls = bucketMatcherCxt.getBucketMatcherClass();
-    BucketMatcher bucketMatcher = (BucketMatcher) ReflectionUtils.newInstance(bucketMatcherCls,
+    BucketMatcher bucketMatcher = ReflectionUtils.newInstance(bucketMatcherCls,
         null);
     bucketMatcher.setAliasBucketFileNameMapping(bucketMatcherCxt.getAliasBucketFileNameMapping());
 

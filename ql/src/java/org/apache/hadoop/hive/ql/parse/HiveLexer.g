@@ -41,6 +41,8 @@ import org.apache.hadoop.hive.conf.HiveConf;
 KW_TRUE : 'TRUE';
 KW_FALSE : 'FALSE';
 KW_ALL : 'ALL';
+KW_NONE: 'NONE';
+KW_DEFAULT : 'DEFAULT';
 KW_AND : 'AND';
 KW_OR : 'OR';
 KW_NOT : 'NOT' | '!';
@@ -289,7 +291,9 @@ KW_EXCHANGE: 'EXCHANGE';
 KW_ADMIN: 'ADMIN';
 KW_OWNER: 'OWNER';
 KW_PRINCIPALS: 'PRINCIPALS';
-
+KW_COMPACT: 'COMPACT';
+KW_COMPACTIONS: 'COMPACTIONS';
+KW_TRANSACTIONS: 'TRANSACTIONS';
 
 // Operators
 // NOTE: if you add a new function/operator, add it to sysFuncNames so that describe function _FUNC_ will work.
