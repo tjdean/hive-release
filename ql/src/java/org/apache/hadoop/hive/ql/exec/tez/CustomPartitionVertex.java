@@ -109,9 +109,9 @@ public class CustomPartitionVertex implements VertexManagerPlugin {
   @Override
   public void onVertexStarted(Map<String, List<Integer>> completions) {
     int numTasks = context.getVertexNumTasks(context.getVertexName());
-    List<Integer> scheduledTasks = new ArrayList<Integer>(numTasks);
+    List<VertexManagerPluginContext.TaskWithLocationHint> scheduledTasks = new ArrayList<VertexManagerPluginContext.TaskWithLocationHint>(numTasks);
     for (int i=0; i<numTasks; ++i) {
-      scheduledTasks.add(new Integer(i));
+      scheduledTasks.add(new VertexManagerPluginContext.TaskWithLocationHint(new Integer(i), null));
     }
     context.scheduleVertexTasks(scheduledTasks);
   }
@@ -353,7 +353,7 @@ public class CustomPartitionVertex implements VertexManagerPlugin {
       bucketSizeMap.put(bucketId, size);
     }
 
-    int totalResource = context.getTotalAVailableResource().getMemory();
+    int totalResource = context.getTotalAvailableResource().getMemory();
     int taskResource = context.getVertexTaskResource().getMemory();
     float waves = conf.getFloat(
         TezConfiguration.TEZ_AM_GROUPING_SPLIT_WAVES,
