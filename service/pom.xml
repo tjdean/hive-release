@@ -87,13 +87,13 @@
       <version>${libthrift.version}</version>
     </dependency>
     <!-- intra-project -->
-    <!--dependency>
+    <dependency>
       <groupId>org.apache.hive</groupId>
       <artifactId>hive-exec</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
       <classifier>tests</classifier>
-    </dependency-->
+    </dependency>
     <!-- test inter-project -->
     <dependency>
       <groupId>junit</groupId>

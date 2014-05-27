@@ -46,13 +46,13 @@
       <version>${project.version}</version>
     </dependency>
     <!-- test intra-project -->
-    <!--dependency>
+    <dependency>
       <groupId>org.apache.hive.hcatalog</groupId>
       <artifactId>hive-hcatalog-core</artifactId>
       <version>${project.version}</version>
       <classifier>tests</classifier>
       <scope>test</scope>
-    </dependency-->
+    </dependency>
   </dependencies>
 
 

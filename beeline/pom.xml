@@ -88,13 +88,13 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
-    <!--dependency>
+    <dependency>
       <groupId>org.apache.hive</groupId>
       <artifactId>hive-exec</artifactId>
       <version>${project.version}</version>
       <classifier>tests</classifier>
       <scope>test</scope>
-    </dependency-->
+    </dependency>
     <dependency>
       <groupId>org.apache.hive</groupId>
       <artifactId>hive-service</artifactId>
