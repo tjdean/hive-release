@@ -110,7 +110,7 @@ POSTHOOK: query: explain select a.key, b.key from tab_part a join tab_part c on 
 POSTHOOK: type: QUERY
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
-  Stage-0 is a root stage
+  Stage-0 depends on stages: Stage-1
 
 STAGE PLANS:
   Stage: Stage-1
@@ -165,10 +165,10 @@ STAGE PLANS:
                       keys:
                         0 _col1 (type: string)
                         1 value (type: string)
-                      outputColumnNames: _col5, _col10
+                      outputColumnNames: _col0, _col10
                       Statistics: Num rows: 605 Data size: 6427 Basic stats: COMPLETE Column stats: NONE
                       Select Operator
-                        expressions: _col5 (type: int), _col10 (type: int)
+                        expressions: _col0 (type: int), _col10 (type: int)
                         outputColumnNames: _col0, _col1
                         Statistics: Num rows: 605 Data size: 6427 Basic stats: COMPLETE Column stats: NONE
                         File Output Operator
@@ -216,7 +216,7 @@ from tab1 a join src b on a.key = b.key
 POSTHOOK: type: QUERY
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
-  Stage-0 is a root stage
+  Stage-0 depends on stages: Stage-1
 
 STAGE PLANS:
   Stage: Stage-1
@@ -278,7 +278,7 @@ select a.key, b.key from (select key from tab_part where key > 1) a join (select
 POSTHOOK: type: QUERY
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
-  Stage-0 is a root stage
+  Stage-0 depends on stages: Stage-1
 
 STAGE PLANS:
   Stage: Stage-1
@@ -338,7 +338,6 @@ STAGE PLANS:
                         sort order: +
                         Map-reduce partition columns: _col0 (type: int)
                         Statistics: Num rows: 166 Data size: 1763 Basic stats: COMPLETE Column stats: NONE
-                        value expressions: _col0 (type: int)
 
   Stage: Stage-0
     Fetch Operator
@@ -354,7 +353,7 @@ select a.key, b.key from (select key from tab_part where key > 1) a left outer j
 POSTHOOK: type: QUERY
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
-  Stage-0 is a root stage
+  Stage-0 depends on stages: Stage-1
 
 STAGE PLANS:
   Stage: Stage-1
@@ -414,7 +413,6 @@ STAGE PLANS:
                         sort order: +
                         Map-reduce partition columns: _col0 (type: int)
                         Statistics: Num rows: 166 Data size: 1763 Basic stats: COMPLETE Column stats: NONE
-                        value expressions: _col0 (type: int)
 
   Stage: Stage-0
     Fetch Operator
@@ -430,7 +428,7 @@ select a.key, b.key from (select key from tab_part where key > 1) a right outer 
 POSTHOOK: type: QUERY
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
-  Stage-0 is a root stage
+  Stage-0 depends on stages: Stage-1
 
 STAGE PLANS:
   Stage: Stage-1
@@ -456,7 +454,6 @@ STAGE PLANS:
                         sort order: +
                         Map-reduce partition columns: _col0 (type: int)
                         Statistics: Num rows: 166 Data size: 1763 Basic stats: COMPLETE Column stats: NONE
-                        value expressions: _col0 (type: int)
         Map 2 
             Map Operator Tree:
                 TableScan
@@ -504,7 +501,7 @@ POSTHOOK: query: explain select a.key, b.key from (select distinct key from tab)
 POSTHOOK: type: QUERY
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
-  Stage-0 is a root stage
+  Stage-0 depends on stages: Stage-1
 
 STAGE PLANS:
   Stage: Stage-1
@@ -576,7 +573,6 @@ STAGE PLANS:
                     sort order: +
                     Map-reduce partition columns: _col0 (type: int)
                     Statistics: Num rows: 121 Data size: 1283 Basic stats: COMPLETE Column stats: NONE
-                    value expressions: _col0 (type: int)
 
   Stage: Stage-0
     Fetch Operator
@@ -590,7 +586,7 @@ POSTHOOK: query: explain select a.value, b.value from (select distinct value fro
 POSTHOOK: type: QUERY
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
-  Stage-0 is a root stage
+  Stage-0 depends on stages: Stage-1
 
 STAGE PLANS:
   Stage: Stage-1

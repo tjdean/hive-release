@@ -17,6 +17,23 @@ POSTHOOK: query: LOAD DATA LOCAL INPATH '../../data/files/dec.txt' into TABLE de
 POSTHOOK: type: LOAD
 #### A masked pattern was here ####
 POSTHOOK: Output: default@dec
+PREHOOK: query: ANALYZE TABLE dec COMPUTE STATISTICS FOR COLUMNS value
+PREHOOK: type: QUERY
+PREHOOK: Input: default@dec
+#### A masked pattern was here ####
+POSTHOOK: query: ANALYZE TABLE dec COMPUTE STATISTICS FOR COLUMNS value
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@dec
+#### A masked pattern was here ####
+PREHOOK: query: DESC FORMATTED dec value
+PREHOOK: type: DESCTABLE
+PREHOOK: Input: default@dec
+POSTHOOK: query: DESC FORMATTED dec value
+POSTHOOK: type: DESCTABLE
+POSTHOOK: Input: default@dec
+# col_name            	data_type           	min                 	max                 	num_nulls           	distinct_count      	avg_col_len         	max_col_len         	num_trues           	num_falses          	comment             
+	 	 	 	 	 	 	 	 	 	 
+value               	decimal(8,4)        	-12.25              	234.79              	0                   	6                   	                    	                    	                    	                    	from deserializer   
 PREHOOK: query: DROP TABLE IF EXISTS avro_dec
 PREHOOK: type: DROPTABLE
 POSTHOOK: query: DROP TABLE IF EXISTS avro_dec
@@ -85,10 +102,10 @@ Beck	77.34
 Snow	55.71
 Mary	4.33
 Cluck	5.96
-Tom	12.25
+Tom	-12.25
 Mary	33.33
 Tom	19
-Beck	3.15
+Beck	0
 Beck	79.9
 PREHOOK: query: DROP TABLE IF EXISTS avro_dec1
 PREHOOK: type: DROPTABLE

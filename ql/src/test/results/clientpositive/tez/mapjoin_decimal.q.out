@@ -77,7 +77,7 @@ select t1.dec, t2.dec from t1 join t2 on (t1.dec=t2.dec)
 POSTHOOK: type: QUERY
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
-  Stage-0 is a root stage
+  Stage-0 depends on stages: Stage-1
 
 STAGE PLANS:
   Stage: Stage-1
@@ -96,7 +96,6 @@ STAGE PLANS:
                     sort order: +
                     Map-reduce partition columns: dec (type: decimal(4,0))
                     Statistics: Num rows: 1049 Data size: 117488 Basic stats: COMPLETE Column stats: NONE
-                    value expressions: dec (type: decimal(4,0))
         Map 2 
             Map Operator Tree:
                 TableScan
