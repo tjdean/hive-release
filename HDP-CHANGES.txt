@@ -3,3 +3,4 @@ baikal-GA-0.13.0 is branched from stinger3-beta (SHA1 8c3967f60452665a843214ef6e
 BUG Fixes:
 HIVE-6890 Streaming API bug causes hive-site.xml to be required on client
 HIVE-8295 Add batch retrieve partition objects for metastore direct sql
+HIVE-7203 Optimize limit 0
