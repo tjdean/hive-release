@@ -1320,6 +1320,7 @@ public class WindowingTableFunction extends TableFunctionEvaluator {
         fnOutputs[i] = new ArrayList<Object>();
         WindowFunctionDef wFn = tabDef.getWindowFunctions().get(i);
         funcArgs[i] = new Object[wFn.getArgs() == null ? 0 : wFn.getArgs().size()];
+        aggBuffers[i] = wFn.getWFnEval().getNewAggregationBuffer();
       }
     }
 
