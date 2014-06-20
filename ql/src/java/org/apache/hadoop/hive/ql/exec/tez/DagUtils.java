@@ -40,6 +40,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.Context;
@@ -791,7 +792,14 @@ public class DagUtils {
     FileSystem destFS = dest.getFileSystem(conf);
     FileSystem sourceFS = src.getFileSystem(conf);
     if (destFS.exists(dest)) {
-      return (sourceFS.getFileStatus(src).getLen() == destFS.getFileStatus(dest).getLen());
+      if (sourceFS.getFileStatus(src).getLen() == destFS.getFileStatus(dest).getLen()) {
+        if (destFS instanceof DistributedFileSystem) {
+          DistributedFileSystem dfs = (DistributedFileSystem) destFS;
+          return dfs.recoverLease(dest);
+        } else {
+          return true;
+        }
+      }
     }
     return false;
   }
