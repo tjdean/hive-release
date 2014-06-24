@@ -2544,12 +2544,14 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
     }
     Table tab = getTable(tblName, true);
     validateAlterTableType(tab, AlterTableTypes.RENAMEPARTITION);
-    inputs.add(new ReadEntity(tab));
+    ReadEntity re = new ReadEntity(tab);
+    re.noLockNeeded();
+    inputs.add(re);
 
     List<Map<String, String>> partSpecs = new ArrayList<Map<String, String>>();
     partSpecs.add(oldPartSpec);
     partSpecs.add(newPartSpec);
-    addTablePartsOutputs(tblName, partSpecs);
+    addTablePartsOutputs(tblName, partSpecs, WriteEntity.WriteType.DDL_EXCLUSIVE);
     RenamePartitionDesc renamePartitionDesc = new RenamePartitionDesc(
         SessionState.get().getCurrentDatabase(), tblName, oldPartSpec, newPartSpec);
     rootTasks.add(TaskFactory.get(new DDLWork(getInputs(), getOutputs(),
@@ -2604,7 +2606,9 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
     if (partSpecs.isEmpty()) return; // nothing to do
 
     validateAlterTableType(tab, AlterTableTypes.DROPPARTITION, expectView);
-    inputs.add(new ReadEntity(tab));
+    ReadEntity re = new ReadEntity(tab);
+    re.noLockNeeded();
+    inputs.add(re);
 
     boolean ignoreProtection = ast.getFirstChildWithType(HiveParser.TOK_IGNOREPROTECTION) != null;
     addTableDropPartsOutputs(tab, partSpecs.values(), !ifExists, ignoreProtection);
@@ -2828,7 +2832,7 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
       rootTasks.add(TaskFactory.get(new DDLWork(getInputs(), getOutputs(),
           touchDesc), conf));
     } else {
-      addTablePartsOutputs(tblName, partSpecs);
+      addTablePartsOutputs(tblName, partSpecs, WriteEntity.WriteType.DDL_NO_LOCK);
       for (Map<String, String> partSpec : partSpecs) {
         AlterTableSimpleDesc touchDesc = new AlterTableSimpleDesc(
             SessionState.get().getCurrentDatabase(), tblName, partSpec,
@@ -2851,7 +2855,7 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
     List<Map<String, String>> partSpecs = getPartitionSpecs(ast);
 
     Table tab = getTable(tblName, true);
-    addTablePartsOutputs(tblName, partSpecs, true);
+    addTablePartsOutputs(tblName, partSpecs, true, WriteEntity.WriteType.DDL_NO_LOCK);
     validateAlterTableType(tab, AlterTableTypes.ARCHIVE);
     inputs.add(new ReadEntity(tab));
 
@@ -3039,9 +3043,10 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
    * Add the table partitions to be modified in the output, so that it is available for the
    * pre-execution hook. If the partition does not exist, no error is thrown.
    */
-  private void addTablePartsOutputs(String tblName, List<Map<String, String>> partSpecs)
+  private void addTablePartsOutputs(String tblName, List<Map<String, String>> partSpecs,
+                                    WriteEntity.WriteType writeType)
       throws SemanticException {
-    addTablePartsOutputs(tblName, partSpecs, false, false, null);
+    addTablePartsOutputs(tblName, partSpecs, false, false, null, writeType);
   }
 
   /**
@@ -3049,9 +3054,9 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
    * pre-execution hook. If the partition does not exist, no error is thrown.
    */
   private void addTablePartsOutputs(String tblName, List<Map<String, String>> partSpecs,
-      boolean allowMany)
+      boolean allowMany, WriteEntity.WriteType writeType)
       throws SemanticException {
-    addTablePartsOutputs(tblName, partSpecs, false, allowMany, null);
+    addTablePartsOutputs(tblName, partSpecs, false, allowMany, null, writeType);
   }
 
   /**
@@ -3060,7 +3065,7 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
    * throwIfNonExistent is true, otherwise ignore it.
    */
   private void addTablePartsOutputs(String tblName, List<Map<String, String>> partSpecs,
-      boolean throwIfNonExistent, boolean allowMany, ASTNode ast)
+      boolean throwIfNonExistent, boolean allowMany, ASTNode ast, WriteEntity.WriteType writeType)
       throws SemanticException {
     Table tab = getTable(tblName);
 
@@ -3096,7 +3101,7 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
       }
       for (Partition p : parts) {
         // Don't request any locks here, as the table has already been locked.
-        outputs.add(new WriteEntity(p, WriteEntity.WriteType.DDL_NO_LOCK));
+        outputs.add(new WriteEntity(p, writeType));
       }
     }
   }
@@ -3140,7 +3145,7 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
             throw new SemanticException(
               ErrorMsg.DROP_COMMAND_NOT_ALLOWED_FOR_PARTITION.getMsg(p.getCompleteName()));
           }
-          outputs.add(new WriteEntity(p, WriteEntity.WriteType.DELETE));
+          outputs.add(new WriteEntity(p, WriteEntity.WriteType.DDL_EXCLUSIVE));
         }
       }
     }
