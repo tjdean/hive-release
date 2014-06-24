@@ -38,14 +38,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -63,6 +61,7 @@ import org.apache.hadoop.hive.metastore.ProtectMode;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
+import org.apache.hadoop.hive.metastore.api.ColumnStatisticsObj;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.GetOpenTxnsInfoResponse;
@@ -93,6 +92,7 @@ import org.apache.hadoop.hive.ql.QueryPlan;
 import org.apache.hadoop.hive.ql.exec.ArchiveUtils.PartSpecInfo;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity;
+import org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe;
 import org.apache.hadoop.hive.ql.io.rcfile.merge.BlockMergeTask;
 import org.apache.hadoop.hive.ql.io.rcfile.merge.MergeWork;
 import org.apache.hadoop.hive.ql.io.rcfile.truncate.ColumnTruncateTask;
@@ -117,7 +117,6 @@ import org.apache.hadoop.hive.ql.metadata.formatting.MetaDataFormatUtils;
 import org.apache.hadoop.hive.ql.metadata.formatting.MetaDataFormatter;
 import org.apache.hadoop.hive.ql.parse.AlterTablePartMergeFilesDesc;
 import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer;
-import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.plan.AddPartitionDesc;
 import org.apache.hadoop.hive.ql.plan.AlterDatabaseDesc;
 import org.apache.hadoop.hive.ql.plan.AlterIndexDesc;
@@ -601,14 +600,9 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
         Database dbObj = null;
 
         if (hiveObjectDesc.getTable()) {
-          String[] dbTab = obj.split("\\.");
-          if (dbTab.length == 2) {
-            dbName = dbTab[0];
-            tableName = dbTab[1];
-          } else {
-            dbName = SessionState.get().getCurrentDatabase();
-            tableName = obj;
-          }
+          String[] dbTab = splitTableName(obj);
+          dbName = dbTab[0];
+          tableName = dbTab[1];
           dbObj = db.getDatabase(dbName);
           tableObj = db.getTable(dbName, tableName);
           notFound = (dbObj == null || tableObj == null);
@@ -668,6 +662,19 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
       throw new HiveException(e);
     }
     return 0;
+  }
+
+  private static String[] splitTableName(String fullName) {
+    String[] dbTab = fullName.split("\\.");
+    String[] result = new String[2];
+    if (dbTab.length == 2) {
+      result[0] = dbTab[0];
+      result[1] = dbTab[1];
+    } else {
+      result[0] = SessionState.get().getCurrentDatabase();
+      result[1] = fullName;
+    }
+    return result;
   }
 
   private int showGrantsV2(ShowGrantDesc showGrantDesc) throws HiveException {
@@ -1272,7 +1279,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
     assert(tbl.isPartitioned());
 
     List<FieldSchema> newPartitionKeys = new ArrayList<FieldSchema>();
-    
+
     //Check if the existing partition values can be type casted to the new column type
     // with a non null value before trying to alter the partition column type.
     try {
@@ -1284,19 +1291,19 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
           break;
         }
       }
-      
+
       if (colIndex == -1 || colIndex == tbl.getTTable().getPartitionKeys().size()) {
-        throw new HiveException("Cannot find partition column " + 
+        throw new HiveException("Cannot find partition column " +
             alterPartitionDesc.getPartKeySpec().getName());
       }
-      
+
       TypeInfo expectedType =
           TypeInfoUtils.getTypeInfoFromTypeString(alterPartitionDesc.getPartKeySpec().getType());
       ObjectInspector outputOI =
           TypeInfoUtils.getStandardWritableObjectInspectorFromTypeInfo(expectedType);
       Converter converter = ObjectInspectorConverters.getConverter(
-          PrimitiveObjectInspectorFactory.javaStringObjectInspector, outputOI); 
-      
+          PrimitiveObjectInspectorFactory.javaStringObjectInspector, outputOI);
+
       // For all the existing partitions, check if the value can be type casted to a non-null object
       for(Partition part : partitions) {
         if (part.getName().equals(conf.getVar(HiveConf.ConfVars.DEFAULTPARTITIONNAME))) {
@@ -1305,23 +1312,23 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
         try {
           String value = part.getValues().get(colIndex);
           Object convertedValue =
-              converter.convert(value);        
+              converter.convert(value);
           if (convertedValue == null) {
             throw new HiveException(" Converting from " + TypeInfoFactory.stringTypeInfo + " to " +
               expectedType + " for value : " + value + " resulted in NULL object");
           }
         } catch (Exception e) {
-          throw new HiveException("Exception while converting " + 
+          throw new HiveException("Exception while converting " +
               TypeInfoFactory.stringTypeInfo + " to " +
               expectedType + " for value : " + part.getValues().get(colIndex));
-        }        
+        }
       }
     } catch(Exception e) {
       throw new HiveException(
           "Exception while checking type conversion of existing partition values to " +
           alterPartitionDesc.getPartKeySpec() + " : " + e.getMessage());
     }
-    
+
     for(FieldSchema col : tbl.getTTable().getPartitionKeys()) {
       if (col.getName().compareTo(alterPartitionDesc.getPartKeySpec().getName()) == 0) {
         newPartitionKeys.add(alterPartitionDesc.getPartKeySpec());
@@ -2590,7 +2597,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
       // as HiveServer2 output is consumed by JDBC/ODBC clients.
       boolean isOutputPadded = !SessionState.get().isHiveServerQuery();
       outStream.writeBytes(MetaDataFormatUtils.getAllColumnsInformation(
-          cols, false, isOutputPadded));
+          cols, false, isOutputPadded, null));
       outStream.close();
       outStream = null;
     } catch (IOException e) {
@@ -3415,6 +3422,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
       outStream = fs.create(resFile);
 
       List<FieldSchema> cols = null;
+      List<ColumnStatisticsObj> colStats = null;
       if (colPath.equals(tableName)) {
         cols = (part == null || tbl.getTableType() == TableType.VIRTUAL_VIEW) ?
             tbl.getCols() : part.getCols();
@@ -3424,6 +3432,21 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
         }
       } else {
         cols = Hive.getFieldsFromDeserializer(colPath, tbl.getDeserializer());
+        if (descTbl.isFormatted()) {
+          // when column name is specified in describe table DDL, colPath will
+          // will be table_name.column_name
+          String colName = colPath.split("\\.")[1];
+          String[] dbTab = splitTableName(tableName);
+          List<String> colNames = new ArrayList<String>();
+          colNames.add(colName.toLowerCase());
+          if (null == part) {
+            colStats = db.getTableColumnStatistics(dbTab[0].toLowerCase(), dbTab[1].toLowerCase(), colNames);
+          } else {
+            List<String> partitions = new ArrayList<String>();
+            partitions.add(part.getName());
+            colStats = db.getPartitionColumnStatistics(dbTab[0].toLowerCase(), dbTab[1].toLowerCase(), partitions, colNames).get(part.getName());
+          }
+        }
       }
 
       fixDecimalColumnTypeName(cols);
@@ -3432,7 +3455,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
       boolean isOutputPadded = !SessionState.get().isHiveServerQuery();
       formatter.describeTable(outStream, colPath, tableName, tbl, part,
           cols, descTbl.isFormatted(), descTbl.isExt(),
-          descTbl.isPretty(), isOutputPadded);
+          descTbl.isPretty(), isOutputPadded, colStats);
 
       LOG.info("DDLTask: written data for " + tbl.getTableName());
       outStream.close();
@@ -3683,7 +3706,8 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
           MetadataTypedColumnsetSerDe.class.getName())
           && !tbl.getSerializationLib().equals(LazySimpleSerDe.class.getName())
           && !tbl.getSerializationLib().equals(ColumnarSerDe.class.getName())
-          && !tbl.getSerializationLib().equals(DynamicSerDe.class.getName())) {
+          && !tbl.getSerializationLib().equals(DynamicSerDe.class.getName())
+          && !tbl.getSerializationLib().equals(ParquetHiveSerDe.class.getName())) {
         throw new HiveException(ErrorMsg.CANNOT_REPLACE_COLUMNS, alterTbl.getOldName());
       }
       tbl.getTTable().getSd().setCols(alterTbl.getNewCols());

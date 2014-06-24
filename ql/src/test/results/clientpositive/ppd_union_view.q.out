@@ -166,24 +166,32 @@ STAGE PLANS:
             alias: t1_mapping
             Statistics: Num rows: 1 Data size: 12 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
-            Reduce Output Operator
-              key expressions: keymap (type: string), ds (type: string)
-              sort order: ++
-              Map-reduce partition columns: keymap (type: string), ds (type: string)
+            Filter Operator
+              isSamplingPred: false
+              predicate: keymap is not null (type: boolean)
               Statistics: Num rows: 1 Data size: 12 Basic stats: COMPLETE Column stats: NONE
-              tag: 1
-              value expressions: key (type: string)
+              Reduce Output Operator
+                key expressions: keymap (type: string), ds (type: string)
+                sort order: ++
+                Map-reduce partition columns: keymap (type: string), ds (type: string)
+                Statistics: Num rows: 1 Data size: 12 Basic stats: COMPLETE Column stats: NONE
+                tag: 1
+                value expressions: key (type: string)
           TableScan
             alias: t1_old
             Statistics: Num rows: 1 Data size: 14 Basic stats: COMPLETE Column stats: NONE
             GatherStats: false
-            Reduce Output Operator
-              key expressions: keymap (type: string), ds (type: string)
-              sort order: ++
-              Map-reduce partition columns: keymap (type: string), ds (type: string)
+            Filter Operator
+              isSamplingPred: false
+              predicate: keymap is not null (type: boolean)
               Statistics: Num rows: 1 Data size: 14 Basic stats: COMPLETE Column stats: NONE
-              tag: 0
-              value expressions: value (type: string), ds (type: string)
+              Reduce Output Operator
+                key expressions: keymap (type: string), ds (type: string)
+                sort order: ++
+                Map-reduce partition columns: keymap (type: string), ds (type: string)
+                Statistics: Num rows: 1 Data size: 14 Basic stats: COMPLETE Column stats: NONE
+                tag: 0
+                value expressions: value (type: string)
       Path -> Alias:
 #### A masked pattern was here ####
       Path -> Partition:
@@ -286,7 +294,7 @@ STAGE PLANS:
           condition map:
                Inner Join 0 to 1
           condition expressions:
-            0 {VALUE._col1} {VALUE._col2}
+            0 {VALUE._col0} {KEY.reducesinkkey1}
             1 {VALUE._col0}
           outputColumnNames: _col1, _col2, _col5
           Statistics: Num rows: 1 Data size: 15 Basic stats: COMPLETE Column stats: NONE
@@ -455,7 +463,7 @@ STAGE PLANS:
           condition map:
                Inner Join 0 to 1
           condition expressions:
-            0 {VALUE._col1} {VALUE._col2}
+            0 {VALUE._col0} {KEY.reducesinkkey1}
             1 {VALUE._col0}
           outputColumnNames: _col1, _col2, _col5
           Statistics: Num rows: 0 Data size: 0 Basic stats: NONE Column stats: NONE

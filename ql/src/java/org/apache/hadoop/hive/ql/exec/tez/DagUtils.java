@@ -23,7 +23,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -51,14 +50,12 @@ import org.apache.hadoop.hive.ql.exec.mr.ExecMapper;
 import org.apache.hadoop.hive.ql.exec.mr.ExecReducer;
 import org.apache.hadoop.hive.ql.exec.tez.tools.TezMergedLogicalInput;
 import org.apache.hadoop.hive.ql.io.BucketizedHiveInputFormat;
-import org.apache.hadoop.hive.ql.io.CombineHiveInputFormat;
 import org.apache.hadoop.hive.ql.io.HiveInputFormat;
 import org.apache.hadoop.hive.ql.io.HiveKey;
 import org.apache.hadoop.hive.ql.io.HiveOutputFormatImpl;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.plan.BaseWork;
 import org.apache.hadoop.hive.ql.plan.MapWork;
-import org.apache.hadoop.hive.ql.plan.PartitionDesc;
 import org.apache.hadoop.hive.ql.plan.ReduceWork;
 import org.apache.hadoop.hive.ql.plan.TezEdgeProperty;
 import org.apache.hadoop.hive.ql.plan.TezEdgeProperty.EdgeType;
@@ -100,7 +97,7 @@ import org.apache.tez.dag.api.Vertex;
 import org.apache.tez.dag.api.VertexGroup;
 import org.apache.tez.dag.api.VertexLocationHint;
 import org.apache.tez.dag.api.VertexManagerPluginDescriptor;
-import org.apache.tez.mapreduce.common.MRInputAMSplitGenerator;
+import org.apache.tez.dag.library.vertexmanager.ShuffleVertexManager;
 import org.apache.tez.mapreduce.hadoop.InputSplitInfo;
 import org.apache.tez.mapreduce.hadoop.MRHelpers;
 import org.apache.tez.mapreduce.hadoop.MRJobConfig;
@@ -118,6 +115,7 @@ import org.apache.tez.runtime.library.output.OnFileUnorderedPartitionedKVOutput;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
+import com.google.protobuf.ByteString;
 
 /**
  * DagUtils. DagUtils is a collection of helper methods to convert
@@ -214,6 +212,7 @@ public class DagUtils {
    * @param edgeProp the edge property of connection between the two
    * endpoints.
    */
+  @SuppressWarnings("rawtypes")
   public GroupInputEdge createEdge(VertexGroup group, JobConf wConf,
       Vertex w, TezEdgeProperty edgeProp)
     throws IOException {
@@ -225,27 +224,31 @@ public class DagUtils {
 
     EdgeType edgeType = edgeProp.getEdgeType();
     switch (edgeType) {
-      case BROADCAST_EDGE:
-        mergeInputClass = ConcatenatedMergedKeyValueInput.class;
-        break;
-      case CUSTOM_EDGE:
-        mergeInputClass = ConcatenatedMergedKeyValueInput.class;
-        int numBuckets = edgeProp.getNumBuckets();
-        VertexManagerPluginDescriptor desc = new VertexManagerPluginDescriptor(
-            CustomPartitionVertex.class.getName());
-        byte[] userPayload = ByteBuffer.allocate(4).putInt(numBuckets).array();
-        desc.setUserPayload(userPayload);
-        w.setVertexManagerPlugin(desc);
-        break;
+    case BROADCAST_EDGE:
+      mergeInputClass = ConcatenatedMergedKeyValueInput.class;
+      break;
+    case CUSTOM_EDGE: {
+      mergeInputClass = ConcatenatedMergedKeyValueInput.class;
+      int numBuckets = edgeProp.getNumBuckets();
+      VertexManagerPluginDescriptor desc =
+          new VertexManagerPluginDescriptor(CustomPartitionVertex.class.getName());
+      byte[] userPayload = ByteBuffer.allocate(4).putInt(numBuckets).array();
+      desc.setUserPayload(userPayload);
+      w.setVertexManagerPlugin(desc);
+      break;
+    }
 
-      case CUSTOM_SIMPLE_EDGE:
-        mergeInputClass = ConcatenatedMergedKeyValueInput.class;
-        break;
+    case CUSTOM_SIMPLE_EDGE:
+      mergeInputClass = ConcatenatedMergedKeyValueInput.class;
+      break;
 
-      case SIMPLE_EDGE:
-      default:
-        mergeInputClass = TezMergedLogicalInput.class;
-        break;
+    case SIMPLE_EDGE:
+      setupAutoReducerParallelism(edgeProp, w);
+      // fall through
+
+    default:
+      mergeInputClass = TezMergedLogicalInput.class;
+      break;
     }
 
     return new GroupInputEdge(group, w, createEdgeProperty(edgeProp),
@@ -282,13 +285,22 @@ public class DagUtils {
 
     updateConfigurationForEdge(vConf, v, wConf, w);
 
-    if (edgeProp.getEdgeType() == EdgeType.CUSTOM_EDGE) {
+    switch(edgeProp.getEdgeType()) {
+    case CUSTOM_EDGE: {
       int numBuckets = edgeProp.getNumBuckets();
       byte[] userPayload = ByteBuffer.allocate(4).putInt(numBuckets).array();
       VertexManagerPluginDescriptor desc = new VertexManagerPluginDescriptor(
           CustomPartitionVertex.class.getName());
       desc.setUserPayload(userPayload);
       w.setVertexManagerPlugin(desc);
+      break;
+    }
+    case SIMPLE_EDGE: {
+      setupAutoReducerParallelism(edgeProp, w);
+      break;
+    }
+    default:
+      // nothing
     }
 
     return new Edge(v, w, createEdgeProperty(edgeProp));
@@ -297,6 +309,7 @@ public class DagUtils {
   /*
    * Helper function to create an edge property from an edge type.
    */
+  @SuppressWarnings("rawtypes")
   private EdgeProperty createEdgeProperty(TezEdgeProperty edgeProp) throws IOException {
     DataMovementType dataMovementType;
     Class logicalInputClass;
@@ -305,45 +318,44 @@ public class DagUtils {
     EdgeProperty edgeProperty = null;
     EdgeType edgeType = edgeProp.getEdgeType();
     switch (edgeType) {
-      case BROADCAST_EDGE:
-        dataMovementType = DataMovementType.BROADCAST;
-        logicalOutputClass = OnFileUnorderedKVOutput.class;
-        logicalInputClass = ShuffledUnorderedKVInput.class;
-        break;
+    case BROADCAST_EDGE:
+      dataMovementType = DataMovementType.BROADCAST;
+      logicalOutputClass = OnFileUnorderedKVOutput.class;
+      logicalInputClass = ShuffledUnorderedKVInput.class;
+      break;
 
-      case CUSTOM_EDGE:
-
-        dataMovementType = DataMovementType.CUSTOM;
-        logicalOutputClass = OnFileUnorderedPartitionedKVOutput.class;
-        logicalInputClass = ShuffledUnorderedKVInput.class;
-        EdgeManagerDescriptor edgeDesc = new EdgeManagerDescriptor(
-            CustomPartitionEdge.class.getName());
-        CustomEdgeConfiguration edgeConf =
-            new CustomEdgeConfiguration(edgeProp.getNumBuckets(), null);
-          DataOutputBuffer dob = new DataOutputBuffer();
-          edgeConf.write(dob);
-          byte[] userPayload = dob.getData();
-        edgeDesc.setUserPayload(userPayload);
-        edgeProperty =
+    case CUSTOM_EDGE:
+      dataMovementType = DataMovementType.CUSTOM;
+      logicalOutputClass = OnFileUnorderedPartitionedKVOutput.class;
+      logicalInputClass = ShuffledUnorderedKVInput.class;
+      EdgeManagerDescriptor edgeDesc =
+          new EdgeManagerDescriptor(CustomPartitionEdge.class.getName());
+      CustomEdgeConfiguration edgeConf =
+          new CustomEdgeConfiguration(edgeProp.getNumBuckets(), null);
+      DataOutputBuffer dob = new DataOutputBuffer();
+      edgeConf.write(dob);
+      byte[] userPayload = dob.getData();
+      edgeDesc.setUserPayload(userPayload);
+      edgeProperty =
           new EdgeProperty(edgeDesc,
               DataSourceType.PERSISTED,
               SchedulingType.SEQUENTIAL,
               new OutputDescriptor(logicalOutputClass.getName()),
               new InputDescriptor(logicalInputClass.getName()));
-        break;
+      break;
 
-      case CUSTOM_SIMPLE_EDGE:
-        dataMovementType = DataMovementType.SCATTER_GATHER;
-        logicalOutputClass = OnFileUnorderedPartitionedKVOutput.class;
-        logicalInputClass = ShuffledUnorderedKVInput.class;
-        break;
+    case CUSTOM_SIMPLE_EDGE:
+      dataMovementType = DataMovementType.SCATTER_GATHER;
+      logicalOutputClass = OnFileUnorderedPartitionedKVOutput.class;
+      logicalInputClass = ShuffledUnorderedKVInput.class;
+      break;
 
-      case SIMPLE_EDGE:
-      default:
-        dataMovementType = DataMovementType.SCATTER_GATHER;
-        logicalOutputClass = OnFileSortedOutput.class;
-        logicalInputClass = ShuffledMergedInputLegacy.class;
-        break;
+    case SIMPLE_EDGE:
+    default:
+      dataMovementType = DataMovementType.SCATTER_GATHER;
+      logicalOutputClass = OnFileSortedOutput.class;
+      logicalInputClass = ShuffledMergedInputLegacy.class;
+      break;
     }
 
     if (edgeProperty == null) {
@@ -364,7 +376,6 @@ public class DagUtils {
    * container size isn't set.
    */
   private Resource getContainerResource(Configuration conf) {
-    Resource containerResource;
     int memory = HiveConf.getIntVar(conf, HiveConf.ConfVars.HIVETEZCONTAINERSIZE) > 0 ?
       HiveConf.getIntVar(conf, HiveConf.ConfVars.HIVETEZCONTAINERSIZE) :
       conf.getInt(MRJobConfig.MAP_MEMORY_MB, MRJobConfig.DEFAULT_MAP_MEMORY_MB);
@@ -415,10 +426,10 @@ public class DagUtils {
     Vertex map = null;
 
     // use tez to combine splits
-    boolean useTezGroupedSplits = true;
+    boolean useTezGroupedSplits = false;
 
     int numTasks = -1;
-    Class amSplitGeneratorClass = null;
+    Class<HiveSplitGenerator> amSplitGeneratorClass = null;
     InputSplitInfo inputSplitInfo = null;
     Class inputFormatClass = conf.getClass("mapred.input.format.class",
         InputFormat.class);
@@ -431,44 +442,8 @@ public class DagUtils {
         }
       }
     }
-
-    // we cannot currently allow grouping of splits where each split is a different input format 
-    // or has different deserializers similar to the checks in CombineHiveInputFormat. We do not
-    // need the check for the opList because we will not process different opLists at this time.
-    // Long term fix would be to have a custom input format
-    // logic that groups only the splits that share the same input format
-    Class<?> previousInputFormatClass = null;
-    Class<?> previousDeserializerClass = null;
-    for (String path : mapWork.getPathToPartitionInfo().keySet()) {
-      PartitionDesc pd = mapWork.getPathToPartitionInfo().get(path);
-      Class<?> currentDeserializerClass = pd.getDeserializer(conf).getClass();
-      Class<?> currentInputFormatClass = pd.getInputFileFormatClass();
-      if (previousInputFormatClass == null) {
-        previousInputFormatClass = currentInputFormatClass;
-      }
-      if (previousDeserializerClass == null) {
-        previousDeserializerClass = currentDeserializerClass;
-      }
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Current input format class = "+currentInputFormatClass+", previous input format class = "
-          + previousInputFormatClass + ", verifying " + " current deserializer class = "
-          + currentDeserializerClass + " previous deserializer class = " + previousDeserializerClass);
-      }
-      if ((currentInputFormatClass != previousInputFormatClass) ||
-          (currentDeserializerClass != previousDeserializerClass)) {
-        useTezGroupedSplits = false;
-        break;
-      }
-    }
     if (vertexHasCustomInput) {
-      // if it is the case of different input formats for different partitions, we cannot group
-      // in the custom vertex for now. Long term, this can be improved to group the buckets that
-      // share the same input format.
-      if (useTezGroupedSplits == false) {
-        conf.setBoolean(CustomPartitionVertex.GROUP_SPLITS, false);
-      } else {
-        conf.setBoolean(CustomPartitionVertex.GROUP_SPLITS, true);
-      }
+      useTezGroupedSplits = false;
       // grouping happens in execution phase. Setting the class to TezGroupedSplitsInputFormat
       // here would cause pre-mature grouping which would be incorrect.
       inputFormatClass = HiveInputFormat.class;
@@ -476,23 +451,19 @@ public class DagUtils {
       // mapreduce.tez.input.initializer.serialize.event.payload should be set to false when using
       // this plug-in to avoid getting a serialized event at run-time.
       conf.setBoolean("mapreduce.tez.input.initializer.serialize.event.payload", false);
-    } else if (useTezGroupedSplits) {
+    } else {
       // we'll set up tez to combine spits for us iff the input format
       // is HiveInputFormat
       if (inputFormatClass == HiveInputFormat.class) {
+        useTezGroupedSplits = true;
         conf.setClass("mapred.input.format.class", TezGroupedSplitsInputFormat.class, InputFormat.class);
-      } else {
-        conf.setClass("mapred.input.format.class", CombineHiveInputFormat.class, InputFormat.class);
-        useTezGroupedSplits = false;
       }
-    } else {
-      conf.setClass("mapred.input.format.class", CombineHiveInputFormat.class, InputFormat.class);
     }
 
     if (HiveConf.getBoolVar(conf, ConfVars.HIVE_AM_SPLIT_GENERATION)) {
       // if we're generating the splits in the AM, we just need to set
       // the correct plugin.
-      amSplitGeneratorClass = MRInputAMSplitGenerator.class;
+      amSplitGeneratorClass = HiveSplitGenerator.class;
     } else {
       // client side split generation means we have to compute them now
       inputSplitInfo = MRHelpers.generateInputSplits(conf,
@@ -577,7 +548,8 @@ public class DagUtils {
     Vertex reducer = new Vertex(reduceWork.getName(),
         new ProcessorDescriptor(ReduceTezProcessor.class.getName()).
         setUserPayload(MRHelpers.createUserPayloadFromConf(conf)),
-        reduceWork.getNumReduceTasks(), getContainerResource(conf));
+            reduceWork.isAutoReduceParallelism() ? reduceWork.getMaxReduceTasks() : reduceWork
+                .getNumReduceTasks(), getContainerResource(conf));
 
     Map<String, String> environment = new HashMap<String, String>();
 
@@ -639,7 +611,7 @@ public class DagUtils {
     prewarmProcDescriptor.setUserPayload(MRHelpers.createUserPayloadFromConf(conf));
 
     PreWarmContext context = new PreWarmContext(prewarmProcDescriptor, getContainerResource(conf),
-        numContainers, new VertexLocationHint(null));
+        numContainers, null);
 
     Map<String, LocalResource> combinedResources = new HashMap<String, LocalResource>();
 
@@ -820,7 +792,14 @@ public class DagUtils {
     FileSystem destFS = dest.getFileSystem(conf);
     FileSystem sourceFS = src.getFileSystem(conf);
     if (destFS.exists(dest)) {
-      return (sourceFS.getFileStatus(src).getLen() == destFS.getFileStatus(dest).getLen());
+      if (sourceFS.getFileStatus(src).getLen() == destFS.getFileStatus(dest).getLen()) {
+        if (destFS instanceof DistributedFileSystem) {
+          DistributedFileSystem dfs = (DistributedFileSystem) destFS;
+          return dfs.recoverLease(dest);
+        } else {
+          return true;
+        }
+      }
     }
     return false;
   }
@@ -856,7 +835,7 @@ public class DagUtils {
         for (int i = 0; i < waitAttempts; i++) {
           if (!checkPreExisting(src, dest, conf)) {
             try {
-              Thread.currentThread().sleep(sleepInterval);
+              Thread.sleep(sleepInterval);
             } catch (InterruptedException interruptedException) {
               throw new IOException(interruptedException);
             }
@@ -874,7 +853,7 @@ public class DagUtils {
     }
 
     return createLocalResource(destFS, dest, LocalResourceType.FILE,
-        LocalResourceVisibility.APPLICATION);
+        LocalResourceVisibility.PRIVATE);
   }
 
   /**
@@ -1043,6 +1022,25 @@ public class DagUtils {
       instance = new DagUtils();
     }
     return instance;
+  }
+
+  private void setupAutoReducerParallelism(TezEdgeProperty edgeProp, Vertex v)
+    throws IOException {
+    if (edgeProp.isAutoReduce()) {
+      Configuration pluginConf = new Configuration(false);
+      VertexManagerPluginDescriptor desc =
+          new VertexManagerPluginDescriptor(ShuffleVertexManager.class.getName());
+      pluginConf.setBoolean(
+          ShuffleVertexManager.TEZ_AM_SHUFFLE_VERTEX_MANAGER_ENABLE_AUTO_PARALLEL, true);
+      pluginConf.setInt(ShuffleVertexManager.TEZ_AM_SHUFFLE_VERTEX_MANAGER_MIN_TASK_PARALLELISM,
+          edgeProp.getMinReducer());
+      pluginConf.setLong(
+          ShuffleVertexManager.TEZ_AM_SHUFFLE_VERTEX_MANAGER_DESIRED_TASK_INPUT_SIZE,
+          edgeProp.getInputSizePerReducer());
+      ByteString payload = MRHelpers.createByteStringFromConf(pluginConf);
+      desc.setUserPayload(payload.toByteArray());
+      v.setVertexManagerPlugin(desc);
+    }
   }
 
   private DagUtils() {

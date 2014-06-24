@@ -57,6 +57,7 @@ import org.apache.hadoop.hive.metastore.api.SkewedInfo;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.exec.ArchiveUtils;
+import org.apache.hadoop.hive.ql.exec.DDLTask;
 import org.apache.hadoop.hive.ql.exec.FetchTask;
 import org.apache.hadoop.hive.ql.exec.FunctionRegistry;
 import org.apache.hadoop.hive.ql.exec.Task;
@@ -1367,6 +1368,11 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
       outputFormat = ORCFILE_OUTPUT;
       serde = ORCFILE_SERDE;
       break;
+    case HiveParser.TOK_TBLPARQUETFILE:
+      inputFormat = PARQUETFILE_INPUT;
+      outputFormat = PARQUETFILE_OUTPUT;
+      serde = PARQUETFILE_SERDE;
+      break;
     case HiveParser.TOK_FILEFORMAT_GENERIC:
       handleGenericFileFormat(child);
       break;
@@ -1396,7 +1402,12 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
       outputs.add(new WriteEntity(tab, writeType));
     }
     else {
-      inputs.add(new ReadEntity(tab));
+      ReadEntity re = new ReadEntity(tab);
+      // In the case of altering a table for its partitions we don't need to lock the table
+      // itself, just the partitions.  But the table will have a ReadEntity.  So mark that
+      // ReadEntity as no lock.
+      re.noLockNeeded();
+      inputs.add(re);
       if (desc == null || desc.getOp() != AlterTableDesc.AlterTableTypes.ALTERPROTECTMODE) {
         Partition part = getPartition(tab, partSpec, true);
         outputs.add(new WriteEntity(part, writeType));
@@ -1980,17 +1991,27 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
     DescTableDesc descTblDesc = new DescTableDesc(
       ctx.getResFile(), tableName, partSpec, colPath);
 
+    boolean showColStats = false;
     if (ast.getChildCount() == 2) {
       int descOptions = ast.getChild(1).getType();
       descTblDesc.setFormatted(descOptions == HiveParser.KW_FORMATTED);
       descTblDesc.setExt(descOptions == HiveParser.KW_EXTENDED);
       descTblDesc.setPretty(descOptions == HiveParser.KW_PRETTY);
+      // in case of "DESCRIBE FORMATTED tablename column_name" statement, colPath
+      // will contain tablename.column_name. If column_name is not specified
+      // colPath will be equal to tableName. This is how we can differentiate
+      // if we are describing a table or column
+      if (!colPath.equalsIgnoreCase(tableName) && descTblDesc.isFormatted()) {
+        showColStats = true;
+      }
     }
 
     inputs.add(new ReadEntity(getTable(tableName)));
-    rootTasks.add(TaskFactory.get(new DDLWork(getInputs(), getOutputs(),
-        descTblDesc), conf));
-    setFetchTask(createFetchTask(DescTableDesc.getSchema()));
+    Task ddlTask = TaskFactory.get(new DDLWork(getInputs(), getOutputs(),
+        descTblDesc), conf);
+    rootTasks.add(ddlTask);
+    String schema = DescTableDesc.getSchema(showColStats);
+    setFetchTask(createFetchTask(schema));
     LOG.info("analyzeDescribeTable done");
   }
 
@@ -2523,12 +2544,14 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
     }
     Table tab = getTable(tblName, true);
     validateAlterTableType(tab, AlterTableTypes.RENAMEPARTITION);
-    inputs.add(new ReadEntity(tab));
+    ReadEntity re = new ReadEntity(tab);
+    re.noLockNeeded();
+    inputs.add(re);
 
     List<Map<String, String>> partSpecs = new ArrayList<Map<String, String>>();
     partSpecs.add(oldPartSpec);
     partSpecs.add(newPartSpec);
-    addTablePartsOutputs(tblName, partSpecs);
+    addTablePartsOutputs(tblName, partSpecs, WriteEntity.WriteType.DDL_EXCLUSIVE);
     RenamePartitionDesc renamePartitionDesc = new RenamePartitionDesc(
         SessionState.get().getCurrentDatabase(), tblName, oldPartSpec, newPartSpec);
     rootTasks.add(TaskFactory.get(new DDLWork(getInputs(), getOutputs(),
@@ -2583,7 +2606,9 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
     if (partSpecs.isEmpty()) return; // nothing to do
 
     validateAlterTableType(tab, AlterTableTypes.DROPPARTITION, expectView);
-    inputs.add(new ReadEntity(tab));
+    ReadEntity re = new ReadEntity(tab);
+    re.noLockNeeded();
+    inputs.add(re);
 
     boolean ignoreProtection = ast.getFirstChildWithType(HiveParser.TOK_IGNOREPROTECTION) != null;
     addTableDropPartsOutputs(tab, partSpecs.values(), !ifExists, ignoreProtection);
@@ -2807,7 +2832,7 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
       rootTasks.add(TaskFactory.get(new DDLWork(getInputs(), getOutputs(),
           touchDesc), conf));
     } else {
-      addTablePartsOutputs(tblName, partSpecs);
+      addTablePartsOutputs(tblName, partSpecs, WriteEntity.WriteType.DDL_NO_LOCK);
       for (Map<String, String> partSpec : partSpecs) {
         AlterTableSimpleDesc touchDesc = new AlterTableSimpleDesc(
             SessionState.get().getCurrentDatabase(), tblName, partSpec,
@@ -2830,7 +2855,7 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
     List<Map<String, String>> partSpecs = getPartitionSpecs(ast);
 
     Table tab = getTable(tblName, true);
-    addTablePartsOutputs(tblName, partSpecs, true);
+    addTablePartsOutputs(tblName, partSpecs, true, WriteEntity.WriteType.DDL_NO_LOCK);
     validateAlterTableType(tab, AlterTableTypes.ARCHIVE);
     inputs.add(new ReadEntity(tab));
 
@@ -3018,9 +3043,10 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
    * Add the table partitions to be modified in the output, so that it is available for the
    * pre-execution hook. If the partition does not exist, no error is thrown.
    */
-  private void addTablePartsOutputs(String tblName, List<Map<String, String>> partSpecs)
+  private void addTablePartsOutputs(String tblName, List<Map<String, String>> partSpecs,
+                                    WriteEntity.WriteType writeType)
       throws SemanticException {
-    addTablePartsOutputs(tblName, partSpecs, false, false, null);
+    addTablePartsOutputs(tblName, partSpecs, false, false, null, writeType);
   }
 
   /**
@@ -3028,9 +3054,9 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
    * pre-execution hook. If the partition does not exist, no error is thrown.
    */
   private void addTablePartsOutputs(String tblName, List<Map<String, String>> partSpecs,
-      boolean allowMany)
+      boolean allowMany, WriteEntity.WriteType writeType)
       throws SemanticException {
-    addTablePartsOutputs(tblName, partSpecs, false, allowMany, null);
+    addTablePartsOutputs(tblName, partSpecs, false, allowMany, null, writeType);
   }
 
   /**
@@ -3039,7 +3065,7 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
    * throwIfNonExistent is true, otherwise ignore it.
    */
   private void addTablePartsOutputs(String tblName, List<Map<String, String>> partSpecs,
-      boolean throwIfNonExistent, boolean allowMany, ASTNode ast)
+      boolean throwIfNonExistent, boolean allowMany, ASTNode ast, WriteEntity.WriteType writeType)
       throws SemanticException {
     Table tab = getTable(tblName);
 
@@ -3075,7 +3101,7 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
       }
       for (Partition p : parts) {
         // Don't request any locks here, as the table has already been locked.
-        outputs.add(new WriteEntity(p, WriteEntity.WriteType.DDL_NO_LOCK));
+        outputs.add(new WriteEntity(p, writeType));
       }
     }
   }
@@ -3119,7 +3145,7 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
             throw new SemanticException(
               ErrorMsg.DROP_COMMAND_NOT_ALLOWED_FOR_PARTITION.getMsg(p.getCompleteName()));
           }
-          outputs.add(new WriteEntity(p, WriteEntity.WriteType.DELETE));
+          outputs.add(new WriteEntity(p, WriteEntity.WriteType.DDL_EXCLUSIVE));
         }
       }
     }

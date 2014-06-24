@@ -14,19 +14,22 @@
 package org.apache.hadoop.hive.ql.io.parquet.convert;
 
 import java.math.BigDecimal;
-
+import java.sql.Timestamp;
 import java.util.ArrayList;
 
-import org.apache.hadoop.hive.ql.io.parquet.writable.BinaryWritable;
+import org.apache.hadoop.hive.ql.io.parquet.timestamp.NanoTime;
+import org.apache.hadoop.hive.ql.io.parquet.timestamp.NanoTimeUtils;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.hive.serde2.io.HiveDecimalWritable;
+import org.apache.hadoop.hive.serde2.io.TimestampWritable;
 import org.apache.hadoop.io.BooleanWritable;
+import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.FloatWritable;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
-
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
+
 import parquet.column.Dictionary;
 import parquet.io.api.Binary;
 import parquet.io.api.Converter;
@@ -43,6 +46,7 @@ public enum ETypeConverter {
 
   EDOUBLE_CONVERTER(Double.TYPE) {
     @Override
+
     Converter getConverter(final PrimitiveType type, final int index, final HiveGroupConverter parent) {
       return new PrimitiveConverter() {
         @Override
@@ -99,10 +103,10 @@ public enum ETypeConverter {
   EBINARY_CONVERTER(Binary.class) {
     @Override
     Converter getConverter(final PrimitiveType type, final int index, final HiveGroupConverter parent) {
-      return new BinaryConverter<BinaryWritable>(type, parent, index) {
+      return new BinaryConverter<BytesWritable>(type, parent, index) {
         @Override
-        protected BinaryWritable convert(Binary binary) {
-          return new BinaryWritable(binary);
+        protected BytesWritable convert(Binary binary) {
+          return new BytesWritable(binary.getBytes());
         }
       };
     }
@@ -128,6 +132,19 @@ public enum ETypeConverter {
         }
       };
     }
+  },
+  ETIMESTAMP_CONVERTER(TimestampWritable.class) {
+    @Override
+    Converter getConverter(final PrimitiveType type, final int index, final HiveGroupConverter parent) {
+      return new BinaryConverter<TimestampWritable>(type, parent, index) {
+        @Override
+        protected TimestampWritable convert(Binary binary) {
+          NanoTime nt = NanoTime.fromBinary(binary);
+          Timestamp ts = NanoTimeUtils.getTimestamp(nt);
+          return new TimestampWritable(ts);
+        }
+      };
+    }
   };
 
   final Class<?> _type;
@@ -143,6 +160,10 @@ public enum ETypeConverter {
   abstract Converter getConverter(final PrimitiveType type, final int index, final HiveGroupConverter parent);
 
   public static Converter getNewConverter(final PrimitiveType type, final int index, final HiveGroupConverter parent) {
+    if (type.isPrimitive() && (type.asPrimitiveType().getPrimitiveTypeName().equals(PrimitiveType.PrimitiveTypeName.INT96))) {
+      //TODO- cleanup once parquet support Timestamp type annotation.
+      return ETypeConverter.ETIMESTAMP_CONVERTER.getConverter(type, index, parent);
+    }
     if (OriginalType.DECIMAL == type.getOriginalType()) {
       return EDECIMAL_CONVERTER.getConverter(type, index, parent);
     } else if (OriginalType.UTF8 == type.getOriginalType()) {
