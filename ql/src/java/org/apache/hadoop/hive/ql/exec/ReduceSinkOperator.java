@@ -111,7 +111,6 @@ public class ReduceSinkOperator extends TerminalOperator<ReduceSinkDesc>
   protected transient TopNHash reducerHash = new TopNHash();
   @Override
   protected void initializeOp(Configuration hconf) throws HiveException {
-
     try {
       List<ExprNodeDesc> keys = conf.getKeyCols();
       keyEval = new ExprNodeEvaluator[keys.size()];
@@ -166,7 +165,9 @@ public class ReduceSinkOperator extends TerminalOperator<ReduceSinkDesc>
 
       int limit = conf.getTopN();
       float memUsage = conf.getTopNMemoryUsage();
+
       if (limit >= 0 && memUsage > 0) {
+        reducerHash = conf.isPTFReduceSink() ? new PTFTopNHash() : reducerHash;
         reducerHash.initialize(limit, memUsage, conf.isMapGroupBy(), this);
       }
 
@@ -293,11 +294,6 @@ public class ReduceSinkOperator extends TerminalOperator<ReduceSinkDesc>
         firstKey = toHiveKey(cachedKeys[0], tag, distKeyLength);
       }
 
-      // Try to store the first key. If it's not excluded, we will proceed.
-      int firstIndex = reducerHash.tryStoreKey(firstKey);
-      if (firstIndex == TopNHash.EXCLUDE) return; // Nothing to do.
-      // Compute value and hashcode - we'd either store or forward them.
-      BytesWritable value = makeValueWritable(row);
       int hashCode = 0;
       if (bucketEval == null) {
         hashCode = computeHashCode(row);
@@ -305,12 +301,25 @@ public class ReduceSinkOperator extends TerminalOperator<ReduceSinkDesc>
         hashCode = computeHashCode(row, buckNum);
       }
 
+      firstKey.setHashCode(hashCode);
+
+      /*
+       * in case of TopN for windowing, we need to distinguish between rows with
+       * null partition keys and rows with value 0 for partition keys.
+       */
+      boolean partKeyNull = conf.isPTFReduceSink() && partitionKeysAreNull(row);
+
+      // Try to store the first key. If it's not excluded, we will proceed.
+      int firstIndex = reducerHash.tryStoreKey(firstKey, partKeyNull);
+      if (firstIndex == TopNHash.EXCLUDE) return; // Nothing to do.
+      // Compute value and hashcode - we'd either store or forward them.
+      BytesWritable value = makeValueWritable(row);
+
       if (firstIndex == TopNHash.FORWARD) {
-        firstKey.setHashCode(hashCode);
         collect(firstKey, value);
       } else {
         assert firstIndex >= 0;
-        reducerHash.storeValue(firstIndex, value, hashCode, false);
+        reducerHash.storeValue(firstIndex, firstKey.hashCode(), value, false);
       }
 
       // All other distinct keys will just be forwarded. This could be optimized...
@@ -394,6 +403,19 @@ public class ReduceSinkOperator extends TerminalOperator<ReduceSinkDesc>
     int keyHashCode = computeHashCode(row);
     keyHashCode = keyHashCode * 31 + buckNum;
     return keyHashCode;
+  }
+
+  private boolean partitionKeysAreNull(Object row) throws HiveException {
+    if ( partitionEval.length != 0 ) {
+      for (int i = 0; i < partitionEval.length; i++) {
+        Object o = partitionEval[i].evaluate(row);
+        if ( o != null ) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   // Serialize the keys and append the tag

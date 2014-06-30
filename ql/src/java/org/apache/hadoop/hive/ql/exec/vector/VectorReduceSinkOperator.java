@@ -24,6 +24,7 @@ import java.util.Random;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.ql.exec.PTFTopNHash;
 import org.apache.hadoop.hive.ql.exec.ReduceSinkOperator;
 import org.apache.hadoop.hive.ql.exec.TopNHash;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.VectorExpression;
@@ -200,6 +201,7 @@ public class VectorReduceSinkOperator extends ReduceSinkOperator {
       int limit = conf.getTopN();
       float memUsage = conf.getTopNMemoryUsage();
       if (limit >= 0 && memUsage > 0) {
+        reducerHash = conf.isPTFReduceSink() ? new PTFTopNHash() : reducerHash;
         reducerHash.initialize(limit, memUsage, conf.isMapGroupBy(), this);
       }
     } catch(Exception e) {
@@ -268,17 +270,23 @@ public class VectorReduceSinkOperator extends ReduceSinkOperator {
           firstKey = toHiveKey(cachedKeys[0], tag, distKeyLength);
         }
 
+        int hashCode = 0;
+        if (bucketEval != null && bucketEval.length != 0) {
+          hashCode = computeHashCode(vrg, rowIndex, buckNum);
+        } else {
+          hashCode = computeHashCode(vrg, rowIndex);
+        }
+        firstKey.setHashCode(hashCode);
+
         if (useTopN) {
-          reducerHash.tryStoreVectorizedKey(firstKey, batchIndex);
+          /*
+           * in case of TopN for windowing, we need to distinguish between 
+           * rows with null partition keys and rows with value 0 for partition keys.
+           */
+          boolean partkeysNull = conf.isPTFReduceSink() && partitionKeysAreNull(vrg, rowIndex);
+          reducerHash.tryStoreVectorizedKey(firstKey, partkeysNull, batchIndex);
         } else {
         // No TopN, just forward the first key and all others.
-          int hashCode = 0;
-          if (bucketEval != null && bucketEval.length != 0) {
-            hashCode = computeHashCode(vrg, rowIndex, buckNum);
-          } else {
-            hashCode = computeHashCode(vrg, rowIndex);
-          }
-          firstKey.setHashCode(hashCode);
           BytesWritable value = makeValueWritable(vrg, rowIndex);
           collect(firstKey, value);
           forwardExtraDistinctRows(vrg, rowIndex, hashCode, value, distKeyLength, tag, 0);
@@ -305,7 +313,7 @@ public class VectorReduceSinkOperator extends ReduceSinkOperator {
           distKeyLength = firstKey.getDistKeyLength();
           collect(firstKey, value);
         } else {
-          reducerHash.storeValue(result, value, hashCode, true);
+	    reducerHash.storeValue(result, hashCode, value, true);
           distKeyLength = reducerHash.getVectorizedKeyDistLength(batchIndex);
         }
         // Now forward other the rows if there's multi-distinct (but see TODO in forward...).
@@ -431,6 +439,22 @@ public class VectorReduceSinkOperator extends ReduceSinkOperator {
     int keyHashCode = computeHashCode(vrg, rowIndex);
     keyHashCode = keyHashCode * 31 + buckNum;
     return keyHashCode;
+  }
+
+  private boolean partitionKeysAreNull(VectorizedRowBatch vrg, int rowIndex)
+      throws HiveException {
+    if (partitionEval.length != 0) {
+      for (int p = 0; p < partitionEval.length; p++) {
+        ColumnVector columnVector = vrg.cols[partitionEval[p].getOutputColumn()];
+        Object partitionValue = partitionWriters[p].writeValue(columnVector,
+            rowIndex);
+        if (partitionValue != null) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   private int computeBucketNumber(VectorizedRowBatch vrg, int rowIndex, int numBuckets) throws HiveException {
