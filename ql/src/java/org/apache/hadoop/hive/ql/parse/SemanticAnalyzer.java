@@ -98,7 +98,6 @@ import org.apache.hadoop.hive.ql.metadata.DummyPartition;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.HiveUtils;
-import org.apache.hadoop.hive.ql.metadata.InvalidTableException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.metadata.VirtualColumn;
@@ -406,7 +405,11 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     LinkedHashMap<String, ASTNode> aggregationTrees = new LinkedHashMap<String, ASTNode>();
     List<ASTNode> wdwFns = new ArrayList<ASTNode>();
     for (int i = 0; i < selExpr.getChildCount(); ++i) {
-      ASTNode function = (ASTNode) selExpr.getChild(i).getChild(0);
+      ASTNode function = (ASTNode) selExpr.getChild(i);
+      if (function.getType() == HiveParser.TOK_SELEXPR ||
+          function.getType() == HiveParser.TOK_SUBQUERY_EXPR) {
+        function = (ASTNode)function.getChild(0);
+      }
       doPhase1GetAllAggregations(function, aggregationTrees, wdwFns);
     }
 
@@ -1221,10 +1224,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
 
       for (String alias : tabAliases) {
         String tab_name = qb.getTabNameForAlias(alias);
-        Table tab = null;
-        try {
-          tab = db.getTable(tab_name);
-        } catch (InvalidTableException ite) {
+        Table tab = db.getTable(tab_name, false);
+        if (tab == null) {
           /*
            * if this s a CTE reference:
            * Add its AST as a SubQuery to this QB.
@@ -1418,11 +1419,11 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
 
               // allocate a temporary output dir on the location of the table
               String tableName = getUnescapedName((ASTNode) ast.getChild(0));
-              Table newTable = db.newTable(tableName);
+              String[] names = Utilities.getDbTableName(tableName);
               Path location;
               try {
                 Warehouse wh = new Warehouse(conf);
-                location = wh.getDatabasePath(db.getDatabase(newTable.getDbName()));
+                location = wh.getDatabasePath(db.getDatabase(names[0]));
               } catch (MetaException e) {
                 throw new SemanticException(e);
               }
@@ -4395,11 +4396,17 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       }
     }
 
+    // Optimize the scenario when there are no grouping keys - only 1 reducer is needed
+    int numReducers = -1;
+    if (grpByExprs.isEmpty()) {
+      numReducers = 1;
+    }
+    ReduceSinkDesc rsDesc = PlanUtils.getReduceSinkDesc(reduceKeys, keyLength, reduceValues,
+        distinctColIndices, outputKeyColumnNames, outputValueColumnNames,
+        true, -1, keyLength, numReducers);
+
     ReduceSinkOperator rsOp = (ReduceSinkOperator) putOpInsertMap(
-        OperatorFactory.getAndMakeChild(PlanUtils.getReduceSinkDesc(reduceKeys,
-            keyLength, reduceValues, distinctColIndices,
-            outputKeyColumnNames, outputValueColumnNames, true, -1, keyLength,
-            -1), new RowSchema(reduceSinkOutputRowResolver
+        OperatorFactory.getAndMakeChild(rsDesc, new RowSchema(reduceSinkOutputRowResolver
             .getColumnInfos()), inputOperatorInfo), reduceSinkOutputRowResolver);
     rsOp.setColumnExprMap(colExprMap);
     return rsOp;

@@ -43,6 +43,7 @@ setlocal enabledelayedexpansion
   @rem webhcat depends on WEBHCAT_CONF_DIR env variable being set
   set WEBHCAT_CONF_DIR=%HCAT_HOME%\etc\webhcat
   set TEMPLETON_CLASSPATH=%WEBHCAT_CONF_DIR%;%HCAT_HOME%;%HCAT_HOME%\share\webhcat\svr;%HCAT_HOME%\conf
+  set TEMPLETON_CLASSPATH=!TEMPLETON_CLASSPATH!;%HIVE_HOME%\conf
 
   set TEMPLETON_CLASSPATH=!TEMPLETON_CLASSPATH!;%HCAT_HOME%\share\hcatalog\*
   set TEMPLETON_CLASSPATH=!TEMPLETON_CLASSPATH!;%HCAT_HOME%\share\webhcat\svr\*
