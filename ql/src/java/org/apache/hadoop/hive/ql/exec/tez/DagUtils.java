@@ -50,6 +50,7 @@ import org.apache.hadoop.hive.ql.exec.mr.ExecMapper;
 import org.apache.hadoop.hive.ql.exec.mr.ExecReducer;
 import org.apache.hadoop.hive.ql.exec.tez.tools.TezMergedLogicalInput;
 import org.apache.hadoop.hive.ql.io.BucketizedHiveInputFormat;
+import org.apache.hadoop.hive.ql.io.CombineHiveInputFormat;
 import org.apache.hadoop.hive.ql.io.HiveInputFormat;
 import org.apache.hadoop.hive.ql.io.HiveKey;
 import org.apache.hadoop.hive.ql.io.HiveOutputFormatImpl;
@@ -194,6 +195,10 @@ public class DagUtils {
 
     if (mapWork.isUseBucketizedHiveInputFormat()) {
       inpFormat = BucketizedHiveInputFormat.class.getName();
+    }
+
+    if (mapWork.isUseOneNullRowInputFormat()) {
+      inpFormat = CombineHiveInputFormat.class.getName();
     }
 
     conf.set("mapred.mapper.class", ExecMapper.class.getName());
@@ -414,7 +419,7 @@ public class DagUtils {
     Path tezDir = getTezDir(mrScratchDir);
 
     // set up the operator plan
-    Utilities.setMapWork(conf, mapWork, mrScratchDir, false);
+    Utilities.cacheMapWork(conf, mapWork, mrScratchDir);
 
     // create the directories FileSinkOperators need
     Utilities.createTmpDirs(conf, mapWork);
@@ -442,6 +447,7 @@ public class DagUtils {
         }
       }
     }
+
     if (vertexHasCustomInput) {
       useTezGroupedSplits = false;
       // grouping happens in execution phase. Setting the class to TezGroupedSplitsInputFormat
@@ -460,7 +466,8 @@ public class DagUtils {
       }
     }
 
-    if (HiveConf.getBoolVar(conf, ConfVars.HIVE_AM_SPLIT_GENERATION)) {
+    if (HiveConf.getBoolVar(conf, ConfVars.HIVE_AM_SPLIT_GENERATION)
+        && !mapWork.isUseOneNullRowInputFormat()) {
       // if we're generating the splits in the AM, we just need to set
       // the correct plugin.
       amSplitGeneratorClass = HiveSplitGenerator.class;
@@ -470,6 +477,9 @@ public class DagUtils {
           new Path(tezDir, "split_"+mapWork.getName().replaceAll(" ", "_")));
       numTasks = inputSplitInfo.getNumTasks();
     }
+
+    // set up the operator plan
+    Utilities.setMapWork(conf, mapWork, mrScratchDir, false);
 
     byte[] serializedConf = MRHelpers.createUserPayloadFromConf(conf);
     map = new Vertex(mapWork.getName(),
