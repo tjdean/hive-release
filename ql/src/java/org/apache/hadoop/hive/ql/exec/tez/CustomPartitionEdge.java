@@ -36,7 +36,6 @@ import com.google.common.collect.Multimap;
 public class CustomPartitionEdge implements EdgeManager {
 
   private static final Log LOG = LogFactory.getLog(CustomPartitionEdge.class.getName());
-  private EdgeManagerContext context = null;
 
   CustomEdgeConfiguration conf = null;
 
@@ -45,24 +44,25 @@ public class CustomPartitionEdge implements EdgeManager {
   }
 
   @Override
-  public int getNumDestinationTaskPhysicalInputs(int destinationTaskIndex) {
-    return context.getSourceVertexNumTasks();
+  public int getNumDestinationTaskPhysicalInputs(int numSourceTasks, 
+      int destinationTaskIndex) {
+    return numSourceTasks;
   }
 
   @Override
-  public int getNumSourceTaskPhysicalOutputs(int sourceTaskIndex) {
+  public int getNumSourceTaskPhysicalOutputs(int numDestinationTasks, 
+      int sourceTaskIndex) {
     return conf.getNumBuckets();
   }
 
   @Override
-  public int getNumDestinationConsumerTasks(int sourceTaskIndex) {
-    return context.getDestinationVertexNumTasks();
+  public int getNumDestinationConsumerTasks(int sourceTaskIndex, int numDestinationTasks) {
+    return numDestinationTasks;
   }
 
   // called at runtime to initialize the custom edge.
   @Override
   public void initialize(EdgeManagerContext context) {
-    this.context = context;
     byte[] payload = context.getUserPayload();
     LOG.info("Initializing the edge, payload: " + payload);
     if (payload == null) {
@@ -83,7 +83,7 @@ public class CustomPartitionEdge implements EdgeManager {
 
   @Override
   public void routeDataMovementEventToDestination(DataMovementEvent event,
-      int sourceTaskIndex, int sourceOutputIndex, Map<Integer, List<Integer>> mapDestTaskIndices) {
+      int sourceTaskIndex, int numDestinationTasks, Map<Integer, List<Integer>> mapDestTaskIndices) {
     int srcIndex = event.getSourceIndex();
     List<Integer> destTaskIndices = new ArrayList<Integer>();
     destTaskIndices.addAll(conf.getRoutingTable().get(srcIndex));
@@ -92,9 +92,9 @@ public class CustomPartitionEdge implements EdgeManager {
 
   @Override
   public void routeInputSourceTaskFailedEventToDestination(int sourceTaskIndex, 
-      Map<Integer, List<Integer>> mapDestTaskIndices) {
+      int numDestinationTasks, Map<Integer, List<Integer>> mapDestTaskIndices) {
     List<Integer> destTaskIndices = new ArrayList<Integer>();
-    addAllDestinationTaskIndices(context.getDestinationVertexNumTasks(), destTaskIndices);
+    addAllDestinationTaskIndices(numDestinationTasks, destTaskIndices);
     mapDestTaskIndices.put(new Integer(sourceTaskIndex), destTaskIndices);
   }
 
