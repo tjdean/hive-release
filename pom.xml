@@ -109,10 +109,10 @@
     <groovy.version>2.1.6</groovy.version>
     <hadoop-20.version>0.20.2</hadoop-20.version>
     <hadoop-20S.version>1.2.1</hadoop-20S.version>
-    <hadoop-23.version>[2.5.0.2.2.0.0,2.5.0.2.3.0.0)</hadoop-23.version>
+    <hadoop-23.version>2.5.0-SNAPSHOT</hadoop-23.version>
     <hadoop.bin.path>${basedir}/${hive.path.to.root}/testutils/hadoop</hadoop.bin.path>
     <hbase.hadoop1.version>0.96.0-hadoop1</hbase.hadoop1.version>
-    <hbase.hadoop2.version>[0.98.0.2.2.0.0,0.98.0.2.3.0.0)</hbase.hadoop2.version>
+    <hbase.hadoop2.version>0.96.0-hadoop2</hbase.hadoop2.version>
     <!-- httpcomponents are not always in version sync -->
     <httpcomponents.client.version>4.2.5</httpcomponents.client.version>
     <httpcomponents.core.version>4.2.5</httpcomponents.core.version>
@@ -144,13 +144,13 @@
     <stax.version>1.0.1</stax.version>
     <slf4j.version>1.7.5</slf4j.version>
     <ST4.version>4.0.4</ST4.version>
-    <tez.version>[0.5.0.2.2.0.0,0.5.0.2.3.0.0)</tez.version>
+    <tez.version>0.5.0-incubating-SNAPSHOT</tez.version>
     <tempus-fugit.version>1.1</tempus-fugit.version>
     <snappy.version>0.2</snappy.version>
     <wadl-resourcedoc-doclet.version>1.4</wadl-resourcedoc-doclet.version>
     <velocity.version>1.5</velocity.version>
     <xerces.version>2.9.1</xerces.version>
-    <zookeeper.version>[3.4.5.2.2.0.0,3.4.5.2.3.0.0)</zookeeper.version>
+    <zookeeper.version>3.4.5</zookeeper.version>
     <jpam.version>1.1</jpam.version>
     <felix.version>2.4.0</felix.version>
   </properties>
@@ -199,18 +199,7 @@
          <enabled>false</enabled>
        </snapshots>
      </repository>
-     <repository>
-       	<id>hortonworks.repo</id>
-       	<url>http://repo.hortonworks.com/content/repositories/releases</url>
-       	<name>Hortonworks Repo</name>
-       	<releases>
-          <enabled>true</enabled>
-       	</releases>
-       	<snapshots>
-          <enabled>false</enabled>
-       	</snapshots>
-     </repository>
-</repositories>
+  </repositories>
 
   <!-- Hadoop dependency management is done at the bottom under profiles -->
   <dependencyManagement>
