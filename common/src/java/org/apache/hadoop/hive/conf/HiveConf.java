@@ -319,6 +319,8 @@ public class HiveConf extends Configuration {
         "hive.cluster.delegation.token.store.zookeeper.acl", ""),
     METASTORE_CACHE_PINOBJTYPES("hive.metastore.cache.pinobjtypes", "Table,StorageDescriptor,SerDeInfo,Partition,Database,Type,FieldSchema,Order"),
     METASTORE_CONNECTION_POOLING_TYPE("datanucleus.connectionPoolingType", "BONECP"),
+    METASTORE_CONNECTION_POOLING_MAX_STATEMENTS("datanucleus.connectionPool.maxStatements",20),
+    METASTORE_CONNECTION_POOLING_TESTSQL("datanucleus.connectionPool.testSQL","SELECT 1"),
     METASTORE_VALIDATE_TABLES("datanucleus.validateTables", false),
     METASTORE_VALIDATE_COLUMNS("datanucleus.validateColumns", false),
     METASTORE_VALIDATE_CONSTRAINTS("datanucleus.validateConstraints", false),
@@ -349,6 +351,7 @@ public class HiveConf extends Configuration {
     METASTORE_PARTITION_NAME_WHITELIST_PATTERN(
         "hive.metastore.partition.name.whitelist.pattern", ""),
     METASTORE_TRY_DIRECT_SQL("hive.metastore.try.direct.sql", true),
+    METASTORE_TRY_DIRECT_SQL_EXPERIMENTAL_EXTENSIONS("hive.metastore.try.direct.sql.extensions",true),
     METASTORE_DISALLOW_INCOMPATIBLE_COL_TYPE_CHANGES(
         "hive.metastore.disallow.incompatible.col.type.changes", false),
 

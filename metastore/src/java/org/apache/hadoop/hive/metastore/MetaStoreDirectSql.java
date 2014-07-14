@@ -34,10 +34,13 @@ import javax.jdo.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.common.ObjectPair;
+import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Order;
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.PrincipalType;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
 import org.apache.hadoop.hive.metastore.api.SkewedInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
@@ -68,6 +71,69 @@ class MetaStoreDirectSql {
     this.pm = pm;
   }
 
+  public Database getDatabase(String dbName) throws MetaException, NoSuchObjectException{
+    Query query = null;
+    Query query2 = null;
+    try {
+      dbName = dbName.toLowerCase();
+
+      String queryText = "select "
+          + "DB_ID,NAME,DB_LOCATION_URI "
+          + "FROM DBS where NAME = ? ";
+      Object[] params = new Object[1];
+      params[0] = dbName;
+      query = pm.newQuery("javax.jdo.query.SQL", queryText);
+
+      LOG.debug("getDatabase:query instantiated : " + queryText + " with param ["+params[0]+"]");
+
+      @SuppressWarnings("unchecked")
+      List<Object[]> sqlResult = (List<Object[]>)query.executeWithArray(params);
+      if (sqlResult.isEmpty()) {
+        LOG.debug("getDatabase:query ran, returned empty results, returning NSOE");
+        throw new NoSuchObjectException("There is no database named " + dbName);
+      }
+
+      assert(sqlResult.size() == 1);
+      if (sqlResult.get(0) == null){
+        LOG.debug("getDatabase:query ran, returned results, but the result entry was null, returning NSOE");
+        throw new NoSuchObjectException("There is no database named " + dbName);
+      }
+      Object[] dbline = sqlResult.get(0);
+      Long dbid = extractSqlLong(dbline[0]);
+
+      String queryText2 = "select PARAM_KEY,PARAM_VALUE "
+          + " FROM DATABASE_PARAMS "
+          + " WHERE DB_ID = ? "
+            + " AND PARAM_KEY IS NOT NULL";
+      Object[] params2 = new Object[1];
+      params2[0] = dbid;
+      query2 = pm.newQuery("javax.jdo.query.SQL",queryText2);
+      LOG.debug("getDatabase:query2 instantiated : " + queryText2 + " with param ["+params2[0]+"]");
+
+      Map<String,String> dbParams = new HashMap<String,String>();
+      List<Object[]> sqlResult2 = ensureList(query2.executeWithArray(params2));
+      if (!sqlResult2.isEmpty()){
+        for (Object[] line : sqlResult2){
+          dbParams.put(extractSqlString(line[0]),extractSqlString(line[1]));
+        }
+      }
+
+      LOG.debug("getDatabase: instantiating db object to return");
+      Database db = new Database();
+      db.setName(extractSqlString(dbline[1]));
+      db.setDescription("");
+      db.setLocationUri(extractSqlString(dbline[2]));
+      db.setParameters(dbParams);
+      return db;
+    } finally {
+      if (query != null){
+        query.closeAll();
+      }
+      if (query2 != null){
+        query2.closeAll();
+      }
+    }
+  }
   /**
    * Gets partitions by using direct SQL queries.
    * @param dbName Metastore db name.
@@ -464,6 +530,26 @@ class MetaStoreDirectSql {
     if (!doTrace) return;
     LOG.debug("Direct SQL query in " + (queryTime - start) / 1000000.0 + "ms + " +
         (System.nanoTime() - queryTime) / 1000000.0 + "ms, the query is [ " + queryText + "]");
+  }
+
+  private String extractSqlString(Object value) {
+    return value.toString();
+  }
+
+  private Long extractSqlLong(Object obj) throws MetaException {
+    if (obj == null) return null;
+    if (!(obj instanceof Number)) {
+      throw new MetaException("Expected numeric type but got " + obj.getClass().getName());
+    }
+    return ((Number)obj).longValue();
+  }
+
+  @SuppressWarnings("unchecked")
+  private List<Object[]> ensureList(Object result) throws MetaException {
+    if (!(result instanceof List<?>)) {
+      throw new MetaException("Wrong result type " + result.getClass());
+    }
+    return (List<Object[]>)result;
   }
 
   private static Boolean extractSqlBoolean(Object value) throws MetaException {

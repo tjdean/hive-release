@@ -422,6 +422,14 @@ public class ObjectStore implements RawStore, Configurable {
       mdb = (MDatabase) query.execute(name);
       pm.retrieve(mdb);
       commited = commitTransaction();
+    } catch (Throwable t) {
+      if (t instanceof RuntimeException){
+        throw (RuntimeException)t;
+      } else if (t instanceof Error){
+        throw (Error)t;
+      } else {
+        throw new RuntimeException(t);
+      }
     } finally {
       if (!commited) {
         rollbackTransaction();
@@ -434,12 +442,32 @@ public class ObjectStore implements RawStore, Configurable {
   }
 
   public Database getDatabase(String name) throws NoSuchObjectException {
+    try {
+      if (canUseDirectSqlExtensions(true)){
+        return directSql.getDatabase(name);
+      } else {
+        return getJDODatabase(name);
+      }
+    }catch (MetaException me){
+      throw new NoSuchObjectException(me.getMessage());
+    } 
+  }
+
+  private Database getJDODatabase(String name) throws NoSuchObjectException {
     MDatabase mdb = null;
     boolean commited = false;
     try {
       openTransaction();
       mdb = getMDatabase(name);
       commited = commitTransaction();
+    } catch (Throwable t) {
+      if (t instanceof RuntimeException){
+        throw (RuntimeException)t;
+      } else if (t instanceof Error){
+        throw (Error)t;
+      } else {
+        throw new RuntimeException(t);
+      }
     } finally {
       if (!commited) {
         rollbackTransaction();
@@ -1837,6 +1865,14 @@ public class ObjectStore implements RawStore, Configurable {
         rollbackTransaction();
       }
     }
+  }
+
+  private boolean canUseDirectSqlExtensions(boolean allowSql){
+    // Slightly more gated function than canUseDirectSql
+    // Intended for use only after rigorous testing, so making doubly sure that the user
+    // wants this experimental feature before allowing
+    return canUseDirectSql(allowSql)
+      && HiveConf.getBoolVar(getConf(), ConfVars.METASTORE_TRY_DIRECT_SQL_EXPERIMENTAL_EXTENSIONS);
   }
 
   private boolean canUseDirectSql(boolean allowSql) {
