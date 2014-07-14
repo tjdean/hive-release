@@ -81,7 +81,6 @@ import org.apache.hadoop.yarn.api.records.URL;
 import org.apache.hadoop.yarn.util.ConverterUtils;
 import org.apache.hadoop.yarn.util.Records;
 import org.apache.tez.client.PreWarmContext;
-import org.apache.tez.client.TezSessionConfiguration;
 import org.apache.tez.dag.api.DAG;
 import org.apache.tez.dag.api.Edge;
 import org.apache.tez.dag.api.EdgeManagerDescriptor;
@@ -93,10 +92,10 @@ import org.apache.tez.dag.api.GroupInputEdge;
 import org.apache.tez.dag.api.InputDescriptor;
 import org.apache.tez.dag.api.OutputDescriptor;
 import org.apache.tez.dag.api.ProcessorDescriptor;
+import org.apache.tez.dag.api.TezConfiguration;
 import org.apache.tez.dag.api.TezException;
 import org.apache.tez.dag.api.Vertex;
 import org.apache.tez.dag.api.VertexGroup;
-import org.apache.tez.dag.api.VertexLocationHint;
 import org.apache.tez.dag.api.VertexManagerPluginDescriptor;
 import org.apache.tez.dag.library.vertexmanager.ShuffleVertexManager;
 import org.apache.tez.mapreduce.hadoop.InputSplitInfo;
@@ -607,15 +606,13 @@ public class DagUtils {
   }
 
   /**
-   * @param sessionConfig session configuration
    * @param numContainers number of containers to pre-warm
    * @param localResources additional resources to pre-warm with
    * @return prewarm context object
    */
-  public PreWarmContext createPreWarmContext(TezSessionConfiguration sessionConfig, int numContainers,
-      Map<String, LocalResource> localResources) throws IOException, TezException {
-
-    Configuration conf = sessionConfig.getTezConfiguration();
+  public PreWarmContext createPreWarmContext(TezConfiguration conf,
+      int numContainers, Map<String, LocalResource> localResources) throws
+      IOException, TezException {
 
     ProcessorDescriptor prewarmProcDescriptor = new ProcessorDescriptor(HivePreWarmProcessor.class.getName());
     prewarmProcDescriptor.setUserPayload(MRHelpers.createUserPayloadFromConf(conf));
@@ -625,7 +622,6 @@ public class DagUtils {
 
     Map<String, LocalResource> combinedResources = new HashMap<String, LocalResource>();
 
-    combinedResources.putAll(sessionConfig.getSessionResources());
     if (localResources != null) {
       combinedResources.putAll(localResources);
     }

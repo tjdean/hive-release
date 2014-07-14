@@ -54,7 +54,7 @@ import org.apache.hadoop.hive.ql.session.SessionState.LogHelper;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.yarn.api.records.LocalResource;
 import org.apache.hadoop.yarn.api.records.Resource;
-import org.apache.tez.client.TezSession;
+import org.apache.tez.client.TezClient;
 import org.apache.tez.dag.api.DAG;
 import org.apache.tez.dag.api.Edge;
 import org.apache.tez.dag.api.EdgeProperty;
@@ -75,7 +75,7 @@ public class TestTezTask {
   ReduceWork[] rws;
   TezWork work;
   TezTask task;
-  TezSession session;
+  TezClient session;
   TezSessionState sessionState;
   JobConf conf;
   LocalResource appLr;
@@ -158,10 +158,10 @@ public class TestTezTask {
     appLr = mock(LocalResource.class);
 
     SessionState.start(new HiveConf());
-    session = mock(TezSession.class);
+    session = mock(TezClient.class);
     sessionState = mock(TezSessionState.class);
     when(sessionState.getSession()).thenReturn(session);
-    when(session.submitDAG(any(DAG.class), any(Map.class)))
+    when(session.submitDAG(any(DAG.class)))
       .thenThrow(new SessionNotRunning(""))
       .thenReturn(mock(DAGClient.class));
   }
@@ -209,7 +209,7 @@ public class TestTezTask {
     // validate close/reopen
     verify(sessionState, times(1)).open(any(HiveConf.class));
     verify(sessionState, times(1)).close(eq(false));  // now uses pool after HIVE-7043
-    verify(session, times(2)).submitDAG(any(DAG.class), any(Map.class));
+    verify(session, times(2)).submitDAG(any(DAG.class));
   }
 
   @Test
