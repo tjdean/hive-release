@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -53,7 +52,6 @@ import org.apache.tez.runtime.api.events.RootInputConfigureVertexTasksEvent;
 import org.apache.tez.runtime.api.events.RootInputDataInformationEvent;
 import org.apache.tez.runtime.api.events.RootInputUpdatePayloadEvent;
 import org.apache.tez.runtime.api.events.VertexManagerEvent;
-import org.apache.tez.runtime.api.RootInputSpecUpdate;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
@@ -66,7 +64,7 @@ import com.google.common.collect.Multimap;
  * Only works with old mapred API
  * Will only work with a single MRInput for now.
  */
-public class CustomPartitionVertex implements VertexManagerPlugin {
+public class CustomPartitionVertex extends VertexManagerPlugin {
 
   private static final Log LOG = LogFactory.getLog(CustomPartitionVertex.class.getName());
 
@@ -266,15 +264,10 @@ public class CustomPartitionVertex implements VertexManagerPlugin {
     }
 
     // Replace the Edge Managers
-    Map<String, RootInputSpecUpdate> rootInputSpecUpdate =
-      new HashMap<String, RootInputSpecUpdate>();
-    rootInputSpecUpdate.put(
-        inputName,
-        RootInputSpecUpdate.getDefaultSinglePhysicalInputSpecUpdate());
     context.setVertexParallelism(
         taskCount,
         new VertexLocationHint(grouper.createTaskLocationHints(finalSplits
-            .toArray(new InputSplit[finalSplits.size()]))), emMap, rootInputSpecUpdate);
+            .toArray(new InputSplit[finalSplits.size()]))), emMap, null);
 
     // Set the actual events for the tasks.
     context.addRootInputEvents(inputName, taskEvents);
