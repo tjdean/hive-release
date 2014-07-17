@@ -444,7 +444,12 @@ public class ObjectStore implements RawStore, Configurable {
   public Database getDatabase(String name) throws NoSuchObjectException {
     try {
       if (canUseDirectSqlExtensions(true)){
-        return directSql.getDatabase(name);
+        try {
+          return directSql.getDatabase(name);
+        } catch (JDODataStoreException jdoe) {
+          LOG.warn("JDODataStoreException using direct sql getting db: " + name + ". Falling back to ORM.",jdoe);
+          return getJDODatabase(name);
+        }
       } else {
         return getJDODatabase(name);
       }
