@@ -236,7 +236,7 @@ public class SQLStdHiveAccessController implements HiveAccessController {
       // So this will revoke privileges that are granted by other users.This is
       // not SQL compliant behavior. Need to change/add a metastore api
       // that has desired behavior.
-      metastoreClient.revoke_privileges(new PrivilegeBag(revokePrivs));
+      metastoreClient.revoke_privileges(new PrivilegeBag(revokePrivs), grantOption);
     } catch (Exception e) {
       throw new HiveAuthzPluginException("Error revoking privileges", e);
     }
@@ -676,9 +676,6 @@ public class SQLStdHiveAccessController implements HiveAccessController {
     }
     LOG.debug("Configuring hooks : " + hooks);
     hiveConf.setVar(ConfVars.PREEXECHOOKS, hooks);
-
-    // set security command list to only allow set command
-    hiveConf.setVar(ConfVars.HIVE_SECURITY_COMMAND_WHITELIST, "set");
 
     // restrict the variables that can be set using set command to a list in whitelist
     hiveConf.setIsModWhiteListEnabled(true);
