@@ -466,7 +466,9 @@ public class ObjectStore implements RawStore, Configurable {
       mdb = getMDatabase(name);
       commited = commitTransaction();
     } catch (Throwable t) {
-      if (t instanceof RuntimeException){
+      if (t instanceof NoSuchObjectException){
+        throw (NoSuchObjectException)t;
+      } else if (t instanceof RuntimeException){
         throw (RuntimeException)t;
       } else if (t instanceof Error){
         throw (Error)t;
