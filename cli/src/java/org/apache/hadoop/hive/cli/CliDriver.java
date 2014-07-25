@@ -22,9 +22,11 @@ import static org.apache.hadoop.util.StringUtils.stringifyException;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
@@ -457,12 +459,10 @@ public class CliDriver {
   }
 
   public int processFile(String fileName) throws IOException {
-    FileReader fileReader = null;
     BufferedReader bufferReader = null;
     int rc = 0;
     try {
-      fileReader = new FileReader(fileName);
-      bufferReader = new BufferedReader(fileReader);
+      bufferReader = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
       rc = processReader(bufferReader);
       bufferReader.close();
       bufferReader = null;
