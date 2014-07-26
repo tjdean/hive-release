@@ -119,8 +119,8 @@ PREHOOK: query: describe extended alter1
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: describe extended alter1
 POSTHOOK: type: DESCTABLE
-a                   	string              	from deserializer   
-b                   	string              	from deserializer   
+a                   	string              	                    
+b                   	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: alter table alter1 set serde 'org.apache.hadoop.hive.serde2.MetadataTypedColumnsetSerDe'
@@ -135,8 +135,8 @@ PREHOOK: query: describe extended alter1
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: describe extended alter1
 POSTHOOK: type: DESCTABLE
-a                   	string              	from deserializer   
-b                   	string              	from deserializer   
+a                   	string              	                    
+b                   	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: alter table alter1 replace columns (a int, b int, c string)
@@ -313,8 +313,8 @@ PREHOOK: query: DESCRIBE EXTENDED alter1
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: DESCRIBE EXTENDED alter1
 POSTHOOK: type: DESCTABLE
-a                   	string              	from deserializer   
-b                   	string              	from deserializer   
+a                   	string              	                    
+b                   	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: ALTER TABLE alter1 SET SERDE 'org.apache.hadoop.hive.serde2.MetadataTypedColumnsetSerDe'
@@ -329,8 +329,8 @@ PREHOOK: query: DESCRIBE EXTENDED alter1
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: DESCRIBE EXTENDED alter1
 POSTHOOK: type: DESCTABLE
-a                   	string              	from deserializer   
-b                   	string              	from deserializer   
+a                   	string              	                    
+b                   	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: ALTER TABLE alter1 REPLACE COLUMNS (a int, b int, c string)

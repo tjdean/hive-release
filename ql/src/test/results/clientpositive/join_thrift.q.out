@@ -2,12 +2,12 @@ PREHOOK: query: DESCRIBE src_thrift
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: DESCRIBE src_thrift
 POSTHOOK: type: DESCTABLE
-aint                	int                 	from deserializer   
-astring             	string              	from deserializer   
-lint                	array<int>          	from deserializer   
-lstring             	array<string>       	from deserializer   
-lintstring          	array<struct<myint:int,mystring:string,underscore_int:int>>	from deserializer   
-mstringstring       	map<string,string>  	from deserializer   
+aint                	int                 	                    
+astring             	string              	                    
+lint                	array<int>          	                    
+lstring             	array<string>       	                    
+lintstring          	array<struct<myint:int,mystring:string,underscore_int:int>>	                    
+mstringstring       	map<string,string>  	                    
 PREHOOK: query: EXPLAIN
 SELECT s1.aint, s2.lintstring
 FROM src_thrift s1

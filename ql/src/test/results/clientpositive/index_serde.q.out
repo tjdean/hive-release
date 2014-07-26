@@ -65,9 +65,9 @@ PREHOOK: query: DESCRIBE doctors
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: DESCRIBE doctors
 POSTHOOK: type: DESCTABLE
-number              	int                 	from deserializer   
-first_name          	string              	from deserializer   
-last_name           	string              	from deserializer   
+number              	int                 	                    
+first_name          	string              	                    
+last_name           	string              	                    
 PREHOOK: query: LOAD DATA LOCAL INPATH '../data/files/doctors.avro' INTO TABLE doctors
 PREHOOK: type: LOAD
 PREHOOK: Output: default@doctors
@@ -85,7 +85,7 @@ PREHOOK: query: DESCRIBE EXTENDED default__doctors_doctors_index__
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: DESCRIBE EXTENDED default__doctors_doctors_index__
 POSTHOOK: type: DESCTABLE
-number              	int                 	from deserializer   
+number              	int                 	                    
 _bucketname         	string              	                    
 _offsets            	array<bigint>       	                    
 	 	 
@@ -100,14 +100,14 @@ POSTHOOK: Input: default@doctors
 POSTHOOK: Output: default@default__doctors_doctors_index__
 POSTHOOK: Lineage: default__doctors_doctors_index__._bucketname SIMPLE [(doctors)doctors.FieldSchema(name:INPUT__FILE__NAME, type:string, comment:), ]
 POSTHOOK: Lineage: default__doctors_doctors_index__._offsets EXPRESSION [(doctors)doctors.FieldSchema(name:BLOCK__OFFSET__INSIDE__FILE, type:bigint, comment:), ]
-POSTHOOK: Lineage: default__doctors_doctors_index__.number SIMPLE [(doctors)doctors.FieldSchema(name:number, type:int, comment:from deserializer), ]
+POSTHOOK: Lineage: default__doctors_doctors_index__.number SIMPLE [(doctors)doctors.FieldSchema(name:number, type:int, comment:), ]
 PREHOOK: query: EXPLAIN SELECT * FROM doctors WHERE number > 6 ORDER BY number
 PREHOOK: type: QUERY
 POSTHOOK: query: EXPLAIN SELECT * FROM doctors WHERE number > 6 ORDER BY number
 POSTHOOK: type: QUERY
 POSTHOOK: Lineage: default__doctors_doctors_index__._bucketname SIMPLE [(doctors)doctors.FieldSchema(name:INPUT__FILE__NAME, type:string, comment:), ]
 POSTHOOK: Lineage: default__doctors_doctors_index__._offsets EXPRESSION [(doctors)doctors.FieldSchema(name:BLOCK__OFFSET__INSIDE__FILE, type:bigint, comment:), ]
-POSTHOOK: Lineage: default__doctors_doctors_index__.number SIMPLE [(doctors)doctors.FieldSchema(name:number, type:int, comment:from deserializer), ]
+POSTHOOK: Lineage: default__doctors_doctors_index__.number SIMPLE [(doctors)doctors.FieldSchema(name:number, type:int, comment:), ]
 ABSTRACT SYNTAX TREE:
   (TOK_QUERY (TOK_FROM (TOK_TABREF (TOK_TABNAME doctors))) (TOK_INSERT (TOK_DESTINATION (TOK_DIR TOK_TMP_FILE)) (TOK_SELECT (TOK_SELEXPR TOK_ALLCOLREF)) (TOK_WHERE (> (TOK_TABLE_OR_COL number) 6)) (TOK_ORDERBY (TOK_TABSORTCOLNAMEASC (TOK_TABLE_OR_COL number)))))
 
@@ -254,7 +254,7 @@ POSTHOOK: Input: default@doctors
 #### A masked pattern was here ####
 POSTHOOK: Lineage: default__doctors_doctors_index__._bucketname SIMPLE [(doctors)doctors.FieldSchema(name:INPUT__FILE__NAME, type:string, comment:), ]
 POSTHOOK: Lineage: default__doctors_doctors_index__._offsets EXPRESSION [(doctors)doctors.FieldSchema(name:BLOCK__OFFSET__INSIDE__FILE, type:bigint, comment:), ]
-POSTHOOK: Lineage: default__doctors_doctors_index__.number SIMPLE [(doctors)doctors.FieldSchema(name:number, type:int, comment:from deserializer), ]
+POSTHOOK: Lineage: default__doctors_doctors_index__.number SIMPLE [(doctors)doctors.FieldSchema(name:number, type:int, comment:), ]
 7	Sylvester	McCoy
 8	Paul	McGann
 9	Christopher	Eccleston
@@ -266,7 +266,7 @@ POSTHOOK: query: DROP INDEX doctors_index ON doctors
 POSTHOOK: type: DROPINDEX
 POSTHOOK: Lineage: default__doctors_doctors_index__._bucketname SIMPLE [(doctors)doctors.FieldSchema(name:INPUT__FILE__NAME, type:string, comment:), ]
 POSTHOOK: Lineage: default__doctors_doctors_index__._offsets EXPRESSION [(doctors)doctors.FieldSchema(name:BLOCK__OFFSET__INSIDE__FILE, type:bigint, comment:), ]
-POSTHOOK: Lineage: default__doctors_doctors_index__.number SIMPLE [(doctors)doctors.FieldSchema(name:number, type:int, comment:from deserializer), ]
+POSTHOOK: Lineage: default__doctors_doctors_index__.number SIMPLE [(doctors)doctors.FieldSchema(name:number, type:int, comment:), ]
 PREHOOK: query: DROP TABLE doctors
 PREHOOK: type: DROPTABLE
 PREHOOK: Input: default@doctors
@@ -277,4 +277,4 @@ POSTHOOK: Input: default@doctors
 POSTHOOK: Output: default@doctors
 POSTHOOK: Lineage: default__doctors_doctors_index__._bucketname SIMPLE [(doctors)doctors.FieldSchema(name:INPUT__FILE__NAME, type:string, comment:), ]
 POSTHOOK: Lineage: default__doctors_doctors_index__._offsets EXPRESSION [(doctors)doctors.FieldSchema(name:BLOCK__OFFSET__INSIDE__FILE, type:bigint, comment:), ]
-POSTHOOK: Lineage: default__doctors_doctors_index__.number SIMPLE [(doctors)doctors.FieldSchema(name:number, type:int, comment:from deserializer), ]
+POSTHOOK: Lineage: default__doctors_doctors_index__.number SIMPLE [(doctors)doctors.FieldSchema(name:number, type:int, comment:), ]

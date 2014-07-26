@@ -17,9 +17,9 @@ PREHOOK: query: describe extended int_string
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: describe extended int_string
 POSTHOOK: type: DESCTABLE
-myint               	int                 	from deserializer   
-mystring            	string              	from deserializer   
-underscore_int      	int                 	from deserializer   
+myint               	int                 	                    
+mystring            	string              	                    
+underscore_int      	int                 	                    
 b                   	string              	                    
 	 	 
 # Partition Information	 	 
@@ -39,9 +39,9 @@ PREHOOK: query: describe extended int_string partition (b='part1')
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: describe extended int_string partition (b='part1')
 POSTHOOK: type: DESCTABLE
-myint               	int                 	from deserializer   
-mystring            	string              	from deserializer   
-underscore_int      	int                 	from deserializer   
+myint               	int                 	                    
+mystring            	string              	                    
+underscore_int      	int                 	                    
 b                   	string              	                    
 	 	 
 # Partition Information	 	 

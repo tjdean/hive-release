@@ -1021,7 +1021,7 @@ public class MetaStoreUtils {
     return str_fields;
   }
 
-  private static final String FROM_SERIALIZER = "from deserializer";
+  private static final String FROM_SERIALIZER = "";
   private static String determineFieldComment(String comment) {
     return (comment == null || comment.isEmpty()) ? FROM_SERIALIZER : comment;
   }

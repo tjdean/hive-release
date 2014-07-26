@@ -16,7 +16,7 @@ PREHOOK: query: describe srcpart.key
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: describe srcpart.key
 POSTHOOK: type: DESCTABLE
-key                 	string              	from deserializer   
+key                 	string              	                    
 PREHOOK: query: describe srcpart PARTITION(ds='2008-04-08', hr='12')
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: describe srcpart PARTITION(ds='2008-04-08', hr='12')
@@ -51,7 +51,7 @@ PREHOOK: query: describe extended srcpart.key
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: describe extended srcpart.key
 POSTHOOK: type: DESCTABLE
-key                 	string              	from deserializer   
+key                 	string              	                    
 PREHOOK: query: describe extended srcpart PARTITION(ds='2008-04-08', hr='12')
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: describe extended srcpart PARTITION(ds='2008-04-08', hr='12')
@@ -114,7 +114,7 @@ POSTHOOK: query: describe formatted srcpart.key
 POSTHOOK: type: DESCTABLE
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	from deserializer   
+key                 	string              	                    
 PREHOOK: query: describe formatted srcpart PARTITION(ds='2008-04-08', hr='12')
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: describe formatted srcpart PARTITION(ds='2008-04-08', hr='12')

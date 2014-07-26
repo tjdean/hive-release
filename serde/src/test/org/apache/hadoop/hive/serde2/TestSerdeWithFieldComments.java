@@ -67,6 +67,6 @@ public class TestSerdeWithFieldComments extends TestCase {
     assertEquals("first", result.get(0).getName());
     assertEquals("this is a comment", result.get(0).getComment());
     assertEquals("second", result.get(1).getName());
-    assertEquals("from deserializer", result.get(1).getComment());
+    assertEquals("", result.get(1).getComment());
   }
 }

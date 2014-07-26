@@ -19,12 +19,12 @@ PREHOOK: query: DESCRIBE EXTENDED INPUTDDL8
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: DESCRIBE EXTENDED INPUTDDL8
 POSTHOOK: type: DESCTABLE
-aint                	int                 	from deserializer   
-astring             	string              	from deserializer   
-lint                	array<int>          	from deserializer   
-lstring             	array<string>       	from deserializer   
-lintstring          	array<struct<myint:int,mystring:string,underscore_int:int>>	from deserializer   
-mstringstring       	map<string,string>  	from deserializer   
+aint                	int                 	                    
+astring             	string              	                    
+lint                	array<int>          	                    
+lstring             	array<string>       	                    
+lintstring          	array<struct<myint:int,mystring:string,underscore_int:int>>	                    
+mstringstring       	map<string,string>  	                    
 ds                  	string              	                    
 country             	string              	                    
 	 	 

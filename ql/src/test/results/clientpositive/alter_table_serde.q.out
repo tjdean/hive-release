@@ -26,9 +26,9 @@ PREHOOK: query: describe extended test_table
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: describe extended test_table
 POSTHOOK: type: DESCTABLE
-id                  	int                 	from deserializer   
-query               	string              	from deserializer   
-name                	string              	from deserializer   
+id                  	int                 	                    
+query               	string              	                    
+name                	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: alter table test_table set serdeproperties ('field.delim' = ',')
@@ -43,9 +43,9 @@ PREHOOK: query: describe extended test_table
 PREHOOK: type: DESCTABLE
 POSTHOOK: query: describe extended test_table
 POSTHOOK: type: DESCTABLE
-id                  	int                 	from deserializer   
-query               	string              	from deserializer   
-name                	string              	from deserializer   
+id                  	int                 	                    
+query               	string              	                    
+name                	string              	                    
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: drop table test_table
