@@ -53,7 +53,6 @@ import org.apache.hadoop.hive.shims.HadoopShims;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.util.Shell;
 
 /**
  * An AuthorizationProvider, which checks against the data access level permissions on HDFS.
@@ -344,15 +343,6 @@ public class HdfsAuthorizationProvider extends HiveAuthorizationProviderBase {
       if (dirPerms.getOtherAction().implies(action)) {
         continue;
       }
-      
-      if (Shell.WINDOWS) {
-        if (stat.getOwner().compareTo("Administrators") == 0 && ArrayUtils.contains(groups, stat.getOwner())) { 
-          if (dirPerms.getUserAction().implies(action)) { 
-            continue; 
-          }
-        }
-      }
-      
       throw new AccessControlException("action " + action + " not permitted on path "
         + path + " for user " + user);
     }

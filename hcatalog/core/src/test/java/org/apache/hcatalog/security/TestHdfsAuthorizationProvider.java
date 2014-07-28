@@ -38,7 +38,6 @@ import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.MetaException;
-import org.apache.hadoop.hive.ql.WindowsPathUtil;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Table;
@@ -46,7 +45,6 @@ import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.hadoop.util.Shell;
 import org.apache.hcatalog.HcatTestUtils;
 import org.apache.hcatalog.cli.HCatDriver;
 import org.apache.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
@@ -67,7 +65,7 @@ public class TestHdfsAuthorizationProvider {
   protected FileSystem whFs;
   protected Warehouse wh;
   protected Hive hive;
-  
+
   @Before
   public void setUp() throws Exception {
 
@@ -86,12 +84,9 @@ public class TestHdfsAuthorizationProvider {
     whDir = System.getProperty("test.warehouse.dir", "/tmp/testhdfsauthorization_wh");
     conf.setVar(HiveConf.ConfVars.METASTOREWAREHOUSE, whDir);
 
-    WindowsPathUtil.convertPathsFromWindowsToHdfs(conf);
-    
     UserGroupInformation ugi = ShimLoader.getHadoopShims().getUGIForConf(conf);
     String username = ShimLoader.getHadoopShims().getShortUserName(ugi);
 
-    whDir = WindowsPathUtil.getHdfsUriString(whDir);
     whPath = new Path(whDir);
     whFs = whPath.getFileSystem(conf);
 
