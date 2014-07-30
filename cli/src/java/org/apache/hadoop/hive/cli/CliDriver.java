@@ -472,7 +472,7 @@ public class CliDriver {
     BufferedReader bufferReader = null;
     int rc = 0;
     try {
-      bufferReader = new BufferedReader(new InputStreamReader(fs.open(path), "UTF-8"));
+      bufferReader = new BufferedReader(new InputStreamReader(fs.open(path)));
       rc = processReader(bufferReader);
     } finally {
       IOUtils.closeStream(bufferReader);
