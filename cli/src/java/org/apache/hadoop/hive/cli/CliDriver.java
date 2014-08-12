@@ -22,14 +22,11 @@ import static org.apache.hadoop.util.StringUtils.stringifyException;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,7 +57,6 @@ import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.exec.FunctionRegistry;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.exec.Utilities.StreamPrinter;
-import org.apache.hadoop.hive.ql.exec.errors.TaskLogProcessor;
 import org.apache.hadoop.hive.ql.exec.mr.HadoopJobExecHelper;
 import org.apache.hadoop.hive.ql.parse.HiveParser;
 import org.apache.hadoop.hive.ql.parse.VariableSubstitution;
@@ -89,15 +85,15 @@ public class CliDriver {
   public static final int LINES_TO_FETCH = 40; // number of lines to fetch in batch from remote hive server
 
   public static final String HIVERCFILE = ".hiverc";
-  
+
   private final LogHelper console;
   private Configuration conf;
-  private final Log LOG = LogFactory.getLog(CliDriver.class);
-  
+
   public CliDriver() {
     SessionState ss = SessionState.get();
     conf = (ss != null) ? ss.getConf() : new Configuration();
-    console = new LogHelper(LogFactory.getLog("CliDriver"));
+    Log LOG = LogFactory.getLog("CliDriver");
+    console = new LogHelper(LOG);
   }
 
   public int processCmd(String cmd) {
@@ -461,31 +457,12 @@ public class CliDriver {
   }
 
   public int processFile(String fileName) throws IOException {
+    FileReader fileReader = null;
     BufferedReader bufferReader = null;
     int rc = 0;
     try {
-      String defaultFileEncoding =  Charset.defaultCharset().name();
-      String systemFileEncoding = System.getProperty("file.encoding");
-      
-      /*encoding schema specified by hive-site.xml has the highest priority, of course, this 
-      could be overwritten by user specification(e.g. hive --hiveconf hive.file.encoding=UTF-8)*/
-      String fileEncoding = HiveConf.getVar(conf, HiveConf.ConfVars.HIVE_FILE_ENCODING);
-      LOG.info(String.format("ENCODING: hiveconf:hive.file.encoding=[%s]", fileEncoding));
-      
-      //encoding schema specified by JVM system(e.g. java -Dfile.encoding=UTF-8) has next highest priority
-      fileEncoding = !StringUtils.isBlank(fileEncoding) ? fileEncoding : systemFileEncoding;
-      LOG.info(String.format("ENCODING: system:hive.file.encoding=[%s]", systemFileEncoding));
-      
-      //encoding schema specified by OS has least highest priority
-      fileEncoding = !StringUtils.isBlank(fileEncoding) ? fileEncoding : defaultFileEncoding;
-      
-      bufferReader = StringUtils.isBlank(fileEncoding) ? new BufferedReader(new InputStreamReader(
-          new FileInputStream(fileName))) : new BufferedReader(new InputStreamReader(
-          new FileInputStream(fileName), fileEncoding));
-      
-      LOG.info(String.format("ENCODING: env:hive.file.encoding=[%s]",defaultFileEncoding));
-      LOG.info(String.format("ENCODING: effective:hive.file.encoding=[%s]", fileEncoding));
-      
+      fileReader = new FileReader(fileName);
+      bufferReader = new BufferedReader(fileReader);
       rc = processReader(bufferReader);
       bufferReader.close();
       bufferReader = null;

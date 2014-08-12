@@ -1038,9 +1038,6 @@ public class HiveConf extends Configuration {
     HIVE_CONVERT_JOIN_BUCKET_MAPJOIN_TEZ("hive.convert.join.bucket.mapjoin.tez", false),
     HIVE_LOCALIZE_RESOURCE_WAIT_INTERVAL("hive.localize.resource.wait.interval", 5000L), // in ms
     HIVE_LOCALIZE_RESOURCE_NUM_WAIT_ATTEMPTS("hive.localize.resource.num.wait.attempts", 5),
-    
-    //encoding schema setting
-    HIVE_FILE_ENCODING("hive.file.encoding", ""),
     ;
 
     public final String varname;
