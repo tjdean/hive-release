@@ -117,7 +117,9 @@ named_struct
 negative
 ngrams
 noop
+noopstreaming
 noopwithmap
+noopwithmapstreaming
 not
 ntile
 nvl

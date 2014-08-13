@@ -491,14 +491,50 @@ public class ObjectStore implements RawStore, Configurable {
 
   @Override
   public Database getDatabase(String name) throws NoSuchObjectException {
+    try {
+      if (isDirectSqlEnabled(true) && directSql.isCompatibleDatastore()){
+        Database db = null;
+        boolean committed = false;
+        try {
+          openTransaction();
+          db = directSql.getDatabase(name);
+          committed = commitTransaction();
+          return db;
+        } catch (JDODataStoreException jdoe) {
+          LOG.warn("JDODataStoreException using direct sql getting db: " + name + ". Falling back to ORM.",jdoe);
+        } finally {
+          if (!committed) {
+            rollbackTransaction();
+          }
+        }
+      }
+      // If we reached here, then DirectSql was not enabled, or did not work. Fall back to JDO.
+      return getJDODatabase(name);
+    } catch (MetaException me){
+      throw new NoSuchObjectException(me.getMessage());
+    }
+  }
+
+  public Database getJDODatabase(String name) throws NoSuchObjectException {
     MDatabase mdb = null;
-    boolean commited = false;
+    boolean committed = false;
     try {
       openTransaction();
       mdb = getMDatabase(name);
-      commited = commitTransaction();
+      committed = commitTransaction();
+    } catch (Throwable t){
+      if (t instanceof NoSuchObjectException){
+        throw (NoSuchObjectException)t;
+      } else if (t instanceof RuntimeException){
+        throw (RuntimeException)t;
+      } else if (t instanceof Error){
+        throw (Error)t;
+      } else {
+        // We should not be throwing any checked exception that is not a NoSuchObjectException
+        throw new RuntimeException(t);
+      }
     } finally {
-      if (!commited) {
+      if (!committed) {
         rollbackTransaction();
       }
     }
@@ -576,7 +612,7 @@ public class ObjectStore implements RawStore, Configurable {
 
   @Override
   public List<String> getDatabases(String pattern) throws MetaException {
-    boolean commited = false;
+    boolean committed = false;
     List<String> databases = null;
     try {
       openTransaction();
@@ -603,9 +639,9 @@ public class ObjectStore implements RawStore, Configurable {
       for (Iterator i = names.iterator(); i.hasNext();) {
         databases.add((String) i.next());
       }
-      commited = commitTransaction();
+      committed = commitTransaction();
     } finally {
-      if (!commited) {
+      if (!committed) {
         rollbackTransaction();
       }
     }
@@ -2165,6 +2201,15 @@ public class ObjectStore implements RawStore, Configurable {
     return getPartitionsByFilterInternal(dbName, tblName, filter, maxParts, true, true);
   }
 
+  private boolean isDirectSqlEnabled(boolean allowSql) {
+    // SQL usage inside a larger transaction (e.g. droptable) may not be desirable because
+    // some databases (e.g. Postgres) abort the entire transaction when any query fails, so
+    // the fallback from failed SQL to JDO is not possible.
+    return allowSql
+      && HiveConf.getBoolVar(getConf(), ConfVars.METASTORE_TRY_DIRECT_SQL)
+      && (HiveConf.getBoolVar(getConf(), ConfVars.METASTORE_TRY_DIRECT_SQL_DDL) || !isActiveTransaction());
+  }
+
   /** Helper class for getting stuff w/transaction, direct SQL, perf logging, etc. */
   private abstract class GetHelper<T> {
     private final boolean isInTxn, doTrace, allowJdo;
@@ -2184,11 +2229,7 @@ public class ObjectStore implements RawStore, Configurable {
       this.doTrace = LOG.isDebugEnabled();
       this.isInTxn = isActiveTransaction();
 
-      // SQL usage inside a larger transaction (e.g. droptable) may not be desirable because
-      // some databases (e.g. Postgres) abort the entire transaction when any query fails, so
-      // the fallback from failed SQL to JDO is not possible.
-      boolean isConfigEnabled = HiveConf.getBoolVar(getConf(), ConfVars.METASTORE_TRY_DIRECT_SQL)
-          && (HiveConf.getBoolVar(getConf(), ConfVars.METASTORE_TRY_DIRECT_SQL_DDL) || !isInTxn);
+      boolean isConfigEnabled = isDirectSqlEnabled(allowSql);
       if (!allowJdo && isConfigEnabled && !directSql.isCompatibleDatastore()) {
         throw new MetaException("SQL is not operational"); // test path; SQL is enabled and broken.
       }
