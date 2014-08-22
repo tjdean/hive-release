@@ -4,7 +4,7 @@ set hive.security.authenticator.manager=org.apache.hadoop.hive.ql.security.Sessi
 
 set hive.cli.print.header=true;
 set user.name=hive_admin_user;
-set role ADMIN;
+set role Admin;
 
 ----------------------------------------
 -- role granting with admin option
@@ -30,7 +30,7 @@ show role grant role src_Role2;;
 
 
 set user.name=hive_admin_user;
-set role ADMIN;
+set role Admin;
 show principals src_ROle_wadmin;
 
 set user.name=user2;
@@ -43,5 +43,5 @@ revoke src_rolE_wadmin from role sRc_role2;
 show role grant role sRc_role2;
 
 set user.name=hive_admin_user;
-set role ADMIN;
+set role Admin;
 show principals src_role_wadmin;

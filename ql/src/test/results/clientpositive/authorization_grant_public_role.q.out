@@ -11,12 +11,12 @@ POSTHOOK: Output: database:default
 POSTHOOK: Output: default@t_gpr1
 PREHOOK: query: -- all privileges should have been set for user
 
-GRANT ALL ON t_gpr1 TO ROLE public
+GRANT ALL ON t_gpr1 TO ROLE puBlic
 PREHOOK: type: GRANT_PRIVILEGE
 PREHOOK: Output: default@t_gpr1
 POSTHOOK: query: -- all privileges should have been set for user
 
-GRANT ALL ON t_gpr1 TO ROLE public
+GRANT ALL ON t_gpr1 TO ROLE puBlic
 POSTHOOK: type: GRANT_PRIVILEGE
 POSTHOOK: Output: default@t_gpr1
 PREHOOK: query: SHOW GRANT ON TABLE t_gpr1

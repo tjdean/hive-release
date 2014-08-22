@@ -245,6 +245,7 @@ public class SQLStdHiveAccessController implements HiveAccessController {
   @Override
   public void createRole(String roleName, HivePrincipal adminGrantor)
       throws HiveAuthzPluginException, HiveAccessControlException {
+
     // only user belonging to admin role can create new roles.
     if (!isUserAdmin()) {
       throw new HiveAccessControlException("Current user : " + currentUserName+ " is not"
