@@ -327,7 +327,7 @@ public class TestTempletonUtils {
     String[] newProps = StringUtils.split(input.toString());
     for(int i = 0; i < newProps.length; i++) {
       Assert.assertEquals("Pre/post split values don't match",
-        StringUtils.unEscapeString(props[i]), StringUtils.unEscapeString(newProps[i]));
+        TempletonUtils.unEscapeString(props[i]), TempletonUtils.unEscapeString(newProps[i]));
     }
   }
 }
