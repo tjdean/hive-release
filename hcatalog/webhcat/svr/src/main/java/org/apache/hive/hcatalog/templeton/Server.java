@@ -20,7 +20,6 @@ package org.apache.hive.hcatalog.templeton;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.URLEncoder;
 import java.net.UnknownHostException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -842,16 +841,13 @@ public class Server {
     if (execute == null && srcFile == null) {
       throw new BadParam("Either execute or file parameter required");
     }
-    List<String> definesEnc = new ArrayList<String>();
-    for (String d : defines) {
-    	definesEnc.add( d == null ? null : URLEncoder.encode(d));
-    }  
+    
     //add all function arguments to a map
     Map<String, Object> userArgs = new HashMap<String, Object>();
     userArgs.put("user.name", getDoAsUser());
     userArgs.put("execute", execute);
     userArgs.put("file", srcFile);
-    userArgs.put("define", definesEnc);
+    userArgs.put("define", defines);
     userArgs.put("files", otherFiles);
     userArgs.put("statusdir", statusdir);
     userArgs.put("callback", callback);
@@ -860,7 +856,7 @@ public class Server {
     checkEnableLogPrerequisite(enablelog, statusdir);
 
     HiveDelegator d = new HiveDelegator(appConf);
-    return d.run(getDoAsUser(), userArgs, execute, srcFile, definesEnc, hiveArgs, otherFiles,
+    return d.run(getDoAsUser(), userArgs, execute, srcFile, defines, hiveArgs, otherFiles,
       statusdir, callback, getCompletedUrl(), enablelog);
   }
 
