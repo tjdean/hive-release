@@ -47,8 +47,10 @@ import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.api.records.LocalResource;
+import org.apache.tez.client.AMConfiguration;
 import org.apache.tez.client.PreWarmContext;
-import org.apache.tez.client.TezClient;
+import org.apache.tez.client.TezSession;
+import org.apache.tez.client.TezSessionConfiguration;
 import org.apache.tez.dag.api.SessionNotRunning;
 import org.apache.tez.dag.api.TezConfiguration;
 import org.apache.tez.dag.api.TezException;
@@ -65,7 +67,7 @@ public class TezSessionState {
   private HiveConf conf;
   private Path tezScratchDir;
   private LocalResource appJarLr;
-  private TezClient session;
+  private TezSession session;
   private String sessionId;
   private DagUtils utils;
   private String queueName;
@@ -148,6 +150,11 @@ public class TezSessionState {
 
     refreshLocalResourcesFromConf(conf);
 
+    // generate basic tez config
+    TezConfiguration tezConfig = new TezConfiguration(conf);
+
+    tezConfig.set(TezConfiguration.TEZ_AM_STAGING_DIR, tezScratchDir.toUri().toString());
+
     // unless already installed on all the cluster nodes, we'll have to
     // localize hive-exec.jar as well.
     appJarLr = createJarLocalResource(utils.getExecJarPathLocal());
@@ -163,12 +170,13 @@ public class TezSessionState {
     Map<String, String> amEnv = new HashMap<String, String>();
     MRHelpers.updateEnvironmentForMRAM(conf, amEnv);
 
+    AMConfiguration amConfig = new AMConfiguration(amEnv, commonLocalResources, tezConfig, null);
+
+    // configuration for the session
+    TezSessionConfiguration sessionConfig = new TezSessionConfiguration(amConfig, tezConfig);
+
     // and finally we're ready to create and start the session
-    // generate basic tez config
-    TezConfiguration tezConfig = new TezConfiguration(conf);
-    tezConfig.set(TezConfiguration.TEZ_AM_STAGING_DIR, tezScratchDir.toUri().toString());
-    session = new TezClient("HIVE-" + sessionId, tezConfig, true,
-        commonLocalResources, null);
+    session = new TezSession("HIVE-" + sessionId, sessionConfig);
 
     LOG.info("Opening new Tez Session (id: " + sessionId
         + ", scratch dir: " + tezScratchDir + ")");
@@ -179,8 +187,7 @@ public class TezSessionState {
       int n = HiveConf.getIntVar(conf, ConfVars.HIVE_PREWARM_NUM_CONTAINERS);
       LOG.info("Prewarming " + n + " containers  (id: " + sessionId
           + ", scratch dir: " + tezScratchDir + ")");
-      PreWarmContext context = utils.createPreWarmContext(tezConfig, n,
-          commonLocalResources);
+      PreWarmContext context = utils.createPreWarmContext(sessionConfig, n, commonLocalResources);
       try {
         session.preWarm(context);
       } catch (InterruptedException ie) {
@@ -190,12 +197,10 @@ public class TezSessionState {
       }
     }
 
-    session.waitTillReady();
     // In case we need to run some MR jobs, we'll run them under tez MR emulation. The session
     // id is used for tez to reuse the current session rather than start a new one.
     conf.set("mapreduce.framework.name", "yarn-tez");
-    conf.set("mapreduce.tez.session.tokill-application-id",
-        session.getAppMasterApplicationId().toString());
+    conf.set("mapreduce.tez.session.tokill-application-id", session.getApplicationId().toString());
 
     openSessions.add(this);
   }
@@ -272,7 +277,7 @@ public class TezSessionState {
     return sessionId;
   }
 
-  public TezClient getSession() {
+  public TezSession getSession() {
     return session;
   }
 

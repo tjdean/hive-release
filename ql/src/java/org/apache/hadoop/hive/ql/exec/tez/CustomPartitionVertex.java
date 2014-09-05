@@ -64,7 +64,7 @@ import com.google.common.collect.Multimap;
  * Only works with old mapred API
  * Will only work with a single MRInput for now.
  */
-public class CustomPartitionVertex extends VertexManagerPlugin {
+public class CustomPartitionVertex implements VertexManagerPlugin {
 
   private static final Log LOG = LogFactory.getLog(CustomPartitionVertex.class.getName());
 
@@ -267,7 +267,7 @@ public class CustomPartitionVertex extends VertexManagerPlugin {
     context.setVertexParallelism(
         taskCount,
         new VertexLocationHint(grouper.createTaskLocationHints(finalSplits
-            .toArray(new InputSplit[finalSplits.size()]))), emMap, null);
+            .toArray(new InputSplit[finalSplits.size()]))), emMap);
 
     // Set the actual events for the tasks.
     context.addRootInputEvents(inputName, taskEvents);

@@ -305,8 +305,7 @@ public class TezTask extends Task<TezWork> {
 
     try {
       // ready to start execution on the cluster
-      sessionState.getSession().addAppMasterLocalResources(resourceMap);
-      dagClient = sessionState.getSession().submitDAG(dag);
+      dagClient = sessionState.getSession().submitDAG(dag, resourceMap);
     } catch (SessionNotRunning nr) {
       console.printInfo("Tez session was closed. Reopening...");
 
@@ -314,7 +313,7 @@ public class TezTask extends Task<TezWork> {
       TezSessionPoolManager.getInstance().closeAndOpen(sessionState, this.conf);
       console.printInfo("Session re-established.");
 
-      dagClient = sessionState.getSession().submitDAG(dag);
+      dagClient = sessionState.getSession().submitDAG(dag, resourceMap);
     }
 
     perfLogger.PerfLogEnd(CLASS_NAME, PerfLogger.TEZ_SUBMIT_DAG);
