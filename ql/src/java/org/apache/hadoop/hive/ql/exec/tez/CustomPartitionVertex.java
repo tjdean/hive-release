@@ -56,7 +56,6 @@ import org.apache.tez.runtime.api.events.InputConfigureVertexTasksEvent;
 import org.apache.tez.runtime.api.events.InputDataInformationEvent;
 import org.apache.tez.runtime.api.events.InputUpdatePayloadEvent;
 import org.apache.tez.runtime.api.events.VertexManagerEvent;
-import org.apache.tez.runtime.api.RootInputSpecUpdate;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;

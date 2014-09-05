@@ -35,7 +35,6 @@ import org.apache.tez.runtime.api.events.InputReadErrorEvent;
 public class CustomPartitionEdge extends EdgeManagerPlugin {
 
   private static final Log LOG = LogFactory.getLog(CustomPartitionEdge.class.getName());
-  private EdgeManagerContext context = null;
 
   CustomEdgeConfiguration conf = null;
   final EdgeManagerPluginContext context;
