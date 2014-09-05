@@ -20,8 +20,6 @@ package org.apache.hadoop.hive.ql.io.sarg;
 
 import java.util.List;
 
-import org.apache.hadoop.hive.ql.plan.ExprNodeGenericFuncDesc;
-
 /**
  * Primary interface for <a href="http://en.wikipedia.org/wiki/Sargable">
  *   SearchArgument</a>, which are the subset of predicates
@@ -177,24 +175,6 @@ public interface SearchArgument {
   public String toKryo();
 
   /**
-   * A factory for creating SearchArguments. Java doesn't allow static methods
-   * in interfaces. *DOH*
-   */
-  public static class Factory {
-    public SearchArgument create(ExprNodeGenericFuncDesc expression) {
-      return new SearchArgumentImpl(expression);
-    }
-
-    public Builder newBuilder() {
-      return SearchArgumentImpl.newBuilder();
-    }
-
-    public SearchArgument create(String kryo) {
-      return SearchArgumentImpl.fromKryo(kryo);
-    }
-  }
-
-  /**
    * A builder object for contexts outside of Hive where it isn't easy to
    * get a ExprNodeDesc. The user must call startOr, startAnd, or startNot
    * before adding any leaves.
@@ -289,9 +269,4 @@ public interface SearchArgument {
      */
     public SearchArgument build();
   }
-
-  /**
-   * Use this instance to create SearchArgument instances.
-   */
-  public static final Factory FACTORY = new Factory();
 }
