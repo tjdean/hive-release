@@ -47,8 +47,8 @@ import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.yarn.api.records.LocalResource;
-import org.apache.tez.client.PreWarmContext;
 import org.apache.tez.client.TezClient;
+import org.apache.tez.dag.api.PreWarmVertex;
 import org.apache.tez.dag.api.SessionNotRunning;
 import org.apache.tez.dag.api.TezConfiguration;
 import org.apache.tez.dag.api.TezException;
@@ -161,13 +161,22 @@ public class TezSessionState {
 
     // Create environment for AM.
     Map<String, String> amEnv = new HashMap<String, String>();
-    MRHelpers.updateEnvironmentForMRAM(conf, amEnv);
+    MRHelpers.updateEnvBasedOnMRAMEnv(conf, amEnv);
 
     // and finally we're ready to create and start the session
     // generate basic tez config
     TezConfiguration tezConfig = new TezConfiguration(conf);
     tezConfig.set(TezConfiguration.TEZ_AM_STAGING_DIR, tezScratchDir.toUri().toString());
-    session = new TezClient("HIVE-" + sessionId, tezConfig, true,
+
+    if (HiveConf.getBoolVar(conf, ConfVars.HIVE_PREWARM_ENABLED)) {
+      int n = HiveConf.getIntVar(conf, ConfVars.HIVE_PREWARM_NUM_CONTAINERS);
+      n = Math.max(tezConfig.getInt(
+          TezConfiguration.TEZ_AM_SESSION_MIN_HELD_CONTAINERS,
+          TezConfiguration.TEZ_AM_SESSION_MIN_HELD_CONTAINERS_DEFAULT), n);
+      tezConfig.setInt(TezConfiguration.TEZ_AM_SESSION_MIN_HELD_CONTAINERS, n);
+    }
+
+    session = TezClient.create("HIVE-" + sessionId, tezConfig, true,
         commonLocalResources, null);
 
     LOG.info("Opening new Tez Session (id: " + sessionId
@@ -179,18 +188,25 @@ public class TezSessionState {
       int n = HiveConf.getIntVar(conf, ConfVars.HIVE_PREWARM_NUM_CONTAINERS);
       LOG.info("Prewarming " + n + " containers  (id: " + sessionId
           + ", scratch dir: " + tezScratchDir + ")");
-      PreWarmContext context = utils.createPreWarmContext(tezConfig, n,
+      PreWarmVertex prewarmVertex = utils.createPreWarmVertex(tezConfig, n,
           commonLocalResources);
       try {
-        session.preWarm(context);
-      } catch (InterruptedException ie) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Hive Prewarm threw an exception ", ie);
+        session.preWarm(prewarmVertex);
+      } catch (IOException ie) {
+        if (ie.getMessage().contains("Interrupted while waiting")) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Hive Prewarm threw an exception ", ie);
+          }
+        } else {
+          throw ie;
         }
       }
     }
-
-    session.waitTillReady();
+    try {
+      session.waitTillReady();
+    } catch(InterruptedException ie) {
+      //ignore
+    }
     // In case we need to run some MR jobs, we'll run them under tez MR emulation. The session
     // id is used for tez to reuse the current session rather than start a new one.
     conf.set("mapreduce.framework.name", "yarn-tez");

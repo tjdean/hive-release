@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -97,18 +96,18 @@ public class TestTezTask {
           @Override
           public Vertex answer(InvocationOnMock invocation) throws Throwable {
             Object[] args = invocation.getArguments();
-            return new Vertex(((BaseWork)args[1]).getName(),
+            return Vertex.create(((BaseWork)args[1]).getName(),
                 mock(ProcessorDescriptor.class), 0, mock(Resource.class));
           }
         });
 
-    when(utils.createEdge(any(JobConf.class), any(Vertex.class), any(JobConf.class),
+    when(utils.createEdge(any(JobConf.class), any(Vertex.class),
         any(Vertex.class), any(TezEdgeProperty.class))).thenAnswer(new Answer<Edge>() {
 
           @Override
           public Edge answer(InvocationOnMock invocation) throws Throwable {
             Object[] args = invocation.getArguments();
-            return new Edge((Vertex)args[1], (Vertex)args[3], mock(EdgeProperty.class));
+            return Edge.create((Vertex)args[1], (Vertex)args[2], mock(EdgeProperty.class));
           }
         });
 
@@ -186,7 +185,7 @@ public class TestTezTask {
       for (BaseWork x: work.getChildren(w)) {
         boolean found = false;
         for (Vertex u: outs) {
-          if (u.getVertexName().equals(x.getName())) {
+          if (u.getName().equals(x.getName())) {
             found = true;
             break;
           }
@@ -204,7 +203,7 @@ public class TestTezTask {
 
   @Test
   public void testSubmit() throws Exception {
-    DAG dag = new DAG("test");
+    DAG dag = DAG.create("test");
     task.submit(conf, dag, path, appLr, sessionState, new LinkedList());
     // validate close/reopen
     verify(sessionState, times(1)).open(any(HiveConf.class));
