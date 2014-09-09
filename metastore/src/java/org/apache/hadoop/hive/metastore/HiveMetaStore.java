@@ -537,9 +537,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         }
       } catch (InvalidObjectException e) {
         throw new MetaException(e.getMessage());
-      } catch (Exception e) {
-        assert (e instanceof RuntimeException);
-        throw (RuntimeException) e;
+      } catch (MetaException e) {
+    	throw e;
       }
     }
 
