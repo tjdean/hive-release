@@ -23,18 +23,6 @@
 </property>
 
 <property>
-  <name>hive.metastore.ds.retry.attempts</name>
-  <value>0</value>
-  <description>The number of times to retry a metastore call if there were a connection error</description>
-</property>
-
-<property>
-   <name>hive.metastore.ds.retry.interval</name>
-   <value>1000</value>
-   <description>The number of miliseconds between metastore retry attempts</description>
-</property>
-
-<property>
   <name>hive.metastore.execute.setugi</name>
   <value>true</value>
 </property>
