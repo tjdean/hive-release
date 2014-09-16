@@ -111,6 +111,7 @@
     <commons-pool.version>1.5.4</commons-pool.version>
     <commons-dbcp.version>1.4</commons-dbcp.version>
     <derby.version>10.10.1.1</derby.version>
+    <derbynet.version>10.11.1.1</derbynet.version>
     <guava.version>11.0.2</guava.version>
     <groovy.version>2.1.6</groovy.version>
     <hadoop-20.version>0.20.2</hadoop-20.version>
@@ -424,6 +425,11 @@
         <groupId>org.apache.derby</groupId>
         <artifactId>derby</artifactId>
         <version>${derby.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.derby</groupId>
+        <artifactId>derbynet</artifactId>
+        <version>${derbynet.version}</version>
       </dependency>
       <dependency>
         <groupId>org.apache.httpcomponents</groupId>
@@ -796,6 +802,7 @@
             <build.test.dir>${test.tmp.dir}</build.test.dir>
             <!-- required by a few tests to find the derby jar -->
             <derby.version>${derby.version}</derby.version>
+            <derbynet.version>${derbynet.version}</derbynet.version>
             <derby.stream.error.file>${test.tmp.dir}/derby.log</derby.stream.error.file>
             <hadoop.bin.path>${hadoop.bin.path}</hadoop.bin.path>
             <!-- required by Hadoop's JobHistory -->
