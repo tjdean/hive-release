@@ -23,6 +23,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.serde2.lazy.objectinspector.LazyMapObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.io.Text;
@@ -36,6 +38,8 @@ import org.apache.hadoop.io.Text;
  */
 public class LazyMap extends LazyNonPrimitive<LazyMapObjectInspector> {
 
+  private static boolean warnedOnce = false;
+  public static final Log LOG = LogFactory.getLog(LazyMap.class);
   /**
    * Whether the data is already parsed or not.
    */
@@ -170,6 +174,11 @@ public class LazyMap extends LazyNonPrimitive<LazyMapObjectInspector> {
         valueLength[mapSize] = elementByteEnd - (keyEnd[mapSize] + 1);
         LazyPrimitive<?, ?> lazyKey = uncheckedGetKey(mapSize);
         if (lazyKey == null) {
+          if (!warnedOnce) {
+            LOG.warn("LazyMap does not deal with the case of a NULL map. That is handled by the parent LazyObject.");
+            LOG.warn("Empty key or empty key/value pair in representation of MAP column, may hang query by infinite loop.");
+            warnedOnce = true;
+          }
           continue;
         }
         Object key = lazyKey.getObject();
