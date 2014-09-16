@@ -40,6 +40,12 @@
 </property>
 
 <property>
+  <name>datanucleus.autoCreateSchema</name>
+  <value>false</value>
+  <description>Create necessary schema on a startup if one does not exist</description>
+</property>
+
+<property>
   <name>javax.jdo.option.ConnectionURL</name>
   <value>jdbc:derby://localhost:1527/metastore_db;create=true</value>
   <description>JDBC connect string for a JDBC metastore</description>
