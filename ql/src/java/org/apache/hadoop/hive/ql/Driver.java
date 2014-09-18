@@ -48,7 +48,6 @@ import org.apache.hadoop.hive.metastore.api.Schema;
 import org.apache.hadoop.hive.ql.exec.ConditionalTask;
 import org.apache.hadoop.hive.ql.exec.ExecDriver;
 import org.apache.hadoop.hive.ql.exec.FetchTask;
-import org.apache.hadoop.hive.ql.exec.MoveTask;
 import org.apache.hadoop.hive.ql.exec.Operator;
 import org.apache.hadoop.hive.ql.exec.TableScanOperator;
 import org.apache.hadoop.hive.ql.exec.Task;
@@ -1349,17 +1348,10 @@ public class Driver implements CommandProcessor {
     TaskRunner tskRun = new TaskRunner(tsk, tskRes);
 
     // Launch Task
-    if (HiveConf.getBoolVar(conf, HiveConf.ConfVars.EXECPARALLEL)
-        && (tsk.isMapRedTask() || (tsk instanceof MoveTask))) {
+    if (HiveConf.getBoolVar(conf, HiveConf.ConfVars.EXECPARALLEL) && tsk.isMapRedTask()) {
       // Launch it in the parallel mode, as a separate thread only for MR tasks
-      if (LOG.isInfoEnabled()){
-        LOG.info("Starting task [" + tsk + "] in parallel");
-      }
       tskRun.start();
     } else {
-      if (LOG.isInfoEnabled()){
-        LOG.info("Starting task [" + tsk + "] in serial mode");
-      }
       tskRun.runSequential();
     }
     running.put(tskRes, tskRun);
