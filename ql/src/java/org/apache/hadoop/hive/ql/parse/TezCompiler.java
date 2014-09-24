@@ -200,6 +200,10 @@ public class TezCompiler extends TaskCompiler {
           HashMap<String, Operator<? extends OperatorDesc>> opMap = mapWork.getAliasToWork();
           if (!opMap.isEmpty()) {
             for (Operator<? extends OperatorDesc> op : opMap.values()) {
+              if (op == null) {
+                // skip nulls, can happen with empty data sets
+                continue;
+              }
               setInputFormat(mapWork, op);
             }
           }
