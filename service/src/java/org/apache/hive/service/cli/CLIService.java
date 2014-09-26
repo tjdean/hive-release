@@ -65,7 +65,6 @@ public class CLIService extends CompositeService implements ICLIService {
 
   private HiveConf hiveConf;
   private SessionManager sessionManager;
-  private IMetaStoreClient metastoreClient;
   private UserGroupInformation serviceUGI;
   private UserGroupInformation httpUGI;
 
@@ -121,7 +120,9 @@ public class CLIService extends CompositeService implements ICLIService {
   @Override
   public synchronized void start() {
     super.start();
-
+    
+    // Initialize and test a connection to the metastore
+    IMetaStoreClient metastoreClient = null;
     try {
       // make sure that the base scratch directories exists and writable
       setupStagingDir(hiveConf.getVar(HiveConf.ConfVars.SCRATCHDIR), false);
@@ -138,13 +139,15 @@ public class CLIService extends CompositeService implements ICLIService {
     } catch (Exception e) {
       throw new ServiceException("Unable to connect to MetaStore!", e);
     }
+    finally {
+      if (metastoreClient != null) {
+        metastoreClient.close();
+      }
+    }
   }
 
   @Override
   public synchronized void stop() {
-    if (metastoreClient != null) {
-      metastoreClient.close();
-    }
     super.stop();
   }
 
