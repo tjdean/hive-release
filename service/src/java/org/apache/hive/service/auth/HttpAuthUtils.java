@@ -92,7 +92,7 @@ public class HttpAuthUtils {
     String serverPrincipal = getServerPrincipal(principal, host);
     // Uses the Ticket Granting Ticket in the UserGroupInformation
     return clientUGI.doAs(new HttpKerberosClientAction(serverPrincipal,
-        clientUGI.getShortUserName(), serverHttpUrl));
+        clientUGI.getUserName(), serverHttpUrl));
   }
 
   /**

@@ -72,6 +72,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
 
   protected int minWorkerThreads;
   protected int maxWorkerThreads;
+  protected int workerKeepAliveTime;
 
   protected static HiveAuthFactory hiveAuthFactory;
 
