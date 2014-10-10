@@ -276,7 +276,14 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
         analyzeAlterTableClusterSort(ast, tableName, partSpec);
       } else if (ast.getToken().getType() == HiveParser.TOK_COMPACT) {
         analyzeAlterTableCompact(ast, tableName, partSpec);
+      } else if (ast.getToken().getType() == HiveParser.TOK_ALTERTABLE_ADDCOLS) {
+        analyzeAlterTableModifyCols(tableName, ast, partSpec, AlterTableTypes.ADDCOLS);
+      } else if (ast.getToken().getType() == HiveParser.TOK_ALTERTABLE_REPLACECOLS) {
+        analyzeAlterTableModifyCols(tableName, ast, partSpec, AlterTableTypes.REPLACECOLS);
+      } else if (ast.getToken().getType() == HiveParser.TOK_ALTERTABLE_RENAMECOL) {
+        analyzeAlterTableRenameCol(tableName, ast, partSpec);
       }
+
       break;
     }
     case HiveParser.TOK_DROPTABLE:
@@ -382,15 +389,6 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
       break;
     case HiveParser.TOK_ALTERTABLE_UNARCHIVE:
       analyzeAlterTableArchive(ast, true);
-      break;
-    case HiveParser.TOK_ALTERTABLE_ADDCOLS:
-      analyzeAlterTableModifyCols(ast, AlterTableTypes.ADDCOLS);
-      break;
-    case HiveParser.TOK_ALTERTABLE_REPLACECOLS:
-      analyzeAlterTableModifyCols(ast, AlterTableTypes.REPLACECOLS);
-      break;
-    case HiveParser.TOK_ALTERTABLE_RENAMECOL:
-      analyzeAlterTableRenameCol(ast);
       break;
     case HiveParser.TOK_ALTERTABLE_ADDPARTS:
       analyzeAlterTableAddParts(ast, false);
@@ -2458,19 +2456,19 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
         alterTblDesc), conf));
   }
 
-  private void analyzeAlterTableRenameCol(ASTNode ast) throws SemanticException {
-    String tblName = getUnescapedName((ASTNode) ast.getChild(0));
+  private void analyzeAlterTableRenameCol(String tblName, ASTNode ast,
+       HashMap<String, String> partSpec) throws SemanticException {
     String newComment = null;
     String newType = null;
-    newType = getTypeStringFromAST((ASTNode) ast.getChild(3));
+    newType = getTypeStringFromAST((ASTNode) ast.getChild(2));
     boolean first = false;
     String flagCol = null;
     ASTNode positionNode = null;
-    if (ast.getChildCount() == 6) {
-      newComment = unescapeSQLString(ast.getChild(4).getText());
-      positionNode = (ASTNode) ast.getChild(5);
-    } else if (ast.getChildCount() == 5) {
-      if (ast.getChild(4).getType() == HiveParser.StringLiteral) {
+    if (ast.getChildCount() == 5) {
+      newComment = unescapeSQLString(ast.getChild(3).getText());
+      positionNode = (ASTNode) ast.getChild(4);
+    } else if (ast.getChildCount() == 4) {
+      if (ast.getChild(3).getType() == HiveParser.StringLiteral) {
         newComment = unescapeSQLString(ast.getChild(4).getText());
       } else {
         positionNode = (ASTNode) ast.getChild(4);
@@ -2485,8 +2483,8 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
       }
     }
 
-    String oldColName = ast.getChild(1).getText();
-    String newColName = ast.getChild(2).getText();
+    String oldColName = ast.getChild(0).getText();
+    String newColName = ast.getChild(1).getText();
 
     /* Validate the operation of renaming a column name. */
     Table tab = getTable(tblName);
@@ -2499,10 +2497,10 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
           + ErrorMsg.ALTER_TABLE_NOT_ALLOWED_RENAME_SKEWED_COLUMN.getMsg());
     }
 
-    AlterTableDesc alterTblDesc = new AlterTableDesc(tblName,
+    AlterTableDesc alterTblDesc = new AlterTableDesc(tblName, partSpec,
         unescapeIdentifier(oldColName), unescapeIdentifier(newColName),
         newType, newComment, first, flagCol);
-    addInputsOutputsAlterTable(tblName, null, alterTblDesc);
+    addInputsOutputsAlterTable(tblName, partSpec, alterTblDesc);
 
     rootTasks.add(TaskFactory.get(new DDLWork(getInputs(), getOutputs(),
         alterTblDesc), conf));
@@ -2544,14 +2542,13 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
         alterBucketNum), conf));
   }
 
-  private void analyzeAlterTableModifyCols(ASTNode ast,
-      AlterTableTypes alterType) throws SemanticException {
-    String tblName = getUnescapedName((ASTNode) ast.getChild(0));
-    List<FieldSchema> newCols = getColumns((ASTNode) ast.getChild(1));
-    AlterTableDesc alterTblDesc = new AlterTableDesc(tblName, newCols,
+  private void analyzeAlterTableModifyCols(String tblName, ASTNode ast,
+      HashMap<String, String> partSpec, AlterTableTypes alterType) throws SemanticException {
+    List<FieldSchema> newCols = getColumns((ASTNode) ast.getChild(0));
+    AlterTableDesc alterTblDesc = new AlterTableDesc(tblName, partSpec, newCols,
         alterType);
 
-    addInputsOutputsAlterTable(tblName, null, alterTblDesc);
+    addInputsOutputsAlterTable(tblName, partSpec, alterTblDesc);
     rootTasks.add(TaskFactory.get(new DDLWork(getInputs(), getOutputs(),
         alterTblDesc), conf));
   }
