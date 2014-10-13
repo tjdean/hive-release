@@ -12423,7 +12423,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
                   + " does not have the field " + field));
         }
         if (!lInfo.getInternalName().equals(rInfo.getInternalName())) {
-          throw new SemanticException(generateErrorMessage(tabref,
+          throw new OptiqSemanticException(generateErrorMessage(tabref,
               "Schema of both sides of union should match: field " + field + ":"
                   + " appears on the left side of the UNION at column position: "
                   + getPositionFromInternalName(lInfo.getInternalName())
@@ -12435,7 +12435,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         TypeInfo commonTypeInfo = FunctionRegistry.getCommonClassForUnionAll(lInfo.getType(),
             rInfo.getType());
         if (commonTypeInfo == null) {
-          throw new SemanticException(generateErrorMessage(tabref,
+          throw new OptiqSemanticException(generateErrorMessage(tabref,
               "Schema of both sides of union should match: Column " + field + " is of type "
                   + lInfo.getType().getTypeName() + " on first table and type "
                   + rInfo.getType().getTypeName() + " on second table"));
@@ -13293,7 +13293,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
                 grpbyExpr, new TypeCheckCtx(groupByInputRowResolver));
             ExprNodeDesc grpbyExprNDesc = astToExprNDescMap.get(grpbyExpr);
             if (grpbyExprNDesc == null)
-              throw new RuntimeException("Invalid Column Reference: " + grpbyExpr.dump());
+              throw new OptiqSemanticException("Invalid Column Reference: " + grpbyExpr.dump());
 
             addToGBExpr(groupByOutputRowResolver, groupByInputRowResolver, grpbyExpr,
                 grpbyExprNDesc, gbExprNDescLst, outputColumnNames);
@@ -13833,16 +13833,12 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       }
 
       // 5. Bailout if select involves UDTF
-      ASTNode udtfExpr = (ASTNode) selExprList.getChild(posn).getChild(0);
-      GenericUDTF genericUDTF = null;
-      int udtfExprType = udtfExpr.getType();
-      if (udtfExprType == HiveParser.TOK_FUNCTION || udtfExprType == HiveParser.TOK_FUNCTIONSTAR) {
-        String funcName = TypeCheckProcFactory.DefaultExprProcessor.getFunctionText(udtfExpr, true);
+      ASTNode expr = (ASTNode) selExprList.getChild(posn).getChild(0);
+      int exprType = expr.getType();
+      if (exprType == HiveParser.TOK_FUNCTION || exprType == HiveParser.TOK_FUNCTIONSTAR) {
+        String funcName = TypeCheckProcFactory.DefaultExprProcessor.getFunctionText(expr, true);
         FunctionInfo fi = FunctionRegistry.getFunctionInfo(funcName);
-        if (fi != null) {
-          genericUDTF = fi.getGenericUDTF();
-        }
-        if (genericUDTF != null) {
+        if (fi != null && fi.getGenericUDTF() != null) {
           String msg = String.format("UDTF " + funcName + " is currently not supported in CBO,"
               + " turn off cbo to use UDTF " + funcName);
           LOG.debug(msg);
@@ -13870,7 +13866,6 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
               ErrorMsg.INVALID_AS.getMsg()));
         }
 
-        ASTNode expr;
         String tabAlias;
         String colAlias;
 
@@ -13907,6 +13902,9 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           pos = genColListRegex(unescapeIdentifier(expr.getChild(1).getText()),
               unescapeIdentifier(expr.getChild(0).getChild(0).getText().toLowerCase()), expr,
               col_list, inputRR, pos, out_rwsch, tabAliasesForAllProjs, subQuery);
+        } else if (expr.toStringTree().contains("TOK_FUNCTIONDI") && !(srcRel instanceof HiveAggregateRel)) {
+          // Likely a malformed query eg, select hash(distinct c1) from t1;
+          throw new OptiqSemanticException("Distinct without an aggreggation.");
         } else {
           // Case when this is an expression
           TypeCheckCtx tcCtx = new TypeCheckCtx(inputRR);
@@ -14119,6 +14117,10 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       ASTNode havingClause = qbp.getHavingForClause(qbp.getClauseNames().iterator().next());
 
       if (havingClause != null) {
+        if (!(srcRel instanceof HiveAggregateRel)) {
+          // ill-formed query like select * from t1 having c1 > 0;
+          throw new OptiqSemanticException("Having clause without any group-by.");
+        }
         validateNoHavingReferenceToAlias(qb,  (ASTNode) havingClause.getChild(0));
         gbFilter = genFilterRelNode(qb, (ASTNode) havingClause.getChild(0), srcRel, aliasToRel,
             true);
