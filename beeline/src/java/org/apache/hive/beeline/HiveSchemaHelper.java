@@ -17,12 +17,19 @@
  */
 package org.apache.hive.beeline;
 
+import com.google.common.collect.Lists;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.HiveMetaException;
+
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.IllegalFormatException;
+import java.util.List;
 
 public class HiveSchemaHelper {
   public static final String DB_DERBY = "derby";
@@ -31,6 +38,56 @@ public class HiveSchemaHelper {
   public static final String DB_POSTGRACE = "postgres";
   public static final String DB_ORACLE = "oracle";
   public static final String DB_AZURE = "azuredb";
+
+  /***
+   * Get JDBC connection to metastore db
+   *
+   * @param userName metastore connection username
+   * @param password metastore connection password
+   * @param printInfo print connection parameters
+   * @param hiveConf hive config object
+   * @return metastore connection object
+   * @throws org.apache.hadoop.hive.metastore.api.MetaException
+   */
+  public static Connection getConnectionToMetastore(String userName,
+      String password, boolean printInfo, HiveConf hiveConf)
+      throws HiveMetaException {
+    try {
+      String connectionURL = getValidConfVar(
+          HiveConf.ConfVars.METASTORECONNECTURLKEY, hiveConf);
+      String driver = getValidConfVar(
+          HiveConf.ConfVars.METASTORE_CONNECTION_DRIVER, hiveConf);
+      if (printInfo) {
+        System.out.println("Metastore connection URL:\t " + connectionURL);
+        System.out.println("Metastore Connection Driver :\t " + driver);
+        System.out.println("Metastore connection User:\t " + userName);
+      }
+      if ((userName == null) || userName.isEmpty()) {
+        throw new HiveMetaException("UserName empty ");
+      }
+
+      // load required JDBC driver
+      Class.forName(driver);
+
+      // Connect using the JDBC URL and user/pass from conf
+      return DriverManager.getConnection(connectionURL, userName, password);
+    } catch (IOException e) {
+      throw new HiveMetaException("Failed to get schema version.", e);
+    } catch (SQLException e) {
+      throw new HiveMetaException("Failed to get schema version.", e);
+    } catch (ClassNotFoundException e) {
+      throw new HiveMetaException("Failed to load driver", e);
+    }
+  }
+
+  public static String getValidConfVar(HiveConf.ConfVars confVar, HiveConf hiveConf)
+      throws IOException {
+    String confVarStr = hiveConf.get(confVar.varname);
+    if (confVarStr == null || confVarStr.isEmpty()) {
+      throw new IOException("Empty " + confVar.varname);
+    }
+    return confVarStr;
+  }
 
   public interface NestedScriptParser {
 
@@ -41,14 +98,6 @@ public class HiveSchemaHelper {
     }
 
     static final String DEFAUTL_DELIMITER = ";";
-
-    /***
-     * Build sql command from sql script
-     * @param scriptDir the directory that contains sql script
-     * @param scriptFile sql script from which to build sql command
-     */
-    public String buildCommand(String scriptDir, String scriptFile)
-        throws IllegalArgumentException, IOException;
 
     /***
      * Find the type of given command
@@ -72,7 +121,7 @@ public class HiveSchemaHelper {
     public boolean isNestedScript(String dbCommand);
 
     /***
-     * Find if the given command is should be passed to DB
+     * Find if the given command should not be passed to DB
      * @param dbCommand
      * @return
      */
@@ -95,8 +144,16 @@ public class HiveSchemaHelper {
      * @return
      */
     public boolean needsQuotedIdentifier();
-  }
 
+    /***
+     * Flatten the nested upgrade script into a buffer
+     * @param scriptDir upgrade script directory
+     * @param scriptFile upgrade script file
+     * @return string of sql commands
+     */
+    public String buildCommand(String scriptDir, String scriptFile)
+        throws IllegalFormatException, IOException;
+  }
 
   /***
    * Base implemenation of NestedScriptParser
@@ -104,10 +161,60 @@ public class HiveSchemaHelper {
    *
    */
   private static abstract class AbstractCommandParser implements NestedScriptParser {
+    private List<String> dbOpts;
+    private String msUsername;
+    private String msPassword;
+    private HiveConf hiveConf;
+
+    public AbstractCommandParser(String dbOpts, String msUsername, String msPassword,
+        HiveConf hiveConf) {
+      setDbOpts(dbOpts);
+      this.msUsername = msUsername;
+      this.msPassword = msPassword;
+      this.hiveConf = hiveConf;
+    }
 
     @Override
-    public String buildCommand(String scriptDir, String scriptFile)
-        throws IllegalArgumentException, IOException {
+    public boolean isPartialCommand(String dbCommand) throws IllegalArgumentException{
+      if (dbCommand == null || dbCommand.isEmpty()) {
+        throw new IllegalArgumentException("invalid command line " + dbCommand);
+      }
+      dbCommand = dbCommand.trim();
+      if (dbCommand.endsWith(getDelimiter()) || isNonExecCommand(dbCommand)) {
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+    @Override
+    public boolean isNonExecCommand(String dbCommand) {
+      return (dbCommand.startsWith("--") || dbCommand.startsWith("#"));
+    }
+
+    @Override
+    public String getDelimiter() {
+      return DEFAUTL_DELIMITER;
+    }
+
+    @Override
+    public String cleanseCommand(String dbCommand) {
+      // strip off the delimiter
+      if (dbCommand.endsWith(getDelimiter())) {
+        dbCommand = dbCommand.substring(0,
+            dbCommand.length() - getDelimiter().length());
+      }
+      return dbCommand;
+    }
+
+    @Override
+    public boolean needsQuotedIdentifier() {
+      return false;
+    }
+
+    @Override
+    public String buildCommand(
+      String scriptDir, String scriptFile) throws IllegalFormatException, IOException {
       BufferedReader bfReader =
           new BufferedReader(new FileReader(scriptDir + File.separatorChar + scriptFile));
       String currLine;
@@ -150,49 +257,37 @@ public class HiveSchemaHelper {
       return sb.toString();
     }
 
-    @Override
-    public boolean isPartialCommand(String dbCommand) throws IllegalArgumentException{
-      if (dbCommand == null || dbCommand.isEmpty()) {
-        throw new IllegalArgumentException("invalid command line " + dbCommand);
-      }
-      dbCommand = dbCommand.trim();
-      if (dbCommand.endsWith(getDelimiter()) || isNonExecCommand(dbCommand)) {
-        return false;
-      } else {
-        return true;
+    private void setDbOpts(String dbOpts) {
+      if (dbOpts != null) {
+        this.dbOpts = Lists.newArrayList(dbOpts.split(","));
       }
     }
 
-    @Override
-    public boolean isNonExecCommand(String dbCommand) {
-      return (dbCommand.startsWith("--") || dbCommand.startsWith("#"));
+    protected List<String> getDbOpts() {
+      return dbOpts;
     }
 
-    @Override
-    public String getDelimiter() {
-      return DEFAUTL_DELIMITER;
+    protected String getMsUsername() {
+      return msUsername;
     }
 
-    @Override
-    public String cleanseCommand(String dbCommand) {
-      // strip off the delimiter
-      if (dbCommand.endsWith(getDelimiter())) {
-        dbCommand = dbCommand.substring(0,
-            dbCommand.length() - getDelimiter().length());
-      }
-      return dbCommand;
+    protected String getMsPassword() {
+      return msPassword;
     }
 
-    @Override
-    public boolean needsQuotedIdentifier() {
-      return false;
+    protected HiveConf getHiveConf() {
+      return hiveConf;
     }
   }
-
 
   // Derby commandline parser
   public static class DerbyCommandParser extends AbstractCommandParser {
     private static String DERBY_NESTING_TOKEN = "RUN";
+
+    public DerbyCommandParser(String dbOpts, String msUsername, String msPassword,
+        HiveConf hiveConf) {
+      super(dbOpts, msUsername, msPassword, hiveConf);
+    }
 
     @Override
     public String getScriptName(String dbCommand) throws IllegalArgumentException {
@@ -214,12 +309,16 @@ public class HiveSchemaHelper {
     }
   }
 
-
   // MySQL parser
   public static class MySqlCommandParser extends AbstractCommandParser {
     private static final String MYSQL_NESTING_TOKEN = "SOURCE";
     private static final String DELIMITER_TOKEN = "DELIMITER";
     private String delimiter = DEFAUTL_DELIMITER;
+
+    public MySqlCommandParser(String dbOpts, String msUsername, String msPassword,
+        HiveConf hiveConf) {
+      super(dbOpts, msUsername, msPassword, hiveConf);
+    }
 
     @Override
     public boolean isPartialCommand(String dbCommand) throws IllegalArgumentException{
@@ -273,6 +372,11 @@ public class HiveSchemaHelper {
   public static class PostgresCommandParser extends AbstractCommandParser {
     private static String POSTGRES_NESTING_TOKEN = "\\i";
 
+    public PostgresCommandParser(String dbOpts, String msUsername, String msPassword,
+        HiveConf hiveConf) {
+      super(dbOpts, msUsername, msPassword, hiveConf);
+    }
+
     @Override
     public String getScriptName(String dbCommand) throws IllegalArgumentException {
       String[] tokens = dbCommand.split(" ");
@@ -297,6 +401,12 @@ public class HiveSchemaHelper {
   //Oracle specific parser
   public static class OracleCommandParser extends AbstractCommandParser {
     private static String ORACLE_NESTING_TOKEN = "@";
+
+    public OracleCommandParser(String dbOpts, String msUsername, String msPassword,
+        HiveConf hiveConf) {
+      super(dbOpts, msUsername, msPassword, hiveConf);
+    }
+
     @Override
     public String getScriptName(String dbCommand) throws IllegalArgumentException {
       if (!isNestedScript(dbCommand)) {
@@ -315,6 +425,12 @@ public class HiveSchemaHelper {
   //MSSQL specific parser
   public static class MSSQLCommandParser extends AbstractCommandParser {
     private static String MSSQL_NESTING_TOKEN = ":r";
+
+    public MSSQLCommandParser(String dbOpts, String msUsername, String msPassword,
+        HiveConf hiveConf) {
+      super(dbOpts, msUsername, msPassword, hiveConf);
+    }
+
     @Override
     public String getScriptName(String dbCommand) throws IllegalArgumentException {
       String[] tokens = dbCommand.split(" ");
@@ -331,6 +447,11 @@ public class HiveSchemaHelper {
   }
 
   public static class AzureDBCommandParser extends MSSQLCommandParser {
+    public AzureDBCommandParser(String dbOpts, String msUsername, String msPassword,
+                              HiveConf hiveConf) {
+      super(dbOpts, msUsername, msPassword, hiveConf);
+    }
+
     @Override
     public String buildCommand(String scriptDir, String scriptFile)
         throws IllegalArgumentException, IOException {
@@ -357,18 +478,24 @@ public class HiveSchemaHelper {
   }
 
   public static NestedScriptParser getDbCommandParser(String dbName) {
+    return getDbCommandParser(dbName, null, null, null, null);
+  }
+
+  public static NestedScriptParser getDbCommandParser(String dbName,
+      String dbOpts, String msUsername, String msPassword,
+      HiveConf hiveConf) {
     if (dbName.equalsIgnoreCase(DB_DERBY)) {
-      return new DerbyCommandParser();
+      return new DerbyCommandParser(dbOpts, msUsername, msPassword, hiveConf);
     } else if (dbName.equalsIgnoreCase(DB_MSSQL)) {
-      return new MSSQLCommandParser();
+      return new MSSQLCommandParser(dbOpts, msUsername, msPassword, hiveConf);
     } else if (dbName.equalsIgnoreCase(DB_MYSQL)) {
-      return new MySqlCommandParser();
+      return new MySqlCommandParser(dbOpts, msUsername, msPassword, hiveConf);
     } else if (dbName.equalsIgnoreCase(DB_POSTGRACE)) {
-      return new PostgresCommandParser();
+      return new PostgresCommandParser(dbOpts, msUsername, msPassword, hiveConf);
     } else if (dbName.equalsIgnoreCase(DB_ORACLE)) {
-      return new OracleCommandParser();
+      return new OracleCommandParser(dbOpts, msUsername, msPassword, hiveConf);
     } else if (dbName.equalsIgnoreCase(DB_AZURE)) {
-      return new AzureDBCommandParser();
+      return new AzureDBCommandParser(dbOpts, msUsername, msPassword, hiveConf);
     } else {
       throw new IllegalArgumentException("Unknown dbType " + dbName);
     }

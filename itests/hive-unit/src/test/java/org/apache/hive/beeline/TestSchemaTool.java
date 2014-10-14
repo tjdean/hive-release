@@ -191,9 +191,9 @@ public class TestSchemaTool extends TestCase {
     String expectedSQL = StringUtils.join(resultScript, System.getProperty("line.separator")) +
         System.getProperty("line.separator");
     File testScriptFile = generateTestScript(testScript);
-    String flattenedSql = HiveSchemaTool.buildCommand(
-        HiveSchemaHelper.getDbCommandParser("derby"),
-        testScriptFile.getParentFile().getPath(), testScriptFile.getName());
+    String flattenedSql = HiveSchemaHelper.getDbCommandParser("derby")
+        .buildCommand(testScriptFile.getParentFile().getPath(),
+            testScriptFile.getName());
 
     assertEquals(expectedSQL, flattenedSql);
   }
@@ -233,9 +233,9 @@ public class TestSchemaTool extends TestCase {
       };
 
     File testScriptFile = generateTestScript(parentTestScript);
-    String flattenedSql = HiveSchemaTool.buildCommand(
-        HiveSchemaHelper.getDbCommandParser("derby"),
-        testScriptFile.getParentFile().getPath(), testScriptFile.getName());
+    String flattenedSql = HiveSchemaHelper.getDbCommandParser("derby")
+        .buildCommand(testScriptFile.getParentFile().getPath(),
+            testScriptFile.getName());
     assertFalse(flattenedSql.contains("RUN"));
     assertFalse(flattenedSql.contains("comment"));
     assertTrue(flattenedSql.contains(childTab1));
@@ -278,9 +278,9 @@ public class TestSchemaTool extends TestCase {
       };
 
     File testScriptFile = generateTestScript(parentTestScript);
-    String flattenedSql = HiveSchemaTool.buildCommand(
-        HiveSchemaHelper.getDbCommandParser("mysql"),
-        testScriptFile.getParentFile().getPath(), testScriptFile.getName());
+    String flattenedSql = HiveSchemaHelper.getDbCommandParser("mysql")
+        .buildCommand(testScriptFile.getParentFile().getPath(),
+            testScriptFile.getName());
     assertFalse(flattenedSql.contains("RUN"));
     assertFalse(flattenedSql.contains("comment"));
     assertTrue(flattenedSql.contains(childTab1));
@@ -321,8 +321,8 @@ public class TestSchemaTool extends TestCase {
         System.getProperty("line.separator");
     File testScriptFile = generateTestScript(testScript);
     NestedScriptParser testDbParser = HiveSchemaHelper.getDbCommandParser("mysql");
-    String flattenedSql = HiveSchemaTool.buildCommand(testDbParser,
-        testScriptFile.getParentFile().getPath(), testScriptFile.getName());
+    String flattenedSql = testDbParser.buildCommand(testScriptFile.getParentFile().getPath(),
+        testScriptFile.getName());
 
     assertEquals(expectedSQL, flattenedSql);
   }
@@ -356,8 +356,8 @@ public class TestSchemaTool extends TestCase {
         System.getProperty("line.separator");
     File testScriptFile = generateTestScript(testScript);
     NestedScriptParser testDbParser = HiveSchemaHelper.getDbCommandParser("mysql");
-    String flattenedSql = HiveSchemaTool.buildCommand(testDbParser,
-        testScriptFile.getParentFile().getPath(), testScriptFile.getName());
+    String flattenedSql = testDbParser.buildCommand(testScriptFile.getParentFile().getPath(),
+        testScriptFile.getName());
 
     assertEquals(expectedSQL, flattenedSql);
   }
@@ -397,9 +397,9 @@ public class TestSchemaTool extends TestCase {
       };
 
     File testScriptFile = generateTestScript(parentTestScript);
-    String flattenedSql = HiveSchemaTool.buildCommand(
-        HiveSchemaHelper.getDbCommandParser("oracle"),
-        testScriptFile.getParentFile().getPath(), testScriptFile.getName());
+    String flattenedSql = HiveSchemaHelper.getDbCommandParser("oracle")
+        .buildCommand(testScriptFile.getParentFile().getPath(),
+            testScriptFile.getName());
     assertFalse(flattenedSql.contains("@"));
     assertFalse(flattenedSql.contains("comment"));
     assertTrue(flattenedSql.contains(childTab1));
