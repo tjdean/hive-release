@@ -288,7 +288,14 @@ public class HCatRecordSerDe implements SerDe {
       }
     }
 
-    return ((PrimitiveObjectInspector) fieldObjectInspector).getPrimitiveJavaObject(field);
+    Object result = null;
+    try {
+      result = ((PrimitiveObjectInspector) fieldObjectInspector).getPrimitiveJavaObject(field);
+    } catch (Exception e) {
+      LOG.info("Encounter " + e.getMessage() + ": " + field==null? "null" : field.toString());
+    }
+
+    return result;
   }
 
   /**
