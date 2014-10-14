@@ -44,6 +44,7 @@ import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.Deserializer;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeUtils;
+import org.apache.hadoop.hive.serde2.io.DateWritable;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
@@ -469,7 +470,7 @@ public class VectorizedRowBatchCtx {
             lcv.isNull[0] = true;
             lcv.isRepeating = true;
           } else { 
-            lcv.fill(((Date)value).getTime());
+            lcv.fill(DateWritable.dateToDays((Date) value));
             lcv.isNull[0] = false;
           }          
         }
@@ -482,7 +483,7 @@ public class VectorizedRowBatchCtx {
             lcv.isNull[0] = true;
             lcv.isRepeating = true;
           } else { 
-            lcv.fill((long)(((Timestamp) value).getTime()));
+            lcv.fill(TimestampUtils.getTimeNanoSec((Timestamp) value));
             lcv.isNull[0] = false;
           }
         }
