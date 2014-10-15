@@ -3484,4 +3484,19 @@ public final class Utilities {
   public static boolean isDefaultNameNode(HiveConf conf) {
     return !conf.getChangedProperties().containsKey(HiveConf.ConfVars.HADOOPFS.varname);
   }
+
+  public static String[] getDbTableName(String defaultDb, String dbtable) throws SemanticException {
+    if (dbtable == null) {
+      return new String[2];
+    }
+    String[] names =  dbtable.split("\\.");
+    switch (names.length) {
+      case 2:
+        return names;
+      case 1:
+        return new String [] {defaultDb, dbtable};
+      default:
+        throw new SemanticException(ErrorMsg.INVALID_TABLE_NAME, dbtable);
+    }
+  }
 }
