@@ -101,7 +101,7 @@ public class TestHCatLoaderComplexSchema {
   private static final TupleFactory tf = TupleFactory.getInstance();
   private static final BagFactory bf = BagFactory.getInstance();
 
-  private Tuple t(Object... objects) {
+  protected Tuple t(Object... objects) {
     return tf.newTuple(Arrays.asList(objects));
   }
 
@@ -186,7 +186,7 @@ public class TestHCatLoaderComplexSchema {
 
   }
 
-  private void verifyWriteRead(String tablename, String pigSchema, String tableSchema, List<Tuple> data, boolean provideSchemaToStorer)
+  protected void verifyWriteRead(String tablename, String pigSchema, String tableSchema, List<Tuple> data, boolean provideSchemaToStorer)
     throws IOException, CommandNeedRetryException, ExecException, FrontendException {
     MockLoader.setData(tablename + "Input", data);
     try {
