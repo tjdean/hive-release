@@ -109,7 +109,15 @@ function Install(
         }
         Configure "hive" $nodeInstallRoot $serviceCredential @{
         "hive.log.dir" = "$hivelogsdir";
-        "hive.querylog.location" = "$hivelogsdir\history"}
+        "hive.querylog.location" = "$hivelogsdir\history";
+        "hive.metastore.pre.event.listeners"="org.apache.hadoop.hive.ql.security.authorization.AuthorizationPreEventListener";
+        "hive.security.metastore.authorization.manager"="org.apache.hadoop.hive.ql.security.authorization.StorageBasedAuthorizationProvider,org.apache.hadoop.hive.ql.security.authorization.MetaStoreAuthzAPIAuthorizerEmbedOnly";
+        "hive.security.authorization.enabled"="false";
+        "hive.security.authorization.manager"="org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdConfOnlyAuthorizerFactory";
+        "fs.hdfs.impl.disable.cache"="false";
+        "fs.file.impl.disable.cache"="false"
+        }
+
     }
     elseif ( $component -eq "hcatalog" )
 	{
