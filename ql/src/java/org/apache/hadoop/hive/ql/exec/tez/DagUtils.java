@@ -51,6 +51,7 @@ import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.Context;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.exec.CommonMergeJoinOperator;
+import org.apache.hadoop.hive.ql.exec.Operator;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.exec.mr.ExecMapper;
 import org.apache.hadoop.hive.ql.exec.mr.ExecReducer;
@@ -179,6 +180,8 @@ public class DagUtils {
    */
   private JobConf initializeVertexConf(JobConf baseConf, Context context, MapWork mapWork) {
     JobConf conf = new JobConf(baseConf);
+
+    conf.set(Operator.CONTEXT_NAME_KEY, mapWork.getName());
 
     if (mapWork.getNumMapTasks() != null) {
       // Is this required ?
@@ -654,6 +657,8 @@ public class DagUtils {
    */
   private JobConf initializeVertexConf(JobConf baseConf, Context context, ReduceWork reduceWork) {
     JobConf conf = new JobConf(baseConf);
+
+    conf.set(Operator.CONTEXT_NAME_KEY, reduceWork.getName());
 
     // Is this required ?
     conf.set("mapred.reducer.class", ExecReducer.class.getName());
