@@ -394,6 +394,10 @@ function Configure(
         ###
         $xmlFile = Join-Path $hiveInstallToDir "conf\hive-site.xml"
         UpdateXmlConfig $xmlFile $configs
+        Write-Log "Creating hiveserver2-site.xml"
+        Copy-Item -Path $xmlFile -Destination "$hiveInstallToDir\conf\hiveserver2-site.xml" -Force -ErrorAction Stop |Out-Null
+        $configs = @{"hive.metastore.uris"=" "}
+        UpdateXmlConfig "$hiveInstallToDir\conf\hiveserver2-site.xml" $configs        
     }
     elseif ( $component -eq "hcatalog" )
     {
