@@ -2662,7 +2662,10 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     if (joinKeys == null || joinKeys.length == 0) {
       return input;
     }
-
+    Map<Integer, ExprNodeDesc> hashes = new HashMap<Integer, ExprNodeDesc>();
+    if (input instanceof FilterOperator) {
+      ExprNodeDescUtils.getExprNodeColumnDesc(Arrays.asList(((FilterDesc)input.getConf()).getPredicate()), hashes);
+    }
     ExprNodeDesc filterPred = null;
     List<Boolean> nullSafes = joinTree.getNullSafes();
     for (int i = 0; i < joinKeys.length; i++) {
@@ -2670,6 +2673,10 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
          ((ExprNodeColumnDesc)joinKeys[i]).getIsPartitionColOrVirtualCol())) {
         // no need to generate is not null predicate for partitioning or
         // virtual column, since those columns can never be null.
+        continue;
+      }
+      if(null != hashes.get(joinKeys[i].hashCode())) {
+        // there is already a predicate on this src.
         continue;
       }
       List<ExprNodeDesc> args = new ArrayList<ExprNodeDesc>();
@@ -8256,7 +8263,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         continue;
       }
       JoinType prevType = null;   // save join type
-      for (int j = i - 1; j >= 0; j--) {
+      boolean continueScanning = true;
+      for (int j = i - 1; j >= 0 && continueScanning; j--) {
         QBJoinTree node = trees.get(j);
         if (node == null) {
           continue;
@@ -8272,6 +8280,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           if (!node.getNoOuterJoin() || !target.getNoOuterJoin()) {
             if (node.getRightAliases().length + target.getRightAliases().length + 1 > 16) {
               LOG.info(ErrorMsg.JOINNODE_OUTERJOIN_MORETHAN_16);
+              continueScanning = !runCBO;
               continue;
             }
           }
@@ -8279,6 +8288,11 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           trees.set(j, null);
           continue; // continue merging with next alias
         }
+        /*
+         * for CBO provided orderings, don't attempt to reorder joins.
+         * only convert consecutive joins into n-way joins.
+         */
+        continueScanning = !runCBO;
         if (prevType == null) {
           prevType = currType;
         }
@@ -9930,7 +9944,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         //prunedPartitions = ImmutableMap.copyOf(prunedPartitions);
         getMetaData(qb);
 
-        disableJoinMerge = true;
+        disableJoinMerge = false;
         sinkOp = genPlan(qb);
         LOG.info("CBO Succeeded; optimized logical plan.");
         LOG.debug(newAST.dump());
