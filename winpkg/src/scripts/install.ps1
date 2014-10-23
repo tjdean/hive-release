@@ -127,6 +127,8 @@ function Main( $scriptDir )
     ### Install webhcat
     ###
     $ENV:TEMPLETON_HOME = "$ENV:HCAT_HOME"
+    [Environment]::SetEnvironmentVariable( "HCAT_HOME", "$ENV:HCAT_HOME", [EnvironmentVariableTarget]::Machine )
+    [Environment]::SetEnvironmentVariable( "TEMPLETON_HOME", "$ENV:HCAT_HOME", [EnvironmentVariableTarget]::Machine )
     $ENV:TEMPLETON_LOG_DIR="$ENV:HDP_LOG_DIR\webhcat"
     Write-Log "Setting TEMPLETON_LOG_DIR to $ENV:TEMPLETON_LOG_DIR at machine scope"
     [Environment]::SetEnvironmentVariable( "TEMPLETON_LOG_DIR", "$ENV:TEMPLETON_LOG_DIR", [EnvironmentVariableTarget]::Machine )
