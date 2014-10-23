@@ -394,10 +394,16 @@ function Configure(
         ###
         $xmlFile = Join-Path $hiveInstallToDir "conf\hive-site.xml"
         UpdateXmlConfig $xmlFile $configs
-        Write-Log "Creating hiveserver2-site.xml"
-        Copy-Item -Path $xmlFile -Destination "$hiveInstallToDir\conf\hiveserver2-site.xml" -Force -ErrorAction Stop |Out-Null
-        $configs = @{"hive.metastore.uris"=" "}
-        UpdateXmlConfig "$hiveInstallToDir\conf\hiveserver2-site.xml" $configs        
+        ###
+        ### Apply configuration changes to hiveserver2-site.xml
+        ###
+        $configs = @{"hive.metastore.uris"=" ";
+        "hive.security.authorization.manager"="org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory"; 
+        "hive.security.authenticator.manager"="org.apache.hadoop.hive.ql.security.SessionStateUserAuthenticator" 
+        "hive.querylog.location"="$hivelogsdir\history"
+        "hive.log.dir"="$hivelogsdir"
+        }
+        UpdateXmlConfig "$hiveInstallToDir\conf\hiveserver2-site.xml" $configs                
     }
     elseif ( $component -eq "hcatalog" )
     {
