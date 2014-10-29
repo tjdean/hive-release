@@ -23,7 +23,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.metastore.HiveMetaHook;
-import org.apache.hadoop.hive.ql.io.HiveOutputFormat;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.DefaultStorageHandler;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
@@ -72,17 +71,17 @@ public class FosterStorageHandler extends DefaultStorageHandler {
 
   @Override
   public Class<? extends InputFormat> getInputFormatClass() {
-    return ifClass;
+    return ifClass;    //To change body of overridden methods use File | Settings | File Templates.
   }
 
   @Override
   public Class<? extends OutputFormat> getOutputFormatClass() {
-    return ofClass;
+    return ofClass;    //To change body of overridden methods use File | Settings | File Templates.
   }
 
   @Override
   public Class<? extends SerDe> getSerDeClass() {
-    return serDeClass;
+    return serDeClass;  //To change body of implemented methods use File | Settings | File Templates.
   }
 
   @Override
@@ -187,9 +186,10 @@ public class FosterStorageHandler extends DefaultStorageHandler {
     return;
   }
 
-  /*OutputFormatContainer getOutputFormatContainer(HiveOutputFormat outputFormat) {
+  OutputFormatContainer getOutputFormatContainer(
+    org.apache.hadoop.mapred.OutputFormat outputFormat) {
     return new FileOutputFormatContainer(outputFormat);
-  }*/
+  }
 
   @Override
   public Configuration getConf() {

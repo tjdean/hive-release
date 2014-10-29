@@ -43,7 +43,6 @@ import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 
 import org.apache.hive.hcatalog.HcatTestUtils;
 import org.apache.hive.hcatalog.mapreduce.HCatBaseTest;
-import org.apache.hive.hcatalog.common.TestUtil;
 
 import org.apache.pig.EvalFunc;
 import org.apache.pig.ExecType;
