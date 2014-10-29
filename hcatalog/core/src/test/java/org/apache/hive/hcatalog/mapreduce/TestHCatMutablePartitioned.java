@@ -20,10 +20,10 @@
 package org.apache.hive.hcatalog.mapreduce;
 
 public class TestHCatMutablePartitioned extends TestHCatPartitioned {
-  public TestHCatMutablePartitioned(String storageFormat, String serdeClass,
+  public TestHCatMutablePartitioned(String formatName, String serdeClass,
       String inputFormatClass, String outputFormatClass)
       throws Exception {
-    super(storageFormat, serdeClass, inputFormatClass, outputFormatClass);
+    super(formatName, serdeClass, inputFormatClass, outputFormatClass);
   }
 
   @Override

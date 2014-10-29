@@ -19,30 +19,16 @@
 
 package org.apache.hive.hcatalog.mapreduce;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.hadoop.hive.ql.io.IOConstants;
-import org.apache.hive.hcatalog.common.TestUtil;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static org.junit.Assume.assumeTrue;
-
 public class TestHCatExternalDynamicPartitioned extends TestHCatDynamicPartitioned {
 
-  @Override
-  protected Map<String, Set<String>> getDisabledStorageFormats() {
-    return new HashMap<String, Set<String>>();
-  }
-
-  public TestHCatExternalDynamicPartitioned(String storageFormat, String serdeClass,
+  public TestHCatExternalDynamicPartitioned(String formatName, String serdeClass,
       String inputFormatClass, String outputFormatClass)
       throws Exception {
-    super(storageFormat, serdeClass, inputFormatClass, outputFormatClass);
-    tableName = "testHCatExternalDynamicPartitionedTable_" + storageFormat;
+    super(formatName, serdeClass, inputFormatClass, outputFormatClass);
+    tableName = "testHCatExternalDynamicPartitionedTable_" + formatName;
     generateWriteRecords(NUM_RECORDS, NUM_PARTITIONS, 0);
     generateDataColumns();
   }
@@ -58,7 +44,6 @@ public class TestHCatExternalDynamicPartitioned extends TestHCatDynamicPartition
    */
   @Test
   public void testHCatExternalDynamicCustomLocation() throws Exception {
-    assumeTrue(!TestUtil.shouldSkip(storageFormat, getDisabledStorageFormats()));
     runHCatDynamicPartitionedTable(true, "mapred/externalDynamicOutput/${p1}");
   }
 

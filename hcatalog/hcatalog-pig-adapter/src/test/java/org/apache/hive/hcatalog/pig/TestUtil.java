@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.hive.hcatalog.common;
+package org.apache.hive.hcatalog.pig;
 
 import java.util.HashMap;
 import java.util.HashSet;

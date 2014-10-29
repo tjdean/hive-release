@@ -20,10 +20,10 @@
 package org.apache.hive.hcatalog.mapreduce;
 
 public class TestHCatExternalNonPartitioned extends TestHCatNonPartitioned {
-  public TestHCatExternalNonPartitioned(String storageFormat, String serdeName,
+  public TestHCatExternalNonPartitioned(String formatName, String serdeName,
       String inputFormatClass, String outputFormatClass)
       throws Exception {
-    super(storageFormat, serdeName, inputFormatClass, outputFormatClass);
+    super(formatName, serdeName, inputFormatClass, outputFormatClass);
   }
 
   @Override
