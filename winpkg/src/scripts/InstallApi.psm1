@@ -168,7 +168,7 @@ function Install(
         [Environment]::SetEnvironmentVariable("HCAT_HOME", $hcatInstallPath, [EnvironmentVariableTarget]::Machine)
         $ENV:HCAT_HOME = "$hcatInstallPath"
         Write-Log "Copying template files"
-        $xcopy_cmd = "xcopy /EIYF `"$HDP_INSTALL_PATH\..\template\conf\*`" `"$installToDir\etc\webhcat`""
+        $xcopy_cmd = "xcopy /EIYF `"$HDP_INSTALL_PATH\..\template\conf\webhcat-*`" `"$installToDir\etc\webhcat`""
         Invoke-CmdChk $xcopy_cmd
 
         ###
@@ -656,7 +656,9 @@ function InstallBinaries(
     ###  Copy template config files
     ###
     Write-Log "Copying template files"
-    $xcopy_cmd = "xcopy /EIYF `"$HDP_INSTALL_PATH\..\template`" `"$hiveInstallToDir`""
+    $xcopy_cmd = "xcopy /EIYF `"$HDP_INSTALL_PATH\..\template\bin\*`" `"$hiveInstallToDir\bin`""
+    Invoke-Cmd $xcopy_cmd
+    $xcopy_cmd = "xcopy /EIYF `"$HDP_INSTALL_PATH\..\template\conf\hive-*`" `"$hiveInstallToDir\conf`""
     Invoke-Cmd $xcopy_cmd
 
     ###
