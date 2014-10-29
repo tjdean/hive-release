@@ -397,13 +397,14 @@ function Configure(
         ###
         ### Apply configuration changes to hiveserver2-site.xml
         ###
-        $configs = @{"hive.metastore.uris"=" ";
-        "hive.security.authorization.manager"="org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory"; 
+        $configs = @{"hive.security.authorization.manager"="org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory"; 
         "hive.security.authenticator.manager"="org.apache.hadoop.hive.ql.security.SessionStateUserAuthenticator" 
         "hive.querylog.location"="$hivelogsdir\history"
         "hive.log.dir"="$hivelogsdir"
         }
-        UpdateXmlConfig "$hiveInstallToDir\conf\hiveserver2-site.xml" $configs                
+        UpdateXmlConfig "$hiveInstallToDir\conf\hiveserver2-site.xml" $configs   
+        $configs = @{"hive.metastore.uris"=" "}
+        UpdateXmlConfigWithWhitespace "$hiveInstallToDir\conf\hiveserver2-site.xml" $configs                 
     }
     elseif ( $component -eq "hcatalog" )
     {
@@ -979,6 +980,51 @@ function UpdateXmlConfig(
     $xml.Save($fileName)
     $xml.ReleasePath
 }
+
+### Helper routine that updates the given fileName XML file with the given
+### key/value configuration values. Supports whitespaces. The XML file is expected to be in the
+### Hadoop format. For example:
+### <configuration>
+###   <property>
+###     <name.../><value.../>
+###   </property>
+### </configuration>
+function UpdateXmlConfigWithWhitespace(
+    [string]
+    [parameter( Position=0, Mandatory=$true )]
+    $fileName,
+    [hashtable]
+    [parameter( Position=1 )]
+    $config = @{} )
+{
+    $xml = New-Object System.Xml.XmlDocument
+    $xml.Load($fileName)
+
+    foreach( $key in empty-null $config.Keys )
+    {
+        $value = $config[$key]
+        $found = $False
+        $xml.SelectNodes('/configuration/property') | ? { $_.name -eq $key } | % { $_.value = $value; $found = $True }
+        if ( -not $found )
+        {
+            $xml["configuration"].AppendChild($xml.CreateWhitespace("`r`n  ")) | Out-Null
+            $newItem = $xml.CreateElement("property")
+            $newItem.AppendChild($xml.CreateWhitespace("`r`n    ")) | Out-Null
+            $newItem.AppendChild($xml.CreateElement("name")) | Out-Null
+            $newItem.AppendChild($xml.CreateWhitespace("`r`n    ")) | Out-Null
+            $newItem.AppendChild($xml.CreateElement("value")) | Out-Null
+            $newItem.AppendChild($xml.CreateWhitespace("`r`n  ")) | Out-Null
+            $newItem.name = $key
+            $newItem.value = $value
+            $xml["configuration"].AppendChild($newItem) | Out-Null
+            $xml["configuration"].AppendChild($xml.CreateWhitespace("`r`n")) | Out-Null
+        }
+    }
+
+    $xml.Save($fileName)
+    $xml.ReleasePath
+}
+
 
 ### Helper routine to emulate which
 function Which($command)
