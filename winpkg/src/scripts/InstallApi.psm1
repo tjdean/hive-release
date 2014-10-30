@@ -660,6 +660,8 @@ function InstallBinaries(
     Invoke-Cmd $xcopy_cmd
     $xcopy_cmd = "xcopy /EIYF `"$HDP_INSTALL_PATH\..\template\conf\hive-*`" `"$hiveInstallToDir\conf`""
     Invoke-Cmd $xcopy_cmd
+    $xcopy_cmd = "xcopy /EIYF `"$HDP_INSTALL_PATH\..\template\conf\hiveserver2-*`" `"$hiveInstallToDir\conf`""
+    Invoke-Cmd $xcopy_cmd
 
     ###
     ### Grant Hadoop user access to $hiveInstallToDir
