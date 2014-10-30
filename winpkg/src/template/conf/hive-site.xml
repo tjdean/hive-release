@@ -130,8 +130,8 @@
   </property>
   <property>
     <name>hive.exec.reducers.bytes.per.reducer</name>
-    <value>256000000</value>
-    <description>size per reducer.The default is 256Mb, i.e if the input size is 1G, it will use 4 reducers.</description>
+    <value>67108864</value>
+    <description>size per reducer.The default is 64Mb, i.e if the input size is 1G, it will use 4 reducers.</description>
   </property>
   <property>
     <name>hive.exec.reducers.max</name>
