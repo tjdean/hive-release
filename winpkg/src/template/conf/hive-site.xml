@@ -3035,6 +3035,7 @@
       The default value is true.
     </description>
   </property>
+  <property>
     <name>hive.vectorized.groupby.maxentries</name>
     <value>100000</value>
     <description>
@@ -3291,7 +3292,6 @@
     <value>4096</value>
     <description>Number of entries added to the group by aggregation hash before a recomputation of average entry size is performed.</description>
   </property>
-  <property>
 
   <property>
     <name>hive.vectorized.groupby.flush.percent</name>
