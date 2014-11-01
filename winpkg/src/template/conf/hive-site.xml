@@ -214,11 +214,6 @@
     <description>Maximum number of dynamic partitions allowed to be created in each mapper/reducer node.</description>
   </property>
   <property>
-    <name>hive.exec.max.created.files</name>
-    <value>100000L</value>
-    <description>Maximum number of HDFS files created by all mappers/reducers in a MapReduce job.</description>
-  </property>
-  <property>
     <name>hive.exec.default.partition.name</name>
     <value>__HIVE_DEFAULT_PARTITION__</value>
     <description>
