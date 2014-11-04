@@ -2732,7 +2732,7 @@
   </property>
   <property>
     <name>hive.server2.long.polling.timeout</name>
-    <value>5000ms</value>
+    <value>50000ms</value>
     <description>
       Expects a time value with unit (d/day, h/hour, m/min, s/sec, ms/msec, us/usec, ns/nsec), which is msec if not specified.
       Time that HiveServer2 will wait before responding to asynchronous calls that use long polling
