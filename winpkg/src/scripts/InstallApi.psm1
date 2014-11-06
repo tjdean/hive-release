@@ -394,17 +394,19 @@ function Configure(
         ###
         $xmlFile = Join-Path $hiveInstallToDir "conf\hive-site.xml"
         UpdateXmlConfig $xmlFile $configs
-        ###
         ### Apply configuration changes to hiveserver2-site.xml
         ###
+		$xmlFile = "$hiveInstallToDir\conf\hiveserver2-site.xml"
         $configs = @{"hive.security.authorization.manager"="org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory"; 
-        "hive.security.authenticator.manager"="org.apache.hadoop.hive.ql.security.SessionStateUserAuthenticator" 
-        "hive.querylog.location"="$hivelogsdir\history"
-        "hive.log.dir"="$hivelogsdir"
+        "hive.security.authenticator.manager"="org.apache.hadoop.hive.ql.security.SessionStateUserAuthenticator";
+        "hive.querylog.location"="$hivelogsdir\history";
+        "hive.log.dir"="$hivelogsdir";
+		"hive.metastore.uris"="%SPACE%"
         }
-        UpdateXmlConfig "$hiveInstallToDir\conf\hiveserver2-site.xml" $configs   
-        $configs = @{"hive.metastore.uris"=" "}
-        UpdateXmlConfigWithWhitespace "$hiveInstallToDir\conf\hiveserver2-site.xml" $configs                 
+        UpdateXmlConfig $xmlFile $configs   
+      	Get-Content $xmlFile | ForEach-Object { $_ -replace "%SPACE%", " " } | Set-Content ($xmlFile+".tmp")
+		Remove-Item $xmlFile  -ErrorAction Stop |Out-Null
+		Rename-Item ($xmlFile+".tmp") $xmlFile -ErrorAction Stop |Out-Null               
     }
     elseif ( $component -eq "hcatalog" )
     {
@@ -958,50 +960,6 @@ function UpdateXmlConfig(
 {
     $xml = New-Object System.Xml.XmlDocument
     $xml.PreserveWhitespace = $true
-    $xml.Load($fileName)
-
-    foreach( $key in empty-null $config.Keys )
-    {
-        $value = $config[$key]
-        $found = $False
-        $xml.SelectNodes('/configuration/property') | ? { $_.name -eq $key } | % { $_.value = $value; $found = $True }
-        if ( -not $found )
-        {
-            $xml["configuration"].AppendChild($xml.CreateWhitespace("`r`n  ")) | Out-Null
-            $newItem = $xml.CreateElement("property")
-            $newItem.AppendChild($xml.CreateWhitespace("`r`n    ")) | Out-Null
-            $newItem.AppendChild($xml.CreateElement("name")) | Out-Null
-            $newItem.AppendChild($xml.CreateWhitespace("`r`n    ")) | Out-Null
-            $newItem.AppendChild($xml.CreateElement("value")) | Out-Null
-            $newItem.AppendChild($xml.CreateWhitespace("`r`n  ")) | Out-Null
-            $newItem.name = $key
-            $newItem.value = $value
-            $xml["configuration"].AppendChild($newItem) | Out-Null
-            $xml["configuration"].AppendChild($xml.CreateWhitespace("`r`n")) | Out-Null
-        }
-    }
-
-    $xml.Save($fileName)
-    $xml.ReleasePath
-}
-
-### Helper routine that updates the given fileName XML file with the given
-### key/value configuration values. Supports whitespaces. The XML file is expected to be in the
-### Hadoop format. For example:
-### <configuration>
-###   <property>
-###     <name.../><value.../>
-###   </property>
-### </configuration>
-function UpdateXmlConfigWithWhitespace(
-    [string]
-    [parameter( Position=0, Mandatory=$true )]
-    $fileName,
-    [hashtable]
-    [parameter( Position=1 )]
-    $config = @{} )
-{
-    $xml = New-Object System.Xml.XmlDocument
     $xml.Load($fileName)
 
     foreach( $key in empty-null $config.Keys )
