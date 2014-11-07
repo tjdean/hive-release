@@ -15632,14 +15632,32 @@ public final class OrcProto {
     // repeated uint32 version = 4 [packed = true];
     /**
      * <code>repeated uint32 version = 4 [packed = true];</code>
+     *
+     * <pre>
+     * the version of the file format
+     *   [0, 11] = Hive 0.11
+     *   [0, 12] = Hive 0.12
+     * </pre>
      */
     java.util.List<java.lang.Integer> getVersionList();
     /**
      * <code>repeated uint32 version = 4 [packed = true];</code>
+     *
+     * <pre>
+     * the version of the file format
+     *   [0, 11] = Hive 0.11
+     *   [0, 12] = Hive 0.12
+     * </pre>
      */
     int getVersionCount();
     /**
      * <code>repeated uint32 version = 4 [packed = true];</code>
+     *
+     * <pre>
+     * the version of the file format
+     *   [0, 11] = Hive 0.11
+     *   [0, 12] = Hive 0.12
+     * </pre>
      */
     int getVersion(int index);
 
@@ -15652,6 +15670,28 @@ public final class OrcProto {
      * <code>optional uint64 metadataLength = 5;</code>
      */
     long getMetadataLength();
+
+    // optional uint32 writerVersion = 6;
+    /**
+     * <code>optional uint32 writerVersion = 6;</code>
+     *
+     * <pre>
+     * Version of the writer:
+     *   0 (or missing) = original
+     *   1 = HIVE-8732 fixed
+     * </pre>
+     */
+    boolean hasWriterVersion();
+    /**
+     * <code>optional uint32 writerVersion = 6;</code>
+     *
+     * <pre>
+     * Version of the writer:
+     *   0 (or missing) = original
+     *   1 = HIVE-8732 fixed
+     * </pre>
+     */
+    int getWriterVersion();
 
     // optional string magic = 8000;
     /**
@@ -15782,8 +15822,13 @@ public final class OrcProto {
               metadataLength_ = input.readUInt64();
               break;
             }
-            case 64002: {
+            case 48: {
               bitField0_ |= 0x00000010;
+              writerVersion_ = input.readUInt32();
+              break;
+            }
+            case 64002: {
+              bitField0_ |= 0x00000020;
               magic_ = input.readBytes();
               break;
             }
@@ -15883,6 +15928,12 @@ public final class OrcProto {
     private java.util.List<java.lang.Integer> version_;
     /**
      * <code>repeated uint32 version = 4 [packed = true];</code>
+     *
+     * <pre>
+     * the version of the file format
+     *   [0, 11] = Hive 0.11
+     *   [0, 12] = Hive 0.12
+     * </pre>
      */
     public java.util.List<java.lang.Integer>
         getVersionList() {
@@ -15890,12 +15941,24 @@ public final class OrcProto {
     }
     /**
      * <code>repeated uint32 version = 4 [packed = true];</code>
+     *
+     * <pre>
+     * the version of the file format
+     *   [0, 11] = Hive 0.11
+     *   [0, 12] = Hive 0.12
+     * </pre>
      */
     public int getVersionCount() {
       return version_.size();
     }
     /**
      * <code>repeated uint32 version = 4 [packed = true];</code>
+     *
+     * <pre>
+     * the version of the file format
+     *   [0, 11] = Hive 0.11
+     *   [0, 12] = Hive 0.12
+     * </pre>
      */
     public int getVersion(int index) {
       return version_.get(index);
@@ -15918,6 +15981,34 @@ public final class OrcProto {
       return metadataLength_;
     }
 
+    // optional uint32 writerVersion = 6;
+    public static final int WRITERVERSION_FIELD_NUMBER = 6;
+    private int writerVersion_;
+    /**
+     * <code>optional uint32 writerVersion = 6;</code>
+     *
+     * <pre>
+     * Version of the writer:
+     *   0 (or missing) = original
+     *   1 = HIVE-8732 fixed
+     * </pre>
+     */
+    public boolean hasWriterVersion() {
+      return ((bitField0_ & 0x00000010) == 0x00000010);
+    }
+    /**
+     * <code>optional uint32 writerVersion = 6;</code>
+     *
+     * <pre>
+     * Version of the writer:
+     *   0 (or missing) = original
+     *   1 = HIVE-8732 fixed
+     * </pre>
+     */
+    public int getWriterVersion() {
+      return writerVersion_;
+    }
+
     // optional string magic = 8000;
     public static final int MAGIC_FIELD_NUMBER = 8000;
     private java.lang.Object magic_;
@@ -15929,7 +16020,7 @@ public final class OrcProto {
      * </pre>
      */
     public boolean hasMagic() {
-      return ((bitField0_ & 0x00000010) == 0x00000010);
+      return ((bitField0_ & 0x00000020) == 0x00000020);
     }
     /**
      * <code>optional string magic = 8000;</code>
@@ -15979,6 +16070,7 @@ public final class OrcProto {
       compressionBlockSize_ = 0L;
       version_ = java.util.Collections.emptyList();
       metadataLength_ = 0L;
+      writerVersion_ = 0;
       magic_ = "";
     }
     private byte memoizedIsInitialized = -1;
@@ -16013,6 +16105,9 @@ public final class OrcProto {
         output.writeUInt64(5, metadataLength_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        output.writeUInt32(6, writerVersion_);
+      }
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
         output.writeBytes(8000, getMagicBytes());
       }
       getUnknownFields().writeTo(output);
@@ -16055,6 +16150,10 @@ public final class OrcProto {
           .computeUInt64Size(5, metadataLength_);
       }
       if (((bitField0_ & 0x00000010) == 0x00000010)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeUInt32Size(6, writerVersion_);
+      }
+      if (((bitField0_ & 0x00000020) == 0x00000020)) {
         size += com.google.protobuf.CodedOutputStream
           .computeBytesSize(8000, getMagicBytes());
       }
@@ -16188,8 +16287,10 @@ public final class OrcProto {
         bitField0_ = (bitField0_ & ~0x00000008);
         metadataLength_ = 0L;
         bitField0_ = (bitField0_ & ~0x00000010);
-        magic_ = "";
+        writerVersion_ = 0;
         bitField0_ = (bitField0_ & ~0x00000020);
+        magic_ = "";
+        bitField0_ = (bitField0_ & ~0x00000040);
         return this;
       }
 
@@ -16242,6 +16343,10 @@ public final class OrcProto {
         if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
           to_bitField0_ |= 0x00000010;
         }
+        result.writerVersion_ = writerVersion_;
+        if (((from_bitField0_ & 0x00000040) == 0x00000040)) {
+          to_bitField0_ |= 0x00000020;
+        }
         result.magic_ = magic_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
@@ -16281,8 +16386,11 @@ public final class OrcProto {
         if (other.hasMetadataLength()) {
           setMetadataLength(other.getMetadataLength());
         }
+        if (other.hasWriterVersion()) {
+          setWriterVersion(other.getWriterVersion());
+        }
         if (other.hasMagic()) {
-          bitField0_ |= 0x00000020;
+          bitField0_ |= 0x00000040;
           magic_ = other.magic_;
           onChanged();
         }
@@ -16425,6 +16533,12 @@ public final class OrcProto {
       }
       /**
        * <code>repeated uint32 version = 4 [packed = true];</code>
+       *
+       * <pre>
+       * the version of the file format
+       *   [0, 11] = Hive 0.11
+       *   [0, 12] = Hive 0.12
+       * </pre>
        */
       public java.util.List<java.lang.Integer>
           getVersionList() {
@@ -16432,18 +16546,36 @@ public final class OrcProto {
       }
       /**
        * <code>repeated uint32 version = 4 [packed = true];</code>
+       *
+       * <pre>
+       * the version of the file format
+       *   [0, 11] = Hive 0.11
+       *   [0, 12] = Hive 0.12
+       * </pre>
        */
       public int getVersionCount() {
         return version_.size();
       }
       /**
        * <code>repeated uint32 version = 4 [packed = true];</code>
+       *
+       * <pre>
+       * the version of the file format
+       *   [0, 11] = Hive 0.11
+       *   [0, 12] = Hive 0.12
+       * </pre>
        */
       public int getVersion(int index) {
         return version_.get(index);
       }
       /**
        * <code>repeated uint32 version = 4 [packed = true];</code>
+       *
+       * <pre>
+       * the version of the file format
+       *   [0, 11] = Hive 0.11
+       *   [0, 12] = Hive 0.12
+       * </pre>
        */
       public Builder setVersion(
           int index, int value) {
@@ -16454,6 +16586,12 @@ public final class OrcProto {
       }
       /**
        * <code>repeated uint32 version = 4 [packed = true];</code>
+       *
+       * <pre>
+       * the version of the file format
+       *   [0, 11] = Hive 0.11
+       *   [0, 12] = Hive 0.12
+       * </pre>
        */
       public Builder addVersion(int value) {
         ensureVersionIsMutable();
@@ -16463,6 +16601,12 @@ public final class OrcProto {
       }
       /**
        * <code>repeated uint32 version = 4 [packed = true];</code>
+       *
+       * <pre>
+       * the version of the file format
+       *   [0, 11] = Hive 0.11
+       *   [0, 12] = Hive 0.12
+       * </pre>
        */
       public Builder addAllVersion(
           java.lang.Iterable<? extends java.lang.Integer> values) {
@@ -16473,6 +16617,12 @@ public final class OrcProto {
       }
       /**
        * <code>repeated uint32 version = 4 [packed = true];</code>
+       *
+       * <pre>
+       * the version of the file format
+       *   [0, 11] = Hive 0.11
+       *   [0, 12] = Hive 0.12
+       * </pre>
        */
       public Builder clearVersion() {
         version_ = java.util.Collections.emptyList();
@@ -16514,6 +16664,63 @@ public final class OrcProto {
         return this;
       }
 
+      // optional uint32 writerVersion = 6;
+      private int writerVersion_ ;
+      /**
+       * <code>optional uint32 writerVersion = 6;</code>
+       *
+       * <pre>
+       * Version of the writer:
+       *   0 (or missing) = original
+       *   1 = HIVE-8732 fixed
+       * </pre>
+       */
+      public boolean hasWriterVersion() {
+        return ((bitField0_ & 0x00000020) == 0x00000020);
+      }
+      /**
+       * <code>optional uint32 writerVersion = 6;</code>
+       *
+       * <pre>
+       * Version of the writer:
+       *   0 (or missing) = original
+       *   1 = HIVE-8732 fixed
+       * </pre>
+       */
+      public int getWriterVersion() {
+        return writerVersion_;
+      }
+      /**
+       * <code>optional uint32 writerVersion = 6;</code>
+       *
+       * <pre>
+       * Version of the writer:
+       *   0 (or missing) = original
+       *   1 = HIVE-8732 fixed
+       * </pre>
+       */
+      public Builder setWriterVersion(int value) {
+        bitField0_ |= 0x00000020;
+        writerVersion_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional uint32 writerVersion = 6;</code>
+       *
+       * <pre>
+       * Version of the writer:
+       *   0 (or missing) = original
+       *   1 = HIVE-8732 fixed
+       * </pre>
+       */
+      public Builder clearWriterVersion() {
+        bitField0_ = (bitField0_ & ~0x00000020);
+        writerVersion_ = 0;
+        onChanged();
+        return this;
+      }
+
       // optional string magic = 8000;
       private java.lang.Object magic_ = "";
       /**
@@ -16524,7 +16731,7 @@ public final class OrcProto {
        * </pre>
        */
       public boolean hasMagic() {
-        return ((bitField0_ & 0x00000020) == 0x00000020);
+        return ((bitField0_ & 0x00000040) == 0x00000040);
       }
       /**
        * <code>optional string magic = 8000;</code>
@@ -16576,7 +16783,7 @@ public final class OrcProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000020;
+  bitField0_ |= 0x00000040;
         magic_ = value;
         onChanged();
         return this;
@@ -16589,7 +16796,7 @@ public final class OrcProto {
        * </pre>
        */
       public Builder clearMagic() {
-        bitField0_ = (bitField0_ & ~0x00000020);
+        bitField0_ = (bitField0_ & ~0x00000040);
         magic_ = getDefaultInstance().getMagic();
         onChanged();
         return this;
@@ -16606,7 +16813,7 @@ public final class OrcProto {
         if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000020;
+  bitField0_ |= 0x00000040;
         magic_ = value;
         onChanged();
         return this;
@@ -16803,13 +17010,14 @@ public final class OrcProto {
       ".orc.UserMetadataItem\022\024\n\014numberOfRows\030\006 " +
       "\001(\004\022F\n\nstatistics\030\007 \003(\01322.org.apache.had",
       "oop.hive.ql.io.orc.ColumnStatistics\022\026\n\016r" +
-      "owIndexStride\030\010 \001(\r\"\305\001\n\nPostScript\022\024\n\014fo" +
+      "owIndexStride\030\010 \001(\r\"\334\001\n\nPostScript\022\024\n\014fo" +
       "oterLength\030\001 \001(\004\022F\n\013compression\030\002 \001(\01621." +
       "org.apache.hadoop.hive.ql.io.orc.Compres" +
       "sionKind\022\034\n\024compressionBlockSize\030\003 \001(\004\022\023" +
       "\n\007version\030\004 \003(\rB\002\020\001\022\026\n\016metadataLength\030\005 " +
-      "\001(\004\022\016\n\005magic\030\300> \001(\t*:\n\017CompressionKind\022\010" +
-      "\n\004NONE\020\000\022\010\n\004ZLIB\020\001\022\n\n\006SNAPPY\020\002\022\007\n\003LZO\020\003"
+      "\001(\004\022\025\n\rwriterVersion\030\006 \001(\r\022\016\n\005magic\030\300> \001" +
+      "(\t*:\n\017CompressionKind\022\010\n\004NONE\020\000\022\010\n\004ZLIB\020" +
+      "\001\022\n\n\006SNAPPY\020\002\022\007\n\003LZO\020\003"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -16935,7 +17143,7 @@ public final class OrcProto {
           internal_static_org_apache_hadoop_hive_ql_io_orc_PostScript_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_org_apache_hadoop_hive_ql_io_orc_PostScript_descriptor,
-              new java.lang.String[] { "FooterLength", "Compression", "CompressionBlockSize", "Version", "MetadataLength", "Magic", });
+              new java.lang.String[] { "FooterLength", "Compression", "CompressionBlockSize", "Version", "MetadataLength", "WriterVersion", "Magic", });
           return null;
         }
       };

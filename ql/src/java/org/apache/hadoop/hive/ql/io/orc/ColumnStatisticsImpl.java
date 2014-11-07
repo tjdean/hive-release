@@ -387,7 +387,8 @@ class ColumnStatisticsImpl implements ColumnStatistics {
       } else if (str.minimum != null) {
         if (minimum.compareTo(str.minimum) > 0) {
           minimum = str.minimum;
-        } else if (maximum.compareTo(str.maximum) < 0) {
+        }
+        if (maximum.compareTo(str.maximum) < 0) {
           maximum = str.maximum;
         }
       }
@@ -556,7 +557,8 @@ class ColumnStatisticsImpl implements ColumnStatistics {
       } else if (dec.minimum != null) {
         if (minimum.compareTo(dec.minimum) > 0) {
           minimum = dec.minimum;
-        } else if (maximum.compareTo(dec.maximum) < 0) {
+        }
+        if (maximum.compareTo(dec.maximum) < 0) {
           maximum = dec.maximum;
         }
         if (sum == null || dec.sum == null) {
@@ -664,7 +666,8 @@ class ColumnStatisticsImpl implements ColumnStatistics {
       } else if (dateStats.minimum != null) {
         if (minimum.compareTo(dateStats.minimum) > 0) {
           minimum = dateStats.minimum;
-        } else if (maximum.compareTo(dateStats.maximum) < 0) {
+        } 
+        if (maximum.compareTo(dateStats.maximum) < 0) {
           maximum = dateStats.maximum;
         }
       }

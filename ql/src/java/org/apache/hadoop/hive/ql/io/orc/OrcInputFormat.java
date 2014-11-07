@@ -620,6 +620,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     private final boolean isOriginal;
     private final List<Long> deltas;
     private final boolean hasBase;
+    private OrcFile.WriterVersion writerVersion;
 
     SplitGenerator(Context context, FileSystem fs,
                    FileStatus file, FileInfo fileInfo,
@@ -755,7 +756,9 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
           Reader.Options options = new Reader.Options();
           setIncludedColumns(options, types, context.conf, isOriginal);
           setSearchArgument(options, types, context.conf, isOriginal);
-          if (options.getSearchArgument() != null) {
+          // only do split pruning if HIVE-8732 has been fixed in the writer
+          if (options.getSearchArgument() != null &&
+              writerVersion != OrcFile.WriterVersion.ORIGINAL) {
             SearchArgument sarg = options.getSearchArgument();
             List<PredicateLeaf> sargLeaves = sarg.getLeaves();
             List<StripeStatistics> stripeStats = metadata.getStripeStatistics();
@@ -846,6 +849,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
           fileMetaInfo = fileInfo.fileMetaInfo;
           metadata = fileInfo.metadata;
           types = fileInfo.types;
+          writerVersion = fileInfo.writerVersion;
           // For multiple runs, in case sendSplitsInFooter changes
           if (fileMetaInfo == null && context.footerInSplits) {
             orcReader = OrcFile.createReader(file.getPath(),
@@ -853,6 +857,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
             fileInfo.fileMetaInfo = ((ReaderImpl) orcReader).getFileMetaInfo();
             fileInfo.metadata = orcReader.getMetadata();
             fileInfo.types = orcReader.getTypes();
+            fileInfo.writerVersion = orcReader.getWriterVersion();
           }
         } else {
           orcReader = OrcFile.createReader(file.getPath(),
@@ -860,13 +865,14 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
           stripes = orcReader.getStripes();
           metadata = orcReader.getMetadata();
           types = orcReader.getTypes();
+          writerVersion = orcReader.getWriterVersion();
           fileMetaInfo = context.footerInSplits ?
               ((ReaderImpl) orcReader).getFileMetaInfo() : null;
           if (context.cacheStripeDetails) {
             // Populate into cache.
             Context.footerCache.put(file.getPath(),
                 new FileInfo(file.getModificationTime(), file.getLen(), stripes,
-                    metadata, types, fileMetaInfo));
+                    metadata, types, fileMetaInfo, writerVersion));
           }
         }
       } catch (Throwable th) {
@@ -961,18 +967,21 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     ReaderImpl.FileMetaInfo fileMetaInfo;
     Metadata metadata;
     List<OrcProto.Type> types;
+    private OrcFile.WriterVersion writerVersion;
 
 
     FileInfo(long modificationTime, long size,
              List<StripeInformation> stripeInfos,
              Metadata metadata, List<OrcProto.Type> types,
-             ReaderImpl.FileMetaInfo fileMetaInfo) {
+             ReaderImpl.FileMetaInfo fileMetaInfo,
+             OrcFile.WriterVersion writerVersion) {
       this.modificationTime = modificationTime;
       this.size = size;
       this.stripeInfos = stripeInfos;
       this.fileMetaInfo = fileMetaInfo;
       this.metadata = metadata;
       this.types = types;
+      this.writerVersion = writerVersion;
     }
   }
 
