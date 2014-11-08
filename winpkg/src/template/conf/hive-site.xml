@@ -3221,7 +3221,7 @@
 
   <property>
     <name>hive.auto.convert.join.noconditionaltask.size</name>
-    <value>1000000000</value>
+    <value>10000000</value>
     <description>
       If hive.auto.convert.join.noconditionaltask is off, this parameter does not take affect. 
       However, if it is on, and the sum of size for n-1 of the tables/partitions for a n-way join is smaller than this size, 
