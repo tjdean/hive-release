@@ -1,3 +1,5 @@
+set hive.metastore.try.direct.sql=false;
+
 -- create testing table.
 create table alter_coltype(key string, value string) partitioned by (dt string, ts string);
 

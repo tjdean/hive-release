@@ -1,3 +1,4 @@
+set hive.metastore.try.direct.sql=false;
 
 -- alter column type, with partitioned table
 drop table if exists alter_varchar2;

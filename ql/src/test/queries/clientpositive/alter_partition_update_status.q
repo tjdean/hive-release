@@ -1,3 +1,5 @@
+set hive.metastore.try.direct.sql=false;
+
 create table src_stat_part_one(key string, value string) partitioned by (partitionId int);
 
 insert overwrite table src_stat_part_one partition (partitionId=1)
