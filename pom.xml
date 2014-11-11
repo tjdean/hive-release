@@ -71,15 +71,6 @@
     <test.warehouse.dir>${project.build.directory}/warehouse</test.warehouse.dir>
     <test.warehouse.scheme>pfile://</test.warehouse.scheme>
 
-    <!-- test.includes.default* meant to match the default surefire patterns -->
-    <test.includes.default1>**/Test*.java</test.includes.default1>
-    <test.includes.default2>**/*Test.java</test.includes.default2>
-    <test.includes.default3>**/*TestCase.java</test.includes.default3>
-    <!-- To add additional include patterns set this property -->
-    <test.includes.additional></test.includes.additional>
-    <!-- To add additional exclude patterns set this property -->
-    <test.excludes.additional></test.excludes.additional>
-
     <!-- Plugin and Plugin Dependency Versions -->
     <ant.contrib.version>1.0b3</ant.contrib.version>
     <datanucleus.maven.plugin.version>3.3.0-release</datanucleus.maven.plugin.version>
@@ -802,14 +793,7 @@
             <exclude>**/ql/exec/vector/udf/generic/*.java</exclude>
             <exclude>**/TestHiveServer2Concurrency.java</exclude>
             <exclude>**/TestHiveMetaStore.java</exclude>
-            <exclude>${test.excludes.additional}</exclude>
           </excludes>
-          <includes>
-            <include>${test.includes.default1}</include>
-            <include>${test.includes.default2}</include>
-            <include>${test.includes.default3}</include>
-            <include>${test.includes.additional}</include>
-          </includes>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
           <reuseForks>false</reuseForks>
           <failIfNoTests>false</failIfNoTests>
