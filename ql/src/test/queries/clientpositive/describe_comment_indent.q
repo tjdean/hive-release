@@ -1,5 +1,7 @@
 -- test comment indent processing for multi-line comments
 
+-- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to comment including CR character on Windows
 CREATE TABLE test_table(
     col1 INT COMMENT 'col1 one line comment',
     col2 STRING COMMENT 'col2

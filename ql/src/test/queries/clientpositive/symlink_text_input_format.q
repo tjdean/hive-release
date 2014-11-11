@@ -1,3 +1,5 @@
+-- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to stats/file size differences dur to CR
 DROP TABLE IF EXISTS symlink_text_input_format;
 
 EXPLAIN

@@ -1,3 +1,5 @@
+-- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to stats/file size differences dur to CR
 create table nzhang_test1 stored as sequencefile as select 'key1' as key, 'value
 1
 

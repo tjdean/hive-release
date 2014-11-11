@@ -1,6 +1,8 @@
 set hive.stats.dbclass=fs;
 set hive.stats.autogather=true;
 
+-- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to stats/file size differences dur to CR
 DROP TABLE lineitem;
 CREATE TABLE lineitem (L_ORDERKEY      INT,
                                 L_PARTKEY       INT,

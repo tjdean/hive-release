@@ -1,3 +1,5 @@
+-- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to stats/file size differences dur to CR
 DROP TABLE IF EXISTS DECIMAL_UDF2;
 
 CREATE TABLE DECIMAL_UDF2 (key decimal(20,10), value int)

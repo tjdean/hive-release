@@ -1,5 +1,7 @@
 -- SORT_QUERY_RESULTS
 
+-- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to stats/file size differences dur to CR
 DROP TABLE part;
 
 -- data setup

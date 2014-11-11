@@ -2,6 +2,8 @@
 -- with different number of rows for a and b in each file. Since bucketizedHiveInputFormat is used, 
 -- this tests that the aggregate function stores the partial aggregate state correctly even if an 
 -- additional MR job is created for processing the grouping sets.
+-- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to stats/file size differences dur to CR
 CREATE TABLE T1(a STRING, b STRING, c STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY ' ' STORED AS TEXTFILE; 
 
 LOAD DATA LOCAL INPATH '../../data/files/grouping_sets1.txt' INTO TABLE T1;
