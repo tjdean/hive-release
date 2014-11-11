@@ -115,7 +115,6 @@ import org.apache.thrift.TException;
 
 import com.google.common.collect.Sets;
 
-import javax.jdo.JDODataStoreException;
 
 /**
  * This class has functions that implement meta data/DDL operations using calls
@@ -1734,9 +1733,16 @@ private void constructOneLBLocationMap(FileStatus fSta,
           } catch (AlreadyExistsException aee) {
             LOG.debug("Caught already exists exception, trying to alter partition instead");
             alterPartitionSpec(tbl, partSpec, tpart, inheritTableSpecs, partPath);
-          } catch (JDODataStoreException jdoe) {
-            LOG.debug("Caught JDO exception, trying to alter partition instead");
-            alterPartitionSpec(tbl, partSpec, tpart, inheritTableSpecs, partPath);
+          } catch (Exception e) {
+            if (CheckJDOException.isJDODataStoreException(e)) {
+              // Using utility method above, so that JDODataStoreException doesn't
+              // have to be used here. This helps avoid adding jdo dependency for
+              // hcatalog client uses
+              LOG.debug("Caught JDO exception, trying to alter partition instead");
+              alterPartitionSpec(tbl, partSpec, tpart, inheritTableSpecs, partPath);
+            } else {
+              throw e;
+            }
           }
         }
         else {
