@@ -1732,6 +1732,8 @@ private void constructOneLBLocationMap(FileStatus fSta,
             tpart = getMSC().appendPartition(tbl.getDbName(), tbl.getTableName(), pvals);
           } catch (AlreadyExistsException aee) {
             LOG.debug("Caught already exists exception, trying to alter partition instead");
+            tpart = getMSC().getPartitionWithAuthInfo(tbl.getDbName(),
+              tbl.getTableName(), pvals, getUserName(), getGroupNames());
             alterPartitionSpec(tbl, partSpec, tpart, inheritTableSpecs, partPath);
           } catch (Exception e) {
             if (CheckJDOException.isJDODataStoreException(e)) {
@@ -1739,6 +1741,8 @@ private void constructOneLBLocationMap(FileStatus fSta,
               // have to be used here. This helps avoid adding jdo dependency for
               // hcatalog client uses
               LOG.debug("Caught JDO exception, trying to alter partition instead");
+              tpart = getMSC().getPartitionWithAuthInfo(tbl.getDbName(),
+                tbl.getTableName(), pvals, getUserName(), getGroupNames());
               alterPartitionSpec(tbl, partSpec, tpart, inheritTableSpecs, partPath);
             } else {
               throw e;
