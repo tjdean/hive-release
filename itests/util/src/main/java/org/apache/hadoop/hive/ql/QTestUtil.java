@@ -359,6 +359,13 @@ public class QTestUtil {
 
     overWrite = "true".equalsIgnoreCase(System.getProperty("test.output.overwrite"));
 
+    // If metastore DB already exists delete it. Previous test may have left Hive tables
+    // created with clusters which have already been shut down.
+    File metastoreDbDir = new File(new File(System.getProperty("test.tmp.dir")), "junit_metastore_db");
+    if (metastoreDbDir.exists()) {
+      FileUtils.deleteDirectory(metastoreDbDir);
+    }
+
     setup = new QTestSetup();
     setup.preTest(conf);
     init();
