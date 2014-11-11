@@ -1,5 +1,7 @@
 set hive.plan.serialization.format=javaXML;
 
+-- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to BUG-27556
 select
   cast(key as decimal(10,2)) as c1,
   cast(key as char(10)) as c2,

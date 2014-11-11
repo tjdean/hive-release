@@ -1,4 +1,6 @@
-PREHOOK: query: select
+PREHOOK: query: -- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to BUG-27556
+select
   cast(key as decimal(10,2)) as c1,
   cast(key as char(10)) as c2,
   cast(key as varchar(10)) as c3
@@ -8,7 +10,9 @@ limit 1
 PREHOOK: type: QUERY
 PREHOOK: Input: default@src
 #### A masked pattern was here ####
-POSTHOOK: query: select
+POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to BUG-27556
+select
   cast(key as decimal(10,2)) as c1,
   cast(key as char(10)) as c2,
   cast(key as varchar(10)) as c3
