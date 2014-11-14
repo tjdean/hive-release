@@ -43,6 +43,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -5644,7 +5645,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
       Lock startLock = new ReentrantLock();
       Condition startCondition = startLock.newCondition();
-      MetaStoreThread.BooleanPointer startedServing = new MetaStoreThread.BooleanPointer();
+      AtomicBoolean startedServing = new AtomicBoolean();
       startMetaStoreThreads(conf, startLock, startCondition, startedServing);
       startMetaStore(cli.port, ShimLoader.getHadoopThriftAuthBridge(), conf, startLock,
           startCondition, startedServing);
@@ -5691,7 +5692,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
    */
   public static void startMetaStore(int port, HadoopThriftAuthBridge bridge,
       HiveConf conf, Lock startLock, Condition startCondition,
-      MetaStoreThread.BooleanPointer startedServing) throws Throwable {
+      AtomicBoolean startedServing) throws Throwable {
     try {
       isMetaStoreRemote = true;
       // Server will create new threads up to max as necessary. After an idle
@@ -5775,7 +5776,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
   private static void signalOtherThreadsToStart(final TServer server, final Lock startLock,
                                                 final Condition startCondition,
-                                                final MetaStoreThread.BooleanPointer startedServing) {
+                                                final AtomicBoolean startedServing) {
     // A simple thread to wait until the server has started and then signal the other threads to
     // begin
     Thread t = new Thread() {
@@ -5790,7 +5791,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         } while (!server.isServing());
         startLock.lock();
         try {
-          startedServing.boolVal = true;
+          startedServing.set(true);
           startCondition.signalAll();
         } finally {
           startLock.unlock();
@@ -5806,7 +5807,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
    */
   private static void startMetaStoreThreads(final HiveConf conf, final Lock startLock,
                                             final Condition startCondition, final
-                                            MetaStoreThread.BooleanPointer startedServing) {
+                                            AtomicBoolean startedServing) {
     // A thread is spun up to start these other threads.  That's because we can't start them
     // until after the TServer has started, but once TServer.serve is called we aren't given back
     // control.
@@ -5824,7 +5825,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         try {
           // Per the javadocs on Condition, do not depend on the condition alone as a start gate
           // since spurious wake ups are possible.
-          while (!startedServing.boolVal) startCondition.await();
+          while (!startedServing.get()) startCondition.await();
           startCompactorInitiator(conf);
           startCompactorWorkers(conf);
           startCompactorCleaner(conf);
@@ -5884,7 +5885,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     LOG.info("Starting metastore thread of type " + thread.getClass().getName());
     thread.setHiveConf(conf);
     thread.setThreadId(nextThreadId++);
-    thread.init(new MetaStoreThread.BooleanPointer(), new MetaStoreThread.BooleanPointer());
+    thread.init(new AtomicBoolean(), new AtomicBoolean());
     thread.start();
   }
 }

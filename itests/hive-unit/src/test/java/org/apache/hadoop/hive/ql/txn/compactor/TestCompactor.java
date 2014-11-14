@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  */
@@ -241,9 +242,8 @@ public class TestCompactor {
     Worker t = new Worker();
     t.setThreadId((int) t.getId());
     t.setHiveConf(conf);
-    MetaStoreThread.BooleanPointer stop = new MetaStoreThread.BooleanPointer();
-    MetaStoreThread.BooleanPointer looped = new MetaStoreThread.BooleanPointer();
-    stop.boolVal = true;
+    AtomicBoolean stop = new AtomicBoolean(true);
+    AtomicBoolean looped = new AtomicBoolean();
     t.init(stop, looped);
     t.run();
     ShowCompactResponse rsp = txnHandler.showCompact(new ShowCompactRequest());
@@ -307,9 +307,8 @@ public class TestCompactor {
       Worker t = new Worker();
       t.setThreadId((int) t.getId());
       t.setHiveConf(conf);
-      MetaStoreThread.BooleanPointer stop = new MetaStoreThread.BooleanPointer();
-      MetaStoreThread.BooleanPointer looped = new MetaStoreThread.BooleanPointer();
-      stop.boolVal = true;
+      AtomicBoolean stop = new AtomicBoolean(true);
+      AtomicBoolean looped = new AtomicBoolean();      
       t.init(stop, looped);
       t.run();
 
@@ -365,9 +364,8 @@ public class TestCompactor {
       Worker t = new Worker();
       t.setThreadId((int) t.getId());
       t.setHiveConf(conf);
-      MetaStoreThread.BooleanPointer stop = new MetaStoreThread.BooleanPointer();
-      MetaStoreThread.BooleanPointer looped = new MetaStoreThread.BooleanPointer();
-      stop.boolVal = true;
+      AtomicBoolean stop = new AtomicBoolean(true);
+      AtomicBoolean looped = new AtomicBoolean();
       t.init(stop, looped);
       t.run();
 
@@ -418,9 +416,8 @@ public class TestCompactor {
       Worker t = new Worker();
       t.setThreadId((int) t.getId());
       t.setHiveConf(conf);
-      MetaStoreThread.BooleanPointer stop = new MetaStoreThread.BooleanPointer();
-      MetaStoreThread.BooleanPointer looped = new MetaStoreThread.BooleanPointer();
-      stop.boolVal = true;
+      AtomicBoolean stop = new AtomicBoolean(true);
+      AtomicBoolean looped = new AtomicBoolean();  
       t.init(stop, looped);
       t.run();
 
@@ -480,9 +477,8 @@ public class TestCompactor {
       Worker t = new Worker();
       t.setThreadId((int) t.getId());
       t.setHiveConf(conf);
-      MetaStoreThread.BooleanPointer stop = new MetaStoreThread.BooleanPointer();
-      MetaStoreThread.BooleanPointer looped = new MetaStoreThread.BooleanPointer();
-      stop.boolVal = true;
+      AtomicBoolean stop = new AtomicBoolean(true);
+      AtomicBoolean looped = new AtomicBoolean();      
       t.init(stop, looped);
       t.run();
 

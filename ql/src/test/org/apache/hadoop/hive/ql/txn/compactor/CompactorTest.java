@@ -53,6 +53,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Stack;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Super class for all of the compactor test modules.
@@ -66,7 +67,7 @@ public abstract class CompactorTest {
   protected long sleepTime = 1000;
   protected HiveConf conf;
 
-  private final MetaStoreThread.BooleanPointer stop = new MetaStoreThread.BooleanPointer();
+  private final AtomicBoolean stop = new AtomicBoolean();
   private final File tmpdir;
 
   protected CompactorTest() throws Exception {
@@ -93,7 +94,7 @@ public abstract class CompactorTest {
     startThread('c', true);
   }
 
-  protected void startCleaner(MetaStoreThread.BooleanPointer looped) throws Exception {
+  protected void startCleaner(AtomicBoolean looped) throws Exception {
     startThread('c', false, looped);
   }
 
@@ -208,7 +209,7 @@ public abstract class CompactorTest {
   }
 
   protected void stopThread() {
-    stop.boolVal = true;
+    stop.set(true);
   }
 
   private StorageDescriptor newStorageDescriptor(String location, List<Order> sortCols) {
@@ -236,10 +237,10 @@ public abstract class CompactorTest {
 
   // I can't do this with @Before because I want to be able to control when the thead starts
   private void startThread(char type, boolean stopAfterOne) throws Exception {
-    startThread(type, stopAfterOne, new MetaStoreThread.BooleanPointer());
+    startThread(type, stopAfterOne, new AtomicBoolean());
   }
 
-  private void startThread(char type, boolean stopAfterOne, MetaStoreThread.BooleanPointer looped)
+  private void startThread(char type, boolean stopAfterOne, AtomicBoolean looped)
     throws Exception {
     TxnDbUtil.setConfValues(conf);
     CompactorThread t = null;
@@ -251,7 +252,7 @@ public abstract class CompactorTest {
     }
     t.setThreadId((int) t.getId());
     t.setHiveConf(conf);
-    stop.boolVal = stopAfterOne;
+    stop.set(stopAfterOne);
     t.init(stop, looped);
     if (stopAfterOne) t.run();
     else t.start();
