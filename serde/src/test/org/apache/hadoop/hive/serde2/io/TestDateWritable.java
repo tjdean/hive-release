@@ -20,9 +20,12 @@ package org.apache.hadoop.hive.serde2.io;
 
 import com.google.code.tempusfugit.concurrency.annotations.*;
 import com.google.code.tempusfugit.concurrency.*;
+
+import org.apache.hadoop.util.Shell;
 import org.junit.*;
 
 import static org.junit.Assert.*;
+
 import java.io.*;
 import java.sql.Date;
 import java.text.DateFormat;
@@ -188,6 +191,7 @@ public class TestDateWritable {
 
   @Test
   public void testDaylightSavingsTime() throws InterruptedException, ExecutionException {
+    Assume.assumeTrue(!Shell.WINDOWS);
     String[] timeZones = {
         "GMT",
         "UTC",
