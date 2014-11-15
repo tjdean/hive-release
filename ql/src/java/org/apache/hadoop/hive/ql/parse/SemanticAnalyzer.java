@@ -2746,11 +2746,14 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
   // TODO: make aliases unique, otherwise needless rewriting takes place
   private Integer genColListRegex(String colRegex, String tabAlias, ASTNode sel,
     ArrayList<ExprNodeDesc> col_list, HashSet<ColumnInfo> excludeCols, RowResolver input,
-    Integer pos, RowResolver output, List<String> aliases, boolean ensureUniqueCols)
-      throws SemanticException {
+    RowResolver colSrcRR, Integer pos, RowResolver output, List<String> aliases,
+    boolean ensureUniqueCols) throws SemanticException {
 
+    if (colSrcRR == null) {
+      colSrcRR = input;
+    }
     // The table alias should exist
-    if (tabAlias != null && !input.hasTableAlias(tabAlias)) {
+    if (tabAlias != null && !colSrcRR.hasTableAlias(tabAlias)) {
       throw new SemanticException(ErrorMsg.INVALID_TABLE_ALIAS.getMsg(sel));
     }
 
@@ -2779,7 +2782,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     // For expr "*", aliases should be iterated in the order they are specified
     // in the query.
     for (String alias : aliases) {
-      HashMap<String, ColumnInfo> fMap = input.getFieldMap(alias);
+      HashMap<String, ColumnInfo> fMap = colSrcRR.getFieldMap(alias);
       if (fMap == null) {
         continue;
       }
@@ -2790,8 +2793,11 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         if (excludeCols != null && excludeCols.contains(colInfo)) {
           continue; // This was added during plan generation.
         }
+        // First, look up the column from the source against which * is to be resolved.
+        // We'd later translated this into the column from proper input, if it's valid.
+        // TODO: excludeCols may be possible to remove using the same technique.
         String name = colInfo.getInternalName();
-        String[] tmp = input.reverseLookup(name);
+        String[] tmp = colSrcRR.reverseLookup(name);
 
         // Skip the colinfos which are not for this particular alias
         if (tabAlias != null && !tmp[0].equalsIgnoreCase(tabAlias)) {
@@ -2805,6 +2811,27 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         // Not matching the regex?
         if (!regex.matcher(tmp[1]).matches()) {
           continue;
+        }
+
+        // If input (GBY) is different than the source of columns, find the same column in input.
+        // TODO: This is fraught with peril.
+        if (input != colSrcRR) {
+          colInfo = input.get(tabAlias, tmp[1]);
+          if (colInfo == null) {
+            LOG.error("Cannot find colInfo for " + tabAlias + "." + tmp[1]
+                + ", derived from [" + colSrcRR + "], in [" + input + "]");
+            throw new SemanticException(ErrorMsg.NON_KEY_EXPR_IN_GROUPBY, tmp[1]);
+          }
+          String oldCol = null;
+          if (LOG.isDebugEnabled()) {
+            oldCol = name + " => " + (tmp == null ? "null" : (tmp[0] + "." + tmp[1]));
+          }
+          name = colInfo.getInternalName();
+          tmp = input.reverseLookup(name);
+          if (LOG.isDebugEnabled()) {
+            String newCol = name + " => " + (tmp == null ? "null" : (tmp[0] + "." + tmp[1]));
+            LOG.debug("Translated [" + oldCol + "] to [" + newCol + "]");
+          }
         }
 
         ColumnInfo oColInfo = inputColsProcessed.get(colInfo);
@@ -3405,11 +3432,10 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
   }
 
 
-  private Operator<?> genSelectPlan(String dest, QB qb, Operator<?> input)
-      throws SemanticException {
+  private Operator<?> genSelectPlan(String dest, QB qb, Operator<?> input,
+      Operator<?> inputForSelectStar) throws SemanticException {
     ASTNode selExprList = qb.getParseInfo().getSelForClause(dest);
-
-    Operator<?> op = genSelectPlan(selExprList, qb, input, false);
+    Operator<?> op = genSelectPlan(selExprList, qb, input, inputForSelectStar, false);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Created Select Plan for clause: " + dest);
@@ -3419,8 +3445,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
   }
 
   @SuppressWarnings("nls")
-  private Operator<?> genSelectPlan(ASTNode selExprList, QB qb,
-      Operator<?> input, boolean outerLV) throws SemanticException {
+  private Operator<?> genSelectPlan(ASTNode selExprList, QB qb, Operator<?> input,
+      Operator<?> inputForSelectStar, boolean outerLV) throws SemanticException {
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("tree: " + selExprList.toStringTree());
@@ -3431,6 +3457,10 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     ASTNode trfm = null;
     Integer pos = Integer.valueOf(0);
     RowResolver inputRR = opParseCtx.get(input).getRowResolver();
+    RowResolver starRR = null;
+    if (inputForSelectStar != null && inputForSelectStar != input) {
+      starRR = opParseCtx.get(inputForSelectStar).getRowResolver();
+    }
     // SELECT * or SELECT TRANSFORM(*)
     boolean selectStar = false;
     int posn = 0;
@@ -3476,7 +3506,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       }
       if (isUDTF && (selectStar = udtfExprType == HiveParser.TOK_FUNCTIONSTAR)) {
         genColListRegex(".*", null, (ASTNode) udtfExpr.getChild(0),
-            col_list, null, inputRR, pos, out_rwsch, qb.getAliases(), false);
+            col_list, null, inputRR, starRR, pos, out_rwsch, qb.getAliases(), false);
       }
     }
 
@@ -3529,7 +3559,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     }
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("genSelectPlan: input = " + inputRR.toString());
+      LOG.debug("genSelectPlan: input = " + inputRR + " starRr = " + starRR);
     }
 
     // For UDTF's, skip the function name to get the expressions
@@ -3598,7 +3628,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       if (expr.getType() == HiveParser.TOK_ALLCOLREF) {
         pos = genColListRegex(".*", expr.getChildCount() == 0 ? null
             : getUnescapedName((ASTNode) expr.getChild(0)).toLowerCase(),
-            expr, col_list, null, inputRR, pos, out_rwsch, qb.getAliases(), false);
+            expr, col_list, null, inputRR, starRR, pos, out_rwsch, qb.getAliases(), false);
         selectStar = true;
       } else if (expr.getType() == HiveParser.TOK_TABLE_OR_COL && !hasAsClause
           && !inputRR.getIsExprResolver()
@@ -3607,7 +3637,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         // This can only happen without AS clause
         // We don't allow this for ExprResolver - the Group By case
         pos = genColListRegex(unescapeIdentifier(expr.getChild(0).getText()),
-            null, expr, col_list, null, inputRR, pos, out_rwsch, qb.getAliases(), false);
+            null, expr, col_list, null, inputRR, starRR, pos, out_rwsch, qb.getAliases(), false);
       } else if (expr.getType() == HiveParser.DOT
           && expr.getChild(0).getType() == HiveParser.TOK_TABLE_OR_COL
           && inputRR.hasTableAlias(unescapeIdentifier(expr.getChild(0)
@@ -3619,7 +3649,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         // We don't allow this for ExprResolver - the Group By case
         pos = genColListRegex(unescapeIdentifier(expr.getChild(1).getText()),
             unescapeIdentifier(expr.getChild(0).getChild(0).getText().toLowerCase()),
-             expr, col_list, null, inputRR, pos, out_rwsch, qb.getAliases(), false);
+             expr, col_list, null, inputRR, starRR, pos, out_rwsch, qb.getAliases(), false);
       } else {
         // Case when this is an expression
         TypeCheckCtx tcCtx = new TypeCheckCtx(inputRR);
@@ -5147,7 +5177,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       Operator groupByOperatorInfo = genGroupByPlanGroupByOperator(parseInfo,
           dest, curr, reduceSinkOperatorInfo, GroupByDesc.Mode.COMPLETE, null);
 
-      curr = genPostGroupByBodyPlan(groupByOperatorInfo, dest, qb, aliasToOpInfo);
+      // TODO: should we pass curr instead of null?
+      curr = genPostGroupByBodyPlan(groupByOperatorInfo, dest, qb, aliasToOpInfo, null);
     }
 
     return curr;
@@ -8790,7 +8821,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       for (String dest : ks) {
         curr = input;
         curr = genGroupByPlan2MRMultiGroupBy(dest, qb, curr);
-        curr = genSelectPlan(dest, qb, curr);
+        curr = genSelectPlan(dest, qb, curr, null); // TODO: we may need to pass "input" here instead of null
         Integer limit = qbp.getDestLimit(dest);
         if (limit != null) {
           curr = genLimitMapRedPlan(dest, qb, curr, limit.intValue(), true);
@@ -8847,6 +8878,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
                 ASTNode whereExpr = qb.getParseInfo().getWhrForClause(dest);
                 curr = genFilterPlan((ASTNode) whereExpr.getChild(0), qb, curr, aliasToOpInfo, false);
               }
+              // Preserve operator before the GBY - we'll use it to resolve '*'
+              Operator<?> gbySource = curr;
 
               if (qbp.getAggregationExprsForClause(dest).size() != 0
                   || getGroupByForClause(qbp, dest).size() > 0) {
@@ -8871,8 +8904,12 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
                   curr = genGroupByPlan1MR(dest, qb, curr);
                 }
               }
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("RR before GB " + opParseCtx.get(gbySource).getRowResolver()
+                    + " after GB " + opParseCtx.get(curr).getRowResolver());
+              }
 
-              curr = genPostGroupByBodyPlan(curr, dest, qb, aliasToOpInfo);
+              curr = genPostGroupByBodyPlan(curr, dest, qb, aliasToOpInfo, gbySource);
             }
           } else {
             curr = genGroupByPlan1ReduceMultiGBY(commonGroupByDestGroup, qb, input, aliasToOpInfo);
@@ -8899,7 +8936,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
   }
 
   private Operator genPostGroupByBodyPlan(Operator curr, String dest, QB qb,
-      Map<String, Operator> aliasToOpInfo)
+      Map<String, Operator> aliasToOpInfo, Operator gbySource)
       throws SemanticException {
 
     QBParseInfo qbp = qb.getParseInfo();
@@ -8917,7 +8954,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       curr = genWindowingPlan(qb.getWindowingSpec(dest), curr);
     }
 
-    curr = genSelectPlan(dest, qb, curr);
+    curr = genSelectPlan(dest, qb, curr, gbySource);
     Integer limit = qbp.getDestLimit(dest);
 
     // Expressions are not supported currently without a alias.
@@ -9874,7 +9911,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     // Get the UDTF Path
     QB blankQb = new QB(null, null, false);
     Operator udtfPath = genSelectPlan((ASTNode) lateralViewTree
-        .getChild(0), blankQb, lvForward,
+        .getChild(0), blankQb, lvForward, null,
         lateralViewTree.getType() == HiveParser.TOK_LATERAL_VIEW_OUTER);
     // add udtf aliases to QB
     for (String udtfAlias : blankQb.getAliases()) {
@@ -14211,8 +14248,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         if (expr.getType() == HiveParser.TOK_ALLCOLREF) {
           pos = genColListRegex(".*",
               expr.getChildCount() == 0 ? null : getUnescapedName((ASTNode) expr.getChild(0))
-                  .toLowerCase(), expr, col_list, excludedColumns, inputRR, pos, out_rwsch,
-                  tabAliasesForAllProjs, true);
+                  .toLowerCase(), expr, col_list, excludedColumns, inputRR, null, pos,
+                  out_rwsch, tabAliasesForAllProjs, true);
           selectStar = true;
         } else if (expr.getType() == HiveParser.TOK_TABLE_OR_COL && !hasAsClause
             && !inputRR.getIsExprResolver()
@@ -14221,7 +14258,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           // This can only happen without AS clause
           // We don't allow this for ExprResolver - the Group By case
           pos = genColListRegex(unescapeIdentifier(expr.getChild(0).getText()), null, expr,
-              col_list, excludedColumns, inputRR, pos, out_rwsch, tabAliasesForAllProjs, true);
+              col_list, excludedColumns, inputRR, null, pos, out_rwsch, tabAliasesForAllProjs,
+              true);
         } else if (expr.getType() == HiveParser.DOT
             && expr.getChild(0).getType() == HiveParser.TOK_TABLE_OR_COL
             && inputRR.hasTableAlias(unescapeIdentifier(expr.getChild(0).getChild(0).getText()
@@ -14232,7 +14270,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           // We don't allow this for ExprResolver - the Group By case
           pos = genColListRegex(unescapeIdentifier(expr.getChild(1).getText()),
               unescapeIdentifier(expr.getChild(0).getChild(0).getText().toLowerCase()), expr,
-              col_list, excludedColumns, inputRR, pos, out_rwsch, tabAliasesForAllProjs, true);
+              col_list, excludedColumns, inputRR, null, pos, out_rwsch, tabAliasesForAllProjs,
+              true);
         } else if (expr.toStringTree().contains("TOK_FUNCTIONDI") && !(srcRel instanceof HiveAggregateRel)) {
           // Likely a malformed query eg, select hash(distinct c1) from t1;
           throw new OptiqSemanticException("Distinct without an aggreggation.");
