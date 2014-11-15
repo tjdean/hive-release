@@ -240,6 +240,7 @@ public class HiveSchemaTool {
       for (String scriptFile : upgradeScripts) {
         System.out.println("Upgrade script " + scriptFile);
         if (!dryRun) {
+          runPreUpgrade(scriptDir, scriptFile);
           runBeeLine(scriptDir, scriptFile);
           System.out.println("Completed " + scriptFile);
         }
@@ -335,6 +336,42 @@ public class HiveSchemaTool {
     }
     bfReader.close();
     return sb.toString();
+  }
+
+
+  /**
+   *  Run pre-upgrade scripts corresponding to a given upgrade script,
+   *  if any exist. The errors from pre-upgrade are ignored.
+   *  Pre-upgrade scripts typically contain setup statements which
+   *  may fail on some database versions and failure is ignorable.
+   *
+   *  @param scriptDir upgrade script directory name
+   *  @param scriptFile upgrade script file name
+   */
+  private void runPreUpgrade(String scriptDir, String scriptFile) {
+    for (int i = 0;; i++) {
+      String preUpgradeScript =
+          MetaStoreSchemaInfo.getPreUpgradeScriptName(i, scriptFile);
+      if (verbose) {
+        System.out.println("Looking for " + preUpgradeScript + " in " + scriptDir);
+      }
+      File preUpgradeScriptFile = new File(scriptDir, preUpgradeScript);
+      if (!preUpgradeScriptFile.isFile()) {
+        break;
+      }
+
+      try {
+        runBeeLine(scriptDir, preUpgradeScript);
+        System.out.println("Completed " + preUpgradeScript);
+      } catch (Exception e) {
+        // Ignore the pre-upgrade script errors
+        System.err.println("Warning in pre-upgrade script " + preUpgradeScript + ": "
+            + e.getMessage());
+        if (verbose) {
+          e.printStackTrace();
+        }
+      }
+    }
   }
 
   // run beeline on the given metastore scrip, flatten the nested scripts into single file
