@@ -437,14 +437,14 @@ public class ObjectStore implements RawStore, Configurable {
     debugLog("Rollback transaction, isActive: " + currentTransaction.isActive());
     if (currentTransaction.isActive()
         && transactionStatus != TXN_STATUS.ROLLBACK) {
-      transactionStatus = TXN_STATUS.ROLLBACK;
       // could already be rolled back
       currentTransaction.rollback();
-      // remove all detached objects from the cache, since the transaction is
-      // being rolled back they are no longer relevant, and this prevents them
-      // from reattaching in future transactions
-      pm.evictAll();
     }
+    transactionStatus = TXN_STATUS.ROLLBACK;
+    // remove all detached objects from the cache, since the transaction is
+    // being rolled back they are no longer relevant, and this prevents them
+    // from reattaching in future transactions
+    pm.evictAll();
   }
 
   @Override
@@ -495,62 +495,47 @@ public class ObjectStore implements RawStore, Configurable {
 
   @Override
   public Database getDatabase(String name) throws NoSuchObjectException {
-    try {
-      if (isDirectSqlEnabled(true) && directSql.isCompatibleDatastore()){
-        Database db = null;
-        boolean committed = false;
-        try {
-          openTransaction();
-          db = directSql.getDatabase(name);
-          committed = commitTransaction();
-          return db;
-        } catch (JDODataStoreException jdoe) {
-          LOG.warn("JDODataStoreException using direct sql getting db: " + name + ". Falling back to ORM.",jdoe);
-        } finally {
-          if (!committed) {
-            rollbackTransaction();
-          }
-        }
-      }
-      // If we reached here, then DirectSql was not enabled, or did not work. Fall back to JDO.
-      return getJDODatabase(name);
-    } catch (MetaException me){
-      throw new NoSuchObjectException(me.getMessage());
-    }
-  }
-
-  public Database getJDODatabase(String name) throws NoSuchObjectException {
-    MDatabase mdb = null;
+    Database db = null;
     boolean committed = false;
     try {
       openTransaction();
-      mdb = getMDatabase(name);
-      committed = commitTransaction();
-    } catch (Throwable t){
-      if (t instanceof NoSuchObjectException){
-        throw (NoSuchObjectException)t;
-      } else if (t instanceof RuntimeException){
-        throw (RuntimeException)t;
-      } else if (t instanceof Error){
-        throw (Error)t;
-      } else {
-        // We should not be throwing any checked exception that is not a NoSuchObjectException
-        throw new RuntimeException(t);
+      if (isDirectSqlEnabled(true) && directSql.isCompatibleDatastore()){
+        try {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Using direct sql for getting db: " + name); 
+          }
+          db = directSql.getDatabase(name);
+          return db;
+        } catch (JDODataStoreException jdoe){
+          LOG.warn("JDODataStoreException using direct sql getting db: " + name + ". Falling back to ORM.",jdoe);
+        }
       }
+
+      // If we're here, it's because directSql was not enabled, or because directSql failed with a JDODataStoreException
+      // JDODataStoreExceptions are retriable exceptions, so it's okay for us to try to use ORM to fallback-retry.
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Using jdo query for getting db: " + name); 
+          }
+      MDatabase mdb = getMDatabase(name);
+      db = new Database();
+      db.setName(mdb.getName());
+      db.setDescription(mdb.getDescription());
+      db.setLocationUri(mdb.getLocationUri());
+      db.setParameters(mdb.getParameters());
+      db.setOwnerName(mdb.getOwnerName());
+      String type = mdb.getOwnerType();
+      db.setOwnerType((null == type || type.trim().isEmpty()) ? null : PrincipalType.valueOf(type));
+      return db;
+
+    } catch (MetaException me){
+      LOG.warn("MetaException got, logging and wrapping in NoSuchObjectException and throwing",me);
+      throw new NoSuchObjectException(me.getMessage());
     } finally {
+      committed = commitTransaction();
       if (!committed) {
         rollbackTransaction();
       }
     }
-    Database db = new Database();
-    db.setName(mdb.getName());
-    db.setDescription(mdb.getDescription());
-    db.setLocationUri(mdb.getLocationUri());
-    db.setParameters(mdb.getParameters());
-    db.setOwnerName(mdb.getOwnerName());
-    String type = mdb.getOwnerType();
-    db.setOwnerType((null == type || type.trim().isEmpty()) ? null : PrincipalType.valueOf(type));
-    return db;
   }
 
   /**
