@@ -1,10 +1,6 @@
-PREHOOK: query: -- EXCLUDE_OS_WINDOWS
--- Exclude on windows due to stats/file size differences dur to CR
-drop table x
+PREHOOK: query: drop table x
 PREHOOK: type: DROPTABLE
-POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
--- Exclude on windows due to stats/file size differences dur to CR
-drop table x
+POSTHOOK: query: drop table x
 POSTHOOK: type: DROPTABLE
 PREHOOK: query: drop table y
 PREHOOK: type: DROPTABLE

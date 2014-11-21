@@ -1,8 +1,6 @@
 set hive.merge.mapfiles = false;
 set hive.merge.mapredfiles = false;
 
--- EXCLUDE_OS_WINDOWS
--- Exclude on windows due to stats/file size differences dur to CR
 -- SORT_QUERY_RESULTS
 
 -- Set merging to false above to make the explain more readable

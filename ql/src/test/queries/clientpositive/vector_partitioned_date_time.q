@@ -4,8 +4,6 @@ set hive.fetch.task.conversion=minimal;
 -- Check if vectorization code is handling partitioning on DATE and the other data types.
 
 
--- EXCLUDE_OS_WINDOWS
--- Exclude on windows due to space character being escaped on filenames
 CREATE TABLE flights_tiny (
   origin_city_name STRING,
   dest_city_name STRING,

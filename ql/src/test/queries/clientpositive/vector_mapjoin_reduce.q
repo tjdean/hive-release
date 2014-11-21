@@ -1,8 +1,6 @@
 SET hive.vectorized.execution.enabled=true;
 SET hive.auto.convert.join=true;
 
--- EXCLUDE_OS_WINDOWS
--- Exclude on windows due to stats/file size differences dur to CR
 DROP TABLE part;
 
 -- data setup

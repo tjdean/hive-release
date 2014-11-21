@@ -1,5 +1,3 @@
--- EXCLUDE_OS_WINDOWS
--- Exclude on windows due to stats/file size differences dur to CR
 drop table x;
 drop table y;
 drop table z;

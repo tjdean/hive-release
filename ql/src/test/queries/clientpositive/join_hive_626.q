@@ -1,8 +1,7 @@
 
 
 
--- EXCLUDE_OS_WINDOWS
--- Exclude on windows due to stats/file size differences dur to CR
+
 create table hive_foo (foo_id int, foo_name string, foo_a string, foo_b string, 
 foo_c string, foo_d string) row format delimited fields terminated by ','
 stored as textfile;

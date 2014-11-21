@@ -1,6 +1,4 @@
-PREHOOK: query: -- EXCLUDE_OS_WINDOWS
--- Exclude on windows due to stats/file size differences dur to CR
-create table nzhang_test1 stored as sequencefile as select 'key1' as key, 'value
+PREHOOK: query: create table nzhang_test1 stored as sequencefile as select 'key1' as key, 'value
 1
 
 http://asdf' value from src limit 1
@@ -8,9 +6,7 @@ PREHOOK: type: CREATETABLE_AS_SELECT
 PREHOOK: Input: default@src
 PREHOOK: Output: database:default
 PREHOOK: Output: default@nzhang_test1
-POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
--- Exclude on windows due to stats/file size differences dur to CR
-create table nzhang_test1 stored as sequencefile as select 'key1' as key, 'value
+POSTHOOK: query: create table nzhang_test1 stored as sequencefile as select 'key1' as key, 'value
 1
 
 http://asdf' value from src limit 1

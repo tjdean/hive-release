@@ -1,7 +1,5 @@
 set hive.new.job.grouping.set.cardinality=2;
 
--- EXCLUDE_OS_WINDOWS
--- Exclude on windows due to stats/file size differences dur to CR
 CREATE TABLE T1(a STRING, b STRING, c STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY ' ' STORED AS TEXTFILE; 
 
 LOAD DATA LOCAL INPATH '../../data/files/grouping_sets.txt' INTO TABLE T1;
