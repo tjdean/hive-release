@@ -1,5 +1,7 @@
 set hive.merge.mapfiles = false;
 set hive.merge.mapredfiles = false;
+-- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to stats/file size differences dur to CR
 -- Set merging to false above to make the explain more readable
 
 CREATE TABLE T1(a STRING, b STRING, c STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY ' ' STORED AS TEXTFILE; 

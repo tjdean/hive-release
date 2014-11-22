@@ -1,6 +1,10 @@
-PREHOOK: query: DROP TABLE lineitem
+PREHOOK: query: -- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to stats/file size differences dur to CR
+DROP TABLE lineitem
 PREHOOK: type: DROPTABLE
-POSTHOOK: query: DROP TABLE lineitem
+POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to stats/file size differences dur to CR
+DROP TABLE lineitem
 POSTHOOK: type: DROPTABLE
 PREHOOK: query: CREATE TABLE lineitem (L_ORDERKEY      INT,
                                 L_PARTKEY       INT,

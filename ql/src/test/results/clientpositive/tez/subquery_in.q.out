@@ -1,9 +1,13 @@
 PREHOOK: query: -- SORT_QUERY_RESULTS
 
+-- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to stats/file size differences dur to CR
 DROP TABLE part
 PREHOOK: type: DROPTABLE
 POSTHOOK: query: -- SORT_QUERY_RESULTS
 
+-- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to stats/file size differences dur to CR
 DROP TABLE part
 POSTHOOK: type: DROPTABLE
 PREHOOK: query: -- data setup
