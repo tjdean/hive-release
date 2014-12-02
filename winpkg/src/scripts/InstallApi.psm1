@@ -293,6 +293,7 @@ function Uninstall(
         [Environment]::SetEnvironmentVariable( "HIVE_OPTS", $null, [EnvironmentVariableTarget]::Machine )
         [Environment]::SetEnvironmentVariable( "HIVE_LIB_DIR", $null, [EnvironmentVariableTarget]::Machine )
 	    [Environment]::SetEnvironmentVariable( "HIVE_CONF_DIR", $null, [EnvironmentVariableTarget]::Machine )
+        [Environment]::SetEnvironmentVariable( "HIVE_REPLACED", $null, [EnvironmentVariableTarget]::Machine )
     }
     elseif ( $component -eq "hcatalog" )
     {
@@ -396,17 +397,22 @@ function Configure(
         UpdateXmlConfig $xmlFile $configs
         ### Apply configuration changes to hiveserver2-site.xml
         ###
-		$xmlFile = "$hiveInstallToDir\conf\hiveserver2-site.xml"
-        $configs = @{"hive.security.authorization.manager"="org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory"; 
-        "hive.security.authenticator.manager"="org.apache.hadoop.hive.ql.security.SessionStateUserAuthenticator";
-        "hive.querylog.location"="$hivelogsdir\history";
-        "hive.log.dir"="$hivelogsdir";
-		"hive.metastore.uris"="%SPACE%"
+        if ([Environment]::GetEnvironmentVariable("HIVE_REPLACED","Machine") -ne "yes")
+        {
+    		$xmlFile = "$hiveInstallToDir\conf\hiveserver2-site.xml"
+            $configs = @{"hive.security.authorization.manager"="org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory"; 
+            "hive.security.authenticator.manager"="org.apache.hadoop.hive.ql.security.SessionStateUserAuthenticator";
+            "hive.querylog.location"="$hivelogsdir\history";
+            "hive.log.dir"="$hivelogsdir";
+    		"hive.metastore.uris"="%SPACE%"
+            }
+            UpdateXmlConfig $xmlFile $configs   
+          	Get-Content $xmlFile | ForEach-Object { $_ -replace "%SPACE%", " " } | Set-Content ($xmlFile+".tmp")
+            Remove-Item $xmlFile  -ErrorAction Stop |Out-Null
+            Rename-Item ($xmlFile+".tmp") $xmlFile -ErrorAction Stop |Out-Null               
+            [Environment]::SetEnvironmentVariable("HIVE_REPLACED","yes","Machine")
         }
-        UpdateXmlConfig $xmlFile $configs   
-      	Get-Content $xmlFile | ForEach-Object { $_ -replace "%SPACE%", " " } | Set-Content ($xmlFile+".tmp")
-		Remove-Item $xmlFile  -ErrorAction Stop |Out-Null
-		Rename-Item ($xmlFile+".tmp") $xmlFile -ErrorAction Stop |Out-Null               
+
     }
     elseif ( $component -eq "hcatalog" )
     {
