@@ -396,7 +396,7 @@ function Configure(
         UpdateXmlConfig $xmlFile $configs
         ### Apply configuration changes to hiveserver2-site.xml
         ###
-        if ([Environment]::GetEnvironmentVariable("HIVE_REPLACED") -ne "yes")
+        if ([Environment]::GetEnvironmentVariable("HIVE_REPLACED","Machine") -ne "yes")
         {
     		$xmlFile = "$hiveInstallToDir\conf\hiveserver2-site.xml"
             $configs = @{"hive.security.authorization.manager"="org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory"; 
