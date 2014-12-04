@@ -125,7 +125,7 @@ function Main( $scriptDir )
     $zookeeperNodes = $zookeeperNodes + ":2181"
 
     UpdateXmlConfig $xmlFile @{"hive.zookeeper.quorum" ="$zookeeperNodes"}
-    [Environment]::SetEnvironmentVariable("HIVE_REPLACED",$null,"Machine")
+
     Write-Log "Installation of Hive completed successfully"
     ###
     ### Install Hcatalog/webhcat
