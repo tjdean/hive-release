@@ -871,6 +871,12 @@ public class HiveConf extends Configuration {
     // whether insert into external tables is allowed
     HIVE_INSERT_INTO_EXTERNAL_TABLES("hive.insert.into.external.tables", true),
 
+    // General Thrift configs (Thrift configs common to Metastore and HiveServer2)
+    
+    // If the length of incoming sasl message is greater than this, regard it as invalid and close the transport. 
+    // Zero or less value disables this. Default is 100MB.
+    HIVE_THRIFT_SASL_MESSAGE_LIMIT("hive.thrift.sasl.message.limit", 104857600),
+       
     // A comma separated list of hooks which implement HiveDriverRunHook and will be run at the
     // beginning and end of Driver.run, these will be run in the order specified
     HIVE_DRIVER_RUN_HOOKS("hive.exec.driver.run.hooks", ""),

@@ -48,27 +48,27 @@ public class HiveAuthFactory {
   private static final Logger LOG = LoggerFactory.getLogger(HiveAuthFactory.class);
 
   public static enum AuthTypes {
-    NOSASL("NOSASL"),
-    NONE("NONE"),
-    LDAP("LDAP"),
-    KERBEROS("KERBEROS"),
-    CUSTOM("CUSTOM"),
-    PAM("PAM");
-
-    private String authType;
-
-    AuthTypes(String authType) {
-      this.authType = authType;
-    }
-
-    public String getAuthName() {
-      return authType;
-    }
+    NOSASL, NONE, LDAP, KERBEROS, CUSTOM, PAM
   };
+  
+  public static enum TransTypes {
+    HTTP {
+      AuthTypes getDefaultAuthType() {
+        return AuthTypes.NOSASL;
+      }
+    },
+    BINARY {
+      AuthTypes getDefaultAuthType() {
+        return AuthTypes.NONE;
+      }
+    };
+    abstract AuthTypes getDefaultAuthType();
+  }
 
-  private HadoopThriftAuthBridge.Server saslServer = null;
-  private String authTypeStr;
-  private final String transportMode;
+  private final HadoopThriftAuthBridge.Server saslServer;
+  private final AuthTypes authType;
+  private final TransTypes transportType;
+  private final int saslMessageLimit;
   private final HiveConf conf;
 
   public static final String HS2_PROXY_USER = "hive.server2.proxy.user";
@@ -76,31 +76,29 @@ public class HiveAuthFactory {
 
   public HiveAuthFactory() throws TTransportException {
     conf = new HiveConf();
-    transportMode = conf.getVar(HiveConf.ConfVars.HIVE_SERVER2_TRANSPORT_MODE);
-    authTypeStr = conf.getVar(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION);
-
-    // In http mode we use NOSASL as the default auth type
-    if (transportMode.equalsIgnoreCase("http")) {
-      if (authTypeStr == null) {
-        authTypeStr = AuthTypes.NOSASL.getAuthName();
+    saslMessageLimit = conf.getIntVar(ConfVars.HIVE_THRIFT_SASL_MESSAGE_LIMIT);
+    String transTypeStr = conf.getVar(HiveConf.ConfVars.HIVE_SERVER2_TRANSPORT_MODE);
+    String authTypeStr = conf.getVar(ConfVars.HIVE_SERVER2_AUTHENTICATION);
+    transportType = TransTypes.valueOf(transTypeStr.toUpperCase());
+    authType =
+        authTypeStr == null ? transportType.getDefaultAuthType() : AuthTypes.valueOf(authTypeStr
+            .toUpperCase());
+    if (transportType == TransTypes.BINARY
+        && authTypeStr.equalsIgnoreCase(AuthTypes.KERBEROS.name())
+        && ShimLoader.getHadoopShims().isSecureShimImpl()) {
+      saslServer =
+          ShimLoader.getHadoopThriftAuthBridge().createServer(
+              conf.getVar(ConfVars.HIVE_SERVER2_KERBEROS_KEYTAB),
+              conf.getVar(ConfVars.HIVE_SERVER2_KERBEROS_PRINCIPAL));
+      // start delegation token manager
+      try {
+        saslServer.startDelegationTokenSecretManager(conf, null);
+      } catch (Exception e) {
+        throw new TTransportException("Failed to start token manager", e);
       }
     }
     else {
-      if (authTypeStr == null) {
-        authTypeStr = AuthTypes.NONE.getAuthName();
-      }
-      if (authTypeStr.equalsIgnoreCase(AuthTypes.KERBEROS.getAuthName())
-          && ShimLoader.getHadoopShims().isSecureShimImpl()) {
-        saslServer = ShimLoader.getHadoopThriftAuthBridge().createServer(
-            conf.getVar(ConfVars.HIVE_SERVER2_KERBEROS_KEYTAB),
-            conf.getVar(ConfVars.HIVE_SERVER2_KERBEROS_PRINCIPAL));
-        // start delegation token manager
-        try {
-          saslServer.startDelegationTokenSecretManager(conf, null);
-        } catch (IOException e) {
-          throw new TTransportException("Failed to start token manager", e);
-        }
-      }
+      saslServer = null;
     }
   }
 
@@ -116,43 +114,21 @@ public class HiveAuthFactory {
     saslProps.put(Sasl.SERVER_AUTH, "true");
     return saslProps;
   }
-
-  public TTransportFactory getAuthTransFactory() throws LoginException {
-    TTransportFactory transportFactory;
-    if (authTypeStr.equalsIgnoreCase(AuthTypes.KERBEROS.getAuthName())) {
-      try {
-        transportFactory = saslServer.createTransportFactory(getSaslProperties());
-      } catch (TTransportException e) {
-        throw new LoginException(e.getMessage());
-      }
-    } else if (authTypeStr.equalsIgnoreCase(AuthTypes.NONE.getAuthName())) {
-      transportFactory = PlainSaslHelper.getPlainTransportFactory(authTypeStr);
-    } else if (authTypeStr.equalsIgnoreCase(AuthTypes.LDAP.getAuthName())) {
-      transportFactory = PlainSaslHelper.getPlainTransportFactory(authTypeStr);
-    } else if (authTypeStr.equalsIgnoreCase(AuthTypes.PAM.getAuthName())) {
-      transportFactory = PlainSaslHelper.getPlainTransportFactory(authTypeStr);
-    } else if (authTypeStr.equalsIgnoreCase(AuthTypes.NOSASL.getAuthName())) {
-      transportFactory = new TTransportFactory();
-    } else if (authTypeStr.equalsIgnoreCase(AuthTypes.CUSTOM.getAuthName())) {
-      transportFactory = PlainSaslHelper.getPlainTransportFactory(authTypeStr);
-    } else {
-      throw new LoginException("Unsupported authentication type " + authTypeStr);
+  public TTransportFactory getAuthTransFactory() throws Exception {
+    if (authType == AuthTypes.KERBEROS) {
+      return saslServer.createTransportFactory(getSaslProperties(), saslMessageLimit);
     }
-    return transportFactory;
+    if (authType == AuthTypes.NOSASL) {
+      return new TTransportFactory();
+    }
+    return PlainSaslHelper.getPlainTransportFactory(authType.name(), saslMessageLimit);
   }
 
-  public TProcessorFactory getAuthProcFactory(ThriftCLIService service)
-      throws LoginException {
-    if (transportMode.equalsIgnoreCase("http")) {
-      return HttpAuthUtils.getAuthProcFactory(service);
+  public TProcessorFactory getAuthProcFactory(ThriftCLIService service) {
+    if (authType == AuthTypes.KERBEROS) {
+      return KerberosSaslHelper.getKerberosProcessorFactory(saslServer, service);
     }
-    else {
-      if (authTypeStr.equalsIgnoreCase(AuthTypes.KERBEROS.getAuthName())) {
-        return KerberosSaslHelper.getKerberosProcessorFactory(saslServer, service);
-      } else {
-        return PlainSaslHelper.getPlainProcessorFactory(service);
-      }
-    }
+    return PlainSaslHelper.getPlainProcessorFactory(service);
   }
 
   public String getRemoteUser() {

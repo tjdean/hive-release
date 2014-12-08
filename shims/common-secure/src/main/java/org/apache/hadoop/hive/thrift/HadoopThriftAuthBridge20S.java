@@ -87,7 +87,8 @@ public class HadoopThriftAuthBridge20S extends HadoopThriftAuthBridge {
   }
 
   @Override
-  public Server createServer(String keytabFile, String principalConf) throws TTransportException {
+  public Server createServer(String keytabFile, String principalConf) 
+      throws TTransportException {
     return new Server(keytabFile, principalConf);
   }
 
@@ -314,26 +315,27 @@ public class HadoopThriftAuthBridge20S extends HadoopThriftAuthBridge {
      * @param saslProps Map of SASL properties
      */
     @Override
-    public TTransportFactory createTransportFactory(Map<String, String> saslProps)
-        throws TTransportException {
+    public TTransportFactory createTransportFactory(Map<String, String> saslProps,
+        int saslMessageLimit) throws TTransportException {
       // Parse out the kerberos principal, host, realm.
       String kerberosName = realUgi.getUserName();
       final String names[] = SaslRpcServer.splitKerberosName(kerberosName);
       if (names.length != 3) {
         throw new TTransportException("Kerberos principal should have 3 parts: " + kerberosName);
       }
-
-      TSaslServerTransport.Factory transFactory = new TSaslServerTransport.Factory();
-      transFactory.addServerDefinition(
-          AuthMethod.KERBEROS.getMechanismName(),
-          names[0], names[1],  // two parts of kerberos principal
-          saslProps,
-          new SaslRpcServer.SaslGssCallbackHandler());
-      transFactory.addServerDefinition(AuthMethod.DIGEST.getMechanismName(),
-          null, SaslRpcServer.SASL_DEFAULT_REALM,
-          saslProps, new SaslDigestCallbackHandler(secretManager));
-
-      return new TUGIAssumingTransportFactory(transFactory, realUgi);
+      TSaslServerTransport.Factory saslTransportFactory;
+      if (saslMessageLimit > 0) {
+        saslTransportFactory = new HadoopThriftAuthBridge.HiveSaslServerTransportFactory(saslMessageLimit);
+      } else {
+        saslTransportFactory = new TSaslServerTransport.Factory();
+      }
+      saslTransportFactory.addServerDefinition(AuthMethod.KERBEROS.getMechanismName(), names[0], names[1],
+          saslProps, new SaslRpcServer.SaslGssCallbackHandler());
+      saslTransportFactory
+          .addServerDefinition(AuthMethod.DIGEST.getMechanismName(), null,
+              SaslRpcServer.SASL_DEFAULT_REALM, saslProps, new SaslDigestCallbackHandler(
+                  secretManager));
+      return new TUGIAssumingTransportFactory(saslTransportFactory, realUgi);
     }
 
     /**
