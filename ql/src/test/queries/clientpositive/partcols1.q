@@ -1,4 +1,5 @@
-
+-- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to BUG-28872
 create table test1(col1 string) partitioned by (partitionId int);
 insert overwrite table test1 partition (partitionId=1)
   select key from src tablesample (10 rows);
