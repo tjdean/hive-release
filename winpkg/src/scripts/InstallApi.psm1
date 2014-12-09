@@ -293,6 +293,7 @@ function Uninstall(
         [Environment]::SetEnvironmentVariable( "HIVE_OPTS", $null, [EnvironmentVariableTarget]::Machine )
         [Environment]::SetEnvironmentVariable( "HIVE_LIB_DIR", $null, [EnvironmentVariableTarget]::Machine )
 	    [Environment]::SetEnvironmentVariable( "HIVE_CONF_DIR", $null, [EnvironmentVariableTarget]::Machine )
+        [Environment]::SetEnvironmentVariable( "HIVE_REPLACED", $null, [EnvironmentVariableTarget]::Machine )
     }
     elseif ( $component -eq "hcatalog" )
     {
