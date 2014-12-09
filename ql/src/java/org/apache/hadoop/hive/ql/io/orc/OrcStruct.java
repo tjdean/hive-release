@@ -213,7 +213,13 @@ final class OrcStruct implements Writable {
       if (object == null) {
         return null;
       }
-      return ((OrcStruct) object).fields[((Field) field).offset];
+      int offset = ((Field) field).offset;
+      OrcStruct struct = (OrcStruct) object;
+      if (offset >= struct.fields.length) {
+        return null;
+      }
+
+      return struct.fields[offset];
     }
 
     @Override
