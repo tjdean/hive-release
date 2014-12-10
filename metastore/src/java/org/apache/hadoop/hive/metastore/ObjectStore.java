@@ -249,7 +249,7 @@ public class ObjectStore implements RawStore, Configurable {
     isInitialized = pm != null;
     if (isInitialized) {
       expressionProxy = createExpressionProxy(hiveConf);
-      directSql = new MetaStoreDirectSql(pm);
+      directSql = new MetaStoreDirectSql(pm, hiveConf);
     }
     LOG.debug("RawStore: " + this + ", with PersistenceManager: " + pm +
         " created in the thread with id: " + Thread.currentThread().getId());
@@ -1891,7 +1891,7 @@ public class ObjectStore implements RawStore, Configurable {
     return new GetListHelper<Partition>(dbName, tblName, allowSql, allowJdo) {
       @Override
       protected List<Partition> getSqlResult(GetHelper<List<Partition>> ctx) throws MetaException {
-        return directSql.getPartitionsViaSqlFilter(dbName, tblName, partNames, null);
+        return directSql.getPartitionsViaSqlFilter(dbName, tblName, partNames);
       }
       @Override
       protected List<Partition> getJdoResult(
@@ -1944,7 +1944,7 @@ public class ObjectStore implements RawStore, Configurable {
           List<String> partNames = new LinkedList<String>();
           hasUnknownPartitions.set(getPartitionNamesPrunedByExprNoTxn(
               ctx.getTable(), expr, defaultPartitionName, maxParts, partNames));
-          result = directSql.getPartitionsViaSqlFilter(dbName, tblName, partNames, null);
+          result = directSql.getPartitionsViaSqlFilter(dbName, tblName, partNames);
         }
         return result;
       }
