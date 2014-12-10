@@ -1,0 +1,3 @@
+
+BUG Fixes:
+    HIVE-8295 Add batch retrieve partition objects for metastore direct sql
