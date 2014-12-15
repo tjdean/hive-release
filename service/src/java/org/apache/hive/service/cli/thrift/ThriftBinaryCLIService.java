@@ -34,6 +34,7 @@ import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportFactory;
 
+
 public class ThriftBinaryCLIService extends ThriftCLIService {
 
   public ThriftBinaryCLIService(CLIService cliService) {
@@ -62,39 +63,44 @@ public class ThriftBinaryCLIService extends ThriftCLIService {
       if (hiveHost != null && !hiveHost.isEmpty()) {
         serverAddress = new InetSocketAddress(hiveHost, portNum);
       } else {
-        serverAddress = new InetSocketAddress(portNum);
+        serverAddress = new  InetSocketAddress(portNum);
       }
 
       minWorkerThreads = hiveConf.getIntVar(ConfVars.HIVE_SERVER2_THRIFT_MIN_WORKER_THREADS);
       maxWorkerThreads = hiveConf.getIntVar(ConfVars.HIVE_SERVER2_THRIFT_MAX_WORKER_THREADS);
       workerKeepAliveTime = hiveConf.getIntVar(ConfVars.HIVE_SERVER2_THRIFT_WORKER_KEEPALIVE_TIME);
-      int socketTimeout = hiveConf.getIntVar(ConfVars.HIVE_SERVER2_TCP_SOCKET_BLOCKING_TIMEOUT);
-      boolean keepAlive = hiveConf.getBoolVar(ConfVars.HIVE_SERVER2_TCP_SOCKET_KEEP_ALIVE);
       String threadPoolName = "HiveServer2-Handler-Pool";
       ExecutorService executorService = new ThreadPoolExecutor(minWorkerThreads, maxWorkerThreads,
           workerKeepAliveTime, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
           new ThreadFactoryWithGarbageCleanup(threadPoolName));
-
+      
       TServerSocket serverSocket = null;
       if (!hiveConf.getBoolVar(ConfVars.HIVE_SERVER2_USE_SSL)) {
-        serverSocket = HiveAuthFactory.getServerSocket(hiveHost, portNum, socketTimeout, keepAlive);
+        serverSocket = HiveAuthFactory.getServerSocket(hiveHost, portNum);
       } else {
         String keyStorePath = hiveConf.getVar(ConfVars.HIVE_SERVER2_SSL_KEYSTORE_PATH).trim();
         if (keyStorePath.isEmpty()) {
-          throw new IllegalArgumentException(ConfVars.HIVE_SERVER2_SSL_KEYSTORE_PATH.varname
-              + " Not configured for SSL connection");
+          throw new IllegalArgumentException(ConfVars.HIVE_SERVER2_SSL_KEYSTORE_PATH.varname +
+              " Not configured for SSL connection");
         }
-        serverSocket = HiveAuthFactory.getServerSSLSocket(hiveHost, portNum, keyStorePath,
-            hiveConf.getVar(ConfVars.HIVE_SERVER2_SSL_KEYSTORE_PASSWORD), socketTimeout, keepAlive);
+        serverSocket = HiveAuthFactory.getServerSSLSocket(hiveHost, portNum,
+            keyStorePath, hiveConf.getVar(ConfVars.HIVE_SERVER2_SSL_KEYSTORE_PASSWORD));
       }
       TThreadPoolServer.Args sargs = new TThreadPoolServer.Args(serverSocket)
-          .processorFactory(processorFactory).transportFactory(transportFactory)
-          .protocolFactory(new TBinaryProtocol.Factory()).executorService(executorService);
+      .processorFactory(processorFactory)
+      .transportFactory(transportFactory)
+      .protocolFactory(new TBinaryProtocol.Factory())
+      .executorService(executorService);
+
       server = new TThreadPoolServer(sargs);
+
       LOG.info("ThriftBinaryCLIService listening on " + serverAddress);
+
       server.serve();
+
     } catch (Throwable t) {
       LOG.error("Error: ", t);
     }
+
   }
 }
