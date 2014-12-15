@@ -2163,6 +2163,20 @@
 </property>
 
 <property>
+  <name>hive.server2.tcp.socket.blocking.timeout</name>
+  <value>0</value>
+  <description>
+    Timeout on blocking socket operations (accept, read). 0 means infinite timeout.
+  </description>
+</property>
+
+<property>
+  <name>hive.server2.tcp.socket.keepalive</name>
+  <value>false</value>
+  <description>Whether to send tcp socket keepalive probe. Not effective in http mode.</description>
+</property>
+
+<property>
   <name>hive.server2.thrift.port</name>
   <value>10000</value>
   <description>Port number of HiveServer2 Thrift interface.
