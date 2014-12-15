@@ -20,8 +20,6 @@ package org.apache.hive.service.auth;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,21 +80,24 @@ public class HiveAuthFactory {
     String transTypeStr = conf.getVar(HiveConf.ConfVars.HIVE_SERVER2_TRANSPORT_MODE);
     String authTypeStr = conf.getVar(ConfVars.HIVE_SERVER2_AUTHENTICATION);
     transportType = TransTypes.valueOf(transTypeStr.toUpperCase());
-    authType = authTypeStr == null ? transportType.getDefaultAuthType() : AuthTypes
-        .valueOf(authTypeStr.toUpperCase());
+    authType =
+        authTypeStr == null ? transportType.getDefaultAuthType() : AuthTypes.valueOf(authTypeStr
+            .toUpperCase());
     if (transportType == TransTypes.BINARY
         && authTypeStr.equalsIgnoreCase(AuthTypes.KERBEROS.name())
         && ShimLoader.getHadoopShims().isSecureShimImpl()) {
-      saslServer = ShimLoader.getHadoopThriftAuthBridge().createServer(
-          conf.getVar(ConfVars.HIVE_SERVER2_KERBEROS_KEYTAB),
-          conf.getVar(ConfVars.HIVE_SERVER2_KERBEROS_PRINCIPAL));
+      saslServer =
+          ShimLoader.getHadoopThriftAuthBridge().createServer(
+              conf.getVar(ConfVars.HIVE_SERVER2_KERBEROS_KEYTAB),
+              conf.getVar(ConfVars.HIVE_SERVER2_KERBEROS_PRINCIPAL));
       // start delegation token manager
       try {
         saslServer.startDelegationTokenSecretManager(conf, null);
       } catch (Exception e) {
         throw new TTransportException("Failed to start token manager", e);
       }
-    } else {
+    }
+    else {
       saslServer = null;
     }
   }
@@ -191,25 +192,21 @@ public class HiveAuthFactory {
     return TSSLTransportFactory.getClientSocket(host, port, loginTimeout, params);
   }
 
-  public static TServerSocket getServerSocket(String hiveHost, int portNum, int socketTimeout,
-      boolean keepAlive) throws TTransportException {
+  public static TServerSocket getServerSocket(String hiveHost, int portNum)
+      throws TTransportException {
     InetSocketAddress serverAddress = null;
     if (hiveHost != null && !hiveHost.isEmpty()) {
       serverAddress = new InetSocketAddress(hiveHost, portNum);
     } else {
-      serverAddress = new InetSocketAddress(portNum);
+      serverAddress = new  InetSocketAddress(portNum);
     }
-    TServerSocket serverSocket = new TServerSocket(serverAddress, socketTimeout);
-    if (keepAlive) {
-      serverSocket = new TServerSocketKeepAlive(serverSocket.getServerSocket());
-    }
-    return serverSocket;
+    return new TServerSocket(serverAddress );
   }
 
-  public static TServerSocket getServerSSLSocket(String hiveHost, int portNum, String keyStorePath,
-      String keyStorePassWord, int socketTimeout, boolean keepAlive) throws TTransportException,
-      UnknownHostException {
-    TSSLTransportFactory.TSSLTransportParameters params = new TSSLTransportFactory.TSSLTransportParameters();
+  public static TServerSocket getServerSSLSocket(String hiveHost, int portNum,
+      String keyStorePath, String keyStorePassWord) throws TTransportException, UnknownHostException {
+    TSSLTransportFactory.TSSLTransportParameters params =
+        new TSSLTransportFactory.TSSLTransportParameters();
     params.setKeyStore(keyStorePath, keyStorePassWord);
 
     InetAddress serverAddress;
@@ -218,12 +215,7 @@ public class HiveAuthFactory {
     } else {
       serverAddress = InetAddress.getByName(hiveHost);
     }
-    TServerSocket serverSocket = TSSLTransportFactory.getServerSocket(portNum, socketTimeout,
-        serverAddress, params);
-    if (keepAlive) {
-      serverSocket = new TServerSocketKeepAlive(serverSocket.getServerSocket());
-    }
-    return serverSocket;
+    return TSSLTransportFactory.getServerSocket(portNum, 0, serverAddress, params);
   }
 
   // retrieve delegation token for the given user
@@ -314,26 +306,5 @@ public class HiveAuthFactory {
           " , shortName: " + shortName);
       return nameHost[0];
   }
-  
-  /**
-   * TServerSocketKeepAlive - like TServerSocket, but will enable keepalive for
-   * accepted sockets.
-   * 
-   */
-  static class TServerSocketKeepAlive extends TServerSocket {
-    public TServerSocketKeepAlive(ServerSocket serverSocket) throws TTransportException {
-      super(serverSocket);
-    }
 
-    @Override
-    protected TSocket acceptImpl() throws TTransportException {
-      TSocket ts = super.acceptImpl();
-      try {
-        ts.getSocket().setKeepAlive(true);
-      } catch (SocketException e) {
-        throw new TTransportException(e);
-      }
-      return ts;
-    }
-  }
 }

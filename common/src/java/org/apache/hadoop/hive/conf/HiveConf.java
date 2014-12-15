@@ -887,11 +887,11 @@ public class HiveConf extends Configuration {
     HIVE_SERVER2_MAX_START_ATTEMPTS("hive.server2.max.start.attempts", 30L,
         new LongRangeValidator(0L, Long.MAX_VALUE)),
 
-    // Binary or Http
+    // binary or http
     HIVE_SERVER2_TRANSPORT_MODE("hive.server2.transport.mode", "binary",
         new StringsValidator("binary", "http")),
 
-    // Http (over thrift) transport settings
+    // http (over thrift) transport settings
     HIVE_SERVER2_THRIFT_HTTP_PORT("hive.server2.thrift.http.port", 10001),
     HIVE_SERVER2_THRIFT_HTTP_PATH("hive.server2.thrift.http.path", "cliservice"),
     HIVE_SERVER2_THRIFT_HTTP_MIN_WORKER_THREADS("hive.server2.thrift.http.min.worker.threads", 5),
@@ -899,11 +899,7 @@ public class HiveConf extends Configuration {
     HIVE_SERVER2_THRIFT_HTTP_MAX_IDLE_TIME("hive.server2.thrift.http.max.idle.time", 1800000),
     HIVE_SERVER2_THRIFT_HTTP_WORKER_KEEPALIVE_TIME("hive.server2.thrift.http.worker.keepalive.time", 60),
 
-    // Binary (TCP) transport settings
-    // Timeout on blocking socket operations (accept, read). 0 means infinite timeout.
-    HIVE_SERVER2_TCP_SOCKET_BLOCKING_TIMEOUT("hive.server2.tcp.socket.blocking.timeout", 0),
-    // Whether to send tcp socket keepalive probe. Not effective in http mode.
-    HIVE_SERVER2_TCP_SOCKET_KEEPALIVE("hive.server2.tcp.socket.keepalive", false),
+    // binary transport settings
     HIVE_SERVER2_THRIFT_PORT("hive.server2.thrift.port", 10000),
     HIVE_SERVER2_THRIFT_BIND_HOST("hive.server2.thrift.bind.host", ""),
     HIVE_SERVER2_THRIFT_SASL_QOP("hive.server2.thrift.sasl.qop", "auth",
