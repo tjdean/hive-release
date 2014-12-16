@@ -113,6 +113,7 @@ public class HiveAuthFactory {
     saslProps.put(Sasl.SERVER_AUTH, "true");
     return saslProps;
   }
+  
   public TTransportFactory getAuthTransFactory() throws Exception {
     if (authType == AuthTypes.KERBEROS) {
       return saslServer.createTransportFactory(getSaslProperties(), saslMessageLimit);
