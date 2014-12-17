@@ -1,0 +1,48 @@
+PREHOOK: query: create table implicit_cast_during_insert (c1 int, c2 string)
+  partitioned by (p1 string) stored as orc
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+POSTHOOK: query: create table implicit_cast_during_insert (c1 int, c2 string)
+  partitioned by (p1 string) stored as orc
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@implicit_cast_during_insert
+PREHOOK: query: insert overwrite table implicit_cast_during_insert partition (p1)
+  select key, value, key key1 from (select * from src where key = 0) q
+  distribute by key1 sort by key1
+PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+PREHOOK: Output: default@implicit_cast_during_insert
+POSTHOOK: query: insert overwrite table implicit_cast_during_insert partition (p1)
+  select key, value, key key1 from (select * from src where key = 0) q
+  distribute by key1 sort by key1
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+POSTHOOK: Output: default@implicit_cast_during_insert@p1=0
+POSTHOOK: Lineage: implicit_cast_during_insert PARTITION(p1=0).c1 EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), ]
+POSTHOOK: Lineage: implicit_cast_during_insert PARTITION(p1=0).c2 SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
+PREHOOK: query: select * from implicit_cast_during_insert
+PREHOOK: type: QUERY
+PREHOOK: Input: default@implicit_cast_during_insert
+PREHOOK: Input: default@implicit_cast_during_insert@p1=0
+#### A masked pattern was here ####
+POSTHOOK: query: select * from implicit_cast_during_insert
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@implicit_cast_during_insert
+POSTHOOK: Input: default@implicit_cast_during_insert@p1=0
+#### A masked pattern was here ####
+POSTHOOK: Lineage: implicit_cast_during_insert PARTITION(p1=0).c1 EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), ]
+POSTHOOK: Lineage: implicit_cast_during_insert PARTITION(p1=0).c2 SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
+0	val_0	0
+0	val_0	0
+0	val_0	0
+PREHOOK: query: drop table implicit_cast_during_insert
+PREHOOK: type: DROPTABLE
+PREHOOK: Input: default@implicit_cast_during_insert
+PREHOOK: Output: default@implicit_cast_during_insert
+POSTHOOK: query: drop table implicit_cast_during_insert
+POSTHOOK: type: DROPTABLE
+POSTHOOK: Input: default@implicit_cast_during_insert
+POSTHOOK: Output: default@implicit_cast_during_insert
+POSTHOOK: Lineage: implicit_cast_during_insert PARTITION(p1=0).c1 EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), ]
+POSTHOOK: Lineage: implicit_cast_during_insert PARTITION(p1=0).c2 SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
