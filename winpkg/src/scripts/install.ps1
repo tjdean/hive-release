@@ -119,12 +119,13 @@ function Main( $scriptDir )
     ### Configure hive-site.xml
     ###
 
-    $xmlFile = Join-Path $hiveInstallToDir "conf\hive-site.xml"
-    Write-log "Configuring $xmlFile"
-    $zookeeperNodes = $env:ZOOKEEPER_HOSTS.Replace(",",":2181,")
-    $zookeeperNodes = $zookeeperNodes + ":2181"
-
-    UpdateXmlConfig $xmlFile @{"hive.zookeeper.quorum" ="$zookeeperNodes"}
+    if ($env:ZOOKEEPER_HOSTS){
+        $xmlFile = Join-Path $hiveInstallToDir "conf\hive-site.xml"
+        Write-log "Configuring $xmlFile"
+        $zookeeperNodes = $env:ZOOKEEPER_HOSTS.Replace(",",":2181,")
+        $zookeeperNodes = $zookeeperNodes + ":2181"
+        UpdateXmlConfig $xmlFile @{"hive.zookeeper.quorum" ="$zookeeperNodes"}
+    }
     [Environment]::SetEnvironmentVariable("HIVE_REPLACED",$null,"Machine")
     Write-Log "Installation of Hive completed successfully"
     ###
