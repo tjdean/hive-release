@@ -1635,7 +1635,8 @@ public class HiveConf extends Configuration {
         "excessive threads are killed after this time interval."),
 
     // Binary (TCP) transport settings
-    HIVE_SERVER2_TCP_SOCKET_BLOCKING_TIMEOUT("hive.server2.tcp.socket.blocking.timeout", 0, 
+    HIVE_SERVER2_TCP_SOCKET_BLOCKING_TIMEOUT("hive.server2.tcp.socket.blocking.timeout", "0s", 
+        new TimeValidator(TimeUnit.SECONDS),
         "Timeout (in seconds) on blocking socket operations (accept, read). 0 means infinite timeout."),
     HIVE_SERVER2_TCP_SOCKET_KEEPALIVE("hive.server2.tcp.socket.keepalive", true,
         "Whether to send tcp socket keepalive probe"),

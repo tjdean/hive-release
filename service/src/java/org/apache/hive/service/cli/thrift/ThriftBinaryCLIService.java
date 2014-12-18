@@ -58,7 +58,8 @@ public class ThriftBinaryCLIService extends ThriftCLIService {
       TTransportFactory transportFactory = hiveAuthFactory.getAuthTransFactory();
       TProcessorFactory processorFactory = hiveAuthFactory.getAuthProcFactory(this);
       TServerSocket serverSocket = null;
-      int socketTimeout = hiveConf.getIntVar(ConfVars.HIVE_SERVER2_TCP_SOCKET_BLOCKING_TIMEOUT);
+      int socketTimeout = (int) hiveConf.getTimeVar(
+          ConfVars.HIVE_SERVER2_TCP_SOCKET_BLOCKING_TIMEOUT, TimeUnit.SECONDS);
       boolean keepAlive = hiveConf.getBoolVar(ConfVars.HIVE_SERVER2_TCP_SOCKET_KEEPALIVE);
       List<String> sslVersionBlacklist = new ArrayList<String>();
       for (String sslVersion : hiveConf.getVar(ConfVars.HIVE_SSL_PROTOCOL_BLACKLIST).split(",")) {
