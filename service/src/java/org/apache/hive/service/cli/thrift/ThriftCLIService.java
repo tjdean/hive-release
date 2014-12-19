@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.net.ServerSocket;
+import java.net.SocketException;
 
 import javax.security.auth.login.LoginException;
 
@@ -48,6 +50,8 @@ import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportFactory;
+import org.apache.thrift.transport.TTransportException;
+import org.apache.thrift.transport.TSocket;
 
 
 /**
@@ -421,9 +425,15 @@ public class ThriftCLIService extends AbstractService implements TCLIService.Ifa
 
       minWorkerThreads = hiveConf.getIntVar(ConfVars.HIVE_SERVER2_THRIFT_MIN_WORKER_THREADS);
       maxWorkerThreads = hiveConf.getIntVar(ConfVars.HIVE_SERVER2_THRIFT_MAX_WORKER_THREADS);
+      int socketTimeout = hiveConf.getIntVar(ConfVars.HIVE_SERVER2_TCP_SOCKET_BLOCKING_TIMEOUT);
+      boolean keepAlive = hiveConf.getBoolVar(ConfVars.HIVE_SERVER2_TCP_SOCKET_KEEPALIVE);
 
+      TServerSocket serverSocket = new TServerSocket(serverAddress, socketTimeout);
+      if (keepAlive) {
+        serverSocket = new TServerSocketKeepAlive(serverSocket.getServerSocket());
+      }
 
-      TThreadPoolServer.Args sargs = new TThreadPoolServer.Args(new TServerSocket(serverAddress))
+      TThreadPoolServer.Args sargs = new TThreadPoolServer.Args(serverSocket)
       .processorFactory(processorFactory)
       .transportFactory(transportFactory)
       .protocolFactory(new TBinaryProtocol.Factory())
@@ -437,6 +447,28 @@ public class ThriftCLIService extends AbstractService implements TCLIService.Ifa
       server.serve();
     } catch (Throwable t) {
       t.printStackTrace();
+    }
+  }
+
+  /**
+   * TServerSocketKeepAlive - like TServerSocket, but will enable keepalive for
+   * accepted sockets.
+   *
+   */
+  static class TServerSocketKeepAlive extends TServerSocket {
+    public TServerSocketKeepAlive(ServerSocket serverSocket) throws TTransportException {
+      super(serverSocket);
+    }
+
+    @Override
+    protected TSocket acceptImpl() throws TTransportException {
+      TSocket ts = super.acceptImpl();
+      try {
+        ts.getSocket().setKeepAlive(true);
+      } catch (SocketException e) {
+        throw new TTransportException(e);
+      }
+      return ts;
     }
   }
 
