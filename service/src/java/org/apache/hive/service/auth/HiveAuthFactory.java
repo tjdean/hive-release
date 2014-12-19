@@ -54,10 +54,11 @@ public class HiveAuthFactory {
   private HadoopThriftAuthBridge.Server saslServer = null;
   private String authTypeStr;
   HiveConf conf;
+  private int saslMessageLimit;
 
   public HiveAuthFactory() throws TTransportException {
     conf = new HiveConf();
-
+    saslMessageLimit = conf.getIntVar(ConfVars.HIVE_THRIFT_SASL_MESSAGE_LIMIT);
     authTypeStr = conf.getVar(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION);
     if (authTypeStr == null) {
       authTypeStr = AuthTypes.NONE.getAuthName();
@@ -82,13 +83,13 @@ public class HiveAuthFactory {
         throw new LoginException(e.getMessage());
       }
     } else if (authTypeStr.equalsIgnoreCase(AuthTypes.NONE.getAuthName())) {
-      transportFactory = PlainSaslHelper.getPlainTransportFactory(authTypeStr);
+      transportFactory = PlainSaslHelper.getPlainTransportFactory(authTypeStr, saslMessageLimit);
     } else if (authTypeStr.equalsIgnoreCase(AuthTypes.LDAP.getAuthName())) {
-      transportFactory = PlainSaslHelper.getPlainTransportFactory(authTypeStr);
+      transportFactory = PlainSaslHelper.getPlainTransportFactory(authTypeStr, saslMessageLimit);
     } else if (authTypeStr.equalsIgnoreCase(AuthTypes.NOSASL.getAuthName())) {
       transportFactory = new TTransportFactory();
     } else if (authTypeStr.equalsIgnoreCase(AuthTypes.CUSTOM.getAuthName())) {
-      transportFactory = PlainSaslHelper.getPlainTransportFactory(authTypeStr);
+      transportFactory = PlainSaslHelper.getPlainTransportFactory(authTypeStr, saslMessageLimit);
     } else {
       throw new LoginException("Unsupported authentication type " + authTypeStr);
     }

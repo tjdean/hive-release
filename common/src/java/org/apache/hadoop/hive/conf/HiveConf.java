@@ -723,6 +723,10 @@ public class HiveConf extends Configuration {
     //Automatically set by hive-server2
     HIVE_HUMAN_FRIENDLY_FORMAT("hive.human.friendly.format", true),
 
+    // If the length of incoming sasl message is greater than this, regard it as invalid and close the transport. 
+    // Zero or less value disables this. Default is 100MB.
+    HIVE_THRIFT_SASL_MESSAGE_LIMIT("hive.thrift.sasl.message.limit", 104857600),
+
     HIVE_SERVER2_THRIFT_MIN_WORKER_THREADS("hive.server2.thrift.min.worker.threads", 5),
     HIVE_SERVER2_THRIFT_MAX_WORKER_THREADS("hive.server2.thrift.max.worker.threads", 100),
 
