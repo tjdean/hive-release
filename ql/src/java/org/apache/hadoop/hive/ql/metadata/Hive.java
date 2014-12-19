@@ -27,6 +27,7 @@ import static org.apache.hadoop.hive.serde.serdeConstants.MAPKEY_DELIM;
 import static org.apache.hadoop.hive.serde.serdeConstants.SERIALIZATION_FORMAT;
 import static org.apache.hadoop.hive.serde.serdeConstants.STRING_TYPE_NAME;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -111,6 +112,7 @@ import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.StringUtils;
+import org.apache.hadoop.util.ToolRunner;
 import org.apache.thrift.TException;
 
 import com.google.common.collect.Sets;
@@ -2376,9 +2378,32 @@ private void constructOneLBLocationMap(FileStatus fSta,
           }
         }
       }
-      if (!isSrcLocal) {
-        // For NOT local src file, rename the file
-        success = fs.rename(srcf, destf);
+      if (!isSrcLocal) {    	      			                 
+        // If the source  FS is same as the destination FS, rename the file
+        if (srcf.getFileSystem(conf).equals(destf.getFileSystem(conf))) {
+          // For NOT local src file and same FS, rename the file
+          success = fs.rename(srcf, destf);
+        } else {
+        	String hadoopExec = conf.getVar(HiveConf.ConfVars.HADOOPBIN);
+        	String cmdLine = hadoopExec + " distcp -f " + srcf + " " + destf;
+        	Process mvProcess =  Runtime.getRuntime().exec(cmdLine);
+        	int exitVal = -101;
+        	try { 
+        	  exitVal = mvProcess.waitFor(); //TODO: poll periodically
+        	} catch (InterruptedException e) {
+        		throw new HiveException("Unable to move using hadoop distcp,  source " + 
+        				                 srcf + " to destination " + destf, e);
+        	}
+        	if (exitVal != 0) {
+        		if (LOG.isDebugEnabled()) {
+        		  LOG.debug(" Could not move files using hadoop distcp, src : " + srcf.toString() + 
+                            " , dest : " + destf.toString());
+        		}
+        		success = false;
+        	} else {
+              success = true;
+        	}
+        }
       } else {
         // For local src file, copy to hdfs
         fs.copyFromLocalFile(srcf, destf);
