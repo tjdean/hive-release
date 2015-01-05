@@ -2358,23 +2358,24 @@ private void constructOneLBLocationMap(FileStatus fSta,
         HiveConf.ConfVars.HIVE_WAREHOUSE_SUBDIR_INHERIT_PERMS);
     HadoopShims shims = ShimLoader.getHadoopShims();
     HadoopShims.HdfsFileStatus destStatus = null;
-
+    
     try {
+      FileSystem destFS = destf.getFileSystem(conf);
       if (inheritPerms || replace) {
         try{
-          destStatus = shims.getFullFileStatus(conf, fs, destf);
+          destStatus = shims.getFullFileStatus(conf, destFS, destf);
           //if destf is an existing directory:
           //if replace is true, delete followed by rename(mv) is equivalent to replace
           //if replace is false, rename (mv) actually move the src under dest dir
           //if destf is an existing file, rename is actually a replace, and do not need
           // to delete the file first
           if (replace && destStatus.getFileStatus().isDir()) {
-            fs.delete(destf, true);
+            destFS.delete(destf, true);
           }
         } catch (FileNotFoundException ignore) {
           //if dest dir does not exist, any re
           if (inheritPerms) {
-            destStatus = shims.getFullFileStatus(conf, fs, destf.getParent());
+            destStatus = shims.getFullFileStatus(conf, destFS, destf.getParent());
           }
         }
       }
