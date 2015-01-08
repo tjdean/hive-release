@@ -2418,7 +2418,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
 
     if (success && inheritPerms) {
       try {
-        ShimLoader.getHadoopShims().setFullFileStatus(conf, destStatus, fs, destf);
+        ShimLoader.getHadoopShims().setFullFileStatus(conf, destStatus, destf.getFileSystem(conf), destf);
       } catch (IOException e) {
         LOG.warn("Error setting permission of file " + destf + ": "+ e.getMessage(), e);
       }
