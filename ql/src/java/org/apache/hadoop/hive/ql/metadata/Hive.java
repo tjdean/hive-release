@@ -29,6 +29,7 @@ import static org.apache.hadoop.hive.serde.serdeConstants.STRING_TYPE_NAME;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2358,7 +2359,41 @@ private void constructOneLBLocationMap(FileStatus fSta,
         HiveConf.ConfVars.HIVE_WAREHOUSE_SUBDIR_INHERIT_PERMS);
     HadoopShims shims = ShimLoader.getHadoopShims();
     HadoopShims.HdfsFileStatus destStatus = null;
+    class InputStreamHandler extends Thread {
+      /* Stream being read */
+      private InputStream m_stream;
+      /**
+      * The StringBuffer holding the captured output
+      */
+      private StringBuffer m_captureBuffer;
     
+      /**
+      * Constructor.
+      */
+      InputStreamHandler( StringBuffer captureBuffer, InputStream stream ) {
+        m_stream = stream;
+        m_captureBuffer = captureBuffer;
+        start();
+      }
+
+      /**
+       * Stream the data.
+       */
+      public void run() {
+        try  {
+          int nextChar;
+	  while ((nextChar = m_stream.read()) != -1 ) {
+	    m_captureBuffer.append((char)nextChar);
+	  }
+        }
+        catch( IOException ioe ) {
+        }
+      }
+    }
+    String cmdLine = "";
+    StringBuffer errBuffer = new StringBuffer();
+    StringBuffer inBuffer = new StringBuffer();
+   
     try {
       FileSystem destFS = destf.getFileSystem(conf);
       if (inheritPerms || replace) {
@@ -2379,6 +2414,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
           }
         }
       }
+      
       if (!isSrcLocal) {    	      			                 
         // If the source  FS is same as the destination FS, rename the file
         if (srcf.getFileSystem(conf).equals(destf.getFileSystem(conf))) {
@@ -2386,23 +2422,33 @@ private void constructOneLBLocationMap(FileStatus fSta,
           success = fs.rename(srcf, destf);
         } else {
         	String hadoopExec = conf.getVar(HiveConf.ConfVars.HADOOPBIN);
-        	String cmdLine = hadoopExec + " distcp -f " + srcf + " " + destf;
+        	cmdLine = hadoopExec + " distcp  " + srcf + " " + destf;
         	Process mvProcess =  Runtime.getRuntime().exec(cmdLine);
         	int exitVal = -101;
-        	try { 
+        	try {
+		    /* Capture the input stream and error stream */
+		  InputStream inStream = mvProcess.getInputStream();
+		  new InputStreamHandler( inBuffer, inStream );
+                  InputStream errStream = mvProcess.getErrorStream();
+                  new InputStreamHandler( errBuffer , errStream ); 
         	  exitVal = mvProcess.waitFor(); //TODO: poll periodically
         	} catch (InterruptedException e) {
-        		throw new HiveException("Unable to move using hadoop distcp,  source " + 
-        				                 srcf + " to destination " + destf, e);
+                  LOG.error("Unable to move using hadoop distcp,  source " +
+                             srcf + " to destination " + destf + " using command: " + cmdLine);
+                  LOG.error("Input stream captured for hadoop dist command: " + inBuffer);
+                  LOG.error("Error stream captured for hadoop dist command: " + errBuffer);
+        	  throw new HiveException("Unable to move using hadoop distcp,  source " + 
+        				   srcf + " to destination " + destf, e);
         	}
         	if (exitVal != 0) {
-        		if (LOG.isDebugEnabled()) {
-        		  LOG.debug(" Could not move files using hadoop distcp, src : " + srcf.toString() + 
-                            " , dest : " + destf.toString());
-        		}
-        		success = false;
+                  LOG.error("Unable to move using hadoop distcp,  source " +
+                             srcf + " to destination " + destf + " using command: " + cmdLine);
+                  LOG.error("Exit value for hadoop distcp command " + exitVal);
+		  LOG.error("Input stream captured for hadoop dist command: " + inBuffer);
+		  LOG.error("Error stream captured for hadoop dist command: " + errBuffer);	
+        	  success = false;
         	} else {
-              success = true;
+                  success = true;
         	}
         }
       } else {
