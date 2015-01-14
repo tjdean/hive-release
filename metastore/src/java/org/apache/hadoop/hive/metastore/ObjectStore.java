@@ -45,6 +45,10 @@ import javax.jdo.Transaction;
 import javax.jdo.datastore.DataStoreCache;
 import javax.jdo.identity.IntIdentity;
 
+import com.google.common.base.Predicates;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
 import org.antlr.runtime.CharStream;
 import org.antlr.runtime.CommonTokenStream;
 import org.antlr.runtime.RecognitionException;
@@ -439,7 +443,7 @@ public class ObjectStore implements RawStore, Configurable {
     db.setName(mdb.getName());
     db.setDescription(mdb.getDescription());
     db.setLocationUri(mdb.getLocationUri());
-    db.setParameters(mdb.getParameters());
+    db.setParameters(convertMap(mdb.getParameters()));
     return db;
   }
 
@@ -861,6 +865,36 @@ public class ObjectStore implements RawStore, Configurable {
     return tables;
   }
 
+  /**
+   * Helper function to transform Nulls to empty strings.
+   */
+  private static final com.google.common.base.Function<String,String> transFormNullsToEmptyString
+      = new com.google.common.base.Function<String, String>() {
+    @Override
+    public java.lang.String apply(String string) {
+      if (string == null){
+        return "";
+      } else {
+        return string;
+      }
+    }
+  };
+
+  /** Makes shallow copy of a map to avoid DataNucleus mucking with our objects. */
+  private Map<String, String> convertMap(Map<String, String> dnMap) {
+    if (dnMap == null){
+      return null;
+    }
+    if (HiveConf.getBoolVar(getConf(), ConfVars.METASTORE_ORM_RETRIEVE_MAPNULLS_AS_EMPTY_STRINGS)){
+      // convert any nulls present in map values to empty strings - this is done in the case
+      // of backing dbs like oracle which persist empty strings as nulls.
+      return Maps.newHashMap(Maps.transformValues(dnMap,transFormNullsToEmptyString));
+    } else {
+      // prune any nulls present in map values - this is the typical case.
+      return Maps.newHashMap(Maps.filterValues(dnMap, Predicates.notNull()));
+    }
+  }
+
   private Table convertToTable(MTable mtbl) throws MetaException {
     if (mtbl == null) {
       return null;
@@ -879,7 +913,7 @@ public class ObjectStore implements RawStore, Configurable {
     return new Table(mtbl.getTableName(), mtbl.getDatabase().getName(), mtbl
         .getOwner(), mtbl.getCreateTime(), mtbl.getLastAccessTime(), mtbl
         .getRetention(), convertToStorageDescriptor(mtbl.getSd()),
-        convertToFieldSchemas(mtbl.getPartitionKeys()), mtbl.getParameters(),
+        convertToFieldSchemas(mtbl.getPartitionKeys()), convertMap(mtbl.getParameters()),
         mtbl.getViewOriginalText(), mtbl.getViewExpandedText(),
         tableType);
   }
@@ -972,8 +1006,8 @@ public class ObjectStore implements RawStore, Configurable {
     if (ms == null) {
       throw new MetaException("Invalid SerDeInfo object");
     }
-    return new SerDeInfo(ms.getName(), ms.getSerializationLib(), ms
-        .getParameters());
+    return new SerDeInfo(ms.getName(), ms.getSerializationLib(),
+        convertMap(ms.getParameters()));
   }
 
   private MSerDeInfo converToMSerDeInfo(SerDeInfo ms) throws MetaException {
@@ -1010,7 +1044,7 @@ public class ObjectStore implements RawStore, Configurable {
         msd.getLocation(), msd.getInputFormat(), msd.getOutputFormat(), msd
         .isCompressed(), msd.getNumBuckets(), converToSerDeInfo(msd
         .getSerDeInfo()), msd.getBucketCols(), convertToOrders(msd
-        .getSortCols()), msd.getParameters());
+        .getSortCols()), convertMap(msd.getParameters()));
     SkewedInfo skewedInfo = new SkewedInfo(msd.getSkewedColNames(),
         convertToSkewedValues(msd.getSkewedColValues()),
         covertToSkewedMap(msd.getSkewedColValueLocationMaps()));
@@ -1280,7 +1314,7 @@ public class ObjectStore implements RawStore, Configurable {
     return new Partition(mpart.getValues(), mpart.getTable().getDatabase()
         .getName(), mpart.getTable().getTableName(), mpart.getCreateTime(),
         mpart.getLastAccessTime(), convertToStorageDescriptor(mpart.getSd()),
-        mpart.getParameters());
+        convertMap(mpart.getParameters()));
   }
 
   private Partition convertToPart(String dbName, String tblName, MPartition mpart)
@@ -1290,7 +1324,7 @@ public class ObjectStore implements RawStore, Configurable {
     }
     return new Partition(mpart.getValues(), dbName, tblName, mpart.getCreateTime(),
         mpart.getLastAccessTime(), convertToStorageDescriptor(mpart.getSd(), false),
-        mpart.getParameters());
+        convertMap(mpart.getParameters()));
   }
 
   @Override
