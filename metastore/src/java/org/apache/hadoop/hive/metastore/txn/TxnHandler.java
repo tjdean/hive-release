@@ -846,7 +846,7 @@ public class TxnHandler {
       dbConn.setTransactionIsolation(isolationLevel);
       return dbConn;
     } catch (SQLException e) {
-      String msg = "Unable to get jdbc connection from pool, " + e.getMessage();
+      String msg = "Unable to get jdbc connection from pool, " + e.getMessage() + "(SQLState=" + e.getSQLState() + ", SQLCode=" + e.getErrorCode() + ")";
       throw new MetaException(msg);
     }
   }
