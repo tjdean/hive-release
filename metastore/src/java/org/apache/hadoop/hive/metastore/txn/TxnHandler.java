@@ -87,10 +87,12 @@ public class TxnHandler {
   protected HiveConf conf;
   protected DatabaseProduct dbProduct;
 
-  // Transaction timeout, in milliseconds.
+  // (End user) Transaction timeout, in milliseconds.
   private long timeout;
 
   private String identifierQuoteString; // quotes to use for quoting tables, where necessary
+  private final long retryInterval;
+  private final int retryLimit;
 
   // DEADLOCK DETECTION AND HANDLING
   // A note to developers of this class.  ALWAYS access HIVE_LOCKS before TXNS to avoid deadlock
@@ -125,6 +127,9 @@ public class TxnHandler {
     timeout = HiveConf.getTimeVar(conf, HiveConf.ConfVars.HIVE_TXN_TIMEOUT, TimeUnit.MILLISECONDS);
     deadlockCnt = 0;
     buildJumpTable();
+    retryInterval = HiveConf.getTimeVar(conf, HiveConf.ConfVars.HMSHANDLERINTERVAL, TimeUnit.MILLISECONDS);
+    retryLimit = HiveConf.getIntVar(conf, HiveConf.ConfVars.HMSHANDLERATTEMPTS);
+
   }
 
   public GetOpenTxnsInfoResponse getOpenTxnsInfo() throws MetaException {
@@ -189,11 +194,35 @@ public class TxnHandler {
   }
 
   public GetOpenTxnsResponse getOpenTxns() throws MetaException {
+    int retryNum = 0;
+    while(true) {
+      try {
+        return getOpenTxnsInternal();
+      } catch (SQLException ex) {
+        if(++retryNum > retryLimit) {
+          throwMetaException("getOpenTxns() failed after " + retryNum + " retries.  Latest error: ", ex);
+        }
+        if(isRetryable(ex)) {
+          try {
+            Thread.sleep(retryInterval);
+          }
+          catch(InterruptedException et) {
+            //
+          }
+        }
+        else {
+          throwMetaException("getOpenTxn() failed: ", ex);
+        }
+      }
+      retryNum++;
+    }
+  }
+  private GetOpenTxnsResponse getOpenTxnsInternal() throws MetaException, SQLException {
     // We need to figure out the current transaction number and the list of
     // open transactions.  To avoid needing a transaction on the underlying
     // database we'll look at the current transaction number first.  If it
     // subsequently shows up in the open list that's ok.
-    Connection dbConn = getDbConn(Connection.TRANSACTION_READ_COMMITTED);
+    Connection dbConn = getDbConnInternal(Connection.TRANSACTION_READ_COMMITTED);
     Statement stmt = null;
     try {
       timeOutTxns(dbConn);
@@ -226,9 +255,11 @@ public class TxnHandler {
         LOG.debug("Going to rollback");
         dbConn.rollback();
       } catch (SQLException e1) {
+        //
       }
-      throw new MetaException("Unable to select from transaction database, "
-          + StringUtils.stringifyException(e));
+      throw e;
+//      throw new MetaException("Unable to select from transaction database, "
+//          + StringUtils.stringifyException(e));
     } finally {
       closeStmt(stmt);
       closeDbConn(dbConn);
@@ -849,6 +880,12 @@ public class TxnHandler {
       String msg = "Unable to get jdbc connection from pool, " + e.getMessage() + "(SQLState=" + e.getSQLState() + ", SQLCode=" + e.getErrorCode() + ")";
       throw new MetaException(msg);
     }
+  }
+  protected Connection getDbConnInternal(int isolationLevel) throws SQLException {
+    Connection dbConn = connPool.getConnection();
+    dbConn.setAutoCommit(false);
+    dbConn.setTransactionIsolation(isolationLevel);
+    return dbConn;
   }
 
   protected void closeDbConn(Connection dbConn) {
@@ -1812,5 +1849,28 @@ public class TxnHandler {
     // No matter whether it has acquired or not, we cannot pass an exclusive.
     m2.put(LockState.ACQUIRED, LockAction.WAIT);
     m2.put(LockState.WAITING, LockAction.WAIT);
+  }
+  /**
+   * Returns true if {@code ex} should be retried
+   * @param ex
+   * @return
+   */
+  private static boolean isRetryable(Exception ex) {
+    if(ex instanceof SQLException) {
+      SQLException sqlException = (SQLException)ex;
+      if("08S01".equalsIgnoreCase(sqlException.getSQLState())) {
+        //in MSSQL this means Communication Link Failure
+        return true;
+      }
+    }
+    return false;
+  }
+  private static String getMessage(SQLException ex) {
+    return ex.getMessage() + "(SQLState=" + ex.getSQLState() + ",ErrorCode=" + ex.getErrorCode() + ")";
+  }
+  private static void throwMetaException(String baseMsg, SQLException ex) throws MetaException {
+    MetaException me = new MetaException(baseMsg + getMessage(ex));
+    me.initCause(ex);
+    throw me;
   }
 }
