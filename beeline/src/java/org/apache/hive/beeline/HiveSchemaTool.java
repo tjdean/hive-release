@@ -295,49 +295,8 @@ public class HiveSchemaTool {
   // Flatten the nested upgrade script into a buffer
   public static String buildCommand(NestedScriptParser dbCommandParser,
         String scriptDir, String scriptFile) throws IllegalFormatException, IOException {
-
-    BufferedReader bfReader =
-        new BufferedReader(new FileReader(scriptDir + File.separatorChar + scriptFile));
-    String currLine;
-    StringBuilder sb = new StringBuilder();
-    String currentCommand = null;
-    while ((currLine = bfReader.readLine()) != null) {
-      currLine = currLine.trim();
-      if (currLine.isEmpty()) {
-        continue; // skip empty lines
-      }
-
-      if (currentCommand == null) {
-        currentCommand = currLine;
-      } else {
-        currentCommand = currentCommand + " " + currLine;
-      }
-      if (dbCommandParser.isPartialCommand(currLine)) {
-        // if its a partial line, continue collecting the pieces
-        continue;
-      }
-
-      // if this is a valid executable command then add it to the buffer
-      if (!dbCommandParser.isNonExecCommand(currentCommand)) {
-        currentCommand = dbCommandParser.cleanseCommand(currentCommand);
-
-        if (dbCommandParser.isNestedScript(currentCommand)) {
-          // if this is a nested sql script then flatten it
-          String currScript = dbCommandParser.getScriptName(currentCommand);
-          sb.append(buildCommand(dbCommandParser, scriptDir, currScript));
-        } else {
-          // Now we have a complete statement, process it
-          // write the line to buffer
-          sb.append(currentCommand);
-          sb.append(System.getProperty("line.separator"));
-        }
-      }
-      currentCommand = null;
-    }
-    bfReader.close();
-    return sb.toString();
+      return dbCommandParser.buildCommand(scriptDir, scriptFile);
   }
-
 
   /**
    *  Run pre-upgrade scripts corresponding to a given upgrade script,
@@ -385,7 +344,8 @@ public class HiveSchemaTool {
 
     // write out the buffer into a file. Add beeline commands for autocommit and close
     FileWriter fstream = new FileWriter(tmpFile.getPath());
-    BufferedWriter out = new BufferedWriter(fstream);
+    //default is 8192, not big enough to hold hive-schema-0.14.0.azuredb.sql, e.g. HIVE-535
+    BufferedWriter out = new BufferedWriter(fstream, 8192*32);
     out.write("!autocommit on" + System.getProperty("line.separator"));
     out.write(sqlCommands);
     out.write("!closeall" + System.getProperty("line.separator"));
@@ -499,8 +459,9 @@ public class HiveSchemaTool {
       if ((!dbType.equalsIgnoreCase(HiveSchemaHelper.DB_DERBY) &&
           !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_MSSQL) &&
           !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_MYSQL) &&
-          !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_POSTGRACE) && !dbType
-          .equalsIgnoreCase(HiveSchemaHelper.DB_ORACLE))) {
+          !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_POSTGRACE) && 
+          !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_ORACLE) &&
+          !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_AZURE))) {
         System.err.println("Unsupported dbType " + dbType);
         printAndExit(cmdLineOptions);
       }

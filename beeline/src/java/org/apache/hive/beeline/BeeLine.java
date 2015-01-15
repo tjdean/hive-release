@@ -773,7 +773,8 @@ public class BeeLine implements Closeable {
     while (!exit) {
       try {
         // Execute one instruction; terminate on executing a script if there is an error
-        if (!dispatch(reader.readLine(getPrompt())) && exitOnError) {
+        String cmdline = reader.readLine(getPrompt());
+        if (!dispatch(cmdline) && exitOnError) {
           return ERRNO_OTHER;
         }
       } catch (Throwable t) {

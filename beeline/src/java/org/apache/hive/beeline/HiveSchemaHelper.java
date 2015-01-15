@@ -17,6 +17,11 @@
  */
 package org.apache.hive.beeline;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.IllegalFormatException;
 
 public class HiveSchemaHelper {
@@ -25,6 +30,7 @@ public class HiveSchemaHelper {
   public static final String DB_MYSQL = "mysql";
   public static final String DB_POSTGRACE = "postgres";
   public static final String DB_ORACLE = "oracle";
+  public static final String DB_AZURE = "azuredb";
 
   public interface NestedScriptParser {
 
@@ -35,6 +41,15 @@ public class HiveSchemaHelper {
     }
 
     static final String DEFAUTL_DELIMITER = ";";
+
+    /***
+     * Build sql command from sql script
+     * @param scriptDir the directory that contains sql script
+     * @param scriptFile sql script from which to build sql command
+     */
+    public String buildCommand(String scriptDir, String scriptFile)
+        throws IllegalArgumentException, IOException;
+
     /***
      * Find the type of given command
      * @param dbCommand
@@ -89,6 +104,51 @@ public class HiveSchemaHelper {
    *
    */
   private static abstract class AbstractCommandParser implements NestedScriptParser {
+
+    @Override
+    public String buildCommand(String scriptDir, String scriptFile)
+        throws IllegalArgumentException, IOException {
+      BufferedReader bfReader =
+          new BufferedReader(new FileReader(scriptDir + File.separatorChar + scriptFile));
+      String currLine;
+      StringBuilder sb = new StringBuilder();
+      String currentCommand = null;
+      while ((currLine = bfReader.readLine()) != null) {
+        currLine = currLine.trim();
+        if (currLine.isEmpty()) {
+          continue; // skip empty lines
+        }
+
+        if (currentCommand == null) {
+          currentCommand = currLine;
+        } else {
+          currentCommand = currentCommand + " " + currLine;
+        }
+        if (isPartialCommand(currLine)) {
+          // if its a partial line, continue collecting the pieces
+          continue;
+        }
+
+        // if this is a valid executable command then add it to the buffer
+        if (!isNonExecCommand(currentCommand)) {
+          currentCommand = cleanseCommand(currentCommand);
+
+          if (isNestedScript(currentCommand)) {
+            // if this is a nested sql script then flatten it
+            String currScript = getScriptName(currentCommand);
+            sb.append(buildCommand(scriptDir, currScript));
+          } else {
+            // Now we have a complete statement, process it
+            // write the line to buffer
+            sb.append(currentCommand);
+            sb.append(System.getProperty("line.separator"));
+          }
+        }
+        currentCommand = null;
+      }
+      bfReader.close();
+      return sb.toString();
+    }
 
     @Override
     public boolean isPartialCommand(String dbCommand) throws IllegalArgumentException{
@@ -270,6 +330,32 @@ public class HiveSchemaHelper {
     }
   }
 
+  public static class AzureDBCommandParser extends MSSQLCommandParser {
+    @Override
+    public String buildCommand(String scriptDir, String scriptFile)
+        throws IllegalArgumentException, IOException {
+      BufferedReader bfReader =
+          new BufferedReader(new FileReader(scriptDir + File.separatorChar + scriptFile));
+      String currLine;
+      StringBuilder sb = new StringBuilder();
+
+      while ((currLine = bfReader.readLine()) != null) {
+        currLine = currLine.trim();
+        if (currLine.isEmpty())
+          continue; //skip empty lines
+
+        if (isNonExecCommand(currLine))
+          currLine = "/*" + currLine + "*/"; //enclose comments within '/*' and '*/'
+
+        sb.append(currLine);
+        sb.append(" ");
+      }
+      sb.append(System.getProperty("line.separator"));
+      bfReader.close();
+      return sb.toString();
+    }
+  }
+
   public static NestedScriptParser getDbCommandParser(String dbName) {
     if (dbName.equalsIgnoreCase(DB_DERBY)) {
       return new DerbyCommandParser();
@@ -281,6 +367,8 @@ public class HiveSchemaHelper {
       return new PostgresCommandParser();
     } else if (dbName.equalsIgnoreCase(DB_ORACLE)) {
       return new OracleCommandParser();
+    } else if (dbName.equalsIgnoreCase(DB_AZURE)) {
+      return new AzureDBCommandParser();
     } else {
       throw new IllegalArgumentException("Unknown dbType " + dbName);
     }
