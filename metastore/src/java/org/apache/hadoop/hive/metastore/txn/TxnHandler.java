@@ -77,7 +77,7 @@ public class TxnHandler {
   static final private Log LOG = LogFactory.getLog(TxnHandler.class.getName());
 
   static private DataSource connPool;
-  private static Boolean lockLock = new Boolean("true"); // Random object to lock on for the lock
+  private final static Object lockLock = new Object(); // Random object to lock on for the lock
   // method
 
   /**
@@ -93,6 +93,7 @@ public class TxnHandler {
   private String identifierQuoteString; // quotes to use for quoting tables, where necessary
   private final long retryInterval;
   private final int retryLimit;
+  private int retryNum;
 
   // DEADLOCK DETECTION AND HANDLING
   // A note to developers of this class.  ALWAYS access HIVE_LOCKS before TXNS to avoid deadlock
@@ -133,13 +134,15 @@ public class TxnHandler {
   }
 
   public GetOpenTxnsInfoResponse getOpenTxnsInfo() throws MetaException {
+    try {
     // We need to figure out the current transaction number and the list of
     // open transactions.  To avoid needing a transaction on the underlying
     // database we'll look at the current transaction number first.  If it
     // subsequently shows up in the open list that's ok.
-    Connection dbConn = getDbConn(Connection.TRANSACTION_READ_COMMITTED);
+    Connection dbConn = null;
     Statement stmt = null;
     try {
+      dbConn = getDbConn(Connection.TRANSACTION_READ_COMMITTED);
       stmt = dbConn.createStatement();
       String s = "select ntxn_next - 1 from NEXT_TXN_ID";
       LOG.debug("Going to execute query <" + s + ">");
@@ -180,51 +183,30 @@ public class TxnHandler {
       dbConn.rollback();
       return new GetOpenTxnsInfoResponse(hwm, txnInfo);
     } catch (SQLException e) {
-      try {
-        LOG.debug("Going to rollback");
-        dbConn.rollback();
-      } catch (SQLException e1) {
-      }
-      throw new MetaException("Unable to select from transaction database, "
+      LOG.debug("Going to rollback");
+      rollbackDBConn(dbConn);
+      checkRetryable(dbConn, e, "getOpenTxnsInfo");
+      throw new MetaException("Unable to select from transaction database: " + getMessage(e)
           + StringUtils.stringifyException(e));
     } finally {
       closeStmt(stmt);
       closeDbConn(dbConn);
     }
+    } catch (RetryException e) {
+      return getOpenTxnsInfo();
+    }
   }
 
   public GetOpenTxnsResponse getOpenTxns() throws MetaException {
-    int retryNum = 0;
-    while(true) {
-      try {
-        return getOpenTxnsInternal();
-      } catch (SQLException ex) {
-        if(++retryNum > retryLimit) {
-          throwMetaException("getOpenTxns() failed after " + retryNum + " retries.  Latest error: ", ex);
-        }
-        if(isRetryable(ex)) {
-          try {
-            Thread.sleep(retryInterval);
-          }
-          catch(InterruptedException et) {
-            //
-          }
-        }
-        else {
-          throwMetaException("getOpenTxn() failed: ", ex);
-        }
-      }
-      retryNum++;
-    }
-  }
-  private GetOpenTxnsResponse getOpenTxnsInternal() throws MetaException, SQLException {
+    try {
     // We need to figure out the current transaction number and the list of
     // open transactions.  To avoid needing a transaction on the underlying
     // database we'll look at the current transaction number first.  If it
     // subsequently shows up in the open list that's ok.
-    Connection dbConn = getDbConnInternal(Connection.TRANSACTION_READ_COMMITTED);
+    Connection dbConn = null;
     Statement stmt = null;
     try {
+      dbConn = getDbConn(Connection.TRANSACTION_READ_COMMITTED);
       timeOutTxns(dbConn);
       stmt = dbConn.createStatement();
       String s = "select ntxn_next - 1 from NEXT_TXN_ID";
@@ -251,18 +233,17 @@ public class TxnHandler {
       dbConn.rollback();
       return new GetOpenTxnsResponse(hwm, openList);
     } catch (SQLException e) {
-      try {
-        LOG.debug("Going to rollback");
-        dbConn.rollback();
-      } catch (SQLException e1) {
-        //
-      }
-      throw e;
-//      throw new MetaException("Unable to select from transaction database, "
-//          + StringUtils.stringifyException(e));
+      LOG.debug("Going to rollback");
+      rollbackDBConn(dbConn);
+      checkRetryable(dbConn, e, "getOpenTxns");
+      throw new MetaException("Unable to select from transaction database, "
+          + StringUtils.stringifyException(e));
     } finally {
       closeStmt(stmt);
       closeDbConn(dbConn);
+    }
+    } catch (RetryException e) {
+      return getOpenTxns();
     }
   }
 
@@ -290,9 +271,10 @@ public class TxnHandler {
   public OpenTxnsResponse openTxns(OpenTxnRequest rqst) throws MetaException {
     int numTxns = rqst.getNum_txns();
     try {
-      Connection dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
+      Connection dbConn = null;
       Statement stmt = null;
       try {
+        dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
         // Make sure the user has not requested an insane amount of txns.
         int maxTxns = HiveConf.getIntVar(conf,
             HiveConf.ConfVars.HIVE_TXN_MAX_OPEN_BATCH);
@@ -327,30 +309,26 @@ public class TxnHandler {
         dbConn.commit();
         return new OpenTxnsResponse(txnIds);
       } catch (SQLException e) {
-        try {
-          LOG.debug("Going to rollback");
-          dbConn.rollback();
-        } catch (SQLException e1) {
-        }
-        detectDeadlock(dbConn, e, "openTxns");
+        LOG.debug("Going to rollback");
+        rollbackDBConn(dbConn);
+        checkRetryable(dbConn, e, "openTxns");
         throw new MetaException("Unable to select from transaction database "
           + StringUtils.stringifyException(e));
       } finally {
         closeStmt(stmt);
         closeDbConn(dbConn);
       }
-    } catch (DeadlockException e) {
+    } catch (RetryException e) {
       return openTxns(rqst);
-    } finally {
-      deadlockCnt = 0;
     }
   }
 
   public void abortTxn(AbortTxnRequest rqst) throws NoSuchTxnException, MetaException {
     long txnid = rqst.getTxnid();
     try {
-      Connection dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
+      Connection dbConn = null;
       try {
+        dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
         List<Long> txnids = new ArrayList<Long>(1);
         txnids.add(txnid);
         if (abortTxns(dbConn, txnids) != 1) {
@@ -362,21 +340,16 @@ public class TxnHandler {
         LOG.debug("Going to commit");
         dbConn.commit();
       } catch (SQLException e) {
-        try {
-          LOG.debug("Going to rollback");
-          dbConn.rollback();
-        } catch (SQLException e1) {
-        }
-        detectDeadlock(dbConn, e, "abortTxn");
+        LOG.debug("Going to rollback");
+        rollbackDBConn(dbConn);
+        checkRetryable(dbConn, e, "abortTxn");
         throw new MetaException("Unable to update transaction database "
           + StringUtils.stringifyException(e));
       } finally {
         closeDbConn(dbConn);
       }
-    } catch (DeadlockException e) {
+    } catch (RetryException e) {
       abortTxn(rqst);
-    } finally {
-      deadlockCnt = 0;
     }
   }
 
@@ -384,9 +357,10 @@ public class TxnHandler {
       throws NoSuchTxnException, TxnAbortedException,  MetaException {
     long txnid = rqst.getTxnid();
     try {
-      Connection dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
+      Connection dbConn = null;
       Statement stmt = null;
       try {
+        dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
         stmt = dbConn.createStatement();
         // Before we do the commit heartbeat the txn.  This is slightly odd in that we're going to
         // commit it, but it does two things.  One, it makes sure the transaction is still valid.
@@ -419,80 +393,68 @@ public class TxnHandler {
         LOG.debug("Going to commit");
         dbConn.commit();
       } catch (SQLException e) {
-        try {
-          LOG.debug("Going to rollback");
-          dbConn.rollback();
-        } catch (SQLException e1) {
-        }
-        detectDeadlock(dbConn, e, "commitTxn");
+        LOG.debug("Going to rollback");
+        rollbackDBConn(dbConn);
+        checkRetryable(dbConn, e, "commitTxn");
         throw new MetaException("Unable to update transaction database "
           + StringUtils.stringifyException(e));
       } finally {
         closeStmt(stmt);
         closeDbConn(dbConn);
       }
-    } catch (DeadlockException e) {
+    } catch (RetryException e) {
       commitTxn(rqst);
-    } finally {
-      deadlockCnt = 0;
     }
   }
 
   public LockResponse lock(LockRequest rqst)
       throws NoSuchTxnException, TxnAbortedException, MetaException {
     try {
-      Connection dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
+      Connection dbConn = null;
       try {
+        dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
         return lock(dbConn, rqst, true);
       } catch (SQLException e) {
-        try {
-          LOG.debug("Going to rollback");
-          dbConn.rollback();
-        } catch (SQLException e1) {
-        }
-        detectDeadlock(dbConn, e, "lock");
+        LOG.debug("Going to rollback");
+        rollbackDBConn(dbConn);
+        checkRetryable(dbConn, e, "lock");
         throw new MetaException("Unable to update transaction database " +
             StringUtils.stringifyException(e));
       } finally {
         closeDbConn(dbConn);
       }
-    } catch (DeadlockException e) {
+    } catch (RetryException e) {
       return lock(rqst);
-    } finally {
-      deadlockCnt = 0;
     }
   }
 
   public LockResponse lockNoWait(LockRequest rqst)
       throws NoSuchTxnException,  TxnAbortedException, MetaException {
     try {
-      Connection dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
+      Connection dbConn = null;
       try {
+        dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
         return lock(dbConn, rqst, false);
       } catch (SQLException e) {
-        try {
-          LOG.debug("Going to rollback");
-          dbConn.rollback();
-        } catch (SQLException e1) {
-        }
-        detectDeadlock(dbConn, e, "lockNoWait");
+        LOG.debug("Going to rollback");
+        rollbackDBConn(dbConn);
+        checkRetryable(dbConn, e, "lockNoWait");
         throw new MetaException("Unable to update transaction database " +
             StringUtils.stringifyException(e));
       } finally {
         closeDbConn(dbConn);
       }
-    } catch (DeadlockException e) {
+    } catch (RetryException e) {
       return lockNoWait(rqst);
-    } finally {
-      deadlockCnt = 0;
     }
   }
 
   public LockResponse checkLock(CheckLockRequest rqst)
       throws NoSuchTxnException, NoSuchLockException, TxnAbortedException, MetaException {
     try {
-      Connection dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
+      Connection dbConn = null;
       try {
+        dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
         long extLockId = rqst.getLockid();
         // Clean up timed out locks
         timeOutLocks(dbConn);
@@ -505,21 +467,16 @@ public class TxnHandler {
         if (txnid > 0)  heartbeatTxn(dbConn, txnid);
         return checkLock(dbConn, extLockId, true);
       } catch (SQLException e) {
-        try {
-          LOG.debug("Going to rollback");
-          dbConn.rollback();
-        } catch (SQLException e1) {
-        }
-        detectDeadlock(dbConn, e, "checkLock");
+        LOG.debug("Going to rollback");
+        rollbackDBConn(dbConn);
+        checkRetryable(dbConn, e, "checkLock");
         throw new MetaException("Unable to update transaction database " +
             StringUtils.stringifyException(e));
       } finally {
         closeDbConn(dbConn);
       }
-    } catch (DeadlockException e) {
+    } catch (RetryException e) {
       return checkLock(rqst);
-    } finally {
-      deadlockCnt = 0;
     }
 
   }
@@ -527,9 +484,10 @@ public class TxnHandler {
   public void unlock(UnlockRequest rqst)
       throws NoSuchLockException, TxnOpenException, MetaException {
     try {
-      Connection dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
+      Connection dbConn = null;
       Statement stmt = null;
       try {
+        dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
         // Odd as it seems, we need to heartbeat first because this touches the
         // lock table and assures that our locks our still valid.  If they are
         // not, this will throw an exception and the heartbeat will fail.
@@ -560,31 +518,28 @@ public class TxnHandler {
         LOG.debug("Going to commit");
         dbConn.commit();
       } catch (SQLException e) {
-        try {
-          LOG.debug("Going to rollback");
-          dbConn.rollback();
-        } catch (SQLException e1) {
-        }
-        detectDeadlock(dbConn, e, "unlock");
+        LOG.debug("Going to rollback");
+        rollbackDBConn(dbConn);
+        checkRetryable(dbConn, e, "unlock");
         throw new MetaException("Unable to update transaction database " +
             StringUtils.stringifyException(e));
       } finally {
         closeStmt(stmt);
         closeDbConn(dbConn);
       }
-    } catch (DeadlockException e) {
+    } catch (RetryException e) {
       unlock(rqst);
-    } finally {
-      deadlockCnt = 0;
     }
   }
 
   public ShowLocksResponse showLocks(ShowLocksRequest rqst) throws MetaException {
-    Connection dbConn = getDbConn(Connection.TRANSACTION_READ_COMMITTED);
+    try {
+    Connection dbConn = null;
     ShowLocksResponse rsp = new ShowLocksResponse();
     List<ShowLocksResponseElement> elems = new ArrayList<ShowLocksResponseElement>();
     Statement stmt = null;
     try {
+      dbConn = getDbConn(Connection.TRANSACTION_READ_COMMITTED);
       stmt = dbConn.createStatement();
 
       String s = "select hl_lock_ext_id, hl_txnid, hl_db, hl_table, hl_partition, hl_lock_state, " +
@@ -621,6 +576,7 @@ public class TxnHandler {
       LOG.debug("Going to rollback");
       dbConn.rollback();
     } catch (SQLException e) {
+      checkRetryable(dbConn, e, "showLocks");
       throw new MetaException("Unable to select from transaction database " +
           StringUtils.stringifyException(e));
     } finally {
@@ -629,28 +585,29 @@ public class TxnHandler {
     }
     rsp.setLocks(elems);
     return rsp;
+    } catch (RetryException e) {
+      return showLocks(rqst);
+    }
   }
 
   public void heartbeat(HeartbeatRequest ids)
       throws NoSuchTxnException,  NoSuchLockException, TxnAbortedException, MetaException {
     try {
-      Connection dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
+      Connection dbConn = null;
       try {
+        dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
         heartbeatLock(dbConn, ids.getLockid());
         heartbeatTxn(dbConn, ids.getTxnid());
       } catch (SQLException e) {
-        try {
-          LOG.debug("Going to rollback");
-          dbConn.rollback();
-        } catch (SQLException e1) {
-        }
-        detectDeadlock(dbConn, e, "heartbeat");
+        LOG.debug("Going to rollback");
+        rollbackDBConn(dbConn);
+        checkRetryable(dbConn, e, "heartbeat");
         throw new MetaException("Unable to select from transaction database " +
             StringUtils.stringifyException(e));
       } finally {
         closeDbConn(dbConn);
       }
-    } catch (DeadlockException e) {
+    } catch (RetryException e) {
       heartbeat(ids);
     } finally {
       deadlockCnt = 0;
@@ -660,13 +617,14 @@ public class TxnHandler {
   public HeartbeatTxnRangeResponse heartbeatTxnRange(HeartbeatTxnRangeRequest rqst)
       throws MetaException {
     try {
-      Connection dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
+      Connection dbConn = null;
       HeartbeatTxnRangeResponse rsp = new HeartbeatTxnRangeResponse();
       Set<Long> nosuch = new HashSet<Long>();
       Set<Long> aborted = new HashSet<Long>();
       rsp.setNosuch(nosuch);
       rsp.setAborted(aborted);
       try {
+        dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
         for (long txn = rqst.getMin(); txn <= rqst.getMax(); txn++) {
           try {
             heartbeatTxn(dbConn, txn);
@@ -678,18 +636,15 @@ public class TxnHandler {
         }
         return rsp;
       } catch (SQLException e) {
-        try {
-          LOG.debug("Going to rollback");
-          dbConn.rollback();
-        } catch (SQLException e1) {
-        }
-        detectDeadlock(dbConn, e, "heartbeatTxnRange");
+        LOG.debug("Going to rollback");
+        rollbackDBConn(dbConn);
+        checkRetryable(dbConn, e, "heartbeatTxnRange");
         throw new MetaException("Unable to select from transaction database " +
             StringUtils.stringifyException(e));
       } finally {
         closeDbConn(dbConn);
       }
-    } catch (DeadlockException e) {
+    } catch (RetryException e) {
       return heartbeatTxnRange(rqst);
     }
   }
@@ -697,9 +652,10 @@ public class TxnHandler {
   public void compact(CompactionRequest rqst) throws MetaException {
     // Put a compaction request in the queue.
     try {
-      Connection dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
+      Connection dbConn = null;
       Statement stmt = null;
       try {
+        dbConn = getDbConn(Connection.TRANSACTION_SERIALIZABLE);
         stmt = dbConn.createStatement();
 
         // Get the id for the next entry in the queue
@@ -761,30 +717,27 @@ public class TxnHandler {
         LOG.debug("Going to commit");
         dbConn.commit();
       } catch (SQLException e) {
-        try {
-          LOG.debug("Going to rollback");
-          dbConn.rollback();
-        } catch (SQLException e1) {
-        }
-        detectDeadlock(dbConn, e, "compact");
+        LOG.debug("Going to rollback");
+        rollbackDBConn(dbConn);
+        checkRetryable(dbConn, e, "compact");
         throw new MetaException("Unable to select from transaction database " +
             StringUtils.stringifyException(e));
       } finally {
         closeStmt(stmt);
         closeDbConn(dbConn);
       }
-    } catch (DeadlockException e) {
+    } catch (RetryException e) {
       compact(rqst);
-    } finally {
-      deadlockCnt = 0;
     }
   }
 
   public ShowCompactResponse showCompact(ShowCompactRequest rqst) throws MetaException {
     ShowCompactResponse response = new ShowCompactResponse(new ArrayList<ShowCompactResponseElement>());
-    Connection dbConn = getDbConn(Connection.TRANSACTION_READ_COMMITTED);
+    Connection dbConn = null;
     Statement stmt = null;
     try {
+    try {
+      dbConn = getDbConn(Connection.TRANSACTION_READ_COMMITTED);
       stmt = dbConn.createStatement();
       String s = "select cq_database, cq_table, cq_partition, cq_state, cq_type, cq_worker_id, " +
           "cq_start, cq_run_as from COMPACTION_QUEUE";
@@ -815,10 +768,8 @@ public class TxnHandler {
       dbConn.rollback();
     } catch (SQLException e) {
       LOG.debug("Going to rollback");
-      try {
-        dbConn.rollback();
-      } catch (SQLException e1) {
-      }
+      rollbackDBConn(dbConn);
+      checkRetryable(dbConn, e, "showCompact");
       throw new MetaException("Unable to select from transaction database " +
           StringUtils.stringifyException(e));
     } finally {
@@ -826,7 +777,10 @@ public class TxnHandler {
       closeDbConn(dbConn);
     }
     return response;
-  }
+    } catch (RetryException e) {
+      return showCompact(rqst);
+    }
+    }
 
   /**
    * For testing only, do not use.
@@ -859,7 +813,7 @@ public class TxnHandler {
     return previous_timeout;
   }
 
-  protected class DeadlockException extends Exception {
+  protected class RetryException extends Exception {
 
   }
 
@@ -870,29 +824,25 @@ public class TxnHandler {
    * @return db connection
    * @throws MetaException if the connection cannot be obtained
    */
-  protected Connection getDbConn(int isolationLevel) throws MetaException {
-    try {
-      Connection dbConn = connPool.getConnection();
-      dbConn.setAutoCommit(false);
-      dbConn.setTransactionIsolation(isolationLevel);
-      return dbConn;
-    } catch (SQLException e) {
-      String msg = "Unable to get jdbc connection from pool, " + e.getMessage() + "(SQLState=" + e.getSQLState() + ", SQLCode=" + e.getErrorCode() + ")";
-      throw new MetaException(msg);
-    }
-  }
-  protected Connection getDbConnInternal(int isolationLevel) throws SQLException {
+  protected Connection getDbConn(int isolationLevel) throws SQLException {
     Connection dbConn = connPool.getConnection();
     dbConn.setAutoCommit(false);
     dbConn.setTransactionIsolation(isolationLevel);
     return dbConn;
   }
 
+  void rollbackDBConn(Connection dbConn) {
+    try {
+      if (dbConn != null) dbConn.rollback();
+    } catch (SQLException e) {
+      LOG.warn("Failed to rollback db connection " + getMessage(e));
+    }
+  }
   protected void closeDbConn(Connection dbConn) {
     try {
       if (dbConn != null) dbConn.close();
     } catch (SQLException e) {
-      LOG.warn("Failed to close db connection " + e.getMessage());
+      LOG.warn("Failed to close db connection " + getMessage(e));
     }
   }
   
@@ -904,7 +854,7 @@ public class TxnHandler {
     try {
       if (stmt != null) stmt.close();
     } catch (SQLException e) {
-      LOG.warn("Failed to close statement " + e.getMessage());
+      LOG.warn("Failed to close statement " + getMessage(e));
     }
   }
 
@@ -919,7 +869,7 @@ public class TxnHandler {
       }
     }
     catch(SQLException ex) {
-      LOG.warn("Failed to close statement " + ex.getMessage());
+      LOG.warn("Failed to close statement " + getMessage(ex));
     }
   }
 
@@ -932,18 +882,18 @@ public class TxnHandler {
     closeDbConn(dbConn);
   }
   /**
-   * Determine if an exception was a deadlock.  Unfortunately there is no standard way to do
+   * Determine if an exception was such that it makse sense to retry.  Unfortunately there is no standard way to do
    * this, so we have to inspect the error messages and catch the telltale signs for each
    * different database.
    * @param conn database connection
    * @param e exception that was thrown.
    * @param caller name of the method calling this
-   * @throws org.apache.hadoop.hive.metastore.txn.TxnHandler.DeadlockException when deadlock
+   * @throws org.apache.hadoop.hive.metastore.txn.TxnHandler.RetryException when deadlock
    * detected and retry count has not been exceeded.
    */
-  protected void detectDeadlock(Connection conn,
+  protected void checkRetryable(Connection conn,
                                 SQLException e,
-                                String caller) throws DeadlockException, MetaException {
+                                String caller) throws RetryException, MetaException {
 
     // If you change this function, remove the @Ignore from TestTxnHandler.deadlockIsDetected()
     // to test these changes.
@@ -963,11 +913,33 @@ public class TxnHandler {
             || e.getMessage().contains("can't serialize access for this transaction")))) {
       if (deadlockCnt++ < ALLOWED_REPEATED_DEADLOCKS) {
         LOG.warn("Deadlock detected in " + caller + ", trying again.");
-        throw new DeadlockException();
+        throw new RetryException();
       } else {
         LOG.error("Too many repeated deadlocks in " + caller + ", giving up.");
         deadlockCnt = 0;
       }
+    }
+    else if(isRetryable(e)) {
+      //in MSSQL this means Communication Link Failure
+      if(retryNum++ < retryLimit) {
+        try {
+          Thread.sleep(retryInterval);
+        }
+        catch(InterruptedException ex) {
+          //
+        }
+        LOG.warn("Retryable error detected in " + caller + ", trying again: " + getMessage(e));
+        throw new RetryException();
+      }
+      else {
+        LOG.error("Fatal error. Retry limit (" + retryLimit + ") reached. Last error: " + getMessage(e));
+        retryNum = 0;
+      }
+    }
+    else {
+      //if here, we got something that will propagate the error (rather than retry), so reset counters
+      deadlockCnt = 0;
+      retryNum = 0;
     }
   }
 
@@ -1852,8 +1824,6 @@ public class TxnHandler {
   }
   /**
    * Returns true if {@code ex} should be retried
-   * @param ex
-   * @return
    */
   private static boolean isRetryable(Exception ex) {
     if(ex instanceof SQLException) {
@@ -1867,10 +1837,5 @@ public class TxnHandler {
   }
   private static String getMessage(SQLException ex) {
     return ex.getMessage() + "(SQLState=" + ex.getSQLState() + ",ErrorCode=" + ex.getErrorCode() + ")";
-  }
-  private static void throwMetaException(String baseMsg, SQLException ex) throws MetaException {
-    MetaException me = new MetaException(baseMsg + getMessage(ex));
-    me.initCause(ex);
-    throw me;
   }
 }
