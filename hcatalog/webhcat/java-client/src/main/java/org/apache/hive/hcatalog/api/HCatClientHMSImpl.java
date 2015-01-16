@@ -20,6 +20,7 @@ package org.apache.hive.hcatalog.api;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -48,11 +49,13 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.api.UnknownDBException;
 import org.apache.hadoop.hive.metastore.api.UnknownTableException;
+import org.apache.hive.hcatalog.api.repl.HCatReplicationTaskIterator;
 import org.apache.hive.hcatalog.common.HCatConstants;
 import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.common.HCatUtil;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchemaUtils;
+import org.apache.hive.hcatalog.api.repl.ReplicationTask;
 import org.apache.thrift.TException;
 
 /**
@@ -842,6 +845,12 @@ public class HCatClientHMSImpl extends HCatClient {
       throw new ConnectionFailureException(
           "TException while retrieving JMS Topic name.", e);
     }
+  }
+
+  @Override
+  public Iterator<ReplicationTask> getReplicationTasks(
+      long lastEventId, int maxEvents, String dbName, String tableName) throws HCatException {
+    return new HCatReplicationTaskIterator(this,lastEventId,maxEvents,dbName,tableName);
   }
 
   @Override

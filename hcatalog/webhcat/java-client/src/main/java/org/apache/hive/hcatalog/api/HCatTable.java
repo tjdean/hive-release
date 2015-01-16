@@ -488,6 +488,21 @@ public class HCatTable {
   }
 
   /**
+   * Gets the last known replication state of this table. This is
+   * applicable only if it is the destination of a replication
+   * and has had data replicated into it via imports previously.
+   * Defaults to 0.
+   */
+  public long getLastReplicationId() {
+    if (tblProps != null){
+      if (tblProps.containsKey("repl.last.id")){
+        return Long.parseLong(tblProps.get("repl.last.id"));
+      }
+    }
+    return 0l; // default is to return earliest possible state.
+  }
+
+  /**
    * Gets the serde lib.
    *
    * @return the serde lib
