@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -30,6 +31,8 @@ import java.util.Random;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore;
+import org.apache.hadoop.hive.metastore.IMetaStoreClient;
+import org.apache.hadoop.hive.metastore.api.NotificationEvent;
 import org.apache.hadoop.hive.metastore.api.PartitionEventType;
 import org.apache.hadoop.hive.ql.WindowsPathUtil;
 import org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat;
@@ -42,12 +45,14 @@ import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.columnar.LazyBinaryColumnarSerDe;
 import org.apache.hadoop.mapred.TextInputFormat;
+import org.apache.hive.hcatalog.api.repl.ReplicationTask;
 import org.apache.hive.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
 import org.apache.hive.hcatalog.common.HCatConstants;
 import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema.Type;
 import org.apache.hive.hcatalog.NoExitSecurityManager;
+import org.apache.hive.hcatalog.listener.DbNotificationListener;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -113,6 +118,8 @@ public class TestHCatClient {
       WindowsPathUtil.convertPathsFromWindowsToHdfs(hcatConf);
     }
 
+    System.setProperty(HiveConf.ConfVars.METASTORE_EVENT_LISTENERS.varname,
+        DbNotificationListener.class.getName()); // turn on db notification listener on metastore
     Thread t = new Thread(new RunMS(msPort));
     t.start();
     Thread.sleep(10000);
@@ -784,6 +791,35 @@ public class TestHCatClient {
       replicationTargetHCatConf.setVar(HiveConf.ConfVars.METASTOREURIS,
                                        "thrift://localhost:" + replicationTargetHCatPort);
       isReplicationTargetHCatRunning = true;
+    }
+  }
+
+  /**
+   * Test for event-based replication scenario
+   */
+  @Test
+  public void testReplicationTaskIter() throws Exception {
+
+    HCatClient sourceMetastore = HCatClient.create(new Configuration(hcatConf));
+
+    List<HCatNotificationEvent> notifs = sourceMetastore.getNextNotification(
+        0, 0, new IMetaStoreClient.NotificationFilter() {
+      @Override
+      public boolean accept(NotificationEvent event) {
+        return true;
+      }
+    });
+    for(HCatNotificationEvent n : notifs){
+      System.err.println("notif from dblistener:"+n.getEventId()
+          +":"+n.getEventTime()+",t:"+n.getEventType()+",o:"+n.getDbName()+"."+n.getTableName());
+    }
+
+    Iterator<ReplicationTask> taskIter = sourceMetastore.getReplicationTasks(0, 0, "mydb", null);
+    while(taskIter.hasNext()){
+      ReplicationTask task = taskIter.next();
+      HCatNotificationEvent n = task.getEvent();
+      System.err.println("notif from tasks:"+n.getEventId()
+          +":"+n.getEventTime()+",t:"+n.getEventType()+",o:"+n.getDbName()+"."+n.getTableName());
     }
   }
 

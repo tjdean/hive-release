@@ -217,6 +217,27 @@ public class HCatPartition {
   }
 
   /**
+   * Gets the last known replication state of this table. This is
+   * applicable only if it is the destination of a replication
+   * and has had data replicated into it via imports previously.
+   * If that is not available, but parent table is available,
+   * defaults to parent table's replication state. If that is also
+   * unknown, defaults to 0.
+   */
+  public long getLastReplicationId() {
+    if (parameters != null){
+      if (parameters.containsKey("repl.last.id")){
+        return Long.parseLong(parameters.get("repl.last.id"));
+      }
+    }
+
+    if (hcatTable != null){
+      return hcatTable.getLastReplicationId();
+    }
+    return 0l; // default is to return earliest possible state.
+  }
+
+  /**
    * Gets the location.
    *
    * @return the location
