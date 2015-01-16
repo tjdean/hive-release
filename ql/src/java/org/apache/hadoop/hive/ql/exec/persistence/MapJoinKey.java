@@ -184,7 +184,8 @@ public abstract class MapJoinKey {
         throw new HiveException("Serialization error", ex);
       }
     }
-    MapJoinKeyObject result = mayReuseKey ? (MapJoinKeyObject)key : new MapJoinKeyObject();
+    MapJoinKeyObject result = (mayReuseKey && key != null)
+        ? (MapJoinKeyObject)key : new MapJoinKeyObject();
     result.readFromRow(fieldObjs, keyFieldsOI);
     return result;
   }
