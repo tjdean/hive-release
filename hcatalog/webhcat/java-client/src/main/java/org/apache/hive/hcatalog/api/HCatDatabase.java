@@ -76,21 +76,6 @@ public class HCatDatabase {
     return props;
   }
 
-  /**
-   * Gets the last known replication state of this db. This is
-   * applicable only if it is the destination of a replication
-   * and has had data replicated into it via imports previously.
-   * Defaults to 0.
-   */
-  public long getLastReplicationId() {
-    if (props != null){
-      if (props.containsKey("repl.last.id")){
-        return Long.parseLong(props.get("repl.last.id"));
-      }
-    }
-    return 0l; // default is to return earliest possible state.
-  }
-
   @Override
   public String toString() {
     return "HCatDatabase ["
