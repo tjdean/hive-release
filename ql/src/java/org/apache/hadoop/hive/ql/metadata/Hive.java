@@ -2426,12 +2426,12 @@ private void constructOneLBLocationMap(FileStatus fSta,
         	Process mvProcess =  Runtime.getRuntime().exec(cmdLine);
         	int exitVal = -101;
         	try {
-		    /* Capture the input stream and error stream */
-		  InputStream inStream = mvProcess.getInputStream();
-		  new InputStreamHandler( inBuffer, inStream );
+		          /* Capture the input stream and error stream */
+		          InputStream inStream = mvProcess.getInputStream();
+		          new InputStreamHandler( inBuffer, inStream );
                   InputStream errStream = mvProcess.getErrorStream();
                   new InputStreamHandler( errBuffer , errStream ); 
-        	  exitVal = mvProcess.waitFor(); //TODO: poll periodically
+        	      exitVal = mvProcess.waitFor(); //TODO: poll periodically
         	} catch (InterruptedException e) {
                   LOG.error("Unable to move using hadoop distcp,  source " +
                              srcf + " to destination " + destf + " using command: " + cmdLine);
@@ -2444,10 +2444,12 @@ private void constructOneLBLocationMap(FileStatus fSta,
                   LOG.error("Unable to move using hadoop distcp,  source " +
                              srcf + " to destination " + destf + " using command: " + cmdLine);
                   LOG.error("Exit value for hadoop distcp command " + exitVal);
-		  LOG.error("Input stream captured for hadoop dist command: " + inBuffer);
-		  LOG.error("Error stream captured for hadoop dist command: " + errBuffer);	
-        	  success = false;
+		          LOG.error("Input stream captured for hadoop dist command: " + inBuffer);
+		          LOG.error("Error stream captured for hadoop dist command: " + errBuffer);	
+        	      success = false;
         	} else {
+			      /* Remove the source file */
+			      srcf.getFileSystem(conf).delete(srcf, true);
                   success = true;
         	}
         }
