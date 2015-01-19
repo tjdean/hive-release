@@ -2869,17 +2869,6 @@
     <description/>
   </property>
   <property>
-    <name>hive.server2.map.fair.scheduler.queue</name>
-    <value>true</value>
-    <description>
-      If the YARN fair scheduler is configured and HiveServer2 is running in non-impersonation mode,
-      this setting determines the user for fair scheduler queue mapping.
-      If set to true (default), the logged-in user determines the fair scheduler queue
-      for submitted jobs, so that map reduce resource usage can be tracked by user.
-      If set to false, all Hive jobs go to the 'hive' user's queue.
-    </description>
-  </property>
-  <property>
     <name>hive.security.command.whitelist</name>
     <value>set,reset,dfs,add,list,delete,reload,compile</value>
     <description>Comma separated list of non-SQL Hive commands users are authorized to execute</description>
@@ -3174,12 +3163,7 @@
   </property>
   
   <!-- missing from HiveConf -->
-	<property>
-        <name>hive.heapsize</name>
-        <value>1024</value>
-        <description>Hive Java heap size</description>
-    </property>
-    
+	    
     <property>
         <name>ambari.hive.db.schema.name</name>
         <value>hive</value>
@@ -3206,16 +3190,7 @@
         <description>Required to Enable the conversion of an SMB (Sort-Merge-Bucket) to a map-join SMB.</description>
     </property>
     
-    <property>
-        <name>hive.optimize.mapjoin.mapreduce</name>
-        <value>true</value>
-        <description>If hive.auto.convert.join is off, this parameter does not take
-            affect. If it is on, and if there are map-join jobs followed by a map-reduce
-            job (for e.g a group by), each map-only job is merged with the following
-            map-reduce job.
-        </description>
-    </property>
-    <!-- missing from HiveConf -->
+        <!-- missing from HiveConf -->
 
 	<!-- performance -->
 
