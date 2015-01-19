@@ -52,7 +52,7 @@ public class NoopReplicationTask extends NotYetImplementedReplicationTask {
    * Returns a list of commands to send to a hive driver on the source warehouse
    * @return a list of commands to send to a hive driver on the source warehouse
    */
-  public List<Command> getSrcWhCommands() {
+  public Iterable<? extends Command> getSrcWhCommands() {
     verifyActionable();
     return noopReturn;
   }
@@ -61,7 +61,7 @@ public class NoopReplicationTask extends NotYetImplementedReplicationTask {
    * Returns a list of commands to send to a hive driver on the dest warehouse
    * @return a list of commands to send to a hive driver on the dest warehouse
    */
-  public List<Command> getDstWhCommands() {
+  public Iterable<? extends Command> getDstWhCommands() {
     verifyActionable();
     return noopReturn;
   }
