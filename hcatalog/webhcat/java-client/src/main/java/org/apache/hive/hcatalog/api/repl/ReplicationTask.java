@@ -38,7 +38,7 @@ public class ReplicationTask {
 
   protected static MessageFactory messageFactory = MessageFactory.getInstance();
 
-  public static boolean injectDebugMode = true; // FIXME : remove debug mode
+  public static boolean injectDebugMode = false; // FIXME : remove debug mode
 
   /**
    * Factory method to return appropriate subtype of ReplicationTask for given event
