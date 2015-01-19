@@ -20,6 +20,7 @@ package org.apache.hive.hcatalog.api.repl;
 
 import org.apache.hive.hcatalog.api.HCatNotificationEvent;
 import org.apache.hive.hcatalog.common.HCatConstants;
+import org.apache.hive.hcatalog.messaging.MessageFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,8 @@ public class ReplicationTask {
   protected StagingDirectoryProvider dstStagingDirProvider = null;
   protected Map<String,String> tableNameMapping = null;
   protected Map<String,String> dbNameMapping = null;
+
+  protected static MessageFactory messageFactory = MessageFactory.getInstance();
 
   /**
    * Factory method to return appropriate subtype of ReplicationTask for given event
@@ -150,19 +153,31 @@ public class ReplicationTask {
   }
 
   /**
-   * Returns a list of commands to send to a hive driver on the source warehouse
-   * @return a list of commands to send to a hive driver on the source warehouse
+   * Returns a Iterable<Command> to send to a hive driver on the source warehouse
+   *
+   * If you *need* a List<Command> instead, you can use guava's
+   * ImmutableList.copyOf(iterable) or Lists.newArrayList(iterable) to
+   * get the underlying list, but this defeats the purpose of making this
+   * interface an Iterable rather than a List, since it is very likely
+   * that the number of Commands returned here will cause your process
+   * to run OOM.
    */
-  public List<Command> getSrcWhCommands() {
+  public Iterable<? extends Command> getSrcWhCommands() {
     verifyActionable();
     return null;
   }
 
   /**
-   * Returns a list of commands to send to a hive driver on the dest warehouse
-   * @return a list of commands to send to a hive driver on the dest warehouse
+   * Returns a Iterable<Command> to send to a hive driver on the source warehouse
+   *
+   * If you *need* a List<Command> instead, you can use guava's
+   * ImmutableList.copyOf(iterable) or Lists.newArrayList(iterable) to
+   * get the underlying list, but this defeats the purpose of making this
+   * interface an Iterable rather than a List, since it is very likely
+   * that the number of Commands returned here will cause your process
+   * to run OOM.
    */
-  public List<Command> getDstWhCommands() {
+  public Iterable<? extends Command> getDstWhCommands() {
     verifyActionable();
     return null;
   }
