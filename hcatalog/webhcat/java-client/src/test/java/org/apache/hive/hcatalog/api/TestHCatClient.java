@@ -28,6 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Iterators;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore;
@@ -45,7 +48,10 @@ import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.columnar.LazyBinaryColumnarSerDe;
 import org.apache.hadoop.mapred.TextInputFormat;
+import org.apache.hive.hcatalog.api.repl.AddPartitionReplicationTask;
+import org.apache.hive.hcatalog.api.repl.Command;
 import org.apache.hive.hcatalog.api.repl.ReplicationTask;
+import org.apache.hive.hcatalog.api.repl.StagingDirectoryProvider;
 import org.apache.hive.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
 import org.apache.hive.hcatalog.common.HCatConstants;
 import org.apache.hive.hcatalog.common.HCatException;
@@ -67,6 +73,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertArrayEquals;
 
 import org.apache.hadoop.util.Shell;
+
+import javax.annotation.Nullable;
 
 public class TestHCatClient {
   private static final Logger LOG = LoggerFactory.getLogger(TestHCatClient.class);
@@ -814,12 +822,63 @@ public class TestHCatClient {
           +":"+n.getEventTime()+",t:"+n.getEventType()+",o:"+n.getDbName()+"."+n.getTableName());
     }
 
+    ReplicationTask.injectDebugMode = true;
     Iterator<ReplicationTask> taskIter = sourceMetastore.getReplicationTasks(0, 0, "mydb", null);
     while(taskIter.hasNext()){
       ReplicationTask task = taskIter.next();
       HCatNotificationEvent n = task.getEvent();
       System.err.println("notif from tasks:"+n.getEventId()
-          +":"+n.getEventTime()+",t:"+n.getEventType()+",o:"+n.getDbName()+"."+n.getTableName());
+          +":"+n.getEventTime()+",t:"+n.getEventType()+",o:"+n.getDbName()+"."+n.getTableName()
+          +",s:"+n.getEventScope());
+      System.err.println("task :" + task.getClass().getName());
+      if (task.needsStagingDirs()){
+        StagingDirectoryProvider provider = new StagingDirectoryProvider() {
+          @Override
+          public String getStagingDirectory(String key) {
+            System.err.println("getStagingDirectory("+key+") called!");
+            return "/tmp/" + key.replaceAll(" ","_");
+          }
+        };
+        task
+            .withSrcStagingDirProvider(provider)
+            .withDstStagingDirProvider(provider);
+      }
+      if (task.isActionable()){
+        System.err.println("task was actionable!");
+        if (task instanceof AddPartitionReplicationTask){
+          Function<Command, String> commandDebugPrinter = new Function<Command, String>() {
+            @Override
+            public String apply(@Nullable Command command) {
+              StringBuilder sb = new StringBuilder();
+              sb.append("CMD:[" + command.getClass().getName() + "]\n");
+              for (String s : command.get()) {
+                sb.append("CMD:" + s);
+                sb.append("\n");
+              }
+              sb.append("Retriable:" + command.isRetriable() + "\n");
+              sb.append("Undoable:" + command.isUndoable() + "\n");
+              if (command.isUndoable()) {
+                for (String s : command.getUndo()) {
+                  sb.append("UNDO:" + s);
+                  sb.append("\n");
+                }
+              }
+              return sb.toString();
+            }
+          };
+          System.err.println("On src:");
+          for (String s : Iterables.transform(task.getSrcWhCommands(), commandDebugPrinter)){
+            System.err.print(s);
+          }
+          System.err.println("On dest:");
+          for (String s : Iterables.transform(task.getDstWhCommands(), commandDebugPrinter)){
+            System.err.print(s);
+          }
+
+        }
+      } else {
+        System.err.println("task was not actionable.");
+      }
     }
   }
 

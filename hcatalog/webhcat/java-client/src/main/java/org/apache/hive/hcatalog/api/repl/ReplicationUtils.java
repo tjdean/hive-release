@@ -137,7 +137,7 @@ public class ReplicationUtils {
    * Return alphanumeric(and '_') chars only of a string
    */
   public static String toStringWordCharsOnly(String s){
-    return (s == null) ? "null" : s.replaceAll("[\\W]|_", "");
+    return (s == null) ? "null" : s.replaceAll("[\\W]", "");
   }
 
   public static String mapIfMapAvailable(String s, Map<String, String> mapping){
