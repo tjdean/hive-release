@@ -38,6 +38,8 @@ public class ReplicationTask {
 
   protected static MessageFactory messageFactory = MessageFactory.getInstance();
 
+  public static boolean injectDebugMode = true; // FIXME : remove debug mode
+
   /**
    * Factory method to return appropriate subtype of ReplicationTask for given event
    * @param event HCatEventMessage returned by the notification subsystem
@@ -56,7 +58,11 @@ public class ReplicationTask {
     } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_TABLE_EVENT)) {
       return new NotYetImplementedReplicationTask(event);
     } else if (event.getEventType().equals(HCatConstants.HCAT_ADD_PARTITION_EVENT)) {
+      if (injectDebugMode){
+        return new AddPartitionReplicationTask(event);
+      } else {
       return new NoopReplicationTask(event);
+      }
     } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_PARTITION_EVENT)) {
       return new NoopReplicationTask(event);
     } else {
