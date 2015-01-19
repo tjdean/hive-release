@@ -59,7 +59,7 @@ public class ReplicationUtils {
    * and has had data replicated into it via imports previously.
    * Defaults to 0.
    */
-  public long getLastReplicationId(HCatTable tbl) {
+  public static long getLastReplicationId(HCatTable tbl) {
     Map<String, String> tblProps = tbl.getTblProps();
     if (tblProps != null){
       if (tblProps.containsKey("repl.last.id")){
@@ -77,7 +77,7 @@ public class ReplicationUtils {
    * defaults to parent table's replication state. If that is also
    * unknown, defaults to 0.
    */
-  public long getLastReplicationId(HCatPartition ptn, @Nullable HCatTable parentTable) {
+  public static long getLastReplicationId(HCatPartition ptn, @Nullable HCatTable parentTable) {
     Map<String,String> parameters = ptn.getParameters();
     if (parameters != null){
       if (parameters.containsKey("repl.last.id")){
