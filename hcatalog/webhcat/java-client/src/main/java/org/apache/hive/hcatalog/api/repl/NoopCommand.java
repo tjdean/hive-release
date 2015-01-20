@@ -23,6 +23,7 @@ package org.apache.hive.hcatalog.api.repl;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,7 +37,7 @@ import java.util.List;
 public class NoopCommand implements Command {
   @Override
   public List<String> get() {
-    return null;
+    return new ArrayList<String>();
   }
 
   @Override
@@ -51,7 +52,17 @@ public class NoopCommand implements Command {
 
   @Override
   public List<String> getUndo() {
-    return null;
+    return new ArrayList<String>();
+  }
+
+  @Override
+  public List<String> cleanupLocationsPerRetry() {
+    return new ArrayList<String>();
+  }
+
+  @Override
+  public List<String> cleanupLocationsAfterEvent() {
+    return new ArrayList<String>();
   }
 
   @Override

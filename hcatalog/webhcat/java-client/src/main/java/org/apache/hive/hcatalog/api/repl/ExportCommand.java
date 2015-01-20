@@ -55,14 +55,12 @@ public class ExportCommand implements Command {
     sb.append(" TO '");
     sb.append(exportLocation);
     sb.append('\'');
-    return Arrays.asList(sb.toString()); // TODO : verify that Arrays.asList instantiates correctly
+    return Arrays.asList(sb.toString());
   }
 
   @Override
   public boolean isRetriable() {
     return true; // Export is trivially retriable (after clearing out the staging dir provided.)
-    // TODO : There needs to be a better way to tell the user to clear out which
-    // staging directory this used, and thus, which to clear out
   }
 
   @Override
@@ -73,6 +71,16 @@ public class ExportCommand implements Command {
   @Override
   public List<String> getUndo() {
     return new ArrayList<String>(); // Nothing to undo.
+  }
+
+  @Override
+  public List<String> cleanupLocationsPerRetry() {
+    return Arrays.asList(exportLocation);
+  }
+
+  @Override
+  public List<String> cleanupLocationsAfterEvent() {
+    return Arrays.asList(exportLocation);
   }
 
   @Override
