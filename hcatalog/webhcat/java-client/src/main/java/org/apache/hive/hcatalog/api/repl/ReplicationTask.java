@@ -50,21 +50,17 @@ public class ReplicationTask {
     // If casing is fine for now. But we should eventually remove this. Also, I didn't want to
     // create another enum just for this.
     if (event.getEventType().equals(HCatConstants.HCAT_CREATE_DATABASE_EVENT)) {
-      return new NotYetImplementedReplicationTask(event);
+      return new NoopReplicationTask(event);
     } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_DATABASE_EVENT)) {
-      return new NotYetImplementedReplicationTask(event);
+      return new NoopReplicationTask(event);
     } else if (event.getEventType().equals(HCatConstants.HCAT_CREATE_TABLE_EVENT)) {
-      return new NotYetImplementedReplicationTask(event);
+      return new NoopReplicationTask(event);
     } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_TABLE_EVENT)) {
-      return new NotYetImplementedReplicationTask(event);
+      return new NoopReplicationTask(event);
     } else if (event.getEventType().equals(HCatConstants.HCAT_ADD_PARTITION_EVENT)) {
-      if (injectDebugMode){
-        return new AddPartitionReplicationTask(event);
-      } else {
-      return new NoopReplicationTask(event);
-      }
+      return injectDebugMode ? new AddPartitionReplicationTask(event) : new NoopReplicationTask(event);
     } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_PARTITION_EVENT)) {
-      return new NoopReplicationTask(event);
+      return injectDebugMode ? new DropPartitionReplicationTask(event) : new NoopReplicationTask(event);
     } else {
       throw new IllegalStateException("Unrecognized Event type, no replication task available");
     }

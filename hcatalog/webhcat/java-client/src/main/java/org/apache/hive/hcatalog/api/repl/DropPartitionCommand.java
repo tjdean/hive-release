@@ -29,58 +29,53 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class ExportCommand implements Command {
-  private String exportLocation;
-  private String dbName = null;
-  private String tableName = null;
-  private Map<String, String> ptnDesc = null;
+public class DropPartitionCommand implements Command {
+  private String dbName;
+  private String tableName;
+  private Map<String,String> ptnDesc;
 
-  public ExportCommand(String dbName, String tableName, Map<String, String> ptnDesc, String exportLocation) {
+  public DropPartitionCommand(String dbName, String tableName, Map<String, String> ptnDesc) {
     this.dbName = dbName;
     this.tableName = tableName;
     this.ptnDesc = ptnDesc;
-    this.exportLocation = this.exportLocation;
   }
 
   @Override
   public List<String> get() {
-    // EXPORT TABLE tablename [PARTITION (part_column="value"[, ...])]
-    // TO 'export_target_path'
+    // ALTER TABLE table_name DROP [IF EXISTS] PARTITION partition_spec, PARTITION partition_spec,...;
     StringBuilder sb = new StringBuilder();
-    sb.append("EXPORT TABLE ");
+    sb.append("ALTER TABLE ");
     sb.append(dbName);
-    sb.append(".");
-    sb.append(tableName); // FIXME : Handle quoted tablenames, or this will bite you
+    sb.append('.');
+    sb.append(tableName);
+    sb.append(" DROP IF EXISTS");
     sb.append(ReplicationUtils.partitionDescriptor(ptnDesc));
-    sb.append(" TO '");
-    sb.append(exportLocation);
-    sb.append('\'');
     return Arrays.asList(sb.toString());
   }
 
   @Override
   public boolean isRetriable() {
-    return true; // Export is trivially retriable (after clearing out the staging dir provided.)
+    return true;
   }
 
   @Override
   public boolean isUndoable() {
-    return true; // Export is trivially undoable - in that nothing needs doing to undo it.
+    return false;
   }
 
   @Override
   public List<String> getUndo() {
-    return new ArrayList<String>(); // Nothing to undo.
+    throw new UnsupportedOperationException("getUndo called on command that does returned false for isUndoable");
   }
 
   @Override
   public List<String> cleanupLocationsPerRetry() {
-    return Arrays.asList(exportLocation);
+    return new ArrayList<String>();
   }
 
   @Override
   public List<String> cleanupLocationsAfterEvent() {
-    return Arrays.asList(exportLocation);
+    return new ArrayList<String>();
   }
 
   @Override
@@ -88,7 +83,6 @@ public class ExportCommand implements Command {
     ReaderWriter.writeDatum(dataOutput, dbName);
     ReaderWriter.writeDatum(dataOutput, tableName);
     ReaderWriter.writeDatum(dataOutput, ptnDesc);
-    ReaderWriter.writeDatum(dataOutput, exportLocation);
   }
 
   @Override
@@ -96,6 +90,5 @@ public class ExportCommand implements Command {
     dbName = (String)ReaderWriter.readDatum(dataInput);
     tableName = (String)ReaderWriter.readDatum(dataInput);
     ptnDesc = (Map<String,String>)ReaderWriter.readDatum(dataInput);
-    exportLocation = (String)ReaderWriter.readDatum(dataInput);
   }
 }
