@@ -40,7 +40,7 @@ public class ImportCommand implements Command {
   // We should ideally take a location for EXTERNAL tables, and specify that for the import
   // statement as well.
 
-  public ImportCommand(Map<String, String> ptnDesc, String dbName, String tableName, String importLocation) {
+  public ImportCommand(String dbName, String tableName, Map<String, String> ptnDesc, String importLocation) {
     this.dbName = dbName;
     this.tableName = tableName;
     this.ptnDesc = ptnDesc;
@@ -78,15 +78,7 @@ public class ImportCommand implements Command {
 
   @Override
   public List<String> getUndo() {
-    // ALTER TABLE table_name DROP [IF EXISTS] PARTITION partition_spec, PARTITION partition_spec,...;
-    StringBuilder sb = new StringBuilder();
-    sb.append("ALTER TABLE ");
-    sb.append(dbName);
-    sb.append('.');
-    sb.append(tableName);
-    sb.append(" DROP IF EXISTS ");
-    sb.append(ReplicationUtils.partitionDescriptor(ptnDesc));
-    return Arrays.asList(sb.toString());
+    return (new DropPartitionCommand(dbName,tableName,ptnDesc)).get();
   }
 
   @Override

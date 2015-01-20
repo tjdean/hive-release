@@ -55,9 +55,9 @@ public class AddPartitionReplicationTask extends ReplicationTask {
       @Override
       public Command apply(@Nullable Map<String, String> ptnDesc) {
         return new ExportCommand(
-          ptnDesc,
           addPartitionMessage.getDB(),
           addPartitionMessage.getTable(),
+          ptnDesc,
           srcStagingDirProvider.getStagingDirectory(
             ReplicationUtils.getUniqueKey(
                 getEvent().getEventId(),
@@ -81,9 +81,9 @@ public class AddPartitionReplicationTask extends ReplicationTask {
       @Override
       public Command apply(@Nullable Map<String, String> ptnDesc) {
         return new ImportCommand(
-            ptnDesc,
             dstDbName,
             dstTableName,
+            ptnDesc,
             dstStagingDirProvider.getStagingDirectory(
                 ReplicationUtils.getUniqueKey(
                     getEvent().getEventId(),

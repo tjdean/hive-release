@@ -173,6 +173,7 @@ public class ReplicationUtils {
           first = false;
         }
         sb.append(e.getKey()); // TODO : verify if any quoting is needed for keys
+        sb.append('=');
         sb.append('"');
         sb.append(e.getValue()); // TODO : verify if any escaping is needed for values
         sb.append('"');

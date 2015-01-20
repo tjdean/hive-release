@@ -50,6 +50,7 @@ import org.apache.hadoop.hive.serde2.columnar.LazyBinaryColumnarSerDe;
 import org.apache.hadoop.mapred.TextInputFormat;
 import org.apache.hive.hcatalog.api.repl.AddPartitionReplicationTask;
 import org.apache.hive.hcatalog.api.repl.Command;
+import org.apache.hive.hcatalog.api.repl.NotYetImplementedReplicationTask;
 import org.apache.hive.hcatalog.api.repl.ReplicationTask;
 import org.apache.hive.hcatalog.api.repl.StagingDirectoryProvider;
 import org.apache.hive.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
@@ -845,7 +846,7 @@ public class TestHCatClient {
       }
       if (task.isActionable()){
         System.err.println("task was actionable!");
-        if (task instanceof AddPartitionReplicationTask){
+        if (!(task instanceof NotYetImplementedReplicationTask)){
           Function<Command, String> commandDebugPrinter = new Function<Command, String>() {
             @Override
             public String apply(@Nullable Command command) {
