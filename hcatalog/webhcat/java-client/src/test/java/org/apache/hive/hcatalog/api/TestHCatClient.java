@@ -863,6 +863,18 @@ public class TestHCatClient {
                   sb.append("\n");
                 }
               }
+              List<String> locns = command.cleanupLocationsPerRetry();
+              sb.append("cleanupLocationsPerRetry entries :" + locns.size());
+              for (String s : locns){
+                sb.append("RETRY_CLEANUP:"+s);
+                sb.append("\n");
+              }
+              locns = command.cleanupLocationsAfterEvent();
+              sb.append("cleanupLocationsAfterEvent entries :" + locns.size());
+              for (String s : locns){
+                sb.append("AFTER_EVENT_CLEANUP:"+s);
+                sb.append("\n");
+              }
               return sb.toString();
             }
           };

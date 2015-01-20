@@ -35,16 +35,17 @@ public interface StagingDirectoryProvider {
   /**
    * Trivial implementation of this interface - creates
    */
-  public class TrivialImpl implements  StagingDirectoryProvider {
+  public class TrivialImpl implements StagingDirectoryProvider {
 
     String prefix = null;
 
     /**
      * Trivial implementation of StagingDirectoryProvider which takes a temporary directory
-     * and creates directories inside that for each key. Note that this is intended to only
-     * be used for testing, since it does not cover all the various corner cases of weird
-     * key value naming.
-     * @param base tmp directory inside which other tmp dirs are created
+     * and creates directories inside that for each key. Note that this is intended as a
+     * trivial implementation, and if any further "advanced" behaviour is desired,
+     * it is better that the user roll their own.
+     *
+     * @param base temp directory inside which other tmp dirs are created
      * @param separator path separator. Usually should be "/"
      */
     public TrivialImpl(String base,String separator){

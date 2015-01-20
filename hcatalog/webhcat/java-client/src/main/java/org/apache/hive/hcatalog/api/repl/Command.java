@@ -34,10 +34,19 @@ import java.util.List;
  * to undo the action by asking the command how to undo it. If not, they
  * can then in turn act upon the exception in whatever manner they see
  * fit (typically by raising an error).
+ *
+ * We also have two more methods that help cleanup of temporary locations
+ * used by this Command. cleanupLocationsPerRetry() provides a list of
+ * directories that are intended to be cleaned up every time this Command
+ * needs to be retried. cleanupLocationsAfterEvent() provides a list of
+ * directories that should be cleaned up after the event for which this
+ * Command is generated is successfully processed.
  */
 public interface Command extends Writable {
   List<String> get();
   boolean isRetriable();
   boolean isUndoable();
   List<String> getUndo();
+  List<String> cleanupLocationsPerRetry();
+  List<String> cleanupLocationsAfterEvent();
 }

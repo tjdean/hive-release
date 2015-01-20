@@ -24,6 +24,7 @@ import org.apache.hive.hcatalog.data.ReaderWriter;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +61,7 @@ public class ImportCommand implements Command {
     sb.append(" FROM '");
     sb.append(importLocation);
     sb.append('\'');
-    return Arrays.asList(sb.toString()); // TODO : verify that Arrays.asList instantiates correctly
+    return Arrays.asList(sb.toString());
   }
 
 
@@ -86,6 +87,16 @@ public class ImportCommand implements Command {
     sb.append(" DROP IF EXISTS ");
     sb.append(ReplicationUtils.partitionDescriptor(ptnDesc));
     return Arrays.asList(sb.toString());
+  }
+
+  @Override
+  public List<String> cleanupLocationsPerRetry() {
+    return new ArrayList<String>();
+  }
+
+  @Override
+  public List<String> cleanupLocationsAfterEvent() {
+    return Arrays.asList(importLocation);
   }
 
   @Override

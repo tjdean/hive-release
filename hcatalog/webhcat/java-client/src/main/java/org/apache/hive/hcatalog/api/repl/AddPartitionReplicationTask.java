@@ -59,7 +59,11 @@ public class AddPartitionReplicationTask extends ReplicationTask {
           addPartitionMessage.getDB(),
           addPartitionMessage.getTable(),
           srcStagingDirProvider.getStagingDirectory(
-            ReplicationUtils.getUniqueKey(addPartitionMessage.getDB(), addPartitionMessage.getTable(),ptnDesc)
+            ReplicationUtils.getUniqueKey(
+                getEvent().getEventId(),
+                addPartitionMessage.getDB(),
+                addPartitionMessage.getTable(),
+                ptnDesc)
           )
         );
       }
@@ -81,7 +85,11 @@ public class AddPartitionReplicationTask extends ReplicationTask {
             dstDbName,
             dstTableName,
             dstStagingDirProvider.getStagingDirectory(
-                ReplicationUtils.getUniqueKey(dstDbName,dstTableName,ptnDesc)
+                ReplicationUtils.getUniqueKey(
+                    getEvent().getEventId(),
+                    addPartitionMessage.getDB(), // Note - important to retain the same key as the export
+                    addPartitionMessage.getTable(),
+                    ptnDesc)
             )
         );
       }

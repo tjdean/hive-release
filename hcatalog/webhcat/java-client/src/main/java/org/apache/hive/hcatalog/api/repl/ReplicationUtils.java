@@ -22,11 +22,22 @@ package org.apache.hive.hcatalog.api.repl;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import org.apache.commons.io.IOExceptionWithCause;
+import org.apache.hadoop.io.DataOutputBuffer;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hive.hcatalog.api.HCatDatabase;
 import org.apache.hive.hcatalog.api.HCatPartition;
 import org.apache.hive.hcatalog.api.HCatTable;
+import org.apache.hive.hcatalog.data.ReaderWriter;
 
 import javax.annotation.Nullable;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInput;
+import java.io.DataInputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -92,15 +103,18 @@ public class ReplicationUtils {
   }
 
   /**
-   * Used to generate a unique key for a combination of dbname, tablename and partition keyvalues
-   * This is used to feed in a name for creating staging directories for exports and imports
-   * This should be idempotent given the same values, i.e. hashcode-like, but at the same time,
-   * be guaranteed to be different for every possible partition, while being "readable-ish".
-   * Basically, we concat the alphanumberic versions of all three, along with a hashcode of the
-   * combination.
+   * Used to generate a unique key for a combination of given event id, dbname,
+   * tablename and partition keyvalues. This is used to feed in a name for creating
+   * staging directories for exports and imports. This should be idempotent given
+   * the same values, i.e. hashcode-like, but at the same time, be guaranteed to be
+   * different for every possible partition, while being "readable-ish". Basically,
+   * we concat the alphanumberic versions of all of the above, along with a hashcode
+   * of the db, tablename and ptn key-value pairs
    */
-  public static String getUniqueKey(String db, String table, Map<String, String> ptnDesc) {
+  public static String getUniqueKey(long eventId, String db, String table, Map<String, String> ptnDesc) {
     StringBuilder sb = new StringBuilder();
+    sb.append(eventId);
+    sb.append('.');
     sb.append(toStringWordCharsOnly(db));
     sb.append('.');
     sb.append(toStringWordCharsOnly(table));
@@ -166,6 +180,42 @@ public class ReplicationUtils {
       sb.append(')');
     }
     return sb.toString();
+  }
+
+  /**
+   * Command implements Writable, but that's not terribly easy to use compared
+   * to String, even if it plugs in easily into the rest of Hadoop. Provide
+   * utility methods to easily serialize and deserialize Commands
+   *
+   * serializeCommand returns a String representation of given command
+   */
+  public static String serializeCommand(Command command) throws IOException {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    DataOutput dataOutput = new DataOutputStream(baos);
+    ReaderWriter.writeDatum(dataOutput,command.getClass().getName());
+    command.write(dataOutput);
+    return baos.toString();
+  }
+
+  /**
+   * Command implements Writable, but that's not terribly easy to use compared
+   * to String, even if it plugs in easily into the rest of Hadoop. Provide
+   * utility methods to easily serialize and deserialize Commands
+   *
+   * deserializeCommand instantiates a concrete Command and initializes it,
+   * given a String representation of it.
+   */
+   public static Command deserializeCommand(String s) throws IOException {
+    DataInput dataInput = new DataInputStream(new ByteArrayInputStream(s.getBytes()));
+    String clazz = (String) ReaderWriter.readDatum(dataInput);
+    Command cmd;
+    try {
+      cmd = (Command)Class.forName(clazz).newInstance();
+    } catch (Exception e) {
+      throw new IOExceptionWithCause("Error instantiating class "+clazz,e);
+    }
+    cmd.readFields(dataInput);
+    return cmd;
   }
 
 }
