@@ -20,6 +20,8 @@
 package org.apache.hive.hcatalog.api.repl;
 
 
+import org.apache.hive.hcatalog.data.ReaderWriter;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -35,6 +37,18 @@ import java.util.List;
  */
 
 public class NoopCommand implements Command {
+  private long eventId;
+
+  public NoopCommand(){
+    // trivial ctor to support Writable reflections instantiation
+    // do not expect to use this object as-is, unless you call
+    // readFields // after using this ctor
+  }
+
+  public NoopCommand(long eventId){
+    this.eventId = eventId;
+  }
+
   @Override
   public List<String> get() {
     return new ArrayList<String>();
@@ -66,13 +80,18 @@ public class NoopCommand implements Command {
   }
 
   @Override
+  public long getEventId() {
+    return eventId;
+  }
+
+  @Override
   public void write(DataOutput dataOutput) throws IOException {
-    // trivial impl, nothing to write.
+    ReaderWriter.writeDatum(dataOutput, Long.valueOf(eventId));
   }
 
   @Override
   public void readFields(DataInput dataInput) throws IOException {
-    // trivial impl, no fields to read.
+    eventId = ((Long)ReaderWriter.readDatum(dataInput)).longValue();
   }
 }
 

@@ -49,4 +49,5 @@ public interface Command extends Writable {
   List<String> getUndo();
   List<String> cleanupLocationsPerRetry();
   List<String> cleanupLocationsAfterEvent();
+  long getEventId();
 }

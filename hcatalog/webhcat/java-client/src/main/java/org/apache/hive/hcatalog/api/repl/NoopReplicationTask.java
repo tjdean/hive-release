@@ -40,7 +40,7 @@ public class NoopReplicationTask extends NotYetImplementedReplicationTask {
   public NoopReplicationTask(HCatNotificationEvent event) {
     super(event);
     noopReturn = new ArrayList<Command>();
-    noopReturn.add(new NoopCommand());
+    noopReturn.add(new NoopCommand(event.getEventId()));
   }
 
   @Override

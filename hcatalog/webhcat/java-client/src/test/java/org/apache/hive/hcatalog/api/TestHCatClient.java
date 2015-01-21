@@ -18,6 +18,7 @@
  */
 package org.apache.hive.hcatalog.api;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,6 +53,7 @@ import org.apache.hive.hcatalog.api.repl.AddPartitionReplicationTask;
 import org.apache.hive.hcatalog.api.repl.Command;
 import org.apache.hive.hcatalog.api.repl.NotYetImplementedReplicationTask;
 import org.apache.hive.hcatalog.api.repl.ReplicationTask;
+import org.apache.hive.hcatalog.api.repl.ReplicationUtils;
 import org.apache.hive.hcatalog.api.repl.StagingDirectoryProvider;
 import org.apache.hive.hcatalog.cli.SemanticAnalysis.HCatSemanticAnalyzer;
 import org.apache.hive.hcatalog.common.HCatConstants;
@@ -849,9 +851,25 @@ public class TestHCatClient {
         if (!(task instanceof NotYetImplementedReplicationTask)){
           Function<Command, String> commandDebugPrinter = new Function<Command, String>() {
             @Override
-            public String apply(@Nullable Command command) {
+            public String apply(@Nullable Command cmd) {
               StringBuilder sb = new StringBuilder();
+              String serializedCmd = null;
+              try {
+                serializedCmd = ReplicationUtils.serializeCommand(cmd);
+              } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+              }
+              sb.append("SERIALIZED:"+serializedCmd+"\n");
+              Command command = null;
+              try {
+                command = ReplicationUtils.deserializeCommand(serializedCmd);
+              } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+              }
               sb.append("CMD:[" + command.getClass().getName() + "]\n");
+              sb.append("EVENTID:[" +command.getEventId()+"]\n");
               for (String s : command.get()) {
                 sb.append("CMD:" + s);
                 sb.append("\n");
