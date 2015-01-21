@@ -30,14 +30,22 @@ import java.util.List;
 import java.util.Map;
 
 public class DropPartitionCommand implements Command {
+  private long eventId;
   private String dbName;
   private String tableName;
   private Map<String,String> ptnDesc;
 
-  public DropPartitionCommand(String dbName, String tableName, Map<String, String> ptnDesc) {
+  public DropPartitionCommand(String dbName, String tableName, Map<String, String> ptnDesc, long eventId) {
     this.dbName = dbName;
     this.tableName = tableName;
     this.ptnDesc = ptnDesc;
+    this.eventId = eventId;
+  }
+
+  public DropPartitionCommand(){
+    // trivial ctor to support Writable reflections instantiation
+    // do not expect to use this object as-is, unless you call
+    // readFields // after using this ctor
   }
 
   @Override
@@ -79,10 +87,16 @@ public class DropPartitionCommand implements Command {
   }
 
   @Override
+  public long getEventId() {
+    return eventId;
+  }
+
+  @Override
   public void write(DataOutput dataOutput) throws IOException {
     ReaderWriter.writeDatum(dataOutput, dbName);
     ReaderWriter.writeDatum(dataOutput, tableName);
     ReaderWriter.writeDatum(dataOutput, ptnDesc);
+    ReaderWriter.writeDatum(dataOutput, Long.valueOf(eventId));
   }
 
   @Override
@@ -90,5 +104,6 @@ public class DropPartitionCommand implements Command {
     dbName = (String)ReaderWriter.readDatum(dataInput);
     tableName = (String)ReaderWriter.readDatum(dataInput);
     ptnDesc = (Map<String,String>)ReaderWriter.readDatum(dataInput);
+    eventId = ((Long)ReaderWriter.readDatum(dataInput)).longValue();
   }
 }

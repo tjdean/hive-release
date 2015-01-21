@@ -34,17 +34,25 @@ public class ImportCommand implements Command {
   private String dbName = null;
   private String tableName = null;
   private Map<String, String> ptnDesc = null;
+  private long eventId;
 
 
   // FIXME : The current implementation does not allow importing to an "EXTERNAL" location
   // We should ideally take a location for EXTERNAL tables, and specify that for the import
   // statement as well.
 
-  public ImportCommand(String dbName, String tableName, Map<String, String> ptnDesc, String importLocation) {
+  public ImportCommand(String dbName, String tableName, Map<String, String> ptnDesc, String importLocation, long eventId) {
     this.dbName = dbName;
     this.tableName = tableName;
     this.ptnDesc = ptnDesc;
     this.importLocation = importLocation;
+    this.eventId = eventId;
+  }
+
+  public ImportCommand(){
+    // trivial ctor to support Writable reflections instantiation
+    // do not expect to use this object as-is, unless you call
+    // readFields // after using this ctor
   }
 
   @Override
@@ -78,7 +86,7 @@ public class ImportCommand implements Command {
 
   @Override
   public List<String> getUndo() {
-    return (new DropPartitionCommand(dbName,tableName,ptnDesc)).get();
+    return (new DropPartitionCommand(dbName,tableName,ptnDesc,eventId)).get();
   }
 
   @Override
@@ -92,11 +100,17 @@ public class ImportCommand implements Command {
   }
 
   @Override
+  public long getEventId() {
+    return eventId;
+  }
+
+  @Override
   public void write(DataOutput dataOutput) throws IOException {
     ReaderWriter.writeDatum(dataOutput, dbName);
     ReaderWriter.writeDatum(dataOutput, tableName);
     ReaderWriter.writeDatum(dataOutput, ptnDesc);
     ReaderWriter.writeDatum(dataOutput, importLocation);
+    ReaderWriter.writeDatum(dataOutput,Long.valueOf(eventId));
   }
 
   @Override
@@ -105,6 +119,7 @@ public class ImportCommand implements Command {
     tableName = (String)ReaderWriter.readDatum(dataInput);
     ptnDesc = (Map<String,String>)ReaderWriter.readDatum(dataInput);
     importLocation = (String)ReaderWriter.readDatum(dataInput);
+    eventId = ((Long)ReaderWriter.readDatum(dataInput)).longValue();
   }
 }
 

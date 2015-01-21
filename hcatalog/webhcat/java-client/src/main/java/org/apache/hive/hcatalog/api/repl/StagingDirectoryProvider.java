@@ -54,7 +54,7 @@ public interface StagingDirectoryProvider {
 
     @Override
     public String getStagingDirectory(String key) {
-      return prefix + key.replaceAll(" ","_");
+      return prefix + key;
     }
   }
 }

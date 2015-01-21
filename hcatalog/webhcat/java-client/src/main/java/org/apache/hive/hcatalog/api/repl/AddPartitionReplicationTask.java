@@ -64,7 +64,8 @@ public class AddPartitionReplicationTask extends ReplicationTask {
                 addPartitionMessage.getDB(),
                 addPartitionMessage.getTable(),
                 ptnDesc)
-          )
+          ),
+          event.getEventId()
         );
       }
     });
@@ -90,7 +91,8 @@ public class AddPartitionReplicationTask extends ReplicationTask {
                     addPartitionMessage.getDB(), // Note - important to retain the same key as the export
                     addPartitionMessage.getTable(),
                     ptnDesc)
-            )
+            ),
+            event.getEventId()
         );
       }
     });
