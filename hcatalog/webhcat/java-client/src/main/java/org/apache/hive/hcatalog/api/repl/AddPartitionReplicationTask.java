@@ -32,7 +32,7 @@ public class AddPartitionReplicationTask extends ReplicationTask {
 
   AddPartitionMessage addPartitionMessage = null;
 
-  protected AddPartitionReplicationTask(HCatNotificationEvent event) {
+  public AddPartitionReplicationTask(HCatNotificationEvent event) {
     super(event);
     if (event == null || !HCatConstants.HCAT_ADD_PARTITION_EVENT.equals(event.getEventType())){
       throw new IllegalStateException("AddPartitionReplicationTask valid only for " +
