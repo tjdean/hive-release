@@ -33,7 +33,7 @@ public class DropPartitionReplicationTask extends ReplicationTask {
 
   DropPartitionMessage dropPartitionMessage = null;
 
-  protected DropPartitionReplicationTask(HCatNotificationEvent event) {
+  public DropPartitionReplicationTask(HCatNotificationEvent event) {
     super(event);
     if (event == null || !HCatConstants.HCAT_DROP_PARTITION_EVENT.equals(event.getEventType())){
       throw new IllegalStateException("DropPartitionReplicationTask valid only for " +

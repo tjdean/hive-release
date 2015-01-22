@@ -40,30 +40,91 @@ public class ReplicationTask {
 
   public static boolean injectDebugMode = false; // FIXME : remove debug mode
 
+  public interface Factory {
+    public ReplicationTask create(HCatNotificationEvent event);
+  }
+
+  /**
+   * EXIMFactory is an export-import based factory, this is the default factory.
+   */
+  public static class EXIMFactory implements Factory {
+    public ReplicationTask create(HCatNotificationEvent event){
+      // TODO : Java 1.7+ support using String with switches, but IDEs don't all seem to know that.
+      // If casing is fine for now. But we should eventually remove this. Also, I didn't want to
+      // create another enum just for this.
+      if (event.getEventType().equals(HCatConstants.HCAT_CREATE_DATABASE_EVENT)) {
+        return new NoopReplicationTask(event);
+      } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_DATABASE_EVENT)) {
+        return new NoopReplicationTask(event);
+      } else if (event.getEventType().equals(HCatConstants.HCAT_CREATE_TABLE_EVENT)) {
+        return new NoopReplicationTask(event);
+      } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_TABLE_EVENT)) {
+        return new NoopReplicationTask(event);
+      } else if (event.getEventType().equals(HCatConstants.HCAT_ADD_PARTITION_EVENT)) {
+        return new AddPartitionReplicationTask(event);
+      } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_PARTITION_EVENT)) {
+        return new DropPartitionReplicationTask(event);
+      } else {
+        throw new IllegalStateException("Unrecognized Event type, no replication task available");
+      }
+    }
+  }
+
+  /**
+   * Dummy NoopFactory for testing, returns a NoopReplicationTask for all recognized events.
+   * Warning : this will eventually go away or move to the test section - it's intended only
+   * for integration testing purposes.
+   */
+  public static class NoopFactory implements Factory {
+    @Override
+    public ReplicationTask create(HCatNotificationEvent event) {
+      // TODO : Java 1.7+ support using String with switches, but IDEs don't all seem to know that.
+      // If casing is fine for now. But we should eventually remove this. Also, I didn't want to
+      // create another enum just for this.
+      if (event.getEventType().equals(HCatConstants.HCAT_CREATE_DATABASE_EVENT)) {
+        return new NoopReplicationTask(event);
+      } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_DATABASE_EVENT)) {
+        return new NoopReplicationTask(event);
+      } else if (event.getEventType().equals(HCatConstants.HCAT_CREATE_TABLE_EVENT)) {
+        return new NoopReplicationTask(event);
+      } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_TABLE_EVENT)) {
+        return new NoopReplicationTask(event);
+      } else if (event.getEventType().equals(HCatConstants.HCAT_ADD_PARTITION_EVENT)) {
+        return new NoopReplicationTask(event);
+      } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_PARTITION_EVENT)) {
+        return new NoopReplicationTask(event);
+      } else {
+        throw new IllegalStateException("Unrecognized Event type, no replication task available");
+      }
+    }
+  }
+
+  private static Factory factoryInstance = null;
+  private static Factory getFactoryInstance() {
+    if (factoryInstance == null){
+      // Eventually, we'll have a bit here that looks at a config param to instantiate
+      // the appropriate factory, with EXIMFactory being the default - that allows
+      // others to implement their own ReplicationTask.Factory for other replication
+      // implementations.
+      if (injectDebugMode){
+        factoryInstance = new EXIMFactory();
+      } else {
+        factoryInstance = new NoopFactory();
+      }
+    }
+    return factoryInstance;
+  }
+
   /**
    * Factory method to return appropriate subtype of ReplicationTask for given event
    * @param event HCatEventMessage returned by the notification subsystem
    * @return corresponding ReplicationTask
    */
   public static ReplicationTask create(HCatNotificationEvent event){
-    // TODO : Java 1.7+ support using String with switches, but IDEs don't all seem to know that.
-    // If casing is fine for now. But we should eventually remove this. Also, I didn't want to
-    // create another enum just for this.
-    if (event.getEventType().equals(HCatConstants.HCAT_CREATE_DATABASE_EVENT)) {
-      return new NoopReplicationTask(event);
-    } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_DATABASE_EVENT)) {
-      return new NoopReplicationTask(event);
-    } else if (event.getEventType().equals(HCatConstants.HCAT_CREATE_TABLE_EVENT)) {
-      return new NoopReplicationTask(event);
-    } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_TABLE_EVENT)) {
-      return new NoopReplicationTask(event);
-    } else if (event.getEventType().equals(HCatConstants.HCAT_ADD_PARTITION_EVENT)) {
-      return injectDebugMode ? new AddPartitionReplicationTask(event) : new NoopReplicationTask(event);
-    } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_PARTITION_EVENT)) {
-      return injectDebugMode ? new DropPartitionReplicationTask(event) : new NoopReplicationTask(event);
-    } else {
-      throw new IllegalStateException("Unrecognized Event type, no replication task available");
+    if (event == null){
+      throw new IllegalArgumentException("event should not be null");
     }
+    return getFactoryInstance().create(event);
   }
 
   // Primary entry point is a factory method instead of ctor
