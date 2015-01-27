@@ -155,12 +155,12 @@ public class HiveServer2 extends CompositeService {
     String instanceURI = getServerInstanceURI(hiveConf);
     byte[] znodeDataUTF8 = instanceURI.getBytes(Charset.forName("UTF-8"));
     setUpZooKeeperAuth(hiveConf);
+    int sessionTimeout = hiveConf.getIntVar(HiveConf.ConfVars.HIVE_ZOOKEEPER_SESSION_TIMEOUT);
     // Create a CuratorFramework instance to be used as the ZooKeeper client
     // Use the zooKeeperAclProvider to create appropriate ACLs
-    zooKeeperClient =
-        CuratorFrameworkFactory.builder().connectString(zooKeeperEnsemble)
-            .aclProvider(zooKeeperAclProvider).retryPolicy(new ExponentialBackoffRetry(1000, 3))
-            .build();
+    zooKeeperClient = CuratorFrameworkFactory.builder().connectString(zooKeeperEnsemble)
+        .sessionTimeoutMs(sessionTimeout).aclProvider(zooKeeperAclProvider)
+        .retryPolicy(new ExponentialBackoffRetry(1000, 3)).build();
     zooKeeperClient.start();
     // Create the parent znodes recursively; ignore if the parent already exists.
     try {
@@ -176,14 +176,11 @@ public class HiveServer2 extends CompositeService {
     // Create a znode under the rootNamespace parent for this instance of the server
     // Znode name: serverUri=host:port;version=versionInfo;sequence=sequenceNumber
     try {
-      String pathPrefix =
-          ZooKeeperHiveHelper.ZOOKEEPER_PATH_SEPARATOR + rootNamespace
-              + ZooKeeperHiveHelper.ZOOKEEPER_PATH_SEPARATOR + "serverUri=" + instanceURI + ";"
-              + "version=" + HiveVersionInfo.getVersion() + ";" + "sequence=";
-      znode =
-          new PersistentEphemeralNode(zooKeeperClient,
-              PersistentEphemeralNode.Mode.PROTECTED_EPHEMERAL_SEQUENTIAL, pathPrefix,
-              znodeDataUTF8);
+      String pathPrefix = ZooKeeperHiveHelper.ZOOKEEPER_PATH_SEPARATOR + rootNamespace
+          + ZooKeeperHiveHelper.ZOOKEEPER_PATH_SEPARATOR + "serverUri=" + instanceURI + ";"
+          + "version=" + HiveVersionInfo.getVersion() + ";" + "sequence=";
+      znode = new PersistentEphemeralNode(zooKeeperClient,
+          PersistentEphemeralNode.Mode.EPHEMERAL_SEQUENTIAL, pathPrefix, znodeDataUTF8);
       znode.start();
       // We'll make 6 attempts, with each attempt waiting for 20 seconds for node creation
       long znodeCreationTimeout = 20;
@@ -191,7 +188,8 @@ public class HiveServer2 extends CompositeService {
       int attempts = 0;
       while (!znode.waitForInitialCreate(znodeCreationTimeout, TimeUnit.SECONDS)) {
         if (++attempts >= maxNodeCreationAttempts) {
-          throw new Exception("Max znode creation attempts " + maxNodeCreationAttempts + " exhausted");
+          throw new Exception("Max znode creation attempts " + maxNodeCreationAttempts
+              + " exhausted");
         }
       }
       setRegisteredWithZooKeeper(true);
