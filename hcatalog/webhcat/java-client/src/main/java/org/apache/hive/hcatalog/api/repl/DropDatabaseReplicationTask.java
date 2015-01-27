@@ -19,30 +19,25 @@
 
 package org.apache.hive.hcatalog.api.repl;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
 import org.apache.hive.hcatalog.api.HCatNotificationEvent;
 import org.apache.hive.hcatalog.common.HCatConstants;
-import org.apache.hive.hcatalog.messaging.DropPartitionMessage;
+import org.apache.hive.hcatalog.messaging.DropDatabaseMessage;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.Arrays;
 
-public class DropPartitionReplicationTask extends ReplicationTask {
+public class DropDatabaseReplicationTask extends ReplicationTask {
+  private DropDatabaseMessage dropDatabaseMessage = null;
 
-  DropPartitionMessage dropPartitionMessage = null;
-
-  public DropPartitionReplicationTask(HCatNotificationEvent event) {
+  public DropDatabaseReplicationTask(HCatNotificationEvent event) {
     super(event);
-    validateEventType(event, HCatConstants.HCAT_DROP_PARTITION_EVENT);
-    dropPartitionMessage = messageFactory.getDeserializer().getDropPartitionMessage(event.getMessage());
+    validateEventType(event, HCatConstants.HCAT_DROP_DATABASE_EVENT);
+    dropDatabaseMessage = messageFactory.getDeserializer().getDropDatabaseMessage(event.getMessage());
   }
 
   public boolean needsStagingDirs(){
     return false;
   }
-
 
   public Iterable<? extends Command> getSrcWhCommands() {
     verifyActionable();
@@ -51,21 +46,7 @@ public class DropPartitionReplicationTask extends ReplicationTask {
 
   public Iterable<? extends Command> getDstWhCommands() {
     verifyActionable();
-
-    final String dstDbName = ReplicationUtils.mapIfMapAvailable(dropPartitionMessage.getDB(), dbNameMapping);
-    final String dstTableName = ReplicationUtils.mapIfMapAvailable(dropPartitionMessage.getTable(), tableNameMapping);
-
-    return Iterables.transform(dropPartitionMessage.getPartitions(), new Function<Map<String, String>, Command>() {
-      @Override
-      public Command apply(@Nullable Map<String, String> ptnDesc) {
-        return new DropPartitionCommand(
-            dstDbName,
-            dstTableName,
-            ptnDesc,
-            event.getEventId()
-        );
-      }
-    });
+    final String dstDbName = ReplicationUtils.mapIfMapAvailable(dropDatabaseMessage.getDB(), dbNameMapping);
+    return Arrays.asList(new DropDatabaseCommand(dstDbName, event.getEventId()));
   }
 }
-
