@@ -16,43 +16,43 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.hive.hcatalog.api.repl;
 
+package org.apache.hive.hcatalog.api.repl.commands;
+
+
+import org.apache.hive.hcatalog.api.repl.Command;
 import org.apache.hive.hcatalog.data.ReaderWriter;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-public class DropTableCommand implements Command {
-  private long eventId;
-  private String dbName = null;
-  private String tableName = null;
+/**
+ * This class is there to help testing, and to help initial development
+ * and will be the default Command for NoopReplicationTask
+ *
+ * This is not intended to be a permanent class, and will likely move to the test
+ * package after initial implementation.
+ */
 
-  public DropTableCommand() {
+public class NoopCommand implements Command {
+  private long eventId;
+
+  public NoopCommand(){
     // trivial ctor to support Writable reflections instantiation
     // do not expect to use this object as-is, unless you call
     // readFields after using this ctor
   }
 
-  public DropTableCommand(String dbName, String tableName, long eventId) {
-    this.dbName = dbName;
-    this.tableName = tableName;
+  public NoopCommand(long eventId){
     this.eventId = eventId;
   }
 
   @Override
   public List<String> get() {
-    // DROP TABLE [IF EXISTS] table_name;
-    StringBuilder sb = new StringBuilder();
-    sb.append("DROP TABLE IF EXISTS ");
-    sb.append(dbName);
-    sb.append('.');
-    sb.append(tableName); // FIXME : Handle quoted tablenames, or this will bite you
-    return Arrays.asList(sb.toString());
+    return new ArrayList<String>();
   }
 
   @Override
@@ -62,12 +62,12 @@ public class DropTableCommand implements Command {
 
   @Override
   public boolean isUndoable() {
-    return false;
+    return true;
   }
 
   @Override
   public List<String> getUndo() {
-    throw new UnsupportedOperationException("getUndo called on command that does returned false for isUndoable");
+    return new ArrayList<String>();
   }
 
   @Override
@@ -87,15 +87,12 @@ public class DropTableCommand implements Command {
 
   @Override
   public void write(DataOutput dataOutput) throws IOException {
-    ReaderWriter.writeDatum(dataOutput, dbName);
-    ReaderWriter.writeDatum(dataOutput, tableName);
     ReaderWriter.writeDatum(dataOutput, Long.valueOf(eventId));
   }
 
   @Override
   public void readFields(DataInput dataInput) throws IOException {
-    dbName = (String)ReaderWriter.readDatum(dataInput);
-    tableName = (String)ReaderWriter.readDatum(dataInput);
     eventId = ((Long)ReaderWriter.readDatum(dataInput)).longValue();
   }
 }
+

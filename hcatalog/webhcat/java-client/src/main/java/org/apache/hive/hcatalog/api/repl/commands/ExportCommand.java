@@ -17,8 +17,9 @@
  * under the License.
  */
 
-package org.apache.hive.hcatalog.api.repl;
+package org.apache.hive.hcatalog.api.repl.commands;
 
+import org.apache.hive.hcatalog.api.repl.ReplicationUtils;
 import org.apache.hive.hcatalog.data.ReaderWriter;
 
 import java.io.DataInput;
@@ -29,7 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class ExportCommand implements Command {
+public class ExportCommand extends HiveCommand {
   private String exportLocation;
   private String dbName = null;
   private String tableName = null;

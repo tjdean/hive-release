@@ -20,6 +20,7 @@
 package org.apache.hive.hcatalog.api.repl;
 
 import org.apache.hive.hcatalog.api.HCatNotificationEvent;
+import org.apache.hive.hcatalog.api.repl.commands.NoopCommand;
 
 import java.util.ArrayList;
 import java.util.List;

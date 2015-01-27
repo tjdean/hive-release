@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.hive.hcatalog.api.repl;
+package org.apache.hive.hcatalog.api.repl.commands;
 
 import org.apache.hive.hcatalog.data.ReaderWriter;
 
@@ -27,9 +27,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class DropDatabaseCommand implements Command {
+public class DropDatabaseCommand extends HiveCommand {
   private String dbName = null;
   private long eventId;
+
+ public DropDatabaseCommand(String dbName, long eventId) {
+    this.dbName = dbName;
+    this.eventId = eventId;
+  }
 
   public DropDatabaseCommand(){
     // trivial ctor to support Writable reflections instantiation
@@ -37,12 +42,7 @@ public class DropDatabaseCommand implements Command {
     // readFields after using this ctor
   }
 
-  public DropDatabaseCommand(String dbName, long eventId) {
-    this.dbName = dbName;
-    this.eventId = eventId;
-  }
-
-  @Override
+   @Override
   public List<String> get() {
     // DROP (DATABASE|SCHEMA) [IF EXISTS] database_name [RESTRICT|CASCADE];
     StringBuilder sb = new StringBuilder();
