@@ -19,6 +19,7 @@
 package org.apache.hive.hcatalog.api.repl;
 
 import org.apache.hive.hcatalog.api.HCatNotificationEvent;
+import org.apache.hive.hcatalog.api.repl.exim.EximReplicationTaskFactory;
 import org.apache.hive.hcatalog.common.HCatConstants;
 import org.apache.hive.hcatalog.messaging.MessageFactory;
 
@@ -42,34 +43,6 @@ public class ReplicationTask {
 
   public interface Factory {
     public ReplicationTask create(HCatNotificationEvent event);
-  }
-
-  /**
-   * EXIMFactory is an export-import based factory, this is the default factory.
-   */
-  public static class EXIMFactory implements Factory {
-    public ReplicationTask create(HCatNotificationEvent event){
-      // TODO : Java 1.7+ support using String with switches, but IDEs don't all seem to know that.
-      // If casing is fine for now. But we should eventually remove this. Also, I didn't want to
-      // create another enum just for this.
-      if (event.getEventType().equals(HCatConstants.HCAT_CREATE_DATABASE_EVENT)) {
-        return new CreateDatabaseReplicationTask(event);
-      } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_DATABASE_EVENT)) {
-        return new DropDatabaseReplicationTask(event);
-      } else if (event.getEventType().equals(HCatConstants.HCAT_CREATE_TABLE_EVENT)) {
-        return new CreateTableReplicationTask(event);
-      } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_TABLE_EVENT)) {
-        return new DropTableReplicationTask(event);
-      } else if (event.getEventType().equals(HCatConstants.HCAT_ADD_PARTITION_EVENT)) {
-        return new AddPartitionReplicationTask(event);
-      } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_PARTITION_EVENT)) {
-        return new DropPartitionReplicationTask(event);
-      } else {
-        // FIXME : add ALTERS
-        // FIXME : add INSERT
-        throw new IllegalStateException("Unrecognized Event type, no replication task available");
-      }
-    }
   }
 
   /**
@@ -109,7 +82,7 @@ public class ReplicationTask {
       // others to implement their own ReplicationTask.Factory for other replication
       // implementations.
       if (injectDebugMode){
-        factoryInstance = new EXIMFactory();
+        factoryInstance = new EximReplicationTaskFactory();
       } else {
         factoryInstance = new NoopFactory();
       }

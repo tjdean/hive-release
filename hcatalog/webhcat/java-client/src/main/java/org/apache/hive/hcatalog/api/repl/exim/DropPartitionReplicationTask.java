@@ -17,11 +17,15 @@
  * under the License.
  */
 
-package org.apache.hive.hcatalog.api.repl;
+package org.apache.hive.hcatalog.api.repl.exim;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import org.apache.hive.hcatalog.api.HCatNotificationEvent;
+import org.apache.hive.hcatalog.api.repl.Command;
+import org.apache.hive.hcatalog.api.repl.ReplicationTask;
+import org.apache.hive.hcatalog.api.repl.ReplicationUtils;
+import org.apache.hive.hcatalog.api.repl.commands.DropPartitionCommand;
 import org.apache.hive.hcatalog.common.HCatConstants;
 import org.apache.hive.hcatalog.messaging.DropPartitionMessage;
 

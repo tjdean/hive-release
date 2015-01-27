@@ -16,9 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
-package org.apache.hive.hcatalog.api.repl;
-
+package org.apache.hive.hcatalog.api.repl.commands;
 
 import org.apache.hive.hcatalog.data.ReaderWriter;
 
@@ -26,32 +24,35 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-/**
- * This class is there to help testing, and to help initial development
- * and will be the default Command for NoopReplicationTask
- *
- * This is not intended to be a permanent class, and will likely move to the test
- * package after initial implementation.
- */
-
-public class NoopCommand implements Command {
+public class DropTableCommand extends HiveCommand {
   private long eventId;
+  private String dbName = null;
+  private String tableName = null;
 
-  public NoopCommand(){
+ public DropTableCommand(String dbName, String tableName, long eventId) {
+    this.dbName = dbName;
+    this.tableName = tableName;
+    this.eventId = eventId;
+  }
+
+  public DropTableCommand() {
     // trivial ctor to support Writable reflections instantiation
     // do not expect to use this object as-is, unless you call
     // readFields after using this ctor
   }
 
-  public NoopCommand(long eventId){
-    this.eventId = eventId;
-  }
-
-  @Override
+   @Override
   public List<String> get() {
-    return new ArrayList<String>();
+    // DROP TABLE [IF EXISTS] table_name;
+    StringBuilder sb = new StringBuilder();
+    sb.append("DROP TABLE IF EXISTS ");
+    sb.append(dbName);
+    sb.append('.');
+    sb.append(tableName); // FIXME : Handle quoted tablenames, or this will bite you
+    return Arrays.asList(sb.toString());
   }
 
   @Override
@@ -61,12 +62,12 @@ public class NoopCommand implements Command {
 
   @Override
   public boolean isUndoable() {
-    return true;
+    return false;
   }
 
   @Override
   public List<String> getUndo() {
-    return new ArrayList<String>();
+    throw new UnsupportedOperationException("getUndo called on command that does returned false for isUndoable");
   }
 
   @Override
@@ -86,12 +87,15 @@ public class NoopCommand implements Command {
 
   @Override
   public void write(DataOutput dataOutput) throws IOException {
+    ReaderWriter.writeDatum(dataOutput, dbName);
+    ReaderWriter.writeDatum(dataOutput, tableName);
     ReaderWriter.writeDatum(dataOutput, Long.valueOf(eventId));
   }
 
   @Override
   public void readFields(DataInput dataInput) throws IOException {
+    dbName = (String)ReaderWriter.readDatum(dataInput);
+    tableName = (String)ReaderWriter.readDatum(dataInput);
     eventId = ((Long)ReaderWriter.readDatum(dataInput)).longValue();
   }
 }
-

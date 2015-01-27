@@ -16,9 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.hive.hcatalog.api.repl;
+package org.apache.hive.hcatalog.api.repl.exim;
 
 import org.apache.hive.hcatalog.api.HCatNotificationEvent;
+import org.apache.hive.hcatalog.api.repl.NoopReplicationTask;
 import org.apache.hive.hcatalog.common.HCatConstants;
 
 public class CreateDatabaseReplicationTask extends NoopReplicationTask {
