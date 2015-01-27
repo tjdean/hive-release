@@ -34,11 +34,7 @@ public class AddPartitionReplicationTask extends ReplicationTask {
 
   public AddPartitionReplicationTask(HCatNotificationEvent event) {
     super(event);
-    if (event == null || !HCatConstants.HCAT_ADD_PARTITION_EVENT.equals(event.getEventType())){
-      throw new IllegalStateException("AddPartitionReplicationTask valid only for " +
-        HCatConstants.HCAT_ADD_PARTITION_EVENT + " events.");
-    }
-
+    validateEventType(event,HCatConstants.HCAT_ADD_PARTITION_EVENT);
     addPartitionMessage = messageFactory.getDeserializer().getAddPartitionMessage(event.getMessage());
   }
 

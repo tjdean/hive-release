@@ -45,7 +45,7 @@ public class DropPartitionCommand implements Command {
   public DropPartitionCommand(){
     // trivial ctor to support Writable reflections instantiation
     // do not expect to use this object as-is, unless you call
-    // readFields // after using this ctor
+    // readFields after using this ctor
   }
 
   @Override

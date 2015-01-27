@@ -53,18 +53,20 @@ public class ReplicationTask {
       // If casing is fine for now. But we should eventually remove this. Also, I didn't want to
       // create another enum just for this.
       if (event.getEventType().equals(HCatConstants.HCAT_CREATE_DATABASE_EVENT)) {
-        return new NoopReplicationTask(event);
+        return new CreateDatabaseReplicationTask(event);
       } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_DATABASE_EVENT)) {
-        return new NoopReplicationTask(event);
+        return new DropDatabaseReplicationTask(event);
       } else if (event.getEventType().equals(HCatConstants.HCAT_CREATE_TABLE_EVENT)) {
-        return new NoopReplicationTask(event);
+        return new CreateTableReplicationTask(event);
       } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_TABLE_EVENT)) {
-        return new NoopReplicationTask(event);
+        return new DropTableReplicationTask(event);
       } else if (event.getEventType().equals(HCatConstants.HCAT_ADD_PARTITION_EVENT)) {
         return new AddPartitionReplicationTask(event);
       } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_PARTITION_EVENT)) {
         return new DropPartitionReplicationTask(event);
       } else {
+        // FIXME : add ALTERS
+        // FIXME : add INSERT
         throw new IllegalStateException("Unrecognized Event type, no replication task available");
       }
     }
@@ -245,6 +247,11 @@ public class ReplicationTask {
     return null;
   }
 
-
+  protected void validateEventType(HCatNotificationEvent event, String allowedEventType) {
+    if (event == null || !allowedEventType.equals(event.getEventType())){
+      throw new IllegalStateException(this.getClass().getName() + " valid only for " +
+          allowedEventType + " events.");
+    }
+  }
 }
 

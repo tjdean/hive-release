@@ -42,7 +42,7 @@ public class NoopCommand implements Command {
   public NoopCommand(){
     // trivial ctor to support Writable reflections instantiation
     // do not expect to use this object as-is, unless you call
-    // readFields // after using this ctor
+    // readFields after using this ctor
   }
 
   public NoopCommand(long eventId){
