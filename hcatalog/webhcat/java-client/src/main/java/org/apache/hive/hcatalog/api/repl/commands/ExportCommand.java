@@ -19,7 +19,10 @@
 
 package org.apache.hive.hcatalog.api.repl.commands;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hive.hcatalog.api.HCatClient;
 import org.apache.hive.hcatalog.api.repl.ReplicationUtils;
+import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.ReaderWriter;
 
 import java.io.DataInput;
@@ -113,5 +116,16 @@ public class ExportCommand extends HiveCommand {
     ptnDesc = (Map<String,String>)ReaderWriter.readDatum(dataInput);
     exportLocation = (String)ReaderWriter.readDatum(dataInput);
     eventId = ((Long)ReaderWriter.readDatum(dataInput)).longValue();
+  }
+
+  @Override
+  void run(HCatClient client, Configuration conf) throws HCatException {
+    // FIXME : Implement
+    throw new IllegalStateException("Not implemented yet! Test isRunnableFromHCatClient() before calling");
+  }
+
+  @Override
+  boolean isRunnableFromHCatClient() {
+    return false; // There is currently no way to run export from HCatClient.
   }
 }

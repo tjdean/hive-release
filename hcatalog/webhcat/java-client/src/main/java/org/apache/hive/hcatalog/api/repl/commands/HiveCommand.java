@@ -18,12 +18,21 @@
  */
 package org.apache.hive.hcatalog.api.repl.commands;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hive.hcatalog.api.HCatClient;
 import org.apache.hive.hcatalog.api.repl.Command;
+import org.apache.hive.hcatalog.common.HCatException;
 
 /**
  * Dummy marker class, to indicate that all those that extend this are
- * Commands that are intended to be run via HiveDriver. This might
- * expand to include other characteristics later on.
+ * Commands whose get() method returns hive ql commands that can be
+ * sent to HiveDriver.
  */
 public abstract class HiveCommand implements Command {
+
+  // WARNING : This call is still under design and should be considered highly
+  // experimental - there are no guarantees being made with it, and if it turns
+  // out that this call is not supportable, it will be removed.
+  abstract void run(HCatClient client, Configuration conf) throws HCatException;
+  abstract boolean isRunnableFromHCatClient(); // returns true if run() can be run for this Command
 }
