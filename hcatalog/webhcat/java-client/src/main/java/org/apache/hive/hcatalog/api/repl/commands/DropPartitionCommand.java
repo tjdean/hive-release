@@ -19,7 +19,10 @@
 
 package org.apache.hive.hcatalog.api.repl.commands;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hive.hcatalog.api.HCatClient;
 import org.apache.hive.hcatalog.api.repl.ReplicationUtils;
+import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.ReaderWriter;
 
 import java.io.DataInput;
@@ -106,5 +109,15 @@ public class DropPartitionCommand extends HiveCommand {
     tableName = (String)ReaderWriter.readDatum(dataInput);
     ptnDesc = (Map<String,String>)ReaderWriter.readDatum(dataInput);
     eventId = ((Long)ReaderWriter.readDatum(dataInput)).longValue();
+  }
+
+  @Override
+  void run(HCatClient client, Configuration conf) throws HCatException {
+    client.dropPartitions(dbName,tableName,ptnDesc,true);
+  }
+
+  @Override
+  boolean isRunnableFromHCatClient() {
+    return true;
   }
 }

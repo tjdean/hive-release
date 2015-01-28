@@ -18,6 +18,9 @@
  */
 package org.apache.hive.hcatalog.api.repl.commands;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hive.hcatalog.api.HCatClient;
+import org.apache.hive.hcatalog.common.HCatException;
 import org.apache.hive.hcatalog.data.ReaderWriter;
 
 import java.io.DataInput;
@@ -97,5 +100,15 @@ public class DropTableCommand extends HiveCommand {
     dbName = (String)ReaderWriter.readDatum(dataInput);
     tableName = (String)ReaderWriter.readDatum(dataInput);
     eventId = ((Long)ReaderWriter.readDatum(dataInput)).longValue();
+  }
+
+  @Override
+  void run(HCatClient client, Configuration conf) throws HCatException {
+    client.dropTable(dbName,tableName,true);
+  }
+
+  @Override
+  boolean isRunnableFromHCatClient() {
+    return true;
   }
 }
