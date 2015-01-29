@@ -46,11 +46,11 @@ public class HCatReplicationTaskIterator implements Iterator<ReplicationTask>{
       if (this.dbName == null){
         return true; // if our dbName is null, we're interested in all wh events
       }
-      if (this.dbName.equals(event.getDbName())){
+      if (this.dbName.equalsIgnoreCase(event.getDbName())){
         if (
             (this.tableName == null)
                 // if our dbName is equal, but tableName is blank, we're interested in this db-level event
-                || (this.tableName.equals(event.getTableName()))
+                || (this.tableName.equalsIgnoreCase(event.getTableName()))
           // table level event that matches us
             ){
           return true;
