@@ -34,7 +34,7 @@ import java.util.List;
  * package after initial implementation.
  */
 
-public class NoopReplicationTask extends NotYetImplementedReplicationTask {
+public class NoopReplicationTask extends ReplicationTask {
 
   List<Command> noopReturn = null;
 

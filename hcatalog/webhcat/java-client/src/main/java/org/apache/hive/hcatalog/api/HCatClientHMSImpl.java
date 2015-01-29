@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Function;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.classification.InterfaceAudience;
@@ -57,6 +59,8 @@ import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
 import org.apache.hive.hcatalog.data.schema.HCatSchemaUtils;
 import org.apache.hive.hcatalog.api.repl.ReplicationTask;
 import org.apache.thrift.TException;
+
+import javax.annotation.Nullable;
 
 /**
  * The HCatClientHMSImpl is the Hive Metastore client based implementation of
@@ -858,14 +862,17 @@ public class HCatClientHMSImpl extends HCatClient {
                                                          IMetaStoreClient.NotificationFilter filter)
       throws HCatException {
     try {
-      List<HCatNotificationEvent> events = new ArrayList<HCatNotificationEvent>();
       NotificationEventResponse rsp = hmsClient.getNextNotification(lastEventId, maxEvents, filter);
       if (rsp != null && rsp.getEvents() != null) {
-        for (NotificationEvent event : rsp.getEvents()) {
-          events.add(new HCatNotificationEvent(event));
-        }
+        return Lists.transform(rsp.getEvents(), new Function<NotificationEvent, HCatNotificationEvent>() {
+          @Override
+          public HCatNotificationEvent apply(@Nullable NotificationEvent notificationEvent) {
+            return new HCatNotificationEvent(notificationEvent);
+          }
+        });
+      } else {
+        return new ArrayList<HCatNotificationEvent>();
       }
-      return events;
     } catch (TException e) {
       throw new ConnectionFailureException("TException while getting notifications", e);
     }
