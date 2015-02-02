@@ -3183,12 +3183,6 @@
         <deleted>true</deleted>
         <description>Disable local filesystem cache.</description>
     </property>    
-
-    <property>
-        <name>hive.auto.convert.sortmerge.join.noconditionaltask</name>
-        <value>true</value>
-        <description>Required to Enable the conversion of an SMB (Sort-Merge-Bucket) to a map-join SMB.</description>
-    </property>
     
         <!-- missing from HiveConf -->
 

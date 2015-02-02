@@ -108,7 +108,6 @@ function Install(
             $hivelogsdir = "$ENV:HIVE_LOG_DIR"
         }
         Configure "hive" $nodeInstallRoot $serviceCredential @{
-        "hive.log.dir" = "$hivelogsdir";
         "hive.querylog.location" = "$hivelogsdir\history";
         "hive.metastore.pre.event.listeners"="org.apache.hadoop.hive.ql.security.authorization.AuthorizationPreEventListener";
         "hive.security.metastore.authorization.manager"="org.apache.hadoop.hive.ql.security.authorization.StorageBasedAuthorizationProvider,org.apache.hadoop.hive.ql.security.authorization.MetaStoreAuthzAPIAuthorizerEmbedOnly";
