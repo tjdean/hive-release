@@ -60,6 +60,7 @@ import org.apache.hadoop.hive.ql.DriverContext;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.QueryPlan;
 import org.apache.hadoop.hive.ql.exec.ArchiveUtils.PartSpecInfo;
+import org.apache.hadoop.hive.ql.exec.tez.TezTask;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity;
 import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
@@ -140,6 +141,7 @@ import org.apache.hadoop.hive.ql.plan.ShowTablesDesc;
 import org.apache.hadoop.hive.ql.plan.ShowTblPropertiesDesc;
 import org.apache.hadoop.hive.ql.plan.ShowTxnsDesc;
 import org.apache.hadoop.hive.ql.plan.SwitchDatabaseDesc;
+import org.apache.hadoop.hive.ql.plan.TezWork;
 import org.apache.hadoop.hive.ql.plan.TruncateTableDesc;
 import org.apache.hadoop.hive.ql.plan.UnlockDatabaseDesc;
 import org.apache.hadoop.hive.ql.plan.UnlockTableDesc;
@@ -561,6 +563,12 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
     // merge work only needs input and output.
     MergeFileWork mergeWork = new MergeFileWork(mergeFilesDesc.getInputDir(),
         mergeFilesDesc.getOutputDir(), mergeFilesDesc.getInputFormatClass().getName());
+    LinkedHashMap<String, ArrayList<String>> pathToAliases =
+        new LinkedHashMap<String, ArrayList<String>>();
+    ArrayList<String> inputDirstr = new ArrayList<String>(1);
+    inputDirstr.add(mergeFilesDesc.getInputDir().toString());
+    pathToAliases.put(mergeFilesDesc.getInputDir().get(0).toString(), inputDirstr);
+    mergeWork.setPathToAliases(pathToAliases);
     mergeWork.setListBucketingCtx(mergeFilesDesc.getLbCtx());
     mergeWork.resolveConcatenateMerge(db.getConf());
     mergeWork.setMapperCannotSpanPartns(true);
@@ -586,12 +594,21 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
     aliasToWork.put(mergeFilesDesc.getInputDir().toString(), mergeOp);
     mergeWork.setAliasToWork(aliasToWork);
     DriverContext driverCxt = new DriverContext();
-    MergeFileTask taskExec = new MergeFileTask();
-    taskExec.initialize(db.getConf(), null, driverCxt);
-    taskExec.setWork(mergeWork);
-    taskExec.setQueryPlan(this.getQueryPlan());
-    int ret = taskExec.execute(driverCxt);
+    Task task = null;
+    if (conf.getVar(ConfVars.HIVE_EXECUTION_ENGINE).equals("tez")) {
+      TezWork tezWork = new TezWork(conf.getVar(HiveConf.ConfVars.HIVEQUERYID));
+      mergeWork.setName("File Merge");
+      tezWork.add(mergeWork);
+      task = new TezTask();
+      task.setWork(tezWork);
+    } else {
+      task = new MergeFileTask();
+      task.setWork(mergeWork);
+    }
 
+    // initialize the task and execute
+    task.initialize(db.getConf(), getQueryPlan(), driverCxt);
+    int ret = task.execute(driverCxt);
     return ret;
   }
 
