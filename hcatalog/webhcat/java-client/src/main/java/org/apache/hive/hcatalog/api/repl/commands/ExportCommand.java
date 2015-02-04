@@ -39,12 +39,15 @@ public class ExportCommand extends HiveCommand {
   private String tableName = null;
   private Map<String, String> ptnDesc = null;
   private long eventId;
+  private boolean isDefinitionOnly = false;
 
-  public ExportCommand(String dbName, String tableName, Map<String, String> ptnDesc, String exportLocation, long eventId) {
+  public ExportCommand(String dbName, String tableName, Map<String, String> ptnDesc,
+                       String exportLocation, boolean isDefinitionOnly, long eventId) {
     this.dbName = dbName;
     this.tableName = tableName;
     this.ptnDesc = ptnDesc;
     this.exportLocation = exportLocation;
+//    this.isDefinitionOnly = isDefinitionOnly; // FIXME : uncomment this after EXIM supports this
     this.eventId = eventId;
   }
 
@@ -64,6 +67,9 @@ public class ExportCommand extends HiveCommand {
     sb.append(".");
     sb.append(tableName); // FIXME : Handle quoted tablenames, or this will bite you
     sb.append(ReplicationUtils.partitionDescriptor(ptnDesc));
+    if (isDefinitionOnly){
+      sb.append(" DEFINITION");
+    }
     sb.append(" TO '");
     sb.append(exportLocation);
     sb.append('\'');
@@ -106,6 +112,7 @@ public class ExportCommand extends HiveCommand {
     ReaderWriter.writeDatum(dataOutput, tableName);
     ReaderWriter.writeDatum(dataOutput, ptnDesc);
     ReaderWriter.writeDatum(dataOutput, exportLocation);
+    ReaderWriter.writeDatum(dataOutput,Boolean.valueOf(isDefinitionOnly));
     ReaderWriter.writeDatum(dataOutput,Long.valueOf(eventId));
   }
 
@@ -115,6 +122,7 @@ public class ExportCommand extends HiveCommand {
     tableName = (String)ReaderWriter.readDatum(dataInput);
     ptnDesc = (Map<String,String>)ReaderWriter.readDatum(dataInput);
     exportLocation = (String)ReaderWriter.readDatum(dataInput);
+    isDefinitionOnly = ((Boolean)ReaderWriter.readDatum(dataInput)).booleanValue();
     eventId = ((Long)ReaderWriter.readDatum(dataInput)).longValue();
   }
 

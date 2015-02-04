@@ -66,6 +66,7 @@ public class AddPartitionReplicationTask extends ReplicationTask {
                 addPartitionMessage.getTable(),
                 ptnDesc)
           ),
+          false,
           event.getEventId()
         );
       }
@@ -93,6 +94,7 @@ public class AddPartitionReplicationTask extends ReplicationTask {
                     addPartitionMessage.getTable(),
                     ptnDesc)
             ),
+            false,
             event.getEventId()
         );
       }

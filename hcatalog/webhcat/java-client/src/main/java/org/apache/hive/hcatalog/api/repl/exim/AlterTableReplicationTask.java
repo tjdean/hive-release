@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.apache.hive.hcatalog.api.repl.exim;
 
 import org.apache.hive.hcatalog.api.HCatNotificationEvent;
@@ -25,18 +26,17 @@ import org.apache.hive.hcatalog.api.repl.ReplicationUtils;
 import org.apache.hive.hcatalog.api.repl.commands.ExportCommand;
 import org.apache.hive.hcatalog.api.repl.commands.ImportCommand;
 import org.apache.hive.hcatalog.common.HCatConstants;
-import org.apache.hive.hcatalog.messaging.CreateTableMessage;
+import org.apache.hive.hcatalog.messaging.AlterTableMessage;
 
 import java.util.Arrays;
 
-public class CreateTableReplicationTask extends ReplicationTask {
+public class AlterTableReplicationTask extends ReplicationTask {
+  private final AlterTableMessage alterTableMessage;
 
-  private CreateTableMessage createTableMessage = null;
-
-  public CreateTableReplicationTask(HCatNotificationEvent event) {
+  public AlterTableReplicationTask(HCatNotificationEvent event) {
     super(event);
-    validateEventType(event, HCatConstants.HCAT_CREATE_TABLE_EVENT);
-    createTableMessage = messageFactory.getDeserializer().getCreateTableMessage(event.getMessage());
+    validateEventType(event, HCatConstants.HCAT_ALTER_TABLE_EVENT);
+    alterTableMessage = messageFactory.getDeserializer().getAlterTableMessage(event.getMessage());
   }
 
   public boolean needsStagingDirs(){
@@ -45,8 +45,8 @@ public class CreateTableReplicationTask extends ReplicationTask {
 
   public Iterable<? extends Command> getSrcWhCommands() {
     verifyActionable();
-    final String dbName = createTableMessage.getDB();
-    final String tableName = createTableMessage.getTable();
+    final String dbName = alterTableMessage.getDB();
+    final String tableName = alterTableMessage.getTable();
     return Arrays.asList(new ExportCommand(
         dbName,
         tableName,
@@ -65,8 +65,8 @@ public class CreateTableReplicationTask extends ReplicationTask {
 
   public Iterable<? extends Command> getDstWhCommands() {
     verifyActionable();
-    final String dbName = createTableMessage.getDB();
-    final String tableName = createTableMessage.getTable();
+    final String dbName = alterTableMessage.getDB();
+    final String tableName = alterTableMessage.getTable();
     return Arrays.asList(new ImportCommand(
         ReplicationUtils.mapIfMapAvailable(dbName, dbNameMapping),
         ReplicationUtils.mapIfMapAvailable(tableName, tableNameMapping),

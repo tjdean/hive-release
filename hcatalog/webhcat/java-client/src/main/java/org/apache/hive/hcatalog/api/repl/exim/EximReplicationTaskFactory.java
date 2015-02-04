@@ -19,6 +19,7 @@
 package org.apache.hive.hcatalog.api.repl.exim;
 
 import org.apache.hive.hcatalog.api.HCatNotificationEvent;
+import org.apache.hive.hcatalog.api.repl.NoopReplicationTask;
 import org.apache.hive.hcatalog.api.repl.ReplicationTask;
 import org.apache.hive.hcatalog.common.HCatConstants;
 
@@ -48,9 +49,15 @@ public class EximReplicationTaskFactory implements ReplicationTask.Factory {
       return new AddPartitionReplicationTask(event);
     } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_PARTITION_EVENT)) {
       return new DropPartitionReplicationTask(event);
+    } else if (event.getEventType().equals(HCatConstants.HCAT_ALTER_TABLE_EVENT)) {
+      return new NoopReplicationTask(event); // FIXME:replace with below
+//      return new AlterTableReplicationTask(event);
+    } else if (event.getEventType().equals(HCatConstants.HCAT_ALTER_PARTITION_EVENT)) {
+      return new NoopReplicationTask(event); // FIXME:replace with below
+//      return new AlterPartitionReplicationTask(event);
+    } else if (event.getEventType().equals(HCatConstants.HCAT_INSERT_EVENT)) {
+      return new NoopReplicationTask(event); // FIXME:implement
     } else {
-      // FIXME : add ALTERS
-      // FIXME : add INSERT
       throw new IllegalStateException("Unrecognized Event type, no replication task available");
     }
   }
