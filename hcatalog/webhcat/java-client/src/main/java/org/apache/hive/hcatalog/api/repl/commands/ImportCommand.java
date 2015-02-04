@@ -39,17 +39,20 @@ public class ImportCommand extends HiveCommand {
   private String tableName = null;
   private Map<String, String> ptnDesc = null;
   private long eventId;
+  private boolean isDefinitionOnly = false;
 
 
   // FIXME : The current implementation does not allow importing to an "EXTERNAL" location
   // We should ideally take a location for EXTERNAL tables, and specify that for the import
   // statement as well.
 
-  public ImportCommand(String dbName, String tableName, Map<String, String> ptnDesc, String importLocation, long eventId) {
+  public ImportCommand(String dbName, String tableName, Map<String, String> ptnDesc,
+                       String importLocation, boolean isDefinitionOnly, long eventId) {
     this.dbName = dbName;
     this.tableName = tableName;
     this.ptnDesc = ptnDesc;
     this.importLocation = importLocation;
+//    this.isDefinitionOnly = isDefinitionOnly; // FIXME : uncomment this after EXIM supports this
     this.eventId = eventId;
   }
 
@@ -70,6 +73,9 @@ public class ImportCommand extends HiveCommand {
     sb.append('.');
     sb.append(tableName); // FIXME : Handle quoted tablenames, or this will bite you
     sb.append(ReplicationUtils.partitionDescriptor(ptnDesc));
+    if (isDefinitionOnly){
+      sb.append(" DEFINITION");
+    }
     sb.append(" FROM '");
     sb.append(importLocation);
     sb.append('\'');
@@ -80,7 +86,10 @@ public class ImportCommand extends HiveCommand {
 
   @Override
   public boolean isRetriable() {
-    return false; // If import failed, for reasons other than connection issues, it's likely not retriable.
+    return isDefinitionOnly;
+      // Metadata-only imports are replace-imports, and thus, are idempotent. If not
+      // metadata-only, then if import failed, for reasons other than connection
+      // issues, it's likely not retriable.
   }
 
   @Override
@@ -114,6 +123,7 @@ public class ImportCommand extends HiveCommand {
     ReaderWriter.writeDatum(dataOutput, tableName);
     ReaderWriter.writeDatum(dataOutput, ptnDesc);
     ReaderWriter.writeDatum(dataOutput, importLocation);
+    ReaderWriter.writeDatum(dataOutput,Boolean.valueOf(isDefinitionOnly));
     ReaderWriter.writeDatum(dataOutput,Long.valueOf(eventId));
   }
 
@@ -123,6 +133,7 @@ public class ImportCommand extends HiveCommand {
     tableName = (String)ReaderWriter.readDatum(dataInput);
     ptnDesc = (Map<String,String>)ReaderWriter.readDatum(dataInput);
     importLocation = (String)ReaderWriter.readDatum(dataInput);
+    isDefinitionOnly = ((Boolean)ReaderWriter.readDatum(dataInput)).booleanValue();
     eventId = ((Long)ReaderWriter.readDatum(dataInput)).longValue();
   }
 

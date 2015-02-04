@@ -68,6 +68,12 @@ public class ReplicationTask {
         return new NoopReplicationTask(event);
       } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_PARTITION_EVENT)) {
         return new NoopReplicationTask(event);
+      } else if (event.getEventType().equals(HCatConstants.HCAT_ALTER_TABLE_EVENT)) {
+        return new NoopReplicationTask(event);
+      } else if (event.getEventType().equals(HCatConstants.HCAT_ALTER_PARTITION_EVENT)) {
+        return new NoopReplicationTask(event);
+      } else if (event.getEventType().equals(HCatConstants.HCAT_INSERT_EVENT)) {
+        return new NoopReplicationTask(event);
       } else {
         throw new IllegalStateException("Unrecognized Event type, no replication task available");
       }

@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.apache.hive.hcatalog.api.repl.exim;
 
 import org.apache.hive.hcatalog.api.HCatNotificationEvent;
@@ -25,18 +26,18 @@ import org.apache.hive.hcatalog.api.repl.ReplicationUtils;
 import org.apache.hive.hcatalog.api.repl.commands.ExportCommand;
 import org.apache.hive.hcatalog.api.repl.commands.ImportCommand;
 import org.apache.hive.hcatalog.common.HCatConstants;
-import org.apache.hive.hcatalog.messaging.CreateTableMessage;
+import org.apache.hive.hcatalog.messaging.AlterPartitionMessage;
 
 import java.util.Arrays;
 
-public class CreateTableReplicationTask extends ReplicationTask {
+public class AlterPartitionReplicationTask extends ReplicationTask {
 
-  private CreateTableMessage createTableMessage = null;
+  AlterPartitionMessage alterPartitionMessage = null;
 
-  public CreateTableReplicationTask(HCatNotificationEvent event) {
+  public AlterPartitionReplicationTask(HCatNotificationEvent event) {
     super(event);
-    validateEventType(event, HCatConstants.HCAT_CREATE_TABLE_EVENT);
-    createTableMessage = messageFactory.getDeserializer().getCreateTableMessage(event.getMessage());
+    validateEventType(event,HCatConstants.HCAT_ALTER_PARTITION_EVENT);
+    alterPartitionMessage = messageFactory.getDeserializer().getAlterPartitionMessage(event.getMessage());
   }
 
   public boolean needsStagingDirs(){
@@ -45,18 +46,17 @@ public class CreateTableReplicationTask extends ReplicationTask {
 
   public Iterable<? extends Command> getSrcWhCommands() {
     verifyActionable();
-    final String dbName = createTableMessage.getDB();
-    final String tableName = createTableMessage.getTable();
+
     return Arrays.asList(new ExportCommand(
-        dbName,
-        tableName,
-        null,
+        alterPartitionMessage.getDB(),
+        alterPartitionMessage.getTable(),
+        alterPartitionMessage.getKeyValues(),
         srcStagingDirProvider.getStagingDirectory(
             ReplicationUtils.getUniqueKey(
                 getEvent().getEventId(),
-                dbName,
-                tableName,
-                null)
+                alterPartitionMessage.getDB(),
+                alterPartitionMessage.getTable(),
+                alterPartitionMessage.getKeyValues())
         ),
         true,
         event.getEventId()
@@ -65,21 +65,24 @@ public class CreateTableReplicationTask extends ReplicationTask {
 
   public Iterable<? extends Command> getDstWhCommands() {
     verifyActionable();
-    final String dbName = createTableMessage.getDB();
-    final String tableName = createTableMessage.getTable();
+
+    final String dstDbName = ReplicationUtils.mapIfMapAvailable(alterPartitionMessage.getDB(), dbNameMapping);
+    final String dstTableName = ReplicationUtils.mapIfMapAvailable(alterPartitionMessage.getTable(), tableNameMapping);
+
     return Arrays.asList(new ImportCommand(
-        ReplicationUtils.mapIfMapAvailable(dbName, dbNameMapping),
-        ReplicationUtils.mapIfMapAvailable(tableName, tableNameMapping),
-        null,
+        dstDbName,
+        dstTableName,
+        alterPartitionMessage.getKeyValues(),
         dstStagingDirProvider.getStagingDirectory(
             ReplicationUtils.getUniqueKey(
                 getEvent().getEventId(),
-                dbName, // Note - important to retain the same key as the export
-                tableName,
-                null)
+                alterPartitionMessage.getDB(), // Note - important to retain the same key as the export
+                alterPartitionMessage.getTable(),
+                alterPartitionMessage.getKeyValues())
         ),
         true,
         event.getEventId()
     ));
   }
 }
+
