@@ -22,7 +22,6 @@ package org.apache.hive.hcatalog.listener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -57,11 +56,8 @@ import org.apache.hadoop.hive.metastore.events.CreateTableEvent;
 import org.apache.hadoop.hive.metastore.events.DropDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
-import org.apache.hadoop.hive.metastore.events.InsertEvent;
-import org.apache.hadoop.hive.metastore.events.ListenerEvent;
 import org.apache.hadoop.hive.metastore.events.LoadPartitionDoneEvent;
 import org.apache.hive.hcatalog.common.HCatConstants;
-import org.apache.hive.hcatalog.messaging.AlterTableMessage;
 import org.apache.hive.hcatalog.messaging.HCatEventMessage;
 import org.apache.hive.hcatalog.messaging.MessageFactory;
 import org.slf4j.Logger;
@@ -153,7 +149,7 @@ public class NotificationListener extends MetaStoreEventListener {
       Partition after = ape.getNewPartition();
 
       String topicName = getTopicName(ape.getTable());
-      send(messageFactory.buildAlterPartitionMessage(before, after), topicName);
+      send(messageFactory.buildAlterPartitionMessage(ape.getTable(), before, after), topicName);
     }
   }
 

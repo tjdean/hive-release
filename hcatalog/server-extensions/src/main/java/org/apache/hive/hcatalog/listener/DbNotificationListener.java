@@ -191,7 +191,7 @@ public class DbNotificationListener extends MetaStoreEventListener {
     Partition after = partitionEvent.getNewPartition();
     NotificationEvent event = new NotificationEvent(0, now(),
         HCatConstants.HCAT_ALTER_PARTITION_EVENT,
-        msgFactory.buildAlterPartitionMessage(before, after).toString());
+        msgFactory.buildAlterPartitionMessage(partitionEvent.getTable(),before, after).toString());
     if (event != null) {
       event.setDbName(before.getDbName());
       event.setTableName(before.getTableName());
