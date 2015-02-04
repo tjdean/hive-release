@@ -156,11 +156,13 @@ public abstract class MessageFactory {
 
   /**
    * Factory method for building AlterPartitionMessage
+   *
+   * @param table The table inside which a partition got altered.
    * @param before The partition before it was altered
    * @param after The partition after it was altered
    * @return a new AlterPartitionMessage
    */
-  public abstract AlterPartitionMessage buildAlterPartitionMessage(Partition before,
+  public abstract AlterPartitionMessage buildAlterPartitionMessage(Table table, Partition before,
                                                                    Partition after);
 
   /**

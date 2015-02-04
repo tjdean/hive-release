@@ -112,9 +112,9 @@ public class JSONMessageFactory extends MessageFactory {
   }
 
   @Override
-  public AlterPartitionMessage buildAlterPartitionMessage(Partition before, Partition after) {
+  public AlterPartitionMessage buildAlterPartitionMessage(Table table, Partition before, Partition after) {
     return new JSONAlterPartitionMessage(HCAT_SERVER_URL, HCAT_SERVICE_PRINCIPAL,
-        before.getDbName(), before.getTableName(), before.getValues(), now());
+        before.getDbName(), before.getTableName(), getPartitionKeyValues(table,before),now());
   }
 
   @Override
