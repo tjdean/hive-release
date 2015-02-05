@@ -87,11 +87,7 @@ public class ReplicationTask {
       // the appropriate factory, with EXIMFactory being the default - that allows
       // others to implement their own ReplicationTask.Factory for other replication
       // implementations.
-      if (injectDebugMode){
-        factoryInstance = new EximReplicationTaskFactory();
-      } else {
-        factoryInstance = new NoopFactory();
-      }
+      factoryInstance = new EximReplicationTaskFactory();
     }
     return factoryInstance;
   }
