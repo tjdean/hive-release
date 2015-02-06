@@ -67,6 +67,7 @@ import org.apache.hadoop.hive.metastore.api.DropPartitionsExpr;
 import org.apache.hadoop.hive.metastore.api.DropPartitionsRequest;
 import org.apache.hadoop.hive.metastore.api.EnvironmentContext;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.apache.hadoop.hive.metastore.api.FireEventRequest;
 import org.apache.hadoop.hive.metastore.api.Function;
 import org.apache.hadoop.hive.metastore.api.GetOpenTxnsInfoResponse;
 import org.apache.hadoop.hive.metastore.api.GetPrincipalsInRoleRequest;
@@ -1436,6 +1437,10 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
     return client.get_current_notificationEventId();
   }
 
+  @Override
+  public void fireNotificationEvent(FireEventRequest rqst) throws TException {
+    client.fire_notification_event(rqst);
+  }
 
   private HiveMetaHook getHook(Table tbl) throws MetaException {
     if (hookLoader == null) {
