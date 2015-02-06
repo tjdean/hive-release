@@ -61,6 +61,7 @@ import org.apache.hadoop.hive.metastore.api.CommitTxnRequest;
 import org.apache.hadoop.hive.metastore.api.CompactionRequest;
 import org.apache.hadoop.hive.metastore.api.CompactionType;
 import org.apache.hadoop.hive.metastore.api.ConfigValSecurityException;
+import org.apache.hadoop.hive.metastore.api.CurrentNotificationEventId;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.DropPartitionsExpr;
 import org.apache.hadoop.hive.metastore.api.DropPartitionsRequest;
@@ -93,6 +94,9 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchLockException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.NoSuchTxnException;
+import org.apache.hadoop.hive.metastore.api.NotificationEvent;
+import org.apache.hadoop.hive.metastore.api.NotificationEventRequest;
+import org.apache.hadoop.hive.metastore.api.NotificationEventResponse;
 import org.apache.hadoop.hive.metastore.api.OpenTxnRequest;
 import org.apache.hadoop.hive.metastore.api.OpenTxnsResponse;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -1406,6 +1410,32 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
     return client.drop_partition_by_name_with_environment_context(dbName, tableName, partName,
         deleteData, envContext);
   }
+
+  @Override
+  public NotificationEventResponse getNextNotification(long lastEventId, int maxEvents,
+                                                       NotificationFilter filter) throws TException {
+    NotificationEventRequest rqst = new NotificationEventRequest(lastEventId);
+    rqst.setMaxEvents(maxEvents);
+    NotificationEventResponse rsp = client.getNextNotification(rqst);
+    LOG.debug("Got back " + rsp.getEventsSize() + " events");
+    if (filter == null) {
+      return rsp;
+    } else {
+      NotificationEventResponse filtered = new NotificationEventResponse();
+      if (rsp != null && rsp.getEvents() != null) {
+        for (NotificationEvent e : rsp.getEvents()) {
+          if (filter.accept(e)) filtered.addToEvents(e);
+        }
+      }
+      return filtered;
+    }
+  }
+
+  @Override
+  public CurrentNotificationEventId getCurrentNotificationEventId() throws TException {
+    return client.getCurrentNotificationEventId();
+  }
+
 
   private HiveMetaHook getHook(Table tbl) throws MetaException {
     if (hookLoader == null) {
