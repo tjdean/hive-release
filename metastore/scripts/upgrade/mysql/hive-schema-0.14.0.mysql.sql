@@ -870,6 +870,8 @@ CREATE TABLE NEXT_COMPACTION_QUEUE_ID (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 INSERT INTO NEXT_COMPACTION_QUEUE_ID VALUES(1);
 
+SOURCE 020-HIVE-9296.mysql.sql;
+
 -- -----------------------------------------------------------------
 -- Record schema version. Should be the last step in the init script
 -- -----------------------------------------------------------------
