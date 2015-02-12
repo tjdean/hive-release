@@ -33,6 +33,10 @@ import java.util.TreeMap;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.crypto.key.KeyProvider;
+import org.apache.hadoop.crypto.key.KeyProvider.Options;
+import org.apache.hadoop.crypto.key.KeyProviderCryptoExtension;
+import org.apache.hadoop.crypto.key.KeyProviderFactory;
 import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.DefaultFileAccess;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -357,7 +361,16 @@ public class Hadoop23Shims extends HadoopShimsSecure {
       int numDataNodes,
       boolean format,
       String[] racks) throws IOException {
-    cluster = new MiniDFSShim(new MiniDFSCluster(conf, numDataNodes, format, racks));
+    MiniDFSCluster miniDFSCluster = new MiniDFSCluster(conf, numDataNodes, format, racks);
+
+    // Need to set the client's KeyProvider to the NN's for JKS,
+    // else the updates do not get flushed properly
+    KeyProviderCryptoExtension keyProvider =  miniDFSCluster.getNameNode().getNamesystem().getProvider();
+    if (keyProvider != null) {
+      miniDFSCluster.getFileSystem().getClient().setKeyProvider(keyProvider);
+    }
+
+    cluster = new MiniDFSShim(miniDFSCluster);
     return cluster;
   }
 
