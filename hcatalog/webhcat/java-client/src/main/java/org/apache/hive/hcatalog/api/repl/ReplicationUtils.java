@@ -22,6 +22,7 @@ package org.apache.hive.hcatalog.api.repl;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOExceptionWithCause;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.util.ReflectionUtils;
@@ -188,14 +189,14 @@ public class ReplicationUtils {
    * to String, even if it plugs in easily into the rest of Hadoop. Provide
    * utility methods to easily serialize and deserialize Commands
    *
-   * serializeCommand returns a String representation of given command
+   * serializeCommand returns a base64 String representation of given command
    */
   public static String serializeCommand(Command command) throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DataOutput dataOutput = new DataOutputStream(baos);
     ReaderWriter.writeDatum(dataOutput,command.getClass().getName());
     command.write(dataOutput);
-    return baos.toString();
+    return Base64.encodeBase64String(baos.toByteArray());
   }
 
   /**
@@ -204,10 +205,10 @@ public class ReplicationUtils {
    * utility methods to easily serialize and deserialize Commands
    *
    * deserializeCommand instantiates a concrete Command and initializes it,
-   * given a String representation of it.
+   * given a base64 String representation of it.
    */
    public static Command deserializeCommand(String s) throws IOException {
-    DataInput dataInput = new DataInputStream(new ByteArrayInputStream(s.getBytes()));
+    DataInput dataInput = new DataInputStream(new ByteArrayInputStream(Base64.decodeBase64(s)));
     String clazz = (String) ReaderWriter.readDatum(dataInput);
     Command cmd;
     try {
