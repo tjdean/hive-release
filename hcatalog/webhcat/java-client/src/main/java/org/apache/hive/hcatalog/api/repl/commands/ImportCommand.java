@@ -94,12 +94,24 @@ public class ImportCommand extends HiveCommand {
 
   @Override
   public boolean isUndoable() {
-    return true; // It should be undoable to allow retry by dropping said partition, if it exists.
+    if (isDefinitionOnly){
+      return false; // Alters are not undoable if they've taken effect already. They are retriable though.
+    }
+    return true;
   }
 
   @Override
   public List<String> getUndo() {
-    return (new DropPartitionCommand(dbName,tableName,ptnDesc,eventId)).get();
+    if (!isDefinitionOnly){
+      if ((ptnDesc != null) && (!ptnDesc.isEmpty())){
+        return (new DropPartitionCommand(dbName,tableName,ptnDesc,eventId)).get();
+      } else {
+        return (new DropTableCommand(dbName,tableName,eventId)).get();
+        // FIXME : Look into this again to see if more guards are needed.
+      }
+    } else {
+      throw new UnsupportedOperationException("Attempted to getUndo() on a metadata-only import that does not support undo.");
+    }
   }
 
   @Override
