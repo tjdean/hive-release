@@ -148,6 +148,9 @@ public class Driver implements CommandProcessor {
 
   private String userName;
 
+  // HS2 operation handle guid string
+  private String operationId;
+
   private boolean checkConcurrency() throws SemanticException {
     boolean supportConcurrency = conf.getBoolVar(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY);
     if (!supportConcurrency) {
@@ -1293,7 +1296,8 @@ public class Driver implements CommandProcessor {
       resStream = null;
 
       SessionState ss = SessionState.get();
-      HookContext hookContext = new HookContext(plan, conf, ctx.getPathToCS(), ss.getUserName(), ss.getUserIpAddress());
+      HookContext hookContext = new HookContext(plan, conf, ctx.getPathToCS(), ss.getUserName(),
+          ss.getUserIpAddress(), operationId);
       hookContext.setHookType(HookContext.HookType.PRE_EXEC_HOOK);
 
       for (Hook peh : getHooks(HiveConf.ConfVars.PREEXECHOOKS)) {
@@ -1744,6 +1748,14 @@ public class Driver implements CommandProcessor {
 
   public String getErrorMsg() {
     return errorMessage;
+  }
+
+  /**
+   * Set the HS2 operation handle's guid string
+   * @param opId base64 encoded guid string
+   */
+  public void setOperationId(String opId) {
+    this.operationId = opId;
   }
 
 }
