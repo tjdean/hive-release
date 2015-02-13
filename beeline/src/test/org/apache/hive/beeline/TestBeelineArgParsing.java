@@ -21,9 +21,6 @@ package org.apache.hive.beeline;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.io.File;
-import java.io.FileOutputStream;
-
 import junit.framework.Assert;
 
 import org.junit.Test;
@@ -62,25 +59,6 @@ public class TestBeelineArgParsing {
     Assert.assertEquals(0, bl.initArgs(args));
     Assert.assertTrue(bl.connectArgs.equals("url name password driver"));
     Assert.assertTrue(bl.getOpts().getAuthType().equals("authType"));
-  }
-
-  @Test
-  public void testPasswordFileArgs() throws Exception {
-    TestBeeline bl = new TestBeeline();
-    File passFile = new File("file.password");
-    passFile.deleteOnExit();
-    FileOutputStream passFileOut = new FileOutputStream(passFile);
-    passFileOut.write("mypass\n".getBytes());
-    passFileOut.close();
-    String args[] = new String[] {"-u", "url", "-n", "name",
-      "-w", "file.password", "-p", "not-taken-if-w-is-present",
-      "-d", "driver", "-a", "authType"};
-    bl.initArgs(args);
-    System.out.println(bl.connectArgs);
-    // Password file contents are trimmed of trailing whitespaces and newlines
-    Assert.assertTrue(bl.connectArgs.equals("url name mypass driver"));
-    Assert.assertTrue(bl.getOpts().getAuthType().equals("authType"));
-    passFile.delete();
   }
 
   /**
