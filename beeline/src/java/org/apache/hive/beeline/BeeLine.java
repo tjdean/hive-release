@@ -86,7 +86,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.io.IOUtils;
 
-
 /**
  * A console SQL shell with command completion.
  * <p>
@@ -292,6 +291,14 @@ public class BeeLine implements Closeable {
         .withArgName("password")
         .withDescription("the password to connect as")
         .create('p'));
+
+    // -w (or) --password-file <file>
+    options.addOption(OptionBuilder
+        .hasArg()
+        .withArgName("password-file")
+        .withDescription("the password file to read password from")
+        .withLongOpt("password-file")
+        .create('w'));
 
     // -a <authType>
     options.addOption(OptionBuilder
@@ -658,7 +665,11 @@ public class BeeLine implements Closeable {
     auth = cl.getOptionValue("a");
     user = cl.getOptionValue("n");
     getOpts().setAuthType(auth);
-    pass = cl.getOptionValue("p");
+    if (cl.hasOption("w")) {
+      pass = obtainPasswordFromFile(cl.getOptionValue("w"));
+    } else {
+      pass = cl.getOptionValue("p");
+    }
     url = cl.getOptionValue("u");
     getOpts().setInitFile(cl.getOptionValue("i"));
     getOpts().setScriptFile(cl.getOptionValue("f"));
@@ -706,6 +717,19 @@ public class BeeLine implements Closeable {
     return code;
   }
 
+  /**
+   * Obtains a password from the passed file path.
+   */
+  private String obtainPasswordFromFile(String passwordFilePath) {
+    try {
+      InputStream passwordIs = new FileInputStream(passwordFilePath);
+      byte[] passwordFileContents = org.apache.commons.io.IOUtils.toByteArray(passwordIs);
+      return new String(passwordFileContents, "UTF-8").trim();
+    } catch (Exception e) {
+      throw new RuntimeException("Unable to read user password from the password file: "
+          + passwordFilePath, e);
+    }
+  }
 
   /**
    * Start accepting input from stdin, and dispatch it
