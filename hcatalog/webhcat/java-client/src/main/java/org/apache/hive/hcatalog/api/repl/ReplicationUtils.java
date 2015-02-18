@@ -196,7 +196,7 @@ public class ReplicationUtils {
     DataOutput dataOutput = new DataOutputStream(baos);
     ReaderWriter.writeDatum(dataOutput,command.getClass().getName());
     command.write(dataOutput);
-    return Base64.encodeBase64String(baos.toByteArray());
+    return Base64.encodeBase64URLSafeString(baos.toByteArray());
   }
 
   /**
