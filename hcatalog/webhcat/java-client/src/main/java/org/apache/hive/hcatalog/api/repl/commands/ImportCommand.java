@@ -42,9 +42,10 @@ public class ImportCommand extends HiveCommand {
   private boolean isDefinitionOnly = false;
 
 
-  // FIXME : The current implementation does not allow importing to an "EXTERNAL" location
-  // We should ideally take a location for EXTERNAL tables, and specify that for the import
-  // statement as well.
+  // NOTE: The current implementation does not allow importing to an "EXTERNAL" location.
+  // This is intentional, since we want the destination tables to be "managed" tables.
+  // If this assumption should change at some point in the future, ImportSemanticAnalyzer
+  // will need some of its checks changed to allow for "replacing" external tables.
 
   public ImportCommand(String dbName, String tableName, Map<String, String> ptnDesc,
                        String importLocation, boolean isDefinitionOnly, long eventId) {
@@ -52,7 +53,7 @@ public class ImportCommand extends HiveCommand {
     this.tableName = tableName;
     this.ptnDesc = ptnDesc;
     this.importLocation = importLocation;
-//    this.isDefinitionOnly = isDefinitionOnly; // FIXME : uncomment this after EXIM supports this
+    this.isDefinitionOnly = isDefinitionOnly;
     this.eventId = eventId;
   }
 
@@ -73,9 +74,6 @@ public class ImportCommand extends HiveCommand {
     sb.append('.');
     sb.append(tableName); // FIXME : Handle quoted tablenames, or this will bite you
     sb.append(ReplicationUtils.partitionDescriptor(ptnDesc));
-    if (isDefinitionOnly){
-      sb.append(" DEFINITION");
-    }
     sb.append(" FROM '");
     sb.append(importLocation);
     sb.append('\'');
@@ -151,7 +149,7 @@ public class ImportCommand extends HiveCommand {
 
   @Override
   void run(HCatClient client, Configuration conf) throws HCatException {
-    // FIXME : Implement
+    // TODO : Implement
     throw new IllegalStateException("Not implemented yet! Test isRunnableFromHCatClient() before calling");
   }
 

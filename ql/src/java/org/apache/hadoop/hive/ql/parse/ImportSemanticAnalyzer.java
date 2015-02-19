@@ -19,6 +19,7 @@
 package org.apache.hadoop.hive.ql.parse;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.Warehouse;
+import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Order;
@@ -86,154 +88,150 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
   public void analyzeInternal(ASTNode ast) throws SemanticException {
     try {
       Tree fromTree = ast.getChild(0);
+
+      boolean isLocationSet = false;
+      boolean isExternalSet = false;
+      boolean isTableSet = false;
+      boolean isDbNameSet = false;
+      boolean isPartSpecSet = false;
+      String parsedLocation = null;
+      String parsedTableName = null;
+      String parsedDbName = null;
+      LinkedHashMap<String, String> parsedPartSpec = new LinkedHashMap<String, String>();
+
+      for (int i = 1; i < ast.getChildCount(); ++i){
+        ASTNode child = (ASTNode) ast.getChild(i);
+        switch (child.getToken().getType()){
+          case HiveParser.KW_EXTERNAL:
+            isExternalSet = true;
+            break;
+          case HiveParser.TOK_TABLELOCATION:
+            isLocationSet = true;
+            parsedLocation = EximUtil.relativeToAbsolutePath(conf, unescapeSQLString(child.getChild(0).getText()));
+            break;
+          case HiveParser.TOK_TAB:
+            isTableSet = true;
+            ASTNode tableNameNode = (ASTNode) child.getChild(0);
+            Map.Entry<String,String> dbTablePair = getDbTableNamePair(tableNameNode);
+            parsedDbName = dbTablePair.getKey();
+            parsedTableName = dbTablePair.getValue();
+            if (parsedDbName != null){
+              isDbNameSet = true;
+            }
+            // get partition metadata if partition specified
+            if (child.getChildCount() == 2) {
+              ASTNode partspec = (ASTNode) child.getChild(1);
+              isPartSpecSet = true;
+              populatePartitionSpec(child,parsedPartSpec);
+            }
+            break;
+        }
+      }
+
+      // parsing statement is now done, on to logic.
+
       // initialize load path
-      String tmpPath = stripQuotes(fromTree.getText());
-      URI fromURI = EximUtil.getValidatedURI(conf, tmpPath);
-
+      URI fromURI = EximUtil.getValidatedURI(conf, stripQuotes(fromTree.getText()));
       FileSystem fs = FileSystem.get(fromURI, conf);
-      String dbname = null;
-      CreateTableDesc tblDesc = null;
-      List<AddPartitionDesc> partitionDescs = new ArrayList<AddPartitionDesc>();
-      Path fromPath = new Path(fromURI.getScheme(), fromURI.getAuthority(),
-          fromURI.getPath());
-      boolean isLocal = FileUtils.isLocalFile(conf, fromURI);
-      inputs.add(new ReadEntity(fromPath, isLocal));
-      try {
-        Path metadataPath = new Path(fromPath, METADATA_NAME);
-        Map.Entry<org.apache.hadoop.hive.metastore.api.Table,
-        List<Partition>> rv =  EximUtil.readMetaData(fs, metadataPath);
-        dbname = SessionState.get().getCurrentDatabase();
-        org.apache.hadoop.hive.metastore.api.Table table = rv.getKey();
-        tblDesc =  new CreateTableDesc(
-            table.getTableName(),
-            false, // isExternal: set to false here, can be overwritten by the
-                   // IMPORT stmt
-            table.isTemporary(),
-            table.getSd().getCols(),
-            table.getPartitionKeys(),
-            table.getSd().getBucketCols(),
-            table.getSd().getSortCols(),
-            table.getSd().getNumBuckets(),
-            null, null, null, null, null, // these 5 delims passed as serde params
-            null, // comment passed as table params
-            table.getSd().getInputFormat(),
-            table.getSd().getOutputFormat(),
-            null, // location: set to null here, can be
-                  // overwritten by the IMPORT stmt
-            table.getSd().getSerdeInfo().getSerializationLib(),
-            null, // storagehandler passed as table params
-            table.getSd().getSerdeInfo().getParameters(),
-            table.getParameters(), false,
-            (null == table.getSd().getSkewedInfo()) ? null : table.getSd().getSkewedInfo()
-                .getSkewedColNames(),
-            (null == table.getSd().getSkewedInfo()) ? null : table.getSd().getSkewedInfo()
-                .getSkewedColValues());
-        tblDesc.setStoredAsSubDirectories(table.getSd().isStoredAsSubDirectories());
+      Path fromPath = new Path(fromURI.getScheme(), fromURI.getAuthority(), fromURI.getPath());
+      inputs.add(new ReadEntity(fromPath, FileUtils.isLocalFile(conf, fromURI)));
 
-        List<FieldSchema> partCols = tblDesc.getPartCols();
-        List<String> partColNames = new ArrayList<String>(partCols.size());
-        for (FieldSchema fsc : partCols) {
-          partColNames.add(fsc.getName());
-        }
-        List<Partition> partitions = rv.getValue();
-        for (Partition partition : partitions) {
-          // TODO: this should not create AddPartitionDesc per partition
-          AddPartitionDesc partsDesc = new AddPartitionDesc(dbname, tblDesc.getTableName(),
-              EximUtil.makePartSpec(tblDesc.getPartCols(), partition.getValues()),
-              partition.getSd().getLocation(), partition.getParameters());
-          AddPartitionDesc.OnePartitionDesc partDesc = partsDesc.getPartition(0);
-          partDesc.setInputFormat(partition.getSd().getInputFormat());
-          partDesc.setOutputFormat(partition.getSd().getOutputFormat());
-          partDesc.setNumBuckets(partition.getSd().getNumBuckets());
-          partDesc.setCols(partition.getSd().getCols());
-          partDesc.setSerializationLib(partition.getSd().getSerdeInfo().getSerializationLib());
-          partDesc.setSerdeParams(partition.getSd().getSerdeInfo().getParameters());
-          partDesc.setBucketCols(partition.getSd().getBucketCols());
-          partDesc.setSortCols(partition.getSd().getSortCols());
-          partDesc.setLocation(new Path(fromPath,
-              Warehouse.makePartName(tblDesc.getPartCols(), partition.getValues())).toString());
-          partitionDescs.add(partsDesc);
-        }
+      EximUtil.ReadMetaData rv = new EximUtil.ReadMetaData();
+      try {
+        rv =  EximUtil.readMetaData(fs, new Path(fromPath, METADATA_NAME));
       } catch (IOException e) {
         throw new SemanticException(ErrorMsg.INVALID_PATH.getMsg(), e);
       }
-      LOG.debug("metadata read and parsed");
-      for (int i = 1; i < ast.getChildCount(); ++i) {
-        ASTNode child = (ASTNode) ast.getChild(i);
-        switch (child.getToken().getType()) {
-        case HiveParser.KW_EXTERNAL:
-          tblDesc.setExternal(true);
-          break;
-        case HiveParser.TOK_TABLELOCATION:
-          String location = unescapeSQLString(child.getChild(0).getText());
-          location = EximUtil.relativeToAbsolutePath(conf, location);
-          tblDesc.setLocation(location);
-          break;
-        case HiveParser.TOK_TAB:
-          Tree tableTree = child.getChild(0);
-          // initialize destination table/partition
-          String tableName = getUnescapedName((ASTNode)tableTree);
-          tblDesc.setTableName(tableName);
-          // get partition metadata if partition specified
-          LinkedHashMap<String, String> partSpec = new LinkedHashMap<String, String>();
-          if (child.getChildCount() == 2) {
-            ASTNode partspec = (ASTNode) child.getChild(1);
-            // partSpec is a mapping from partition column name to its value.
-            for (int j = 0; j < partspec.getChildCount(); ++j) {
-              ASTNode partspec_val = (ASTNode) partspec.getChild(j);
-              String val = null;
-              String colName = unescapeIdentifier(partspec_val.getChild(0)
-                    .getText().toLowerCase());
-              if (partspec_val.getChildCount() < 2) { // DP in the form of T
-                                                      // partition (ds, hr)
-                throw new SemanticException(
-                      ErrorMsg.INVALID_PARTITION
-                          .getMsg(" - Dynamic partitions not allowed"));
-              } else { // in the form of T partition (ds="2010-03-03")
-                val = stripQuotes(partspec_val.getChild(1).getText());
-              }
-              partSpec.put(colName, val);
-            }
-            boolean found = false;
-            for (Iterator<AddPartitionDesc> partnIter = partitionDescs
-                  .listIterator(); partnIter.hasNext();) {
-              AddPartitionDesc addPartitionDesc = partnIter.next();
-              if (!found && addPartitionDesc.getPartition(0).getPartSpec().equals(partSpec)) {
-                found = true;
-              } else {
-                partnIter.remove();
-              }
-            }
-            if (!found) {
-              throw new SemanticException(
-                    ErrorMsg.INVALID_PARTITION
-                        .getMsg(" - Specified partition not found in import directory"));
-            }
+
+      ReplicationSpec replicationSpec = rv.getReplicationSpec();
+      if (replicationSpec.isNoop()){
+        // nothing to do here, silently return.
+        return;
+      }
+
+      String dbname = SessionState.get().getCurrentDatabase();
+      if (isDbNameSet){
+        // If the parsed statement contained a db.tablename specification, prefer that.
+        dbname = parsedDbName;
+      }
+
+      // Create table associated with the import
+      // Executed if relevant, and used to contain all the other details about the table if not.
+      CreateTableDesc tblDesc = getBaseCreateTableDescFromTable(dbname,rv.getTable());
+
+      if (isExternalSet){
+        tblDesc.setExternal(isExternalSet);
+        // This condition-check could have been avoided, but to honour the old
+        // default of not calling if it wasn't set, we retain that behaviour.
+      }
+
+      if (isLocationSet){
+        tblDesc.setLocation(parsedLocation);
+      }
+
+      if (isTableSet){
+        tblDesc.setTableName(parsedTableName);
+      }
+
+      List<AddPartitionDesc> partitionDescs = new ArrayList<AddPartitionDesc>();
+      Iterable<Partition> partitions = rv.getPartitions();
+      for (Partition partition : partitions) {
+        // TODO: this should ideally not create AddPartitionDesc per partition
+        AddPartitionDesc partsDesc = getBaseAddPartitionDescFromPartition(fromPath, dbname, tblDesc, partition);
+        partitionDescs.add(partsDesc);
+      }
+
+      if (isPartSpecSet){
+        // The import specification asked for only a particular partition to be loaded
+        // We load only that, and ignore all the others.
+        boolean found = false;
+        for (Iterator<AddPartitionDesc> partnIter = partitionDescs
+            .listIterator(); partnIter.hasNext();) {
+          AddPartitionDesc addPartitionDesc = partnIter.next();
+          if (!found && addPartitionDesc.getPartition(0).getPartSpec().equals(parsedPartSpec)) {
+            found = true;
+          } else {
+            partnIter.remove();
           }
         }
+        if (!found) {
+          throw new SemanticException(
+              ErrorMsg.INVALID_PARTITION
+                  .getMsg(" - Specified partition not found in import directory"));
+        }
       }
+
       if (tblDesc.getTableName() == null) {
+        // Either we got the tablename from the IMPORT statement (first priority)
+        // or from the export dump.
         throw new SemanticException(ErrorMsg.NEED_TABLE_SPECIFICATION.getMsg());
       } else {
-        conf.set("import.destination.table", tblDesc.getTableName());
+        conf.set("import.destination.table", tblDesc.getTableName()); // TODO: never used, remove
         for (AddPartitionDesc addPartitionDesc : partitionDescs) {
           addPartitionDesc.setTableName(tblDesc.getTableName());
         }
       }
+
       Warehouse wh = new Warehouse(conf);
       try {
-        Table table = db.getTable(tblDesc.getTableName());
-        checkTable(table, tblDesc);
+        // Check if the table already exists.
+        Table table = db.getTable(tblDesc.getDatabaseName(),tblDesc.getTableName());
+        checkTable(table, tblDesc,replicationSpec);
         LOG.debug("table " + tblDesc.getTableName()
             + " exists: metadata checked");
         tableExists = true;
-        conf.set("import.destination.dir", table.getDataLocation().toString());
+        conf.set("import.destination.dir", table.getDataLocation().toString()); // TODO: never used, remove
         if (table.isPartitioned()) {
           LOG.debug("table partitioned");
           for (AddPartitionDesc addPartitionDesc : partitionDescs) {
+
             Map<String, String> partSpec = addPartitionDesc.getPartition(0).getPartSpec();
+
             if (db.getPartition(table, partSpec, false) == null) {
               rootTasks.add(addSinglePartition(fromURI, fs, tblDesc, table, wh, addPartitionDesc));
+            } else if (replicationSpec.isInReplicationScope()){
+                // If replicating, then the partition already existing means we need to replace.
+                rootTasks.add(addSingleReplacementPartition(fromURI, fs, tblDesc, table, wh, addPartitionDesc));
             } else {
               throw new SemanticException(
                   ErrorMsg.PARTITION_EXISTS.getMsg(partSpecToString(partSpec)));
@@ -253,9 +251,9 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
         Task<?> t = TaskFactory.get(new DDLWork(getInputs(), getOutputs(),
             tblDesc), conf);
         Table table = new Table(dbname, tblDesc.getTableName());
-        String currentDb = SessionState.get().getCurrentDatabase();
+        Database parentDb = db.getDatabase(dbname);
         conf.set("import.destination.dir",
-            wh.getTablePath(db.getDatabaseCurrent(),
+            wh.getTablePath(parentDb,
                 tblDesc.getTableName()).toString());
         if ((tblDesc.getPartCols() != null) && (tblDesc.getPartCols().size() != 0)) {
           for (AddPartitionDesc addPartitionDesc : partitionDescs) {
@@ -273,7 +271,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
             if (tblDesc.getLocation() != null) {
               tablePath = new Path(tblDesc.getLocation());
             } else {
-              tablePath = wh.getTablePath(db.getDatabaseCurrent(), tblDesc.getTableName());
+              tablePath = wh.getTablePath(parentDb, tblDesc.getTableName());
             }
             checkTargetLocationEmpty(fs, tablePath);
             t.addDependentTask(loadTable(fromURI, table));
@@ -290,6 +288,79 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     }
   }
 
+  public void populatePartitionSpec(ASTNode tableNode, LinkedHashMap<String,String> partSpec) throws SemanticException {
+    // get partition metadata if partition specified
+    if (tableNode.getChildCount() == 2) {
+      ASTNode partspec = (ASTNode) tableNode.getChild(1);
+      // partSpec is a mapping from partition column name to its value.
+      for (int j = 0; j < partspec.getChildCount(); ++j) {
+        ASTNode partspec_val = (ASTNode) partspec.getChild(j);
+        String val = null;
+        String colName = unescapeIdentifier(partspec_val.getChild(0)
+            .getText().toLowerCase());
+        if (partspec_val.getChildCount() < 2) { // DP in the form of T
+          // partition (ds, hr)
+          throw new SemanticException(
+              ErrorMsg.INVALID_PARTITION
+                  .getMsg(" - Dynamic partitions not allowed"));
+        } else { // in the form of T partition (ds="2010-03-03")
+          val = stripQuotes(partspec_val.getChild(1).getText());
+        }
+        partSpec.put(colName, val);
+      }
+    }
+  }
+
+  public AddPartitionDesc getBaseAddPartitionDescFromPartition(
+      Path fromPath, String dbname, CreateTableDesc tblDesc, Partition partition) throws MetaException {
+    AddPartitionDesc partsDesc = new AddPartitionDesc(dbname, tblDesc.getTableName(),
+        EximUtil.makePartSpec(tblDesc.getPartCols(), partition.getValues()),
+        partition.getSd().getLocation(), partition.getParameters());
+    AddPartitionDesc.OnePartitionDesc partDesc = partsDesc.getPartition(0);
+    partDesc.setInputFormat(partition.getSd().getInputFormat());
+    partDesc.setOutputFormat(partition.getSd().getOutputFormat());
+    partDesc.setNumBuckets(partition.getSd().getNumBuckets());
+    partDesc.setCols(partition.getSd().getCols());
+    partDesc.setSerializationLib(partition.getSd().getSerdeInfo().getSerializationLib());
+    partDesc.setSerdeParams(partition.getSd().getSerdeInfo().getParameters());
+    partDesc.setBucketCols(partition.getSd().getBucketCols());
+    partDesc.setSortCols(partition.getSd().getSortCols());
+    partDesc.setLocation(new Path(fromPath,
+        Warehouse.makePartName(tblDesc.getPartCols(), partition.getValues())).toString());
+    return partsDesc;
+  }
+
+  private CreateTableDesc getBaseCreateTableDescFromTable(String dbName,
+      org.apache.hadoop.hive.metastore.api.Table table) {
+    CreateTableDesc tblDesc = new CreateTableDesc(
+        dbName,
+        table.getTableName(),
+        false, // isExternal: set to false here, can be overwritten by the
+               // IMPORT stmt
+        table.isTemporary(),
+        table.getSd().getCols(),
+        table.getPartitionKeys(),
+        table.getSd().getBucketCols(),
+        table.getSd().getSortCols(),
+        table.getSd().getNumBuckets(),
+        null, null, null, null, null, // these 5 delims passed as serde params
+        null, // comment passed as table params
+        table.getSd().getInputFormat(),
+        table.getSd().getOutputFormat(),
+        null, // location: set to null here, can be
+              // overwritten by the IMPORT stmt
+        table.getSd().getSerdeInfo().getSerializationLib(),
+        null, // storagehandler passed as table params
+        table.getSd().getSerdeInfo().getParameters(),
+        table.getParameters(), false,
+        (null == table.getSd().getSkewedInfo()) ? null : table.getSd().getSkewedInfo()
+            .getSkewedColNames(),
+        (null == table.getSd().getSkewedInfo()) ? null : table.getSd().getSkewedInfo()
+            .getSkewedColValues());
+    tblDesc.setStoredAsSubDirectories(table.getSd().isStoredAsSubDirectories());
+    return tblDesc;
+  }
+
   private Task<?> loadTable(URI fromURI, Table table) {
     Path dataPath = new Path(fromURI.toString(), "data");
     Path tmpPath = ctx.getExternalTmpPath(new Path(fromURI));
@@ -303,6 +374,12 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     copyTask.addDependentTask(loadTableTask);
     rootTasks.add(copyTask);
     return loadTableTask;
+  }
+
+  private Task<?> addSingleReplacementPartition(URI fromURI, FileSystem fs, CreateTableDesc tblDesc,
+      Table table, Warehouse wh, AddPartitionDesc addPartitionDesc) throws HiveException, IOException, MetaException {
+    // FIXME : actually add in replacement semantics
+    return addSinglePartition(fromURI,fs,tblDesc,table,wh,addPartitionDesc);
   }
 
   private Task<?> addSinglePartition(URI fromURI, FileSystem fs, CreateTableDesc tblDesc,
@@ -324,8 +401,9 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
           tgtPath = new Path(table.getDataLocation().toString(),
               Warehouse.makePartPath(partSpec.getPartSpec()));
         } else {
-          tgtPath = new Path(wh.getTablePath(
-              db.getDatabaseCurrent(), tblDesc.getTableName()),
+          Database parentDb = db.getDatabase(tblDesc.getDatabaseName());
+          tgtPath = new Path(
+              wh.getTablePath( parentDb, tblDesc.getTableName()),
               Warehouse.makePartPath(partSpec.getPartSpec()));
         }
       } else {
@@ -384,38 +462,49 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     return sb.toString();
   }
 
-  private static void checkTable(Table table, CreateTableDesc tableDesc)
+  private static void checkTable(Table table, CreateTableDesc tableDesc, ReplicationSpec replicationSpec)
       throws SemanticException, URISyntaxException {
+    // NOTE: this method gets called only in the scope that a destination table already exists, so
+    // we're validating if the table is an appropriate destination to import into
+
+    if (replicationSpec.isInReplicationScope()){
+      // If this import is being done for replication, then this will be a managed table, and replacements
+      // are allowed irrespective of what the table currently looks like. So no more checks are necessary.
+      return;
+    }
+
+    // First, we verifies that the destination table is not offline, a view, or a non-native table
+    EximUtil.validateTable(table);
+
+    // If the import statement specified that we're importing to an external
+    // table, we seem to be doing the following:
+    //    a) We don't allow replacement in an unpartitioned pre-existing table
+    //    b) We don't allow replacement in a partitioned pre-existing table where that table is external
+    // TODO : Does this simply mean we don't allow replacement in external tables if they already exist?
+    //    If so(i.e. the check is superfluous and wrong), this can be a simpler check. If not, then
+    //    what we seem to be saying is that the only case we allow is to allow an IMPORT into an EXTERNAL
+    //    table in the statement, if a destination partitioned table exists, so long as it is actually
+    //    not external itself. Is that the case? Why?
     {
-      EximUtil.validateTable(table);
-      if (!table.isPartitioned()) {
-        if (tableDesc.isExternal()) { // the import statement specified external
-          throw new SemanticException(
-              ErrorMsg.INCOMPATIBLE_SCHEMA
-                  .getMsg(" External table cannot overwrite existing table."
-                      + " Drop existing table first."));
-        }
-      } else {
-        if (tableDesc.isExternal()) { // the import statement specified external
-          if (!table.getTableType().equals(TableType.EXTERNAL_TABLE)) {
-            throw new SemanticException(
-                ErrorMsg.INCOMPATIBLE_SCHEMA
-                    .getMsg(" External table cannot overwrite existing table."
-                        + " Drop existing table first."));
-          }
-        }
+      if ( (tableDesc.isExternal()) // IMPORT statement speicified EXTERNAL
+          && (!table.isPartitioned() || !table.getTableType().equals(TableType.EXTERNAL_TABLE))
+          ){
+        throw new SemanticException(ErrorMsg.INCOMPATIBLE_SCHEMA.getMsg(
+            " External table cannot overwrite existing table. Drop existing table first."));
       }
     }
+
+    // If a table import statement specified a location and the table(unpartitioned)
+    // already exists, ensure that the locations are the same.
+    // Partitioned tables not checked here, since the location provided would need
+    // checking against the partition in question instead.
     {
-      if (!table.isPartitioned()) {
-        if (tableDesc.getLocation() != null) { // IMPORT statement specified
-                                               // location
-          if (!table.getDataLocation()
-              .equals(new Path(tableDesc.getLocation()))) {
-            throw new SemanticException(
-                ErrorMsg.INCOMPATIBLE_SCHEMA.getMsg(" Location does not match"));
-          }
-        }
+      if ((tableDesc.getLocation() != null)
+          && (!table.isPartitioned())
+          && (!table.getDataLocation().equals(new Path(tableDesc.getLocation()))) ){
+        throw new SemanticException(
+            ErrorMsg.INCOMPATIBLE_SCHEMA.getMsg(" Location does not match"));
+
       }
     }
     {

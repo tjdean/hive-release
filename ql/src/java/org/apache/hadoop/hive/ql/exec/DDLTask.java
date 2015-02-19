@@ -3833,7 +3833,12 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
    */
   private int createTable(Hive db, CreateTableDesc crtTbl) throws HiveException {
     // create the table
-    Table tbl = db.newTable(crtTbl.getTableName());
+    Table tbl;
+    if (crtTbl.getDatabaseName() == null){
+      tbl = db.newTable(crtTbl.getTableName());
+    }else {
+      tbl = new Table(crtTbl.getDatabaseName(),crtTbl.getTableName());
+    }
 
     if (crtTbl.getTblProps() != null) {
       tbl.getTTable().getParameters().putAll(crtTbl.getTblProps());

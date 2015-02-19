@@ -18,13 +18,13 @@
 
 package org.apache.hadoop.hive.ql.parse;
 
+import org.apache.hadoop.hive.ql.metadata.InvalidTableException;
 import org.apache.hadoop.hive.ql.metadata.PartitionIterable;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.URI;
-import java.util.List;
 
 import org.antlr.runtime.tree.Tree;
 import org.apache.hadoop.fs.FileStatus;
@@ -46,6 +46,8 @@ import org.apache.hadoop.hive.ql.plan.CopyWork;
  */
 public class ExportSemanticAnalyzer extends BaseSemanticAnalyzer {
 
+  private ReplicationSpec replicationSpec;
+
   public ExportSemanticAnalyzer(HiveConf conf) throws SemanticException {
     super(conf);
   }
@@ -55,13 +57,33 @@ public class ExportSemanticAnalyzer extends BaseSemanticAnalyzer {
     Tree tableTree = ast.getChild(0);
     Tree toTree = ast.getChild(1);
 
+    if (ast.getChildCount() > 2) {
+      replicationSpec = new ReplicationSpec((ASTNode) ast.getChild(2));
+    } else {
+      replicationSpec = new ReplicationSpec();
+    }
+
     // initialize export path
     String tmpPath = stripQuotes(toTree.getText());
     URI toURI = EximUtil.getValidatedURI(conf, tmpPath);
 
     // initialize source table/partition
-    tableSpec ts = new tableSpec(db, conf, (ASTNode) tableTree, false, true);
-    EximUtil.validateTable(ts.tableHandle);
+    tableSpec ts;
+
+    try {
+      ts = new tableSpec(db, conf, (ASTNode) tableTree, false, true);
+    } catch (SemanticException sme){
+      if ((sme.getCause() instanceof InvalidTableException) && (replicationSpec.isInReplicationScope())){
+        // If we're in replication scope, it's possible that we're running the export long after
+        // the table was dropped, so the table not existing currently is not an error.
+        ts = null; // FIXME : capture in tests
+      } else {
+        throw sme;
+      }
+    }
+    if (ts != null) {
+      EximUtil.validateTable(ts.tableHandle);
+    }
     try {
       FileSystem fs = FileSystem.get(toURI, conf);
       Path toPath = new Path(toURI.getScheme(), toURI.getAuthority(), toURI.getPath());
@@ -86,14 +108,33 @@ public class ExportSemanticAnalyzer extends BaseSemanticAnalyzer {
 
     PartitionIterable partitions = null;
     try {
-      if (ts.tableHandle.isPartitioned()) {
-        partitions = (ts.partitions != null) ?
-            new PartitionIterable(ts.partitions) :
-            new PartitionIterable(db,ts.tableHandle,null,conf.getIntVar(
+      replicationSpec.setCurrentReplicationState(String.valueOf(db.getMSC().getCurrentNotificationEventId().getEventId()));
+      // FIXME : ensure each of the below cases through explicit testcases
+      // FIXME : verify also, for partial ptn specification and full
+      if ( (ts != null) && (ts.tableHandle.isPartitioned())){
+        if (ts.specType == tableSpec.SpecType.TABLE_ONLY){
+          // TABLE-ONLY, fetch partitions if regular export, don't if metadata-only
+          if (replicationSpec.isMetadataOnly()){
+            partitions = null;
+          } else {
+            partitions = new PartitionIterable(db,ts.tableHandle,null,conf.getIntVar(
                 HiveConf.ConfVars.METASTORE_BATCH_RETRIEVE_MAX));
+          }
+        } else {
+          // PARTITIONS specified - partitions inside tableSpec
+          partitions = new PartitionIterable(ts.partitions);
+        }
+      } else {
+        // Either tableHandle isn't partitioned => null, or repl-export after ts becomes null => null.
+        partitions = null;
       }
       Path path = new Path(ctx.getLocalTmpPath(), "_metadata");
-      EximUtil.createExportDump(FileSystem.getLocal(conf), path, ts.tableHandle, partitions);
+      EximUtil.createExportDump(
+          FileSystem.getLocal(conf),
+          path,
+          (ts != null ? ts.tableHandle: null),
+          partitions,
+          replicationSpec);
       Task<? extends Serializable> rTask = TaskFactory.get(new CopyWork(
           path, new Path(toURI), false), conf);
       rootTasks.add(rTask);
@@ -105,27 +146,29 @@ public class ExportSemanticAnalyzer extends BaseSemanticAnalyzer {
               .getMsg("Exception while writing out the local file"), e);
     }
 
-    Path parentPath = new Path(toURI);
-
-    if (ts.tableHandle.isPartitioned()) {
-      for (Partition partition : partitions) {
-        Path fromPath = partition.getDataLocation();
-        Path toPartPath = new Path(parentPath, partition.getName());
-        Task<? extends Serializable> rTask = TaskFactory.get(
-            new CopyWork(fromPath, toPartPath, false),
-            conf);
+    if (!(replicationSpec.isMetadataOnly() || (ts == null))) {
+      Path parentPath = new Path(toURI);
+      if (ts.tableHandle.isPartitioned()) {
+        for (Partition partition : partitions) {
+          Path fromPath = partition.getDataLocation();
+          Path toPartPath = new Path(parentPath, partition.getName());
+          Task<? extends Serializable> rTask = TaskFactory.get(
+              new CopyWork(fromPath, toPartPath, false),
+              conf);
+          rootTasks.add(rTask);
+          inputs.add(new ReadEntity(partition));
+        }
+      } else {
+        Path fromPath = ts.tableHandle.getDataLocation();
+        Path toDataPath = new Path(parentPath, "data");
+        Task<? extends Serializable> rTask = TaskFactory.get(new CopyWork(
+            fromPath, toDataPath, false), conf);
         rootTasks.add(rTask);
-        inputs.add(new ReadEntity(partition));
+        inputs.add(new ReadEntity(ts.tableHandle));
       }
-    } else {
-      Path fromPath = ts.tableHandle.getDataLocation();
-      Path toDataPath = new Path(parentPath, "data");
-      Task<? extends Serializable> rTask = TaskFactory.get(new CopyWork(
-          fromPath, toDataPath, false), conf);
-      rootTasks.add(rTask);
-      inputs.add(new ReadEntity(ts.tableHandle));
+      boolean isLocal = FileUtils.isLocalFile(conf, toURI);
+      outputs.add(new WriteEntity(parentPath, isLocal));
     }
-    boolean isLocal = FileUtils.isLocalFile(conf, toURI);
-    outputs.add(new WriteEntity(parentPath, isLocal));
+
   }
 }

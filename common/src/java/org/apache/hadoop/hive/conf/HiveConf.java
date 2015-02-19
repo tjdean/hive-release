@@ -1526,6 +1526,17 @@ public class HiveConf extends Configuration {
     // temporary variable for testing. This is added just to turn off this feature in case of a bug in
     // deployment. It has not been documented in hive-default.xml intentionally, this should be removed
     // once the feature is stable
+    HIVE_EXIM_STRICTLY_NEWER_IMPORTS("hive.exim.strict.imports.newer.only",true,
+        "Parameter that determines if IMPORT should be strict when importing so as to\n" +
+        "import only if the export dump is newer in state than the current state of the\n" +
+        "table. Having this be true makes it so that export dumps which do not contain\n" +
+        "state info (by way of the 'last.repl.id' parameter are not importable. A client\n" +
+        "that wishes to override this parameter while processing an older format dump\n" +
+        "may do so explicitly in a .q file and be aware that this should not be used on\n" +
+        "tables that they also intend to be the target of replication."),
+    // hive.exim.strict.imports.newer.only is intended to be deprecated and removed in a couple of
+    // releases. The main reason it exists as a parameter at all is to give people some leeway in
+    // accepting older format export dumps.
     HIVE_MAPPER_CANNOT_SPAN_MULTIPLE_PARTITIONS("hive.mapper.cannot.span.multiple.partitions", false, ""),
     HIVE_REWORK_MAPREDWORK("hive.rework.mapredwork", false,
         "should rework the mapred work or not.\n" +
