@@ -69,8 +69,8 @@ public class ImportCommand extends HiveCommand {
     //    [LOCATION 'import_target_path']
     StringBuilder sb = new StringBuilder();
     sb.append("IMPORT TABLE ");
-    // sb.append(dbName); // FIXME : temporarily commented to help handle E2E testing in the face of BUG-31703. Uncomment.
-    // sb.append('.'); // FIXME : temporarily commented to help handle E2E testing in the face of BUG-31703. Uncomment.
+    sb.append(dbName);
+    sb.append('.');
     sb.append(tableName); // FIXME : Handle quoted tablenames, or this will bite you
     sb.append(ReplicationUtils.partitionDescriptor(ptnDesc));
     if (isDefinitionOnly){
