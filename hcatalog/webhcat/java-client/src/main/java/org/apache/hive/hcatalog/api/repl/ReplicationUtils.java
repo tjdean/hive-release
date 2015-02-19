@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOExceptionWithCause;
+import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
 import org.apache.hadoop.io.DataOutputBuffer;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hive.hcatalog.api.HCatDatabase;
@@ -57,8 +58,8 @@ public class ReplicationUtils {
   public static long getLastReplicationId(HCatDatabase db){
     Map<String, String> props = db.getProperties();
     if (props != null){
-      if (props.containsKey("repl.last.id")){
-        return Long.parseLong(props.get("repl.last.id"));
+      if (props.containsKey(ReplicationSpec.KEY.CURR_STATE_ID.toString())){
+        return Long.parseLong(props.get(ReplicationSpec.KEY.CURR_STATE_ID.toString()));
       }
     }
     return 0l; // default is to return earliest possible state.
@@ -74,8 +75,8 @@ public class ReplicationUtils {
   public static long getLastReplicationId(HCatTable tbl) {
     Map<String, String> tblProps = tbl.getTblProps();
     if (tblProps != null){
-      if (tblProps.containsKey("repl.last.id")){
-        return Long.parseLong(tblProps.get("repl.last.id"));
+      if (tblProps.containsKey(ReplicationSpec.KEY.CURR_STATE_ID.toString())){
+        return Long.parseLong(tblProps.get(ReplicationSpec.KEY.CURR_STATE_ID.toString()));
       }
     }
     return 0l; // default is to return earliest possible state.
@@ -92,8 +93,8 @@ public class ReplicationUtils {
   public static long getLastReplicationId(HCatPartition ptn, @Nullable HCatTable parentTable) {
     Map<String,String> parameters = ptn.getParameters();
     if (parameters != null){
-      if (parameters.containsKey("repl.last.id")){
-        return Long.parseLong(parameters.get("repl.last.id"));
+      if (parameters.containsKey(ReplicationSpec.KEY.CURR_STATE_ID.toString())){
+        return Long.parseLong(parameters.get(ReplicationSpec.KEY.CURR_STATE_ID.toString()));
       }
     }
 
