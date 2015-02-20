@@ -423,6 +423,7 @@ public enum ErrorMsg {
       "sorted, table {0}", true),
   ALTER_TABLE_TYPE_PARTIAL_PARTITION_SPEC_NO_SUPPORTED(10299,
       "Alter table partition type {0} does not allow partial partition spec", true),
+  IMPORT_INTO_STRICT_REPL_TABLE(10300,"Non-repl import disallowed against table that is a destination of replication."),
 
   //========================== 20000 range starts here ========================//
   SCRIPT_INIT_ERROR(20000, "Unable to initialize custom script."),

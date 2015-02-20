@@ -462,18 +462,26 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     return sb.toString();
   }
 
-  private static void checkTable(Table table, CreateTableDesc tableDesc, ReplicationSpec replicationSpec)
+  private void checkTable(Table table, CreateTableDesc tableDesc, ReplicationSpec replicationSpec)
       throws SemanticException, URISyntaxException {
-    // NOTE: this method gets called only in the scope that a destination table already exists, so
+    // This method gets called only in the scope that a destination table already exists, so
     // we're validating if the table is an appropriate destination to import into
 
     if (replicationSpec.isInReplicationScope()){
       // If this import is being done for replication, then this will be a managed table, and replacements
       // are allowed irrespective of what the table currently looks like. So no more checks are necessary.
       return;
+    } else {
+      // verify if table has been the target of replication, and if so, check HiveConf if we're allowed
+      // to override. If not, fail.
+      if (table.getParameters().containsKey(ReplicationSpec.KEY.CURR_STATE_ID.toString())
+          && conf.getBoolVar(HiveConf.ConfVars.HIVE_EXIM_RESTRICT_IMPORTS_INTO_REPLICATED_TABLES)){
+            throw new SemanticException(ErrorMsg.IMPORT_INTO_STRICT_REPL_TABLE.getMsg(
+                "Table "+table.getTableName()+" has repl.last.id parameter set." ));
+      }
     }
 
-    // First, we verifies that the destination table is not offline, a view, or a non-native table
+    // Next, we verify that the destination table is not offline, a view, or a non-native table
     EximUtil.validateTable(table);
 
     // If the import statement specified that we're importing to an external
