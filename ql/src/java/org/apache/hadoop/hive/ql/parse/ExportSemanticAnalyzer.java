@@ -82,7 +82,17 @@ public class ExportSemanticAnalyzer extends BaseSemanticAnalyzer {
       }
     }
     if (ts != null) {
-      EximUtil.validateTable(ts.tableHandle);
+      try {
+        EximUtil.validateTable(ts.tableHandle);
+      } catch (SemanticException e) {
+        // table was a view, a non-native table or an offline table.
+        // ignore for replication, error if not.
+        if (replicationSpec.isInReplicationScope()){
+          ts = null; // null out ts so we can't use it.
+        } else {
+          throw e;
+        }
+      }
     }
     try {
       FileSystem fs = FileSystem.get(toURI, conf);
@@ -126,6 +136,7 @@ public class ExportSemanticAnalyzer extends BaseSemanticAnalyzer {
         }
       } else {
         // Either tableHandle isn't partitioned => null, or repl-export after ts becomes null => null.
+        // or this is a noop-replication export, so we can skip looking at ptns.
         partitions = null;
       }
       Path path = new Path(ctx.getLocalTmpPath(), "_metadata");

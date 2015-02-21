@@ -209,7 +209,7 @@ public class EximUtil {
       // uncomment this else section, but currently unnneeded. Will require a lot of golden file
       // regen if we do so.
     }
-    if (tableHandle != null){
+    if ((tableHandle != null) && (!replicationSpec.isNoop())){
       TSerializer serializer = new TSerializer(new TJSONProtocol.Factory());
       try {
         String tableDesc = serializer.toString(tableHandle.getTTable(), "UTF-8");
