@@ -80,36 +80,27 @@ public class ImportCommand extends HiveCommand {
     return Arrays.asList(sb.toString());
   }
 
-
-
   @Override
   public boolean isRetriable() {
-    return isDefinitionOnly;
-      // Metadata-only imports are replace-imports, and thus, are idempotent. If not
-      // metadata-only, then if import failed, for reasons other than connection
-      // issues, it's likely not retriable.
+    return true;
+    // Repl imports are replace-imports, and thus, are idempotent.
+    // Note that this assumes that this ImportCommand is running on an export dump
+    // created using EXPORT ... FOR REPLICATION. If the scope of ImportCommand
+    // were to eventually expand to importing dumps created by regular exports,
+    // then this needs updating.
   }
 
   @Override
   public boolean isUndoable() {
-    if (isDefinitionOnly){
-      return false; // Alters are not undoable if they've taken effect already. They are retriable though.
-    }
-    return true;
+    return false; // Alters and replacements are not undoable if they've taken effect already. They are retriable though.
   }
 
   @Override
   public List<String> getUndo() {
-    if (!isDefinitionOnly){
-      if ((ptnDesc != null) && (!ptnDesc.isEmpty())){
-        return (new DropPartitionCommand(dbName,tableName,ptnDesc,eventId)).get();
-      } else {
-        return (new DropTableCommand(dbName,tableName,eventId)).get();
-        // FIXME : Look into this again to see if more guards are needed.
-      }
-    } else {
-      throw new UnsupportedOperationException("Attempted to getUndo() on a metadata-only import that does not support undo.");
-    }
+    // throw new UnsupportedOperationException("Attempted to getUndo() on a repl import that does not support undo.");
+    return new ArrayList<String>();
+    // FIXME : Decide if we want to throw an exception or return an empty list.
+    //   This would depend on what we intend to be the isUndoable semantic.
   }
 
   @Override

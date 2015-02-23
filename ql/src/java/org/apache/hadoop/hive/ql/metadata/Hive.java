@@ -1640,9 +1640,16 @@ private void constructOneLBLocationMap(FileStatus fSta,
     List<Partition> out = new ArrayList<Partition>();
     try {
       // TODO: normally, the result is not necessary; might make sense to pass false
-      for (org.apache.hadoop.hive.metastore.api.Partition outPart
-          : getMSC().add_partitions(in, addPartitionDesc.isIfNotExists(), true)) {
-        out.add(new Partition(tbl, outPart));
+      if (!addPartitionDesc.getReplaceMode()){
+        for (org.apache.hadoop.hive.metastore.api.Partition outPart
+            : getMSC().add_partitions(in, addPartitionDesc.isIfNotExists(), true)) {
+          out.add(new Partition(tbl, outPart));
+        }
+      } else {
+        getMSC().alter_partitions(addPartitionDesc.getDbName(), addPartitionDesc.getTableName(), in);
+        for (org.apache.hadoop.hive.metastore.api.Partition p: in){
+          out.add(new Partition(tbl, getMSC().getPartition(p.getDbName(), p.getTableName(), p.getValues())));
+        }
       }
     } catch (Exception e) {
       LOG.error(StringUtils.stringifyException(e));

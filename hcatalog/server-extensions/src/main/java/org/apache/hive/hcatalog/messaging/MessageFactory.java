@@ -30,6 +30,7 @@ import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hive.hcatalog.messaging.json.JSONMessageFactory;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Abstract Factory for the construction of HCatalog message instances.
@@ -183,5 +184,5 @@ public abstract class MessageFactory {
    * @return instance of InsertMessage
    */
   public abstract InsertMessage buildInsertMessage(String db, String table,
-                                                   List<String> partVals, List<String> files);
+                                                   Map<String,String> partVals, List<String> files);
 }

@@ -37,7 +37,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.FileUtils;
-import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.Warehouse;
@@ -61,6 +60,7 @@ import org.apache.hadoop.hive.ql.plan.AddPartitionDesc;
 import org.apache.hadoop.hive.ql.plan.CopyWork;
 import org.apache.hadoop.hive.ql.plan.CreateTableDesc;
 import org.apache.hadoop.hive.ql.plan.DDLWork;
+import org.apache.hadoop.hive.ql.plan.DropTableDesc;
 import org.apache.hadoop.hive.ql.plan.LoadTableDesc;
 import org.apache.hadoop.hive.ql.plan.MoveWork;
 import org.apache.hadoop.hive.ql.session.SessionState;
@@ -122,7 +122,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
             if (child.getChildCount() == 2) {
               ASTNode partspec = (ASTNode) child.getChild(1);
               isPartSpecSet = true;
-              populatePartitionSpec(child,parsedPartSpec);
+              parsePartitionSpec(child, parsedPartSpec);
             }
             break;
         }
@@ -206,80 +206,31 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
         // or from the export dump.
         throw new SemanticException(ErrorMsg.NEED_TABLE_SPECIFICATION.getMsg());
       } else {
-        conf.set("import.destination.table", tblDesc.getTableName()); // TODO: never used, remove
+        conf.set("import.destination.table", tblDesc.getTableName());
         for (AddPartitionDesc addPartitionDesc : partitionDescs) {
           addPartitionDesc.setTableName(tblDesc.getTableName());
         }
       }
 
       Warehouse wh = new Warehouse(conf);
-      try {
-        // Check if the table already exists.
-        Table table = db.getTable(tblDesc.getDatabaseName(),tblDesc.getTableName());
+      Table table = tableIfExists(tblDesc);
+
+      if (table != null){
         checkTable(table, tblDesc,replicationSpec);
-        LOG.debug("table " + tblDesc.getTableName()
-            + " exists: metadata checked");
+        LOG.debug("table " + tblDesc.getTableName() + " exists: metadata checked");
         tableExists = true;
-        conf.set("import.destination.dir", table.getDataLocation().toString()); // TODO: never used, remove
-        if (table.isPartitioned()) {
-          LOG.debug("table partitioned");
-          for (AddPartitionDesc addPartitionDesc : partitionDescs) {
+      }
 
-            Map<String, String> partSpec = addPartitionDesc.getPartition(0).getPartSpec();
-
-            if (db.getPartition(table, partSpec, false) == null) {
-              rootTasks.add(addSinglePartition(fromURI, fs, tblDesc, table, wh, addPartitionDesc));
-            } else if (replicationSpec.isInReplicationScope()){
-                // If replicating, then the partition already existing means we need to replace.
-                rootTasks.add(addSingleReplacementPartition(fromURI, fs, tblDesc, table, wh, addPartitionDesc));
-            } else {
-              throw new SemanticException(
-                  ErrorMsg.PARTITION_EXISTS.getMsg(partSpecToString(partSpec)));
-            }
-          }
-        } else {
-          LOG.debug("table non-partitioned");
-          checkTargetLocationEmpty(fs, new Path(table.getDataLocation()
-              .toString()));
-          loadTable(fromURI, table);
-        }
-        // Set this to read because we can't overwrite any existing partitions
-        outputs.add(new WriteEntity(table, WriteEntity.WriteType.DDL_NO_LOCK));
-      } catch (InvalidTableException e) {
-        LOG.debug("table " + tblDesc.getTableName() + " does not exist");
-
-        Task<?> t = TaskFactory.get(new DDLWork(getInputs(), getOutputs(),
-            tblDesc), conf);
-        Table table = new Table(dbname, tblDesc.getTableName());
-        Database parentDb = db.getDatabase(dbname);
-        conf.set("import.destination.dir",
-            wh.getTablePath(parentDb,
-                tblDesc.getTableName()).toString());
-        if ((tblDesc.getPartCols() != null) && (tblDesc.getPartCols().size() != 0)) {
-          for (AddPartitionDesc addPartitionDesc : partitionDescs) {
-            t.addDependentTask(
-                addSinglePartition(fromURI, fs, tblDesc, table, wh, addPartitionDesc));
-          }
-        } else {
-          LOG.debug("adding dependent CopyWork/MoveWork for table");
-          if (tblDesc.isExternal() && (tblDesc.getLocation() == null)) {
-            LOG.debug("Importing in place, no emptiness check, no copying/loading");
-            Path dataPath = new Path(fromURI.toString(), "data");
-            tblDesc.setLocation(dataPath.toString());
-          } else {
-            Path tablePath = null;
-            if (tblDesc.getLocation() != null) {
-              tablePath = new Path(tblDesc.getLocation());
-            } else {
-              tablePath = wh.getTablePath(parentDb, tblDesc.getTableName());
-            }
-            checkTargetLocationEmpty(fs, tablePath);
-            t.addDependentTask(loadTable(fromURI, table));
-          }
-        }
-        rootTasks.add(t);
-        //inputs.add(new ReadEntity(fromURI.toString(),
-        //  fromURI.getScheme().equals("hdfs") ? true : false));
+      if (!replicationSpec.isInReplicationScope()){
+        createRegularImportTasks(
+            rootTasks, tblDesc, partitionDescs,
+            isPartSpecSet, replicationSpec, table,
+            fromURI, fs, wh);
+      } else {
+        createReplImportTasks(
+            rootTasks, tblDesc, partitionDescs,
+            isPartSpecSet, replicationSpec, table,
+            fromURI, fs, wh);
       }
     } catch (SemanticException e) {
       throw e;
@@ -288,7 +239,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     }
   }
 
-  public void populatePartitionSpec(ASTNode tableNode, LinkedHashMap<String,String> partSpec) throws SemanticException {
+  private void parsePartitionSpec(ASTNode tableNode, LinkedHashMap<String, String> partSpec) throws SemanticException {
     // get partition metadata if partition specified
     if (tableNode.getChildCount() == 2) {
       ASTNode partspec = (ASTNode) tableNode.getChild(1);
@@ -311,7 +262,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     }
   }
 
-  public AddPartitionDesc getBaseAddPartitionDescFromPartition(
+  private AddPartitionDesc getBaseAddPartitionDescFromPartition(
       Path fromPath, String dbname, CreateTableDesc tblDesc, Partition partition) throws MetaException {
     AddPartitionDesc partsDesc = new AddPartitionDesc(dbname, tblDesc.getTableName(),
         EximUtil.makePartSpec(tblDesc.getPartCols(), partition.getValues()),
@@ -361,14 +312,14 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     return tblDesc;
   }
 
-  private Task<?> loadTable(URI fromURI, Table table) {
+  private Task<?> loadTable(URI fromURI, Table table, boolean replace) {
     Path dataPath = new Path(fromURI.toString(), "data");
     Path tmpPath = ctx.getExternalTmpPath(new Path(fromURI));
     Task<?> copyTask = TaskFactory.get(new CopyWork(dataPath,
        tmpPath, false), conf);
     LoadTableDesc loadTableWork = new LoadTableDesc(tmpPath,
         Utilities.getTableDesc(table), new TreeMap<String, String>(),
-        false);
+        replace);
     Task<?> loadTableTask = TaskFactory.get(new MoveWork(getInputs(),
         getOutputs(), loadTableWork, null, false), conf);
     copyTask.addDependentTask(loadTableTask);
@@ -376,15 +327,47 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     return loadTableTask;
   }
 
-  private Task<?> addSingleReplacementPartition(URI fromURI, FileSystem fs, CreateTableDesc tblDesc,
-      Table table, Warehouse wh, AddPartitionDesc addPartitionDesc) throws HiveException, IOException, MetaException {
-    // FIXME : actually add in replacement semantics
-    return addSinglePartition(fromURI,fs,tblDesc,table,wh,addPartitionDesc);
+  private Task<?> createTableTask(CreateTableDesc tableDesc){
+    return TaskFactory.get(new DDLWork(
+        getInputs(),
+        getOutputs(),
+        tableDesc
+    ), conf);
   }
 
-  private Task<?> addSinglePartition(URI fromURI, FileSystem fs, CreateTableDesc tblDesc,
+  private Task<?> dropTableTask(Table table){
+    return TaskFactory.get(new DDLWork(
+        getInputs(),
+        getOutputs(),
+        new DropTableDesc(table.getTableName(), false, true, true)
+    ), conf);
+  }
+
+  private Task<? extends Serializable> alterTableTask(CreateTableDesc tableDesc) {
+    tableDesc.setReplaceMode(true);
+    return TaskFactory.get(new DDLWork(
+        getInputs(),
+        getOutputs(),
+        tableDesc
+    ), conf);
+  }
+
+  private Task<? extends Serializable> alterSinglePartition(
+      URI fromURI, FileSystem fs, CreateTableDesc tblDesc,
+      Table table, Warehouse wh, AddPartitionDesc addPartitionDesc, ReplicationSpec replicationSpec) {
+    addPartitionDesc.setReplaceMode(true);
+    return TaskFactory.get(new DDLWork(
+        getInputs(),
+        getOutputs(),
+        addPartitionDesc
+    ), conf);
+  }
+
+
+ private Task<?> addSinglePartition(URI fromURI, FileSystem fs, CreateTableDesc tblDesc,
       Table table, Warehouse wh,
-      AddPartitionDesc addPartitionDesc) throws MetaException, IOException, HiveException {
+      AddPartitionDesc addPartitionDesc, ReplicationSpec replicationSpec)
+      throws MetaException, IOException, HiveException {
     AddPartitionDesc.OnePartitionDesc partSpec = addPartitionDesc.getPartition(0);
     if (tblDesc.isExternal() && tblDesc.getLocation() == null) {
       LOG.debug("Importing in-place: adding AddPart for partition "
@@ -410,7 +393,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
         tgtPath = new Path(tblDesc.getLocation(),
             Warehouse.makePartPath(partSpec.getPartSpec()));
       }
-      checkTargetLocationEmpty(fs, tgtPath);
+      checkTargetLocationEmpty(fs, tgtPath, replicationSpec);
       partSpec.setLocation(tgtPath.toString());
       LOG.debug("adding dependent CopyWork/AddPart/MoveWork for partition "
           + partSpecToString(partSpec.getPartSpec())
@@ -434,8 +417,12 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     }
   }
 
-  private void checkTargetLocationEmpty(FileSystem fs, Path targetPath)
+  private void checkTargetLocationEmpty(FileSystem fs, Path targetPath, ReplicationSpec replicationSpec)
       throws IOException, SemanticException {
+    if (replicationSpec.isInReplicationScope()){
+      // replication scope allows replacement, and does not require empty directories
+      return;
+    }
     LOG.debug("checking emptiness of " + targetPath.toString());
     if (fs.exists(targetPath)) {
       FileStatus[] status = fs.listStatus(targetPath);
@@ -671,4 +658,218 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     }
     return null;
   }
+
+  /**
+   * Create tasks for regular import, no repl complexity
+   */
+  private void createRegularImportTasks(
+      List<Task<? extends Serializable>> rootTasks,
+      CreateTableDesc tblDesc,
+      List<AddPartitionDesc> partitionDescs,
+      boolean isPartSpecSet,
+      ReplicationSpec replicationSpec,
+      Table table, URI fromURI, FileSystem fs, Warehouse wh)
+      throws HiveException, URISyntaxException, IOException, MetaException {
+
+    if (table != null){
+      if (table.isPartitioned()) {
+        LOG.debug("table partitioned");
+
+        for (AddPartitionDesc addPartitionDesc : partitionDescs) {
+          Map<String, String> partSpec = addPartitionDesc.getPartition(0).getPartSpec();
+          org.apache.hadoop.hive.ql.metadata.Partition ptn = null;
+          if ((ptn = db.getPartition(table, partSpec, false)) == null) {
+            rootTasks.add(addSinglePartition(fromURI, fs, tblDesc, table, wh, addPartitionDesc, replicationSpec));
+          } else {
+            throw new SemanticException(
+                ErrorMsg.PARTITION_EXISTS.getMsg(partSpecToString(partSpec)));
+          }
+        }
+
+      } else {
+        LOG.debug("table non-partitioned");
+        // ensure if destination is not empty only for regular import
+        checkTargetLocationEmpty(fs, new Path(table.getDataLocation().toString()), replicationSpec);
+        loadTable(fromURI, table, false);
+      }
+      // Set this to read because we can't overwrite any existing partitions
+      outputs.add(new WriteEntity(table, WriteEntity.WriteType.DDL_NO_LOCK));
+    } else {
+      LOG.debug("table " + tblDesc.getTableName() + " does not exist");
+
+      Task<?> t = TaskFactory.get(new DDLWork(getInputs(), getOutputs(), tblDesc), conf);
+      table = new Table(tblDesc.getDatabaseName(), tblDesc.getTableName());
+      Database parentDb = db.getDatabase(tblDesc.getDatabaseName());
+
+      if (isPartitioned(tblDesc)) {
+        for (AddPartitionDesc addPartitionDesc : partitionDescs) {
+          t.addDependentTask(
+              addSinglePartition(fromURI, fs, tblDesc, table, wh, addPartitionDesc, replicationSpec));
+        }
+      } else {
+        LOG.debug("adding dependent CopyWork/MoveWork for table");
+        if (tblDesc.isExternal() && (tblDesc.getLocation() == null)) {
+          LOG.debug("Importing in place, no emptiness check, no copying/loading");
+          Path dataPath = new Path(fromURI.toString(), "data");
+          tblDesc.setLocation(dataPath.toString());
+        } else {
+          Path tablePath = null;
+          if (tblDesc.getLocation() != null) {
+            tablePath = new Path(tblDesc.getLocation());
+          } else {
+            tablePath = wh.getTablePath(parentDb, tblDesc.getTableName());
+          }
+          checkTargetLocationEmpty(fs, tablePath, replicationSpec);
+          t.addDependentTask(loadTable(fromURI, table, false));
+        }
+      }
+      rootTasks.add(t);
+    }
+  }
+
+  /**
+   * Create tasks for repl import
+   */
+  private void createReplImportTasks(
+      List<Task<? extends Serializable>> rootTasks,
+      CreateTableDesc tblDesc,
+      List<AddPartitionDesc> partitionDescs,
+      boolean isPartSpecSet, ReplicationSpec replicationSpec, Table table, URI fromURI, FileSystem fs, Warehouse wh)
+      throws HiveException, URISyntaxException, IOException, MetaException {
+
+    Task dr = null;
+    WriteEntity.WriteType lockType = WriteEntity.WriteType.DDL_NO_LOCK;
+
+    if ((table != null) && (isPartitioned(tblDesc) != table.isPartitioned())){
+      // If destination table exists, but is partitioned, and we think we're writing to an unpartitioned
+      // or if destination table exists, but is unpartitioned and we think we're writing to a partitioned
+      // table, then this can only happen because there are drops in the queue that are yet to be processed.
+      // So, we check the repl.last.id of the destination, and if it's newer, we no-op. If it's older, we
+      // drop and re-create.
+      if (replicationSpec.allowReplacementInto(table)){
+        dr = dropTableTask(table);
+        lockType = WriteEntity.WriteType.DDL_EXCLUSIVE;
+        table = null; // null it out so we go into the table re-create flow.
+      } else {
+        return; // noop out of here.
+      }
+    }
+
+    Database parentDb = db.getDatabase(tblDesc.getDatabaseName());
+    if (tblDesc.getLocation() == null) {
+      tblDesc.setLocation(wh.getTablePath(parentDb, tblDesc.getTableName()).toString());
+    }
+
+     /* Note: In the following section, Metadata-only import handling logic is
+        interleaved with regular repl-import logic. The rule of thumb being
+        followed here is that MD-only imports are essentially ALTERs. They do
+        not load data, and should not be "creating" any metadata - they should
+        be replacing instead. The only place it makes sense for a MD-only import
+        to create is in the case of a table that's been dropped and recreated,
+        or in the case of an unpartitioned table. In all other cases, it should
+        behave like a noop or a pure MD alter.
+     */
+
+    if (table == null) {
+      // Either we're dropping and re-creating, or the table didn't exist, and we're creating.
+
+      if (lockType == WriteEntity.WriteType.DDL_NO_LOCK){
+        lockType = WriteEntity.WriteType.DDL_SHARED;
+      }
+
+      Task t = createTableTask(tblDesc);
+      table = new Table(tblDesc.getDatabaseName(), tblDesc.getTableName());
+
+      if (!replicationSpec.isMetadataOnly()) {
+        if (isPartitioned(tblDesc)) {
+          for (AddPartitionDesc addPartitionDesc : partitionDescs) {
+            t.addDependentTask(
+                addSinglePartition(fromURI, fs, tblDesc, table, wh, addPartitionDesc, replicationSpec));
+          }
+        } else {
+          LOG.debug("adding dependent CopyWork/MoveWork for table");
+          t.addDependentTask(loadTable(fromURI, table, true));
+        }
+      }
+      if (dr == null){
+        // Simply create
+        rootTasks.add(t);
+      } else {
+        // Drop and recreate
+        dr.addDependentTask(t);
+        rootTasks.add(dr);
+      }
+    } else {
+      // Table existed, and is okay to replicate into, not dropping and re-creating.
+      if (table.isPartitioned()) {
+        LOG.debug("table partitioned");
+        for (AddPartitionDesc addPartitionDesc : partitionDescs) {
+
+          Map<String, String> partSpec = addPartitionDesc.getPartition(0).getPartSpec();
+          org.apache.hadoop.hive.ql.metadata.Partition ptn = null;
+
+          if ((ptn = db.getPartition(table, partSpec, false)) == null) {
+            if (!replicationSpec.isMetadataOnly()){
+              rootTasks.add(addSinglePartition(fromURI, fs, tblDesc, table, wh, addPartitionDesc, replicationSpec));
+            }
+          } else {
+            // If replicating, then the partition already existing means we need to replace, maybe, if
+            // the destination ptn's repl.last.id is older than the replacement's.
+            if (replicationSpec.allowReplacementInto(ptn)){
+              if (!replicationSpec.isMetadataOnly()){
+                rootTasks.add(addSinglePartition(fromURI, fs, tblDesc, table, wh, addPartitionDesc, replicationSpec));
+              } else {
+                rootTasks.add(alterSinglePartition(fromURI, fs, tblDesc, table, wh, addPartitionDesc, replicationSpec));
+              }
+              if (lockType == WriteEntity.WriteType.DDL_NO_LOCK){
+                lockType = WriteEntity.WriteType.DDL_SHARED;
+              }
+            } else {
+              // ignore this ptn, do nothing, not an error.
+            }
+          }
+
+        }
+        if (replicationSpec.isMetadataOnly() && partitionDescs.isEmpty()){
+          // MD-ONLY table alter
+          rootTasks.add(alterTableTask(tblDesc));
+          if (lockType == WriteEntity.WriteType.DDL_NO_LOCK){
+            lockType = WriteEntity.WriteType.DDL_SHARED;
+          }
+        }
+      } else {
+        LOG.debug("table non-partitioned");
+        if (!replicationSpec.allowReplacementInto(table)){
+          return; // silently return, table is newer than our replacement.
+        }
+        if (!replicationSpec.isMetadataOnly()) {
+          loadTable(fromURI, table, true); // repl-imports are replace-into
+        } else {
+          rootTasks.add(alterTableTask(tblDesc));
+        }
+        if (lockType == WriteEntity.WriteType.DDL_NO_LOCK){
+          lockType = WriteEntity.WriteType.DDL_SHARED;
+        }
+      }
+    }
+    outputs.add(new WriteEntity(table,lockType));
+
+  }
+
+  private boolean isPartitioned(CreateTableDesc tblDesc) {
+    return !(tblDesc.getPartCols() == null || tblDesc.getPartCols().isEmpty());
+  }
+
+  /**
+   * Utility method that returns a table if one corresponding to the destination
+   * tblDesc is found. Returns null if no such table is found.
+   */
+   private Table tableIfExists(CreateTableDesc tblDesc) throws HiveException {
+    try {
+      return db.getTable(tblDesc.getDatabaseName(),tblDesc.getTableName());
+    } catch (InvalidTableException e) {
+      return null;
+    }
+  }
+
 }

@@ -265,7 +265,7 @@ public class TestDbNotificationListener {
     assertEquals("alterparttable", event.getTableName());
     assertTrue(event.getMessage().matches( "\\{\"eventType\":\"ALTER_PARTITION\",\"server\":\"\"," +
         "\"servicePrincipal\":\"\",\"db\":\"default\",\"table\":\"alterparttable\"," +
-        "\"timestamp\":[0-9]+,\"values\":\\[\"today\"]}"));
+        "\"timestamp\":[0-9]+,\"values\":\\[\"today\"]}")); // FIXME
   }
 
   @Test
@@ -323,7 +323,7 @@ public class TestDbNotificationListener {
     assertEquals("mytable", event.getTableName());
     assertTrue(event.getMessage().matches("\\{\"eventType\":\"INSERT\",\"server\":\"\"," +
         "\"servicePrincipal\":\"\",\"db\":\"mydb\",\"table\":" +
-        "\"mytable\",\"timestamp\":[0-9]+,\"partitionValues\":null," +
+        "\"mytable\",\"timestamp\":[0-9]+,\"partKeyVals\":null," +
         "\"files\":\\[\"/warehouse/mytable/b1\"]}"));
   }
 
@@ -350,8 +350,8 @@ public class TestDbNotificationListener {
     assertEquals("mytable", event.getTableName());
     assertTrue(event.getMessage().matches("\\{\"eventType\":\"INSERT\",\"server\":\"\"," +
         "\"servicePrincipal\":\"\",\"db\":\"mydb\",\"table\":" +
-        "\"mytable\",\"timestamp\":[0-9]+,\"partitionValues\":\\[\"today\"]," +
-        "\"files\":\\[\"/warehouse/mytable/today/b1\"]}"));
+        "\"mytable\",\"timestamp\":[0-9]+,\"partKeyVals\":\\[\"today\"]," +
+        "\"files\":\\[\"/warehouse/mytable/today/b1\"]}")); // FIXME
   }
 
   @Test
@@ -420,7 +420,7 @@ public class TestDbNotificationListener {
     NotificationEventResponse rsp = msClient.getNextNotification(firstEventId, 0, null);
     // For reasons not clear to me there's an alter after the create table and one after the
     // insert.  I think the one after the insert is a stats calculation.
-    assertEquals(6, rsp.getEventsSize());
+    assertEquals(6, rsp.getEventsSize()); // FIXME : 4?
     NotificationEvent event = rsp.getEvents().get(0);
     assertEquals(firstEventId + 1, event.getEventId());
     assertEquals(HCatConstants.HCAT_CREATE_TABLE_EVENT, event.getEventType());

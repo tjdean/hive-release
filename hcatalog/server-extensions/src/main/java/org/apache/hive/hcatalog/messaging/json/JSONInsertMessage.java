@@ -24,6 +24,7 @@ import org.apache.hive.hcatalog.messaging.InsertMessage;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * JSON implementation of DropTableMessage.
@@ -37,7 +38,10 @@ public class JSONInsertMessage extends InsertMessage {
   Long timestamp;
 
   @JsonProperty
-  List<String> partitionValues, files;
+  List<String> files;
+
+  @JsonProperty
+  Map<String,String> partKeyVals;
 
   /**
    * Default constructor, needed for Jackson.
@@ -45,13 +49,13 @@ public class JSONInsertMessage extends InsertMessage {
   public JSONInsertMessage() {}
 
   public JSONInsertMessage(String server, String servicePrincipal, String db, String table,
-                           List<String> partVals, List<String> files, Long timestamp) {
+                           Map<String, String> partKeyVals, List<String> files, Long timestamp) {
     this.server = server;
     this.servicePrincipal = servicePrincipal;
     this.db = db;
     this.table = table;
     this.timestamp = timestamp;
-    partitionValues = partVals;
+    this.partKeyVals = partKeyVals;
     this.files = files;
     checkValid();
   }
@@ -64,8 +68,8 @@ public class JSONInsertMessage extends InsertMessage {
   public String getServer() { return server; }
 
   @Override
-  public List<String> getPartitionValues() {
-    return partitionValues;
+  public Map<String,String> getPartitionKeyValues() {
+    return partKeyVals;
   }
 
   @Override

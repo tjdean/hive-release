@@ -47,7 +47,7 @@ public class ExportCommand extends HiveCommand {
     this.tableName = tableName;
     this.ptnDesc = ptnDesc;
     this.exportLocation = exportLocation;
-//    this.isMetadataOnly = isMetadataOnly; // FIXME : uncomment this after EXIM supports this
+    this.isMetadataOnly = isMetadataOnly;
     this.eventId = eventId;
   }
 
