@@ -124,9 +124,9 @@ public class JSONMessageFactory extends MessageFactory {
   }
 
   @Override
-  public InsertMessage buildInsertMessage(String db, String table, List<String> partVals,
+  public InsertMessage buildInsertMessage(String db, String table, Map<String,String> partKeyVals,
                                           List<String> files) {
-    return new JSONInsertMessage(HCAT_SERVER_URL, HCAT_SERVICE_PRINCIPAL, db, table, partVals,
+    return new JSONInsertMessage(HCAT_SERVER_URL, HCAT_SERVICE_PRINCIPAL, db, table, partKeyVals,
         files, now());
   }
 

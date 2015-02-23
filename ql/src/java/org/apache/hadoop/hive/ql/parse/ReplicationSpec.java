@@ -18,9 +18,12 @@
 package org.apache.hadoop.hive.ql.parse;
 
 import com.google.common.base.Function;
+import org.apache.hadoop.hive.ql.metadata.Partition;
+import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.plan.PlanUtils;
 
 import java.text.Collator;
+import java.util.Map;
 
 /**
  * Statements executed to handle replication have some additional
@@ -56,6 +59,8 @@ public class ReplicationSpec {
       return keyName;
     }
   }
+
+  public enum SCOPE { NO_REPL, MD_ONLY, REPL };
 
   static private Collator collator = Collator.getInstance();
 
@@ -123,8 +128,6 @@ public class ReplicationSpec {
 
   /**
    * Tests if an ASTNode is a Replication Specification
-   * @param node
-   * @return
    */
   public static boolean isApplicable(ASTNode node){
     return (node.getToken().getType() == HiveParser.TOK_REPLICATION);
@@ -136,19 +139,52 @@ public class ReplicationSpec {
    * @return whether or not a provided replacement candidate is newer(or equal) to the existing object state or not
    */
   public static boolean allowReplacement(String currReplState, String replacementReplState){
-    if (currReplState == null) {
+    if ((currReplState == null) || (currReplState.isEmpty())) {
       // if we have no replication state on record for the obj, allow replacement.
       return true;
     }
-    if (replacementReplState == null) {
+    if ((replacementReplState == null) || (replacementReplState.isEmpty())) {
       // if we reached this condition, we had replication state on record for the
-      // object, but its replacement has no state. Disallow.
+      // object, but its replacement has no state. Disallow replacement
       return false;
     }
 
-    // Lexical comparison according to locale will suffice for now, future might add more logic
+    // First try to extract a long value from the strings, and compare them.
     // If oldReplState is less-than or equal to newReplState, allow.
+    long currReplStateLong = Long.parseLong(currReplState.replaceAll("\\D",""));
+    long replacementReplStateLong = Long.parseLong(replacementReplState.replaceAll("\\D",""));
+
+    if ((currReplStateLong != 0) || (replacementReplStateLong != 0)){
+      return ((currReplStateLong - replacementReplStateLong) <= 0);
+    }
+
+    // If the long value of both is 0, though, fall back to lexical comparison.
+
+    // Lexical comparison according to locale will suffice for now, future might add more logic
     return (collator.compare(currReplState.toLowerCase(), replacementReplState.toLowerCase()) <= 0);
+  }
+
+  /**
+   * Determines if a current replication specification is allowed to
+   * replicate-replace-into a given partition
+   */
+  public boolean allowReplacementInto(Partition ptn){
+    return allowReplacement(getLastReplicatedStateFromParameters(ptn.getParameters()),this.getCurrentReplicationState());
+  }
+
+  /**
+   * Determines if a current replication specification is allowed to
+   * replicate-replace-into a given table
+   */
+  public boolean allowReplacementInto(Table table) {
+    return allowReplacement(getLastReplicatedStateFromParameters(table.getParameters()),this.getCurrentReplicationState());
+  }
+
+  private static String getLastReplicatedStateFromParameters(Map<String, String> m) {
+    if ((m != null) && (m.containsKey(KEY.CURR_STATE_ID.toString()))){
+      return m.get(KEY.CURR_STATE_ID.toString());
+    }
+    return null;
   }
 
   private void init(ASTNode node){
@@ -211,14 +247,13 @@ public class ReplicationSpec {
   public String get(KEY key) {
     switch (key){
       case REPL_SCOPE:
-        if (isInReplicationScope()){
-          if (isMetadataOnly()){
+        switch (getScope()){
+          case MD_ONLY:
             return "metadata";
-          } else {
+          case REPL:
             return "all";
-          }
-        } else {
-          return "none";
+          case NO_REPL:
+            return "none";
         }
       case EVENT_ID:
         return getReplicationState();
@@ -230,4 +265,15 @@ public class ReplicationSpec {
     return null;
   }
 
+  public SCOPE getScope(){
+    if (isInReplicationScope()){
+      if (isMetadataOnly()){
+        return SCOPE.MD_ONLY;
+      } else {
+        return SCOPE.REPL;
+      }
+    } else {
+      return SCOPE.NO_REPL;
+    }
+  }
 }

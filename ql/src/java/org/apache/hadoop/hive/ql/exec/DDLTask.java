@@ -3961,7 +3961,16 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
     }
 
     // create the table
-    db.createTable(tbl, crtTbl.getIfNotExists());
+    if (crtTbl.getReplaceMode()){
+      // replace-mode creates are really alters using CreateTableDesc.
+      try {
+        db.alterTable(tbl.getDbName()+"."+tbl.getTableName(),tbl);
+      } catch (InvalidOperationException e) {
+        throw new HiveException("Unable to alter table. " + e.getMessage(), e);
+      }
+    } else {
+      db.createTable(tbl, crtTbl.getIfNotExists());
+    }
     work.getOutputs().add(new WriteEntity(tbl, WriteEntity.WriteType.DDL_NO_LOCK));
     return 0;
   }

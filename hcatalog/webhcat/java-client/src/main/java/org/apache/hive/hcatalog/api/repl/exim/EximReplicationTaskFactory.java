@@ -50,13 +50,11 @@ public class EximReplicationTaskFactory implements ReplicationTask.Factory {
     } else if (event.getEventType().equals(HCatConstants.HCAT_DROP_PARTITION_EVENT)) {
       return new DropPartitionReplicationTask(event);
     } else if (event.getEventType().equals(HCatConstants.HCAT_ALTER_TABLE_EVENT)) {
-      return new NoopReplicationTask(event); // FIXME:replace with below
-//      return new AlterTableReplicationTask(event);
+      return new AlterTableReplicationTask(event);
     } else if (event.getEventType().equals(HCatConstants.HCAT_ALTER_PARTITION_EVENT)) {
-      return new NoopReplicationTask(event); // FIXME:replace with below
-//      return new AlterPartitionReplicationTask(event);
+      return new AlterPartitionReplicationTask(event);
     } else if (event.getEventType().equals(HCatConstants.HCAT_INSERT_EVENT)) {
-      return new NoopReplicationTask(event); // FIXME:implement
+      return new InsertReplicationTask(event);
     } else {
       throw new IllegalStateException("Unrecognized Event type, no replication task available");
     }

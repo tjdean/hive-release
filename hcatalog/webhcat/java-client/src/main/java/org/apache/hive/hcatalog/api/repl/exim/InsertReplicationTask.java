@@ -18,6 +18,8 @@
  */
 package org.apache.hive.hcatalog.api.repl.exim;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import org.apache.hive.hcatalog.api.HCatNotificationEvent;
 import org.apache.hive.hcatalog.api.repl.Command;
 import org.apache.hive.hcatalog.api.repl.ReplicationTask;
@@ -25,61 +27,77 @@ import org.apache.hive.hcatalog.api.repl.ReplicationUtils;
 import org.apache.hive.hcatalog.api.repl.commands.ExportCommand;
 import org.apache.hive.hcatalog.api.repl.commands.ImportCommand;
 import org.apache.hive.hcatalog.common.HCatConstants;
-import org.apache.hive.hcatalog.messaging.CreateTableMessage;
+import org.apache.hive.hcatalog.messaging.InsertMessage;
 
+import javax.annotation.Nullable;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
-public class CreateTableReplicationTask extends ReplicationTask {
+public class InsertReplicationTask extends ReplicationTask {
+  private final InsertMessage insertMessage;
 
-  private CreateTableMessage createTableMessage = null;
-
-  public CreateTableReplicationTask(HCatNotificationEvent event) {
+  public InsertReplicationTask(HCatNotificationEvent event) {
     super(event);
-    validateEventType(event, HCatConstants.HCAT_CREATE_TABLE_EVENT);
-    createTableMessage = messageFactory.getDeserializer().getCreateTableMessage(event.getMessage());
+    validateEventType(event, HCatConstants.HCAT_INSERT_EVENT);
+    insertMessage = messageFactory.getDeserializer().getInsertMessage(event.getMessage());
   }
 
+
   public boolean needsStagingDirs(){
+    // we need staging directories as long as a single partition needed addition
     return true;
   }
 
+  @Override
   public Iterable<? extends Command> getSrcWhCommands() {
     verifyActionable();
-    final String dbName = createTableMessage.getDB();
-    final String tableName = createTableMessage.getTable();
+
+    final String dbName = insertMessage.getDB();
+    final String tableName = insertMessage.getTable();
+    final Map<String,String> ptnDesc = insertMessage.getPartitionKeyValues();
+    // Note : ptnDesc can be null or empty for non-ptn table
+
     return Arrays.asList(new ExportCommand(
         dbName,
         tableName,
-        null,
+        ptnDesc,
         srcStagingDirProvider.getStagingDirectory(
             ReplicationUtils.getUniqueKey(
                 getEvent().getEventId(),
                 dbName,
                 tableName,
-                null)
+                ptnDesc)
         ),
         false,
         event.getEventId()
     ));
+
   }
 
   public Iterable<? extends Command> getDstWhCommands() {
     verifyActionable();
-    final String dbName = createTableMessage.getDB();
-    final String tableName = createTableMessage.getTable();
+
+    final String dbName = insertMessage.getDB();
+    final String tableName = insertMessage.getTable();
+    final Map<String,String> ptnDesc = insertMessage.getPartitionKeyValues();
+    // Note : ptnDesc can be null or empty for non-ptn table
+
     return Arrays.asList(new ImportCommand(
         ReplicationUtils.mapIfMapAvailable(dbName, dbNameMapping),
         ReplicationUtils.mapIfMapAvailable(tableName, tableNameMapping),
-        null,
+        ptnDesc,
         dstStagingDirProvider.getStagingDirectory(
             ReplicationUtils.getUniqueKey(
                 getEvent().getEventId(),
                 dbName, // Note - important to retain the same key as the export
                 tableName,
-                null)
+                ptnDesc)
         ),
         false,
         event.getEventId()
     ));
+
   }
+
 }
