@@ -42,6 +42,11 @@ public class JSONAlterPartitionMessage extends AlterPartitionMessage {
   @JsonProperty
   Map<String,String> keyValues;
 
+  /**
+   * Default Constructor. Required for Jackson.
+   */
+  public JSONAlterPartitionMessage() { }
+
   public JSONAlterPartitionMessage(String server,
                                    String servicePrincipal,
                                    String db,
