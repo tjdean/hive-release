@@ -53,8 +53,10 @@ public class InsertEvent extends ListenerEvent {
     this.files = files;
     Table t = handler.get_table(db,table);
     keyValues = new LinkedHashMap<String, String>();
-    for (int i = 0; i < partVals.size(); i++){
-      keyValues.put(t.getPartitionKeys().get(i).getName(),partVals.get(i));
+    if (partVals != null) {
+      for (int i = 0; i < partVals.size(); i++) {
+        keyValues.put(t.getPartitionKeys().get(i).getName(), partVals.get(i));
+      }
     }
   }
 
