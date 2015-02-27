@@ -18,6 +18,8 @@
 
 package org.apache.hadoop.hive.ql.plan;
 
+import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +56,7 @@ public class DropTableDesc extends DDLDesc implements Serializable {
   boolean ifExists;
   boolean ifPurge;
   boolean ignoreProtection;
+  ReplicationSpec replicationSpec;
 
   public DropTableDesc() {
   }
@@ -62,17 +65,20 @@ public class DropTableDesc extends DDLDesc implements Serializable {
    * @param tableName
    * @param ifPurge
    */
-  public DropTableDesc(String tableName, boolean expectView, boolean ifExists, boolean ifPurge) {
+  public DropTableDesc(
+      String tableName, boolean expectView, boolean ifExists,
+      boolean ifPurge, ReplicationSpec replicationSpec) {
     this.tableName = tableName;
     this.partSpecs = null;
     this.expectView = expectView;
     this.ifExists = ifExists;
     this.ifPurge = ifPurge;
     this.ignoreProtection = false;
+    this.replicationSpec = replicationSpec;
   }
 
   public DropTableDesc(String tableName, Map<Integer, List<ExprNodeGenericFuncDesc>> partSpecs,
-      boolean expectView, boolean ignoreProtection) {
+      boolean expectView, boolean ignoreProtection, ReplicationSpec replicationSpec) {
     this.tableName = tableName;
     this.partSpecs = new ArrayList<PartSpec>(partSpecs.size());
     for (Map.Entry<Integer, List<ExprNodeGenericFuncDesc>> partSpec : partSpecs.entrySet()) {
@@ -83,6 +89,7 @@ public class DropTableDesc extends DDLDesc implements Serializable {
     }
     this.ignoreProtection = ignoreProtection;
     this.expectView = expectView;
+    this.replicationSpec = replicationSpec;
   }
 
   /**
@@ -166,5 +173,15 @@ public class DropTableDesc extends DDLDesc implements Serializable {
    */
   public void setIfPurge(boolean ifPurge) {
       this.ifPurge = ifPurge;
+  }
+
+  /**
+   * @return what replication scope this drop is running under
+   */
+  public ReplicationSpec getReplicationSpec(){
+    if (replicationSpec == null){
+      this.replicationSpec = new ReplicationSpec();
+    }
+    return this.replicationSpec;
   }
 }
