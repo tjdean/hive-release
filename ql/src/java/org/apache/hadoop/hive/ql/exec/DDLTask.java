@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hive.ql.exec;
 
+import com.google.common.collect.Iterables;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -83,12 +84,14 @@ import org.apache.hadoop.hive.ql.metadata.HiveStorageHandler;
 import org.apache.hadoop.hive.ql.metadata.HiveUtils;
 import org.apache.hadoop.hive.ql.metadata.InvalidTableException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
+import org.apache.hadoop.hive.ql.metadata.PartitionIterable;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.metadata.formatting.MetaDataFormatUtils;
 import org.apache.hadoop.hive.ql.metadata.formatting.MetaDataFormatter;
 import org.apache.hadoop.hive.ql.parse.AlterTablePartMergeFilesDesc;
 import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer;
 import org.apache.hadoop.hive.ql.parse.DDLSemanticAnalyzer;
+import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
 import org.apache.hadoop.hive.ql.plan.AddPartitionDesc;
 import org.apache.hadoop.hive.ql.plan.AlterDatabaseDesc;
 import org.apache.hadoop.hive.ql.plan.AlterIndexDesc;
@@ -3612,6 +3615,27 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
   }
 
   private void dropPartitions(Hive db, Table tbl, DropTableDesc dropTbl) throws HiveException {
+
+    ReplicationSpec replicationSpec = dropTbl.getReplicationSpec();
+    if (replicationSpec.isInReplicationScope()){
+      // If this was called in replication scope, this is the result of a DROP_PARTITION
+      // event which is a singular ptn and not a large number of partitions. Allow fetching
+      // list of partitions that match, and deciding whether to drop them or not on the client
+      // side.
+      for (DropTableDesc.PartSpec partSpec : dropTbl.getPartSpecs()){
+        try {
+          for (Partition p : Iterables.filter(
+              db.getPartitionsByFilter(tbl, partSpec.getPartSpec().getExprString()),
+              replicationSpec.allowEventReplacementInto())){
+            db.dropPartition(tbl.getDbName(),tbl.getTableName(),p.getValues(),true);
+          }
+        } catch (Exception e) {
+          throw new HiveException(e.getMessage(), e);
+        }
+      }
+      return;
+    }
+
     // ifExists is currently verified in DDLSemanticAnalyzer
     List<Partition> droppedParts = db.dropPartitions(dropTbl.getTableName(),
         dropTbl.getPartSpecs(), true, dropTbl.getIgnoreProtection(), true);
@@ -3646,6 +3670,25 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
     if (tbl != null && !tbl.canDrop()) {
       throw new HiveException("Table " + tbl.getTableName() +
           " is protected from being dropped");
+    }
+
+    ReplicationSpec replicationSpec = dropTbl.getReplicationSpec();
+    if (replicationSpec.isInReplicationScope()){
+      if (!replicationSpec.allowEventReplacementInto(tbl)){
+        // Drop occured as part of replicating a drop, but the destination
+        // table was newer than the event being replicated. Ignore, but drop
+        // any partitions inside that are older.
+        if (tbl.isPartitioned()){
+
+          PartitionIterable partitions = new PartitionIterable(db,tbl,null,conf.getIntVar(
+              HiveConf.ConfVars.METASTORE_BATCH_RETRIEVE_MAX));
+
+          for (Partition p : Iterables.filter(partitions, replicationSpec.allowEventReplacementInto())){
+            db.dropPartition(tbl.getDbName(),tbl.getTableName(),p.getValues(),true);
+          }
+        }
+        return; // table is newer, leave it be.
+      }
     }
 
     int partitionBatchSize = HiveConf.getIntVar(conf,

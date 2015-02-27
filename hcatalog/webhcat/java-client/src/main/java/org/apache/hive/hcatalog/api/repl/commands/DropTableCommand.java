@@ -34,10 +34,12 @@ public class DropTableCommand extends HiveCommand {
   private long eventId;
   private String dbName = null;
   private String tableName = null;
+  private boolean isReplicatedEvent = false;
 
- public DropTableCommand(String dbName, String tableName, long eventId) {
+  public DropTableCommand(String dbName, String tableName, boolean isReplicatedEvent, long eventId) {
     this.dbName = dbName;
     this.tableName = tableName;
+    this.isReplicatedEvent = isReplicatedEvent;
     this.eventId = eventId;
   }
 
@@ -55,6 +57,11 @@ public class DropTableCommand extends HiveCommand {
     sb.append(dbName);
     sb.append('.');
     sb.append(tableName); // FIXME : Handle quoted tablenames, or this will bite you
+    if (isReplicatedEvent){
+      sb.append(" FOR REPLICATION(\'");
+      sb.append(eventId);
+      sb.append("\')");
+    }
     return Arrays.asList(sb.toString());
   }
 
@@ -92,6 +99,7 @@ public class DropTableCommand extends HiveCommand {
   public void write(DataOutput dataOutput) throws IOException {
     ReaderWriter.writeDatum(dataOutput, dbName);
     ReaderWriter.writeDatum(dataOutput, tableName);
+    ReaderWriter.writeDatum(dataOutput, Boolean.valueOf(isReplicatedEvent));
     ReaderWriter.writeDatum(dataOutput, Long.valueOf(eventId));
   }
 
@@ -99,16 +107,17 @@ public class DropTableCommand extends HiveCommand {
   public void readFields(DataInput dataInput) throws IOException {
     dbName = (String)ReaderWriter.readDatum(dataInput);
     tableName = (String)ReaderWriter.readDatum(dataInput);
+    isReplicatedEvent = ((Boolean)ReaderWriter.readDatum(dataInput)).booleanValue();
     eventId = ((Long)ReaderWriter.readDatum(dataInput)).longValue();
   }
 
   @Override
   void run(HCatClient client, Configuration conf) throws HCatException {
-    client.dropTable(dbName,tableName,true);
+    client.dropTable(dbName,tableName,true); // No support for .. FOR REPLICATION semantics form HCatClient yet.
   }
 
   @Override
   boolean isRunnableFromHCatClient() {
-    return true;
+    return !isReplicatedEvent; // No support for .. FOR REPLICATION semantics form HCatClient yet.
   }
 }

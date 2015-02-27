@@ -38,11 +38,13 @@ public class DropPartitionCommand extends HiveCommand {
   private String dbName;
   private String tableName;
   private Map<String,String> ptnDesc;
+  private boolean isReplicatedEvent = false;
 
-  public DropPartitionCommand(String dbName, String tableName, Map<String, String> ptnDesc, long eventId) {
+  public DropPartitionCommand(String dbName, String tableName, Map<String, String> ptnDesc, boolean isReplicatedEvent, long eventId) {
     this.dbName = dbName;
     this.tableName = tableName;
     this.ptnDesc = ptnDesc;
+    this.isReplicatedEvent = isReplicatedEvent;
     this.eventId = eventId;
   }
 
@@ -62,6 +64,11 @@ public class DropPartitionCommand extends HiveCommand {
     sb.append(tableName);
     sb.append(" DROP IF EXISTS");
     sb.append(ReplicationUtils.partitionDescriptor(ptnDesc));
+    if (isReplicatedEvent){
+      sb.append(" FOR REPLICATION(\'");
+      sb.append(eventId);
+      sb.append("\')");
+    }
     return Arrays.asList(sb.toString());
   }
 
@@ -100,6 +107,7 @@ public class DropPartitionCommand extends HiveCommand {
     ReaderWriter.writeDatum(dataOutput, dbName);
     ReaderWriter.writeDatum(dataOutput, tableName);
     ReaderWriter.writeDatum(dataOutput, ptnDesc);
+    ReaderWriter.writeDatum(dataOutput, Boolean.valueOf(isReplicatedEvent));
     ReaderWriter.writeDatum(dataOutput, Long.valueOf(eventId));
   }
 
@@ -108,16 +116,17 @@ public class DropPartitionCommand extends HiveCommand {
     dbName = (String)ReaderWriter.readDatum(dataInput);
     tableName = (String)ReaderWriter.readDatum(dataInput);
     ptnDesc = (Map<String,String>)ReaderWriter.readDatum(dataInput);
+    isReplicatedEvent = ((Boolean)ReaderWriter.readDatum(dataInput)).booleanValue();
     eventId = ((Long)ReaderWriter.readDatum(dataInput)).longValue();
   }
 
   @Override
   void run(HCatClient client, Configuration conf) throws HCatException {
-    client.dropPartitions(dbName,tableName,ptnDesc,true);
+    client.dropPartitions(dbName,tableName,ptnDesc,true); // No support for .. FOR REPLICATION semantics form HCatClient yet.
   }
 
   @Override
   boolean isRunnableFromHCatClient() {
-    return true;
+    return !isReplicatedEvent; // No support for .. FOR REPLICATION semantics form HCatClient yet.
   }
 }

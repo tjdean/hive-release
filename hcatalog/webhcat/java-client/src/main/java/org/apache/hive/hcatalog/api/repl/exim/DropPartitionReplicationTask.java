@@ -66,6 +66,7 @@ public class DropPartitionReplicationTask extends ReplicationTask {
             dstDbName,
             dstTableName,
             ptnDesc,
+            true,
             event.getEventId()
         );
       }

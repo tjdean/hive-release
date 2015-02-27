@@ -18,10 +18,12 @@
 package org.apache.hadoop.hive.ql.parse;
 
 import com.google.common.base.Function;
+import com.google.common.base.Predicate;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.plan.PlanUtils;
 
+import javax.annotation.Nullable;
 import java.text.Collator;
 import java.util.Map;
 
@@ -78,8 +80,9 @@ public class ReplicationSpec {
         return;
       } else {
         for (int i = 1; i < node.getChildCount(); ++i) {
-          if (isApplicable((ASTNode) node.getChild(i))) {
-            init(node);
+          ASTNode child = (ASTNode) node.getChild(i);
+          if (isApplicable(child)) {
+            init(child);
             return;
           }
         }
@@ -164,8 +167,8 @@ public class ReplicationSpec {
     return (collator.compare(currReplState.toLowerCase(), replacementReplState.toLowerCase()) <= 0);
   }
 
-  /**
-   * Determines if a current replication specification is allowed to
+ /**
+   * Determines if a current replication object(current state of dump) is allowed to
    * replicate-replace-into a given partition
    */
   public boolean allowReplacementInto(Partition ptn){
@@ -173,11 +176,43 @@ public class ReplicationSpec {
   }
 
   /**
-   * Determines if a current replication specification is allowed to
+   * Determines if a current replication event specification is allowed to
+   * replicate-replace-into a given partition
+   */
+  public boolean allowEventReplacementInto(Partition ptn){
+    return allowReplacement(getLastReplicatedStateFromParameters(ptn.getParameters()),this.getReplicationState());
+  }
+
+  /**
+   * Determines if a current replication object(current state of dump) is allowed to
    * replicate-replace-into a given table
    */
   public boolean allowReplacementInto(Table table) {
     return allowReplacement(getLastReplicatedStateFromParameters(table.getParameters()),this.getCurrentReplicationState());
+  }
+
+  /**
+   * Determines if a current replication event specification is allowed to
+   * replicate-replace-into a given table
+   */
+  public boolean allowEventReplacementInto(Table table) {
+    return allowReplacement(getLastReplicatedStateFromParameters(table.getParameters()),this.getReplicationState());
+  }
+
+  /**
+   * Returns a predicate filter to filter an Iterable<Partition> to return all partitions
+   * that the current replication event specification is allowed to replicate-replace-into
+   */
+  public Predicate<Partition> allowEventReplacementInto() {
+    return new Predicate<Partition>() {
+      @Override
+      public boolean apply(@Nullable Partition partition) {
+        if (partition == null){
+          return false;
+        }
+        return (allowEventReplacementInto(partition));
+      }
+    };
   }
 
   private static String getLastReplicatedStateFromParameters(Map<String, String> m) {

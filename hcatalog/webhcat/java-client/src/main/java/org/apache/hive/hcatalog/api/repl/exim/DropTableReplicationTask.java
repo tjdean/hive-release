@@ -51,6 +51,6 @@ public class DropTableReplicationTask extends ReplicationTask {
     verifyActionable();
     final String dstDbName = ReplicationUtils.mapIfMapAvailable(dropTableMessage.getDB(), dbNameMapping);
     final String dstTableName = ReplicationUtils.mapIfMapAvailable(dropTableMessage.getTable(), tableNameMapping);
-    return Arrays.asList(new DropTableCommand(dstDbName, dstTableName, event.getEventId()));
+    return Arrays.asList(new DropTableCommand(dstDbName, dstTableName, true, event.getEventId()));
   }
 }
