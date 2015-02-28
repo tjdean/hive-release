@@ -351,17 +351,27 @@ public class Table implements Serializable {
     return outputFormatClass;
   }
 
+  public class PartColumnValidationFailureSemanticException extends SemanticException{
+    public PartColumnValidationFailureSemanticException(String s) {
+      super(s);
+    }
+    // FIXME : dummy marker class so that this can be caught externally.
+    // Eventually, refactor to use ErrorMsg properly.
+  };
+
   final public void validatePartColumnNames(
       Map<String, String> spec, boolean shouldBeFull) throws SemanticException {
     List<FieldSchema> partCols = tTable.getPartitionKeys();
     if (partCols == null || (partCols.size() == 0)) {
       if (spec != null) {
-        throw new SemanticException("table is not partitioned but partition spec exists: " + spec);
+        throw new PartColumnValidationFailureSemanticException(
+            "table is not partitioned but partition spec exists: " + spec);
       }
       return;
     } else if (spec == null) {
       if (shouldBeFull) {
-        throw new SemanticException("table is partitioned but partition spec is not specified");
+        throw new PartColumnValidationFailureSemanticException(
+            "table is partitioned but partition spec is not specified");
       }
       return;
     }
@@ -373,10 +383,11 @@ public class Table implements Serializable {
       if (columnsFound == spec.size()) break;
     }
     if (columnsFound < spec.size()) {
-      throw new SemanticException("Partition spec " + spec + " contains non-partition columns");
+      throw new PartColumnValidationFailureSemanticException(
+          "Partition spec " + spec + " contains non-partition columns");
     }
     if (shouldBeFull && (spec.size() != partCols.size())) {
-      throw new SemanticException("partition spec " + spec
+      throw new PartColumnValidationFailureSemanticException("partition spec " + spec
           + " doesn't contain all (" + partCols.size() + ") partition columns");
     }
   }

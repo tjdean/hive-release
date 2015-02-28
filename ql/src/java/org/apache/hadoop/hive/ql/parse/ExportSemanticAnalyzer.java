@@ -38,6 +38,7 @@ import org.apache.hadoop.hive.ql.exec.TaskFactory;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity;
 import org.apache.hadoop.hive.ql.metadata.Partition;
+import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.plan.CopyWork;
 
 /**
@@ -73,9 +74,15 @@ public class ExportSemanticAnalyzer extends BaseSemanticAnalyzer {
     try {
       ts = new tableSpec(db, conf, (ASTNode) tableTree, false, true);
     } catch (SemanticException sme){
-      if ((sme.getCause() instanceof InvalidTableException) && (replicationSpec.isInReplicationScope())){
+      if ((replicationSpec.isInReplicationScope()) &&
+            ((sme.getCause() instanceof InvalidTableException)
+            || (sme instanceof Table.PartColumnValidationFailureSemanticException)
+            )
+          ){
         // If we're in replication scope, it's possible that we're running the export long after
-        // the table was dropped, so the table not existing currently is not an error.
+        // the table was dropped, so the table not existing currently or being a different kind of
+        // table is not an error - it simply means we should no-op, and let a future export
+        // capture the appropriate state
         ts = null; // FIXME : capture in tests
       } else {
         throw sme;
