@@ -43,6 +43,10 @@ import org.apache.hadoop.hive.ql.exec.tez.TezTask;
 import org.apache.hadoop.hive.ql.exec.vector.VectorExtractOperator;
 import org.apache.hadoop.hive.ql.exec.vector.VectorExpressionDescriptor;
 import org.apache.hadoop.hive.ql.exec.vector.VectorGroupByOperator;
+import org.apache.hadoop.hive.ql.exec.vector.VectorMapJoinOperator;
+import org.apache.hadoop.hive.ql.exec.vector.VectorMapJoinOuterFilteredOperator;
+import org.apache.hadoop.hive.ql.exec.vector.VectorSMBMapJoinOperator;
+import org.apache.hadoop.hive.ql.exec.vector.VectorSMBMapJoinOuterFilteredOperator;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizationContext;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizationContextRegion;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedInputFormatInterface;
@@ -1309,6 +1313,28 @@ public class Vectorizer implements PhysicalPlanResolver {
 
     switch (op.getType()) {
       case MAPJOIN:
+        {
+          MapJoinDesc mapJoinDesc = (MapJoinDesc) op.getConf();
+          List<ExprNodeDesc> bigTableFilters = mapJoinDesc.getFilters().get((byte) mapJoinDesc.getPosBigTable());
+          boolean isOuterAndFiltered = (!mapJoinDesc.isNoOuterJoin() && bigTableFilters.size() > 0);
+          Class<? extends Operator<?>> opClass = null;
+          if (op instanceof MapJoinOperator) {
+            if (!isOuterAndFiltered) {
+              opClass = VectorMapJoinOperator.class;
+            } else {
+              opClass = VectorMapJoinOuterFilteredOperator.class;
+            }
+          } else if (op instanceof SMBMapJoinOperator) {
+            if (!isOuterAndFiltered) {
+              opClass = VectorSMBMapJoinOperator.class;
+            } else {
+              opClass = VectorSMBMapJoinOuterFilteredOperator.class;
+            }
+          }
+          vectorOp = OperatorFactory.getVectorOperator(opClass, op.getConf(), vContext);
+          LOG.info("Vectorizer vectorizeOperator map join class " + vectorOp.getClass().getSimpleName());
+        }
+        break;
       case GROUPBY:
       case FILTER:
       case SELECT:

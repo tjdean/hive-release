@@ -86,7 +86,8 @@ public class VectorFileSinkOperator extends FileSinkOperator {
     }
     for (int i = 0; i < vrg.projectionSize; i++) {
       ColumnVector vectorColumn = vrg.cols[vrg.projectedColumns[i]];
-      singleRow[i] = valueWriters[i].writeValue(vectorColumn, batchIndex);
+      int adjustedIndex = (vectorColumn.isRepeating ? 0 : batchIndex);
+      singleRow[i] = valueWriters[i].writeValue(vectorColumn, adjustedIndex);
     }
     return singleRow;
   }

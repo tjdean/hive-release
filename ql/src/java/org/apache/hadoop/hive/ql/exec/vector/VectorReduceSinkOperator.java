@@ -87,7 +87,8 @@ public class VectorReduceSinkOperator extends ReduceSinkOperator {
     for (int i = 0; i < vrg.projectionSize; i++) {
       ColumnVector vectorColumn = vrg.cols[vrg.projectedColumns[i]];
       if (vectorColumn != null) {
-        singleRow[i] = rowWriters[i].writeValue(vectorColumn, batchIndex);
+        int adjustedIndex = (vectorColumn.isRepeating ? 0 : batchIndex);
+        singleRow[i] = rowWriters[i].writeValue(vectorColumn, adjustedIndex);
       } else {
         // Some columns from tables are not used.
         singleRow[i] = null;
