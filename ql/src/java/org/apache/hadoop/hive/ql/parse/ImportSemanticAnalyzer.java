@@ -355,9 +355,9 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
   private Task<? extends Serializable> alterSinglePartition(
       URI fromURI, FileSystem fs, CreateTableDesc tblDesc,
       Table table, Warehouse wh, AddPartitionDesc addPartitionDesc,
-      ReplicationSpec replicationSpec) throws IOException, HiveException, MetaException {
+      ReplicationSpec replicationSpec, org.apache.hadoop.hive.ql.metadata.Partition ptn) {
     addPartitionDesc.setReplaceMode(true);
-    fixLocationInPartSpec(fs, tblDesc, table, wh, replicationSpec, addPartitionDesc.getPartition(0));
+    addPartitionDesc.getPartition(0).setLocation(ptn.getLocation()); // use existing location
     return TaskFactory.get(new DDLWork(
         getInputs(),
         getOutputs(),
@@ -831,7 +831,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
               if (!replicationSpec.isMetadataOnly()){
                 rootTasks.add(addSinglePartition(fromURI, fs, tblDesc, table, wh, addPartitionDesc, replicationSpec));
               } else {
-                rootTasks.add(alterSinglePartition(fromURI, fs, tblDesc, table, wh, addPartitionDesc, replicationSpec));
+                rootTasks.add(alterSinglePartition(fromURI, fs, tblDesc, table, wh, addPartitionDesc, replicationSpec, ptn));
               }
               if (lockType == WriteEntity.WriteType.DDL_NO_LOCK){
                 lockType = WriteEntity.WriteType.DDL_SHARED;
