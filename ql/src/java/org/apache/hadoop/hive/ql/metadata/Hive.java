@@ -1844,6 +1844,9 @@ private void constructOneLBLocationMap(FileStatus fSta,
       FireEventRequestData data = new FireEventRequestData();
       InsertEventRequestData insertData = new InsertEventRequestData();
       data.setInsertData(insertData);
+      if (insertData.getFilesAdded() == null){
+        insertData.setFilesAdded(new ArrayList<String>());
+      }
       if (newFiles != null && newFiles.size() > 0) {
         for (Path p : newFiles) {
           insertData.addToFilesAdded(p.toString());
