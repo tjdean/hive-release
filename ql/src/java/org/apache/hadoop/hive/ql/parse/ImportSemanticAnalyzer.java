@@ -354,8 +354,10 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
 
   private Task<? extends Serializable> alterSinglePartition(
       URI fromURI, FileSystem fs, CreateTableDesc tblDesc,
-      Table table, Warehouse wh, AddPartitionDesc addPartitionDesc, ReplicationSpec replicationSpec) {
+      Table table, Warehouse wh, AddPartitionDesc addPartitionDesc,
+      ReplicationSpec replicationSpec) throws IOException, HiveException, MetaException {
     addPartitionDesc.setReplaceMode(true);
+    fixLocationInPartSpec(fs, tblDesc, table, wh, replicationSpec, addPartitionDesc.getPartition(0));
     return TaskFactory.get(new DDLWork(
         getInputs(),
         getOutputs(),
@@ -378,23 +380,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
       return addPartTask;
     } else {
       String srcLocation = partSpec.getLocation();
-      Path tgtPath = null;
-      if (tblDesc.getLocation() == null) {
-        if (table.getDataLocation() != null) {
-          tgtPath = new Path(table.getDataLocation().toString(),
-              Warehouse.makePartPath(partSpec.getPartSpec()));
-        } else {
-          Database parentDb = db.getDatabase(tblDesc.getDatabaseName());
-          tgtPath = new Path(
-              wh.getTablePath( parentDb, tblDesc.getTableName()),
-              Warehouse.makePartPath(partSpec.getPartSpec()));
-        }
-      } else {
-        tgtPath = new Path(tblDesc.getLocation(),
-            Warehouse.makePartPath(partSpec.getPartSpec()));
-      }
-      checkTargetLocationEmpty(fs, tgtPath, replicationSpec);
-      partSpec.setLocation(tgtPath.toString());
+      fixLocationInPartSpec(fs, tblDesc, table, wh, replicationSpec, partSpec);
       LOG.debug("adding dependent CopyWork/AddPart/MoveWork for partition "
           + partSpecToString(partSpec.getPartSpec())
           + " with source location: " + srcLocation);
@@ -415,6 +401,32 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
       rootTasks.add(copyTask);
       return addPartTask;
     }
+  }
+
+  /**
+   * Helper method to set location properly in partSpec
+   */
+  private void fixLocationInPartSpec(
+      FileSystem fs, CreateTableDesc tblDesc, Table table,
+      Warehouse wh, ReplicationSpec replicationSpec,
+      AddPartitionDesc.OnePartitionDesc partSpec) throws MetaException, HiveException, IOException {
+    Path tgtPath = null;
+    if (tblDesc.getLocation() == null) {
+      if (table.getDataLocation() != null) {
+        tgtPath = new Path(table.getDataLocation().toString(),
+            Warehouse.makePartPath(partSpec.getPartSpec()));
+      } else {
+        Database parentDb = db.getDatabase(tblDesc.getDatabaseName());
+        tgtPath = new Path(
+            wh.getTablePath( parentDb, tblDesc.getTableName()),
+            Warehouse.makePartPath(partSpec.getPartSpec()));
+      }
+    } else {
+      tgtPath = new Path(tblDesc.getLocation(),
+          Warehouse.makePartPath(partSpec.getPartSpec()));
+    }
+    checkTargetLocationEmpty(fs, tgtPath, replicationSpec);
+    partSpec.setLocation(tgtPath.toString());
   }
 
   private void checkTargetLocationEmpty(FileSystem fs, Path targetPath, ReplicationSpec replicationSpec)
