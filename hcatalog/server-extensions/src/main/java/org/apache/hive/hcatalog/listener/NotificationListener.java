@@ -126,15 +126,14 @@ public class NotificationListener extends MetaStoreEventListener {
     // and message selector string as "HCAT_EVENT = HCAT_ADD_PARTITION"
     if (partitionEvent.getStatus()) {
       Table table = partitionEvent.getTable();
-      List<Partition> partitions = partitionEvent.getPartitions();
       String topicName = getTopicName(table);
       if (topicName != null && !topicName.equals("")) {
-        send(messageFactory.buildAddPartitionMessage(table, partitions), topicName);
+        send(messageFactory.buildAddPartitionMessage(table, partitionEvent.getPartitionIterator()), topicName);
       } else {
         LOG.info("Topic name not found in metastore. Suppressing HCatalog notification for "
-            + partitions.get(0).getDbName()
+            + partitionEvent.getTable().getDbName()
             + "."
-            + partitions.get(0).getTableName()
+            + partitionEvent.getTable().getTableName()
             + " To enable notifications for this table, please do alter table set properties ("
             + HCatConstants.HCAT_MSGBUS_TOPIC_NAME
             + "=<dbname>.<tablename>) or whatever you want topic name to be.");

@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hive.metastore.events;
 
+import com.google.common.collect.Lists;
 import org.apache.hadoop.hive.metastore.HiveMetaStore.HMSHandler;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -63,16 +64,26 @@ public class AddPartitionEvent extends ListenerEvent {
 
   /**
    * @return List of partitions.
+   * Note : Do not use apart from testing - unsustainable memory usage in the long run
+   * @Deprecated slated for removal with 1.4.0
    */
+  @Deprecated
   public List<Partition> getPartitions() {
-    return partitions;
+    if (partitions != null){
+      return partitions;
+    }
+    return Lists.newArrayList(this.getPartitionIterator());
   }
 
   /**
    * @return Iterator for partitions.
    */
   public Iterator<Partition> getPartitionIterator() {
-    return partitionSpecProxy == null ? null : partitionSpecProxy.getPartitionIterator();
+    if (partitions != null){
+      return partitions.iterator();
+    } else {
+      return partitionSpecProxy == null ? null : partitionSpecProxy.getPartitionIterator();
+    }
   }
 
 }
