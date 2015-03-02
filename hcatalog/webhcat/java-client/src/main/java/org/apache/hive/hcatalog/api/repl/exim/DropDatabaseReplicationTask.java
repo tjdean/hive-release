@@ -24,6 +24,7 @@ import org.apache.hive.hcatalog.api.repl.Command;
 import org.apache.hive.hcatalog.api.repl.ReplicationTask;
 import org.apache.hive.hcatalog.api.repl.ReplicationUtils;
 import org.apache.hive.hcatalog.api.repl.commands.DropDatabaseCommand;
+import org.apache.hive.hcatalog.api.repl.commands.NoopCommand;
 import org.apache.hive.hcatalog.common.HCatConstants;
 import org.apache.hive.hcatalog.messaging.DropDatabaseMessage;
 
@@ -45,7 +46,7 @@ public class DropDatabaseReplicationTask extends ReplicationTask {
 
   public Iterable<? extends Command> getSrcWhCommands() {
     verifyActionable();
-    return new ArrayList<Command>();
+    return Arrays.asList(new NoopCommand(event.getEventId()));
   }
 
   public Iterable<? extends Command> getDstWhCommands() {
