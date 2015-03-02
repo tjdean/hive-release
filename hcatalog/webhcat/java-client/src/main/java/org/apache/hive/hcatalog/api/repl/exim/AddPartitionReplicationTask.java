@@ -27,10 +27,12 @@ import org.apache.hive.hcatalog.api.repl.ReplicationTask;
 import org.apache.hive.hcatalog.api.repl.ReplicationUtils;
 import org.apache.hive.hcatalog.api.repl.commands.ExportCommand;
 import org.apache.hive.hcatalog.api.repl.commands.ImportCommand;
+import org.apache.hive.hcatalog.api.repl.commands.NoopCommand;
 import org.apache.hive.hcatalog.common.HCatConstants;
 import org.apache.hive.hcatalog.messaging.AddPartitionMessage;
 
 import javax.annotation.Nullable;
+import java.util.Arrays;
 import java.util.Map;
 
 public class AddPartitionReplicationTask extends ReplicationTask {
@@ -51,6 +53,9 @@ public class AddPartitionReplicationTask extends ReplicationTask {
 
   public Iterable<? extends Command> getSrcWhCommands() {
     verifyActionable();
+    if (addPartitionMessage.getPartitions().isEmpty()){
+      return Arrays.asList(new NoopCommand(event.getEventId()));
+    }
 
     return Iterables.transform(addPartitionMessage.getPartitions(), new Function<Map<String,String>, Command>(){
       @Override
@@ -76,6 +81,9 @@ public class AddPartitionReplicationTask extends ReplicationTask {
 
   public Iterable<? extends Command> getDstWhCommands() {
     verifyActionable();
+    if (addPartitionMessage.getPartitions().isEmpty()){
+      return Arrays.asList(new NoopCommand(event.getEventId()));
+    }
 
     final String dstDbName = ReplicationUtils.mapIfMapAvailable(addPartitionMessage.getDB(), dbNameMapping);
     final String dstTableName = ReplicationUtils.mapIfMapAvailable(addPartitionMessage.getTable(), tableNameMapping);

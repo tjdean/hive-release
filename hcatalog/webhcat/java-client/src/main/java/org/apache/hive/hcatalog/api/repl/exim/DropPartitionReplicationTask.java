@@ -26,11 +26,13 @@ import org.apache.hive.hcatalog.api.repl.Command;
 import org.apache.hive.hcatalog.api.repl.ReplicationTask;
 import org.apache.hive.hcatalog.api.repl.ReplicationUtils;
 import org.apache.hive.hcatalog.api.repl.commands.DropPartitionCommand;
+import org.apache.hive.hcatalog.api.repl.commands.NoopCommand;
 import org.apache.hive.hcatalog.common.HCatConstants;
 import org.apache.hive.hcatalog.messaging.DropPartitionMessage;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 
 public class DropPartitionReplicationTask extends ReplicationTask {
@@ -50,7 +52,7 @@ public class DropPartitionReplicationTask extends ReplicationTask {
 
   public Iterable<? extends Command> getSrcWhCommands() {
     verifyActionable();
-    return new ArrayList<Command>();
+    return Arrays.asList(new NoopCommand(event.getEventId()));
   }
 
   public Iterable<? extends Command> getDstWhCommands() {
