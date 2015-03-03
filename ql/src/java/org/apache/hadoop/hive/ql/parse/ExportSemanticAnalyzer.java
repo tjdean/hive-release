@@ -88,9 +88,17 @@ public class ExportSemanticAnalyzer extends BaseSemanticAnalyzer {
         throw sme;
       }
     }
+
+
     if (ts != null) {
       try {
         EximUtil.validateTable(ts.tableHandle);
+        if (replicationSpec.isInReplicationScope()
+            && ts.tableHandle.isTemporary()){
+          // No replication for temporary tables either
+          ts = null;
+        }
+
       } catch (SemanticException e) {
         // table was a view, a non-native table or an offline table.
         // ignore for replication, error if not.
