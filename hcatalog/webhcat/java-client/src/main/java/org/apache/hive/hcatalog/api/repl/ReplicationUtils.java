@@ -150,10 +150,10 @@ public class ReplicationUtils {
   }
 
   /**
-   * Return alphanumeric(and '_') chars only of a string
+   * Return alphanumeric(and '_') chars only of a string, lowercased
    */
   public static String toStringWordCharsOnly(String s){
-    return (s == null) ? "null" : s.replaceAll("[\\W]", "");
+    return (s == null) ? "null" : s.replaceAll("[\\W]", "").toLowerCase();
   }
 
   public static String mapIfMapAvailable(String s, Map<String, String> mapping){
