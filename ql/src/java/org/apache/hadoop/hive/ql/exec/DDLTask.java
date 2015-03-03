@@ -3629,6 +3629,8 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
               replicationSpec.allowEventReplacementInto())){
             db.dropPartition(tbl.getDbName(),tbl.getTableName(),p.getValues(),true);
           }
+        } catch (NoSuchObjectException e){
+          // ignore NSOE because that means there's nothing to drop.
         } catch (Exception e) {
           throw new HiveException(e.getMessage(), e);
         }
@@ -3673,7 +3675,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
     }
 
     ReplicationSpec replicationSpec = dropTbl.getReplicationSpec();
-    if (replicationSpec.isInReplicationScope()){
+    if ((tbl!= null) && replicationSpec.isInReplicationScope()){
       if (!replicationSpec.allowEventReplacementInto(tbl)){
         // Drop occured as part of replicating a drop, but the destination
         // table was newer than the event being replicated. Ignore, but drop

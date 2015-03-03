@@ -53,6 +53,7 @@ import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Index;
 import org.apache.hadoop.hive.metastore.api.MetaException;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Order;
 import org.apache.hadoop.hive.metastore.api.SkewedInfo;
 import org.apache.hadoop.hive.ql.Driver;
@@ -2616,12 +2617,32 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
     // popular case but that's kinda hacky. Let's not do it for now.
     boolean canGroupExprs = ifExists;
 
-    Table tab = getTable(qualified);
+    ReplicationSpec replicationSpec = new ReplicationSpec(ast);
+
+    Table tab = null;
+    try {
+      tab = getTable(qualified);
+    } catch (SemanticException se){
+      if (replicationSpec.isInReplicationScope() &&
+            (
+                (se.getCause() instanceof InvalidTableException)
+                ||  (se.getMessage().contains(ErrorMsg.INVALID_TABLE.getMsg()))
+            )){
+        // If we're inside a replication scope, then the table not existing is not an error.
+        // We just return in that case, no drop needed.
+        return;
+        // TODO : the contains message check is fragile, we should refactor SemanticException to be
+        // queriable for error code, and not simply have a message
+        // NOTE : IF_EXISTS might also want to invoke this, but there's a good possibility
+        // that IF_EXISTS is stricter about table existence, and applies only to the ptn.
+        // Therefore, ignoring IF_EXISTS here.
+      } else {
+        throw se;
+      }
+    }
     Map<Integer, List<ExprNodeGenericFuncDesc>> partSpecs =
         getFullPartitionSpecs(ast, tab, canGroupExprs);
     if (partSpecs.isEmpty()) return; // nothing to do
-
-    ReplicationSpec replicationSpec = new ReplicationSpec(ast);
 
     validateAlterTableType(tab, AlterTableTypes.DROPPARTITION, expectView);
     ReadEntity re = new ReadEntity(tab);
