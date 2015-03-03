@@ -40,6 +40,7 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -199,8 +200,18 @@ public class EximUtil {
         }
       }
       if (tableHandle != null){
-        tableHandle.getTTable().putToParameters(
+        Table ttable = tableHandle.getTTable();
+        ttable.putToParameters(
             ReplicationSpec.KEY.CURR_STATE_ID.toString(), replicationSpec.getCurrentReplicationState());
+        if ((ttable.getParameters().containsKey("EXTERNAL")) &&
+            (ttable.getParameters().get("EXTERNAL").equalsIgnoreCase("TRUE"))){
+          // Replication destination will not be external - override if set
+          ttable.putToParameters("EXTERNAL","FALSE");
+        }
+        if (ttable.isSetTableType() && ttable.getTableType().equalsIgnoreCase(TableType.EXTERNAL_TABLE.toString())){
+          // Replication dest will not be external - override if set
+          ttable.setTableType(TableType.MANAGED_TABLE.toString());
+        }
       }
     } else {
       // ReplicationSpec.KEY scopeKey = ReplicationSpec.KEY.REPL_SCOPE;
@@ -218,11 +229,17 @@ public class EximUtil {
         if (partitions != null) {
           boolean firstPartition = true;
           for (org.apache.hadoop.hive.ql.metadata.Partition partition : partitions) {
+            Partition tptn = partition.getTPartition();
             if (replicationSpec.isInReplicationScope()){
-              partition.getTPartition().putToParameters(
+              tptn.putToParameters(
                   ReplicationSpec.KEY.CURR_STATE_ID.toString(), replicationSpec.getCurrentReplicationState());
+              if ((tptn.getParameters().containsKey("EXTERNAL")) &&
+                  (tptn.getParameters().get("EXTERNAL").equalsIgnoreCase("TRUE"))){
+                // Replication destination will not be external
+                tptn.putToParameters("EXTERNAL", "FALSE");
+              }
             }
-            String partDesc = serializer.toString(partition.getTPartition(), "UTF-8");
+            String partDesc = serializer.toString(tptn, "UTF-8");
             if (firstPartition){
               write(out, JSONObject.quote(partDesc));
               firstPartition = false;
