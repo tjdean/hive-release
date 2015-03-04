@@ -772,6 +772,9 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     }
 
     Database parentDb = db.getDatabase(tblDesc.getDatabaseName());
+    if (parentDb == null){
+      throw new SemanticException(ErrorMsg.DATABASE_NOT_EXISTS.getMsg(tblDesc.getDatabaseName()));
+    }
     if (tblDesc.getLocation() == null) {
       tblDesc.setLocation(wh.getTablePath(parentDb, tblDesc.getTableName()).toString());
     }
