@@ -1941,8 +1941,9 @@ public class HiveConf extends Configuration {
     TEZ_EXEC_INPLACE_PROGRESS(
         "hive.tez.exec.inplace.progress",
         true,
-        "Updates tez job execution progress in-place in the terminal.")
-    ;
+        "Updates tez job execution progress in-place in the terminal."),
+    NWAYJOINREORDER("hive.reorder.nway.joins", true,
+      "Runs reordering of tables within single n-way join (i.e.: picks streamtable)");
 
     public final String varname;
     private final String defaultExpr;
