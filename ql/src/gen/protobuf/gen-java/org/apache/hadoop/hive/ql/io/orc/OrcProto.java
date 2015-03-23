@@ -9289,6 +9289,21 @@ public final class OrcProto {
      */
     org.apache.hadoop.hive.ql.io.orc.OrcProto.ColumnEncodingOrBuilder getColumnsOrBuilder(
         int index);
+
+    // optional string writerTimezone = 3;
+    /**
+     * <code>optional string writerTimezone = 3;</code>
+     */
+    boolean hasWriterTimezone();
+    /**
+     * <code>optional string writerTimezone = 3;</code>
+     */
+    java.lang.String getWriterTimezone();
+    /**
+     * <code>optional string writerTimezone = 3;</code>
+     */
+    com.google.protobuf.ByteString
+        getWriterTimezoneBytes();
   }
   /**
    * Protobuf type {@code orc.proto.StripeFooter}
@@ -9357,6 +9372,11 @@ public final class OrcProto {
               columns_.add(input.readMessage(org.apache.hadoop.hive.ql.io.orc.OrcProto.ColumnEncoding.PARSER, extensionRegistry));
               break;
             }
+            case 26: {
+              bitField0_ |= 0x00000001;
+              writerTimezone_ = input.readBytes();
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -9402,6 +9422,7 @@ public final class OrcProto {
       return PARSER;
     }
 
+    private int bitField0_;
     // repeated .orc.proto.Stream streams = 1;
     public static final int STREAMS_FIELD_NUMBER = 1;
     private java.util.List<org.apache.hadoop.hive.ql.io.orc.OrcProto.Stream> streams_;
@@ -9474,9 +9495,53 @@ public final class OrcProto {
       return columns_.get(index);
     }
 
+    // optional string writerTimezone = 3;
+    public static final int WRITERTIMEZONE_FIELD_NUMBER = 3;
+    private java.lang.Object writerTimezone_;
+    /**
+     * <code>optional string writerTimezone = 3;</code>
+     */
+    public boolean hasWriterTimezone() {
+      return ((bitField0_ & 0x00000001) == 0x00000001);
+    }
+    /**
+     * <code>optional string writerTimezone = 3;</code>
+     */
+    public java.lang.String getWriterTimezone() {
+      java.lang.Object ref = writerTimezone_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        if (bs.isValidUtf8()) {
+          writerTimezone_ = s;
+        }
+        return s;
+      }
+    }
+    /**
+     * <code>optional string writerTimezone = 3;</code>
+     */
+    public com.google.protobuf.ByteString
+        getWriterTimezoneBytes() {
+      java.lang.Object ref = writerTimezone_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        writerTimezone_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private void initFields() {
       streams_ = java.util.Collections.emptyList();
       columns_ = java.util.Collections.emptyList();
+      writerTimezone_ = "";
     }
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
@@ -9496,6 +9561,9 @@ public final class OrcProto {
       for (int i = 0; i < columns_.size(); i++) {
         output.writeMessage(2, columns_.get(i));
       }
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        output.writeBytes(3, getWriterTimezoneBytes());
+      }
       getUnknownFields().writeTo(output);
     }
 
@@ -9512,6 +9580,10 @@ public final class OrcProto {
       for (int i = 0; i < columns_.size(); i++) {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(2, columns_.get(i));
+      }
+      if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeBytesSize(3, getWriterTimezoneBytes());
       }
       size += getUnknownFields().getSerializedSize();
       memoizedSerializedSize = size;
@@ -9643,6 +9715,8 @@ public final class OrcProto {
         } else {
           columnsBuilder_.clear();
         }
+        writerTimezone_ = "";
+        bitField0_ = (bitField0_ & ~0x00000004);
         return this;
       }
 
@@ -9670,6 +9744,7 @@ public final class OrcProto {
       public org.apache.hadoop.hive.ql.io.orc.OrcProto.StripeFooter buildPartial() {
         org.apache.hadoop.hive.ql.io.orc.OrcProto.StripeFooter result = new org.apache.hadoop.hive.ql.io.orc.OrcProto.StripeFooter(this);
         int from_bitField0_ = bitField0_;
+        int to_bitField0_ = 0;
         if (streamsBuilder_ == null) {
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
             streams_ = java.util.Collections.unmodifiableList(streams_);
@@ -9688,6 +9763,11 @@ public final class OrcProto {
         } else {
           result.columns_ = columnsBuilder_.build();
         }
+        if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+          to_bitField0_ |= 0x00000001;
+        }
+        result.writerTimezone_ = writerTimezone_;
+        result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
       }
@@ -9754,6 +9834,11 @@ public final class OrcProto {
               columnsBuilder_.addAllMessages(other.columns_);
             }
           }
+        }
+        if (other.hasWriterTimezone()) {
+          bitField0_ |= 0x00000004;
+          writerTimezone_ = other.writerTimezone_;
+          onChanged();
         }
         this.mergeUnknownFields(other.getUnknownFields());
         return this;
@@ -10260,6 +10345,80 @@ public final class OrcProto {
           columns_ = null;
         }
         return columnsBuilder_;
+      }
+
+      // optional string writerTimezone = 3;
+      private java.lang.Object writerTimezone_ = "";
+      /**
+       * <code>optional string writerTimezone = 3;</code>
+       */
+      public boolean hasWriterTimezone() {
+        return ((bitField0_ & 0x00000004) == 0x00000004);
+      }
+      /**
+       * <code>optional string writerTimezone = 3;</code>
+       */
+      public java.lang.String getWriterTimezone() {
+        java.lang.Object ref = writerTimezone_;
+        if (!(ref instanceof java.lang.String)) {
+          java.lang.String s = ((com.google.protobuf.ByteString) ref)
+              .toStringUtf8();
+          writerTimezone_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string writerTimezone = 3;</code>
+       */
+      public com.google.protobuf.ByteString
+          getWriterTimezoneBytes() {
+        java.lang.Object ref = writerTimezone_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          writerTimezone_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string writerTimezone = 3;</code>
+       */
+      public Builder setWriterTimezone(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        writerTimezone_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string writerTimezone = 3;</code>
+       */
+      public Builder clearWriterTimezone() {
+        bitField0_ = (bitField0_ & ~0x00000004);
+        writerTimezone_ = getDefaultInstance().getWriterTimezone();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string writerTimezone = 3;</code>
+       */
+      public Builder setWriterTimezoneBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  bitField0_ |= 0x00000004;
+        writerTimezone_ = value;
+        onChanged();
+        return this;
       }
 
       // @@protoc_insertion_point(builder_scope:orc.proto.StripeFooter)
@@ -17593,40 +17752,41 @@ public final class OrcProto {
       "ding\022,\n\004kind\030\001 \001(\0162\036.orc.proto.ColumnEnc" +
       "oding.Kind\022\026\n\016dictionarySize\030\002 \001(\r\"D\n\004Ki" +
       "nd\022\n\n\006DIRECT\020\000\022\016\n\nDICTIONARY\020\001\022\r\n\tDIRECT" +
-      "_V2\020\002\022\021\n\rDICTIONARY_V2\020\003\"^\n\014StripeFooter" +
+      "_V2\020\002\022\021\n\rDICTIONARY_V2\020\003\"v\n\014StripeFooter" +
       "\022\"\n\007streams\030\001 \003(\0132\021.orc.proto.Stream\022*\n\007" +
       "columns\030\002 \003(\0132\031.orc.proto.ColumnEncoding" +
-      "\"\341\002\n\004Type\022\"\n\004kind\030\001 \001(\0162\024.orc.proto.Type",
-      ".Kind\022\024\n\010subtypes\030\002 \003(\rB\002\020\001\022\022\n\nfieldName" +
-      "s\030\003 \003(\t\022\025\n\rmaximumLength\030\004 \001(\r\022\021\n\tprecis" +
-      "ion\030\005 \001(\r\022\r\n\005scale\030\006 \001(\r\"\321\001\n\004Kind\022\013\n\007BOO" +
-      "LEAN\020\000\022\010\n\004BYTE\020\001\022\t\n\005SHORT\020\002\022\007\n\003INT\020\003\022\010\n\004" +
-      "LONG\020\004\022\t\n\005FLOAT\020\005\022\n\n\006DOUBLE\020\006\022\n\n\006STRING\020" +
-      "\007\022\n\n\006BINARY\020\010\022\r\n\tTIMESTAMP\020\t\022\010\n\004LIST\020\n\022\007" +
-      "\n\003MAP\020\013\022\n\n\006STRUCT\020\014\022\t\n\005UNION\020\r\022\013\n\007DECIMA" +
-      "L\020\016\022\010\n\004DATE\020\017\022\013\n\007VARCHAR\020\020\022\010\n\004CHAR\020\021\"x\n\021" +
-      "StripeInformation\022\016\n\006offset\030\001 \001(\004\022\023\n\013ind" +
-      "exLength\030\002 \001(\004\022\022\n\ndataLength\030\003 \001(\004\022\024\n\014fo",
-      "oterLength\030\004 \001(\004\022\024\n\014numberOfRows\030\005 \001(\004\"/" +
-      "\n\020UserMetadataItem\022\014\n\004name\030\001 \001(\t\022\r\n\005valu" +
-      "e\030\002 \001(\014\"A\n\020StripeStatistics\022-\n\010colStats\030" +
-      "\001 \003(\0132\033.orc.proto.ColumnStatistics\"<\n\010Me" +
-      "tadata\0220\n\013stripeStats\030\001 \003(\0132\033.orc.proto." +
-      "StripeStatistics\"\222\002\n\006Footer\022\024\n\014headerLen" +
-      "gth\030\001 \001(\004\022\025\n\rcontentLength\030\002 \001(\004\022-\n\007stri" +
-      "pes\030\003 \003(\0132\034.orc.proto.StripeInformation\022" +
-      "\036\n\005types\030\004 \003(\0132\017.orc.proto.Type\022-\n\010metad" +
-      "ata\030\005 \003(\0132\033.orc.proto.UserMetadataItem\022\024",
-      "\n\014numberOfRows\030\006 \001(\004\022/\n\nstatistics\030\007 \003(\013" +
-      "2\033.orc.proto.ColumnStatistics\022\026\n\016rowInde" +
-      "xStride\030\010 \001(\r\"\305\001\n\nPostScript\022\024\n\014footerLe" +
-      "ngth\030\001 \001(\004\022/\n\013compression\030\002 \001(\0162\032.orc.pr" +
-      "oto.CompressionKind\022\034\n\024compressionBlockS" +
-      "ize\030\003 \001(\004\022\023\n\007version\030\004 \003(\rB\002\020\001\022\026\n\016metada" +
-      "taLength\030\005 \001(\004\022\025\n\rwriterVersion\030\006 \001(\r\022\016\n" +
-      "\005magic\030\300> \001(\t*:\n\017CompressionKind\022\010\n\004NONE" +
-      "\020\000\022\010\n\004ZLIB\020\001\022\n\n\006SNAPPY\020\002\022\007\n\003LZO\020\003B\"\n org" +
-      ".apache.hadoop.hive.ql.io.orc"
+      "\022\026\n\016writerTimezone\030\003 \001(\t\"\341\002\n\004Type\022\"\n\004kin",
+      "d\030\001 \001(\0162\024.orc.proto.Type.Kind\022\024\n\010subtype" +
+      "s\030\002 \003(\rB\002\020\001\022\022\n\nfieldNames\030\003 \003(\t\022\025\n\rmaxim" +
+      "umLength\030\004 \001(\r\022\021\n\tprecision\030\005 \001(\r\022\r\n\005sca" +
+      "le\030\006 \001(\r\"\321\001\n\004Kind\022\013\n\007BOOLEAN\020\000\022\010\n\004BYTE\020\001" +
+      "\022\t\n\005SHORT\020\002\022\007\n\003INT\020\003\022\010\n\004LONG\020\004\022\t\n\005FLOAT\020" +
+      "\005\022\n\n\006DOUBLE\020\006\022\n\n\006STRING\020\007\022\n\n\006BINARY\020\010\022\r\n" +
+      "\tTIMESTAMP\020\t\022\010\n\004LIST\020\n\022\007\n\003MAP\020\013\022\n\n\006STRUC" +
+      "T\020\014\022\t\n\005UNION\020\r\022\013\n\007DECIMAL\020\016\022\010\n\004DATE\020\017\022\013\n" +
+      "\007VARCHAR\020\020\022\010\n\004CHAR\020\021\"x\n\021StripeInformatio" +
+      "n\022\016\n\006offset\030\001 \001(\004\022\023\n\013indexLength\030\002 \001(\004\022\022",
+      "\n\ndataLength\030\003 \001(\004\022\024\n\014footerLength\030\004 \001(\004" +
+      "\022\024\n\014numberOfRows\030\005 \001(\004\"/\n\020UserMetadataIt" +
+      "em\022\014\n\004name\030\001 \001(\t\022\r\n\005value\030\002 \001(\014\"A\n\020Strip" +
+      "eStatistics\022-\n\010colStats\030\001 \003(\0132\033.orc.prot" +
+      "o.ColumnStatistics\"<\n\010Metadata\0220\n\013stripe" +
+      "Stats\030\001 \003(\0132\033.orc.proto.StripeStatistics" +
+      "\"\222\002\n\006Footer\022\024\n\014headerLength\030\001 \001(\004\022\025\n\rcon" +
+      "tentLength\030\002 \001(\004\022-\n\007stripes\030\003 \003(\0132\034.orc." +
+      "proto.StripeInformation\022\036\n\005types\030\004 \003(\0132\017" +
+      ".orc.proto.Type\022-\n\010metadata\030\005 \003(\0132\033.orc.",
+      "proto.UserMetadataItem\022\024\n\014numberOfRows\030\006" +
+      " \001(\004\022/\n\nstatistics\030\007 \003(\0132\033.orc.proto.Col" +
+      "umnStatistics\022\026\n\016rowIndexStride\030\010 \001(\r\"\305\001" +
+      "\n\nPostScript\022\024\n\014footerLength\030\001 \001(\004\022/\n\013co" +
+      "mpression\030\002 \001(\0162\032.orc.proto.CompressionK" +
+      "ind\022\034\n\024compressionBlockSize\030\003 \001(\004\022\023\n\007ver" +
+      "sion\030\004 \003(\rB\002\020\001\022\026\n\016metadataLength\030\005 \001(\004\022\025" +
+      "\n\rwriterVersion\030\006 \001(\r\022\016\n\005magic\030\300> \001(\t*:\n" +
+      "\017CompressionKind\022\010\n\004NONE\020\000\022\010\n\004ZLIB\020\001\022\n\n\006" +
+      "SNAPPY\020\002\022\007\n\003LZO\020\003B\"\n org.apache.hadoop.h",
+      "ive.ql.io.orc"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
       new com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner() {
@@ -17716,7 +17876,7 @@ public final class OrcProto {
           internal_static_orc_proto_StripeFooter_fieldAccessorTable = new
             com.google.protobuf.GeneratedMessage.FieldAccessorTable(
               internal_static_orc_proto_StripeFooter_descriptor,
-              new java.lang.String[] { "Streams", "Columns", });
+              new java.lang.String[] { "Streams", "Columns", "WriterTimezone", });
           internal_static_orc_proto_Type_descriptor =
             getDescriptor().getMessageTypes().get(14);
           internal_static_orc_proto_Type_fieldAccessorTable = new

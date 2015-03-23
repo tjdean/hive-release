@@ -33,6 +33,7 @@ import org.apache.hadoop.hive.ql.io.orc.OrcProto.RowIndexEntry;
  */
 public final class FileDump {
   private static final String ROWINDEX_PREFIX = "--rowindex=";
+  private static final String UNKNOWN = "UNKNOWN";
 
   // not used
   private FileDump() {}
@@ -41,6 +42,7 @@ public final class FileDump {
     Configuration conf = new Configuration();
     List<String> files = new ArrayList<String>();
     List<Integer> rowIndexCols = null;
+    boolean printTimeZone = false;
     for (String arg : args) {
       if (arg.startsWith("--")) {
         if (arg.startsWith(ROWINDEX_PREFIX)) {
@@ -52,6 +54,8 @@ public final class FileDump {
         } else {
           System.err.println("Unknown argument " + arg);
         }
+      } else if (arg.equals("-t")) {
+		    printTimeZone = true;
       } else {
         files.add(arg);
       }
@@ -90,11 +94,19 @@ public final class FileDump {
       for (StripeInformation stripe : reader.getStripes()) {
         ++stripeIx;
         long stripeStart = stripe.getOffset();
-        System.out.println("  Stripe: " + stripe.toString());
         OrcProto.StripeFooter footer = rows.readStripeFooter(stripe);
+        if (printTimeZone) {
+          String tz = footer.getWriterTimezone();
+          if (tz == null || tz.isEmpty()) {
+            tz = UNKNOWN;
+          }
+          System.out.println("  Stripe: " + stripe.toString() + " timezone: " + tz);
+        } else {
+          System.out.println("  Stripe: " + stripe.toString());
+        }
         long sectionStart = stripeStart;
         for(OrcProto.Stream section: footer.getStreamsList()) {
-          String kind = section.hasKind() ? section.getKind().name() : "UNKNOWN";
+          String kind = section.hasKind() ? section.getKind().name() : UNKNOWN;
           System.out.println("    Stream: column " + section.getColumn() +
               " section " + kind + " start: " + sectionStart +
               " length " + section.getLength());
