@@ -27,7 +27,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.google.common.annotations.VisibleForTesting;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
+import java.nio.ByteBuffer;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
+import java.util.TreeMap;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -68,6 +79,7 @@ import org.apache.hadoop.hive.serde2.typeinfo.VarcharTypeInfo;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.Text;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedOutputStream;
@@ -573,6 +585,7 @@ class WriterImpl implements Writer, MemoryManager.Callback {
       foundNulls = false;
 
       builder.addColumns(getEncoding());
+      builder.setWriterTimezone(TimeZone.getDefault().getID());
       if (rowIndexStream != null) {
         if (rowIndex.getEntryCount() != requiredIndexEntries) {
           throw new IllegalArgumentException("Column has wrong number of " +
@@ -1173,13 +1186,13 @@ class WriterImpl implements Writer, MemoryManager.Callback {
   }
 
   static final int MILLIS_PER_SECOND = 1000;
-  static final long BASE_TIMESTAMP =
-      Timestamp.valueOf("2015-01-01 00:00:00").getTime() / MILLIS_PER_SECOND;
+  static final String BASE_TIMESTAMP_STRING = "2015-01-01 00:00:00";
 
   private static class TimestampTreeWriter extends TreeWriter {
     private final IntegerWriter seconds;
     private final IntegerWriter nanos;
     private final boolean isDirectV2;
+    private final long base_timestamp;
 
     TimestampTreeWriter(int columnId,
                      ObjectInspector inspector,
@@ -1192,6 +1205,8 @@ class WriterImpl implements Writer, MemoryManager.Callback {
       this.nanos = createIntegerWriter(writer.createStream(id,
           OrcProto.Stream.Kind.SECONDARY), false, isDirectV2);
       recordPosition(rowIndexPosition);
+      // for unit tests to set different time zones
+      this.base_timestamp = Timestamp.valueOf(BASE_TIMESTAMP_STRING).getTime() / MILLIS_PER_SECOND;
     }
 
     @Override
@@ -1211,7 +1226,7 @@ class WriterImpl implements Writer, MemoryManager.Callback {
         Timestamp val =
             ((TimestampObjectInspector) inspector).
                 getPrimitiveJavaObject(obj);
-        seconds.write((val.getTime() / MILLIS_PER_SECOND) - BASE_TIMESTAMP);
+        seconds.write((val.getTime() / MILLIS_PER_SECOND) - base_timestamp);
         nanos.write(formatNanos(val.getNanos()));
       }
     }

@@ -122,12 +122,12 @@ STAGE PLANS:
       Processor Tree:
         TableScan
           alias: emp_orc
-          Statistics: Num rows: 3 Data size: 351 Basic stats: COMPLETE Column stats: NONE
+          Statistics: Num rows: 3 Data size: 363 Basic stats: COMPLETE Column stats: NONE
           GatherStats: false
           Select Operator
             expressions: lastname (type: string), deptid (type: int)
             outputColumnNames: _col0, _col1
-            Statistics: Num rows: 3 Data size: 351 Basic stats: COMPLETE Column stats: NONE
+            Statistics: Num rows: 3 Data size: 363 Basic stats: COMPLETE Column stats: NONE
             ListSink
 
 PREHOOK: query: -- table level analyze statistics
@@ -176,12 +176,12 @@ STAGE PLANS:
       Processor Tree:
         TableScan
           alias: emp_orc
-          Statistics: Num rows: 6 Data size: 351 Basic stats: COMPLETE Column stats: NONE
+          Statistics: Num rows: 6 Data size: 363 Basic stats: COMPLETE Column stats: NONE
           GatherStats: false
           Select Operator
             expressions: lastname (type: string), deptid (type: int)
             outputColumnNames: _col0, _col1
-            Statistics: Num rows: 6 Data size: 351 Basic stats: COMPLETE Column stats: NONE
+            Statistics: Num rows: 6 Data size: 363 Basic stats: COMPLETE Column stats: NONE
             ListSink
 
 PREHOOK: query: -- column level partial statistics
@@ -230,12 +230,12 @@ STAGE PLANS:
       Processor Tree:
         TableScan
           alias: emp_orc
-          Statistics: Num rows: 6 Data size: 351 Basic stats: COMPLETE Column stats: PARTIAL
+          Statistics: Num rows: 6 Data size: 363 Basic stats: COMPLETE Column stats: PARTIAL
           GatherStats: false
           Select Operator
             expressions: lastname (type: string), deptid (type: int)
             outputColumnNames: _col0, _col1
-            Statistics: Num rows: 6 Data size: 351 Basic stats: COMPLETE Column stats: PARTIAL
+            Statistics: Num rows: 6 Data size: 363 Basic stats: COMPLETE Column stats: PARTIAL
             ListSink
 
 PREHOOK: query: -- all selected columns have statistics
@@ -275,7 +275,7 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: emp_orc
-            Statistics: Num rows: 6 Data size: 351 Basic stats: COMPLETE Column stats: COMPLETE
+            Statistics: Num rows: 6 Data size: 363 Basic stats: COMPLETE Column stats: COMPLETE
             GatherStats: false
             Select Operator
               expressions: deptid (type: int)
@@ -325,7 +325,7 @@ STAGE PLANS:
               serialization.ddl struct emp_orc { string lastname, i32 deptid}
               serialization.format |
               serialization.lib org.apache.hadoop.hive.ql.io.orc.OrcSerde
-              totalSize 351
+              totalSize 363
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.ql.io.orc.OrcSerde
           
@@ -346,7 +346,7 @@ STAGE PLANS:
                 serialization.ddl struct emp_orc { string lastname, i32 deptid}
                 serialization.format |
                 serialization.lib org.apache.hadoop.hive.ql.io.orc.OrcSerde
-                totalSize 351
+                totalSize 363
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.ql.io.orc.OrcSerde
               name: default.emp_orc
@@ -404,12 +404,12 @@ STAGE PLANS:
       Processor Tree:
         TableScan
           alias: emp_orc
-          Statistics: Num rows: 6 Data size: 351 Basic stats: COMPLETE Column stats: COMPLETE
+          Statistics: Num rows: 6 Data size: 363 Basic stats: COMPLETE Column stats: COMPLETE
           GatherStats: false
           Select Operator
             expressions: lastname (type: string), deptid (type: int)
             outputColumnNames: _col0, _col1
-            Statistics: Num rows: 6 Data size: 351 Basic stats: COMPLETE Column stats: COMPLETE
+            Statistics: Num rows: 6 Data size: 363 Basic stats: COMPLETE Column stats: COMPLETE
             ListSink
 
 PREHOOK: query: -- basicStatState: COMPLETE colStatState: COMPLETE
@@ -447,7 +447,7 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: emp_orc
-            Statistics: Num rows: 6 Data size: 351 Basic stats: COMPLETE Column stats: COMPLETE
+            Statistics: Num rows: 6 Data size: 363 Basic stats: COMPLETE Column stats: COMPLETE
             GatherStats: false
             Select Operator
               expressions: lastname (type: string)
@@ -497,7 +497,7 @@ STAGE PLANS:
               serialization.ddl struct emp_orc { string lastname, i32 deptid}
               serialization.format |
               serialization.lib org.apache.hadoop.hive.ql.io.orc.OrcSerde
-              totalSize 351
+              totalSize 363
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.ql.io.orc.OrcSerde
           
@@ -518,7 +518,7 @@ STAGE PLANS:
                 serialization.ddl struct emp_orc { string lastname, i32 deptid}
                 serialization.format |
                 serialization.lib org.apache.hadoop.hive.ql.io.orc.OrcSerde
-                totalSize 351
+                totalSize 363
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.ql.io.orc.OrcSerde
               name: default.emp_orc
@@ -565,7 +565,7 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: emp_orc
-            Statistics: Num rows: 6 Data size: 351 Basic stats: COMPLETE Column stats: COMPLETE
+            Statistics: Num rows: 6 Data size: 363 Basic stats: COMPLETE Column stats: COMPLETE
             GatherStats: false
             Select Operator
               expressions: deptid (type: int)
@@ -615,7 +615,7 @@ STAGE PLANS:
               serialization.ddl struct emp_orc { string lastname, i32 deptid}
               serialization.format |
               serialization.lib org.apache.hadoop.hive.ql.io.orc.OrcSerde
-              totalSize 351
+              totalSize 363
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.ql.io.orc.OrcSerde
           
@@ -636,7 +636,7 @@ STAGE PLANS:
                 serialization.ddl struct emp_orc { string lastname, i32 deptid}
                 serialization.format |
                 serialization.lib org.apache.hadoop.hive.ql.io.orc.OrcSerde
-                totalSize 351
+                totalSize 363
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.ql.io.orc.OrcSerde
               name: default.emp_orc
@@ -686,7 +686,7 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: emp_orc
-            Statistics: Num rows: 6 Data size: 351 Basic stats: COMPLETE Column stats: COMPLETE
+            Statistics: Num rows: 6 Data size: 363 Basic stats: COMPLETE Column stats: COMPLETE
             GatherStats: false
             Select Operator
               expressions: lastname (type: string), deptid (type: int)
@@ -736,7 +736,7 @@ STAGE PLANS:
               serialization.ddl struct emp_orc { string lastname, i32 deptid}
               serialization.format |
               serialization.lib org.apache.hadoop.hive.ql.io.orc.OrcSerde
-              totalSize 351
+              totalSize 363
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.ql.io.orc.OrcSerde
           
@@ -757,7 +757,7 @@ STAGE PLANS:
                 serialization.ddl struct emp_orc { string lastname, i32 deptid}
                 serialization.format |
                 serialization.lib org.apache.hadoop.hive.ql.io.orc.OrcSerde
-                totalSize 351
+                totalSize 363
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.ql.io.orc.OrcSerde
               name: default.emp_orc

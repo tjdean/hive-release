@@ -31,13 +31,24 @@ import org.apache.hadoop.hive.ql.io.orc.OrcProto.RowIndexEntry;
  * A tool for printing out the file structure of ORC files.
  */
 public final class FileDump {
+  private static final String UNKNOWN = "UNKNOWN";
 
   // not used
   private FileDump() {}
 
   public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
-    for(String filename: args) {
+    List<String> files = new ArrayList<String>();
+    boolean printTimeZone = false;
+    for (String arg : args) {
+      if (arg.equals("-t")) {
+		    printTimeZone = true;
+      } else {
+        files.add(arg);
+      }
+    }
+
+    for (String filename : files) {
       System.out.println("Structure for " + filename);
       Path path = new Path(filename);
       Reader reader = OrcFile.createReader(path, OrcFile.readerOptions(conf));
@@ -68,11 +79,19 @@ public final class FileDump {
       System.out.println("\nStripes:");
       for(StripeInformation stripe: reader.getStripes()) {
         long stripeStart = stripe.getOffset();
-        System.out.println("  Stripe: " + stripe.toString());
         OrcProto.StripeFooter footer = rows.readStripeFooter(stripe);
+        if (printTimeZone) {
+          String tz = footer.getWriterTimezone();
+          if (tz == null || tz.isEmpty()) {
+            tz = UNKNOWN;
+          }
+          System.out.println("  Stripe: " + stripe.toString() + " timezone: " + tz);
+        } else {
+          System.out.println("  Stripe: " + stripe.toString());
+        }
         long sectionStart = stripeStart;
         for(OrcProto.Stream section: footer.getStreamsList()) {
-          String kind = section.hasKind() ? section.getKind().name() : "UNKNOWN";
+          String kind = section.hasKind() ? section.getKind().name() : UNKNOWN;
           System.out.println("    Stream: column " + section.getColumn() +
               " section " + kind + " start: " + sectionStart +
               " length " + section.getLength());
