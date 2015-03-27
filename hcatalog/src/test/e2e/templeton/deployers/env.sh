@@ -29,11 +29,15 @@ if [ -z ${HADOOP_VERSION} ]; then
 fi
 
 if [ -z ${HIVE_VERSION} ]; then
-  export HIVE_VERSION=0.14.0-SNAPSHOT
+  export HIVE_VERSION=0.14.0
 fi
 
 if [ -z ${PIG_VERSION} ]; then
   export PIG_VERSION=0.12.2-SNAPSHOT
+fi
+
+if [ -z ${TEZ_VERSION} ]; then
+  export TEZ_VERSION=0.5.3
 fi
 
 #Root of project source tree
@@ -46,6 +50,7 @@ if [ -z ${HADOOP_HOME} ]; then
   export HADOOP_HOME=/Users/${USER}/dev/hwxhadoop/hadoop-dist/target/hadoop-${HADOOP_VERSION}
 fi
 
+export TEZ_CLIENT_HOME=/Users/ekoifman/dev/apache-tez-client-${TEZ_VERSION}
 #Make sure Pig is built for the Hadoop version you are running
 export PIG_TAR_PATH=/Users/${USER}/dev/pig-${PIG_VERSION}-src/build
 #this is part of Pig distribution

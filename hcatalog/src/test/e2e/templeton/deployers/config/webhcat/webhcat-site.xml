@@ -69,6 +69,11 @@
             shipped to the target node in the cluster to execute Pig job which uses 
             HCat, Hive query, etc.</description>
     </property>
+
+    <property>
+      <name>templeton.hive.extra.files</name>
+      <value>${env.TEZ_CLIENT_HOME}/conf/tez-site.xml,${env.TEZ_CLIENT_HOME}/,${env.TEZ_CLIENT_HOME}/lib</value>
+    </property>
     <property>
         <name>templeton.hcat.home</name>
         <value>apache-hive-${env.HIVE_VERSION}-bin.tar.gz/apache-hive-${env.HIVE_VERSION}-bin/hcatalog</value>
@@ -101,7 +106,7 @@
     </property>
 
     <property>
-        <!--\,thrift://127.0.0.1:9933-->
+        <!--\,thrift://127.0.0.1:9933,,hive.execution.engine=tez-->
         <name>templeton.hive.properties</name>
         <value>hive.metastore.uris=thrift://localhost:9933,hive.metastore.sasl.enabled=false</value>
     </property>
