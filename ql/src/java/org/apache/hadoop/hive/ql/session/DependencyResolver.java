@@ -20,7 +20,6 @@ package org.apache.hadoop.hive.ql.session;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -59,11 +58,8 @@ public class DependencyResolver {
 
     // If HIVE_HOME is not defined or file is not found in HIVE_HOME/conf then load default ivysettings.xml from class loader
     if (ivysettingsPath == null || !(new File(ivysettingsPath).exists())) {
-      URL ivysetttingsResource = ClassLoader.getSystemResource("ivysettings.xml");
-      if (ivysetttingsResource != null){
-        ivysettingsPath = ivysetttingsResource.getFile();
-        _console.printInfo("ivysettings.xml file not found in HIVE_HOME or HIVE_CONF_DIR," + ivysettingsPath + " will be used");
-      }
+      ivysettingsPath = ClassLoader.getSystemResource("ivysettings.xml").getFile();
+      _console.printInfo("ivysettings.xml file not found in HIVE_HOME or HIVE_CONF_DIR," + ivysettingsPath + " will be used");
     }
 
   }
