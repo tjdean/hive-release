@@ -592,7 +592,6 @@ public final class ColumnPrunerProcFactory {
       // these are from ColumnPrunerSelectProc
       List<String> cols = cppCtx.getPrunedColList(select);
       RowResolver rr = cppCtx.getOpToParseCtxMap().get(op).getRowResolver();
-      if (rr.getColumnInfos().size() != cols.size()) {
         ArrayList<ExprNodeDesc> colList = new ArrayList<ExprNodeDesc>();
         ArrayList<String> outputColNames = new ArrayList<String>();
         for (String col : cols) {
@@ -607,7 +606,6 @@ public final class ColumnPrunerProcFactory {
         ((SelectDesc)select.getConf()).setSelStarNoCompute(false);
         ((SelectDesc)select.getConf()).setColList(colList);
         ((SelectDesc)select.getConf()).setOutputColumnNames(outputColNames);
-      }
       return null;
     }
   }
