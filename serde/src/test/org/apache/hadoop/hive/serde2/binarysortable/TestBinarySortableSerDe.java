@@ -196,16 +196,114 @@ public class TestBinarySortableSerDe extends TestCase {
     return bytes;
   }
 
+  public static Object getNonRandValue(Object[] nrArray, int index) {
+    return nrArray[index % nrArray.length];
+  }
+
+  Object[] nrByte = {
+      Byte.valueOf((byte) 1)
+  };
+
+  Object[] nrShort = {
+      Short.valueOf((short) 1)
+  };
+
+  Object[] nrInt = {
+      Integer.valueOf(1)
+  };
+
+  Object[] nrLong = {
+      Long.valueOf(1)
+  };
+
+  Object[] nrFloat = {
+      Float.valueOf(1.0f)
+  };
+
+  Object[] nrDouble = {
+      Double.valueOf(1.0)
+  };
+
+  Object[] nrDecimal = {
+      HiveDecimal.create("100"),
+      HiveDecimal.create("10"),
+      HiveDecimal.create("1"),
+      HiveDecimal.create("0"),
+      HiveDecimal.create("0.1"),
+      HiveDecimal.create("0.01"),
+      HiveDecimal.create("0.001"),
+      HiveDecimal.create("-100"),
+      HiveDecimal.create("-10"),
+      HiveDecimal.create("-1"),
+      HiveDecimal.create("-0.1"),
+      HiveDecimal.create("-0.01"),
+      HiveDecimal.create("-0.001"),
+      HiveDecimal.create("12345678900"),
+      HiveDecimal.create("1234567890"),
+      HiveDecimal.create("123456789"),
+      HiveDecimal.create("12345678.9"),
+      HiveDecimal.create("1234567.89"),
+      HiveDecimal.create("123456.789"),
+      HiveDecimal.create("12345.6789"),
+      HiveDecimal.create("1234.56789"),
+      HiveDecimal.create("123.456789"),
+      HiveDecimal.create("1.23456789"),
+      HiveDecimal.create("0.123456789"),
+      HiveDecimal.create("0.0123456789"),
+      HiveDecimal.create("0.00123456789"),
+      HiveDecimal.create("0.000123456789"),
+      HiveDecimal.create("-12345678900"),
+      HiveDecimal.create("-1234567890"),
+      HiveDecimal.create("-123456789"),
+      HiveDecimal.create("-12345678.9"),
+      HiveDecimal.create("-1234567.89"),
+      HiveDecimal.create("-123456.789"),
+      HiveDecimal.create("-12345.6789"),
+      HiveDecimal.create("-1234.56789"),
+      HiveDecimal.create("-123.456789"),
+      HiveDecimal.create("-1.23456789"),
+      HiveDecimal.create("-0.123456789"),
+      HiveDecimal.create("-0.0123456789"),
+      HiveDecimal.create("-0.00123456789"),
+      HiveDecimal.create("-0.000123456789"),
+  };
+
+  Object[] nrString = {
+      "abcdefg"
+  };
+
+  Object[] nrDate = {
+      Date.valueOf("2001-01-01")
+  };
+
   public void testBinarySortableSerDe() throws Throwable {
     try {
 
       System.out.println("Beginning Test testBinarySortableSerDe:");
 
-      int num = 1000;
+      int num = 1000 + nrDecimal.length;
       Random r = new Random(1234);
       MyTestClass rows[] = new MyTestClass[num];
+      int i;
+      // First try non-random values
+      for (i = 0; i < nrDecimal.length; i++) {
+        MyTestClass t = new MyTestClass();
+        t.myByte = (Byte) getNonRandValue(nrByte, i);
+        t.myShort = (Short) getNonRandValue(nrShort, i);
+        t.myInt = (Integer) getNonRandValue(nrInt, i);
+        t.myLong = (Long) getNonRandValue(nrLong, i);
+        t.myFloat = (Float) getNonRandValue(nrFloat, i);
+        t.myDouble = (Double) getNonRandValue(nrDouble, i);
+        t.myString = (String) getNonRandValue(nrString, i);
+        t.myDecimal = (HiveDecimal) getNonRandValue(nrDecimal, i);
+        t.myDate = (Date) getNonRandValue(nrDate, i);
+        t.myStruct = null;
+        t.myList = null;
+        t.myBA = null;
+        rows[i] = t;
+      }
 
-      for (int i = 0; i < num; i++) {
+      for (; i < num; i++) {
         int randField = r.nextInt(11);
         MyTestClass t = new MyTestClass();
         t.myByte = randField > 0 ? null : Byte.valueOf((byte) r.nextInt());

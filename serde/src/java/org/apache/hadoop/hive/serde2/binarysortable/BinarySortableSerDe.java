@@ -775,7 +775,9 @@ public class BinarySortableSerDe extends AbstractSerDe {
         dec = dec.abs();
 
         // get the scale factor to turn big decimal into a decimal < 1
-        int factor = dec.precision() - dec.scale();
+        // This relies on the BigDecimal precision value, which as of HIVE-10270
+        // is now different from HiveDecimal.precision()
+        int factor = dec.bigDecimalValue().precision() - dec.bigDecimalValue().scale();
         factor = sign == 1 ? factor : -factor;
 
         // convert the absolute big decimal to string
