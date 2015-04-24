@@ -143,8 +143,18 @@ public class RegexSerDe extends AbstractSerDe {
      }
 
     // StandardStruct uses ArrayList to store the row.
+    String columnComments = tbl.getProperty("columns.comments");
+    if (columnComments == null) {
+      // split() needs to have list size matching number of columns
+      StringBuilder sb = new StringBuilder();
+      for (int idx = 0; idx < columnNames.size() - 1; ++idx) {
+        sb.append('\0');
+      }
+      columnComments = sb.toString();
+    }
+
     rowOI = ObjectInspectorFactory.getStandardStructObjectInspector(
-        columnNames,columnOIs,Lists.newArrayList(Splitter.on('\0').split(tbl.getProperty("columns.comments"))));
+        columnNames,columnOIs,Lists.newArrayList(Splitter.on('\0').split(columnComments)));
 
     row = new ArrayList<Object>(numColumns);
     // Constructing the row object, etc, which will be reused for all rows.
