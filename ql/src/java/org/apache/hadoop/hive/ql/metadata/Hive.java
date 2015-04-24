@@ -2417,7 +2417,8 @@ private void constructOneLBLocationMap(FileStatus fSta,
       
       if (!isSrcLocal) {    	      			                 
         // If the source  FS is same as the destination FS, rename the file
-        if (srcf.getFileSystem(conf).equals(destf.getFileSystem(conf))) {
+        // Note that FileSystem.equals() does not work here as it inherits Object.equals().
+        if (srcf.getFileSystem(conf).getUri().equals(destf.getFileSystem(conf).getUri())) {
           // For NOT local src file and same FS, rename the file
           success = fs.rename(srcf, destf);
         } else {
