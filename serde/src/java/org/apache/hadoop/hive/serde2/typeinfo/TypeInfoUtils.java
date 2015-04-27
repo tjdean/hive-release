@@ -475,10 +475,7 @@ public final class TypeInfoUtils {
               break;
             }
           }
-          Token name = expect("name",">");
-          if (name.text.equals(">")) {
-            break;
-          }
+          Token name = expect("name");
           fieldNames.add(name.text);
           expect(":");
           fieldTypeInfos.add(parseType());
