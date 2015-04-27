@@ -36,7 +36,6 @@ import org.apache.hadoop.hive.common.DiskRangeList;
 import org.apache.hadoop.hive.common.DiskRangeList.DiskRangeListCreateHelper;
 import org.apache.hadoop.hive.common.DiskRangeList.DiskRangeListMutateHelper;
 import org.apache.hadoop.hive.ql.io.orc.RecordReaderImpl.BufferChunk;
-import org.apache.hadoop.hive.shims.HadoopShims;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.hive.shims.HadoopShims.ByteBufferPoolShim;
 import org.apache.hadoop.hive.shims.HadoopShims.ZeroCopyReaderShim;
@@ -47,7 +46,6 @@ import com.google.common.collect.ComparisonChain;
  * Stateless methods shared between RecordReaderImpl and EncodedReaderImpl.
  */
 public class RecordReaderUtils {
-  private static final HadoopShims SHIMS = ShimLoader.getHadoopShims();
   static boolean[] findPresentStreamsByColumn(
       List<OrcProto.Stream> streamList, List<OrcProto.Type> types) {
     boolean[] hasNull = new boolean[types.size()];
@@ -265,7 +263,7 @@ public class RecordReaderUtils {
         }
       } else if (doForceDirect) {
         ByteBuffer directBuf = ByteBuffer.allocateDirect(len);
-        readDirect(file, len, directBuf);
+        readDirect(file, len, directBuf, true);
         range = range.replaceSelfWith(new BufferChunk(directBuf, range.getOffset()));
       } else {
         byte[] buffer = new byte[len];
@@ -278,13 +276,13 @@ public class RecordReaderUtils {
   }
 
   public static void readDirect(FSDataInputStream file,
-      int len, ByteBuffer directBuf) throws IOException {
+      int len, ByteBuffer directBuf, boolean doSetLimit) throws IOException {
     // TODO: HDFS API is a mess, so handle all kinds of cases.
     // Before 2.7, read() also doesn't adjust position correctly, so track it separately.
     int pos = directBuf.position(), startPos = pos, endPos = pos + len;
     try {
       while (pos < endPos) {
-        int count = SHIMS.readByteBuffer(file, directBuf);
+        int count = file.read(directBuf);
         if (count < 0) throw new EOFException();
         assert count != 0 : "0-length read: " + (endPos - pos) + "@" + (pos - startPos);
         pos += count;
@@ -300,7 +298,9 @@ public class RecordReaderUtils {
       directBuf.put(buffer);
     }
     directBuf.position(startPos);
-    directBuf.limit(startPos + len);
+    if (doSetLimit) {
+      directBuf.limit(startPos + len);
+    }
   }
 
 
