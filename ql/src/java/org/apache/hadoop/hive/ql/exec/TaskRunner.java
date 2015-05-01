@@ -72,6 +72,7 @@ public class TaskRunner extends Thread {
       runSequential();
     } finally {
       runner = null;
+      result.setRunning(false);
     }
   }
 
