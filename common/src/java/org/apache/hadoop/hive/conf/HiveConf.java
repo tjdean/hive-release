@@ -2607,6 +2607,7 @@ public class HiveConf extends Configuration {
     ConfVars.JOB_DEBUG_TIMEOUT.varname,
     ConfVars.MAXCREATEDFILES.varname,
     ConfVars.MAXREDUCERS.varname,
+    ConfVars.NWAYJOINREORDER.varname,
     ConfVars.OUTPUT_FILE_EXTENSION.varname,
     ConfVars.SHOW_JOB_FAIL_DEBUG_INFO.varname,
     ConfVars.TASKLOG_DEBUG_TIMEOUT.varname,
@@ -2627,6 +2628,7 @@ public class HiveConf extends Configuration {
     "hive\\.exec\\.mode.local\\..*",
     "hive\\.exec\\.orc\\..*",
     "hive\\.exec\\.parallel\\..*",
+    "hive\\.explain\\..*",
     "hive\\.fetch.task\\..*",
     "hive\\.groupby\\..*",
     "hive\\.hbase\\..*",
@@ -2635,11 +2637,13 @@ public class HiveConf extends Configuration {
     "hive\\.intermediate\\..*",
     "hive\\.join\\..*",
     "hive\\.limit\\..*",
+    "hive\\.log\\..*",
     "hive\\.mapjoin\\..*",
     "hive\\.merge\\..*",
     "hive\\.optimize\\..*",
     "hive\\.orc\\..*",
     "hive\\.outerjoin\\..*",
+    "hive\\.parquet\\..*",
     "hive\\.ppd\\..*",
     "hive\\.prewarm\\..*",
     "hive\\.server2\\.proxy\\.user",
@@ -2659,6 +2663,7 @@ public class HiveConf extends Configuration {
     "tez\\.am\\..*",
     "tez\\.task\\..*",
     "tez\\.runtime\\..*",
+    "tez.queue.name",
   };
 
 
