@@ -178,6 +178,9 @@ function Install(
         $streamingJarUriPath = ConvertAbsolutePathToUri $streamingJarUriPath
         $templetonLibJarsPath = $ENV:HIVE_HOME + "/lib/zookeeper-@zookeeper.version@.jar"
         $templetonLibJarsPath = ConvertAbsolutePathToUri $templetonLibJarsPath
+        $templetonLibJarsPath2 = $ENV:HIVE_HOME + "/lib/hive-common-@hive.version@.jar"
+        $templetonLibJarsPath2 = ConvertAbsolutePathToUri $templetonLibJarsPath2
+        $templetonLibJarsPath = $templetonLibJarsPath + "," + $templetonLibJarsPath2
         $templetonJar = "$ENV:TEMPLETON_HOME\share\webhcat\svr\lib\hive-webhcat-$WebHCatVersion.jar"
 
         Configure "hcatalog" $NodeInstallRoot $serviceCredential @{
