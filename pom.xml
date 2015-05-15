@@ -1253,6 +1253,10 @@
                             <token>@zookeeper.version@</token>
                             <value>${zookeeper.version}</value>
                        </replacement>
+                       <replacement>
+                            <token>@hive.version@</token>
+                            <value>${project.version}</value>
+                       </replacement>
                     </replacements>
                     </configuration>
                 </plugin>
