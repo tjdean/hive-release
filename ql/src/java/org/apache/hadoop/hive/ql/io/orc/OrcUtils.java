@@ -62,7 +62,7 @@ public class OrcUtils {
       return results;
     }
     if (selectedColumns != null && !selectedColumns.isEmpty()) {
-      includeColumnsImpl(results, selectedColumns, allColumns, inspector);
+      includeColumnsImpl(results, selectedColumns.toLowerCase(), allColumns, inspector);
     }
     return results;
   }
