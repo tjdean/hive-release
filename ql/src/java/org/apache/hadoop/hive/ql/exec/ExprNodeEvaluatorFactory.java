@@ -27,7 +27,8 @@ import org.apache.hadoop.hive.ql.plan.ExprNodeConstantDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeFieldDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeGenericFuncDesc;
-import org.apache.hadoop.hive.ql.plan.ExprNodeNullDesc;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
+import org.apache.hadoop.io.NullWritable;
 
 /**
  * ExprNodeEvaluatorFactory.
@@ -55,11 +56,6 @@ public final class ExprNodeEvaluatorFactory {
     if (desc instanceof ExprNodeFieldDesc) {
       return new ExprNodeFieldEvaluator((ExprNodeFieldDesc) desc);
     }
-    // Null node, a constant node with value NULL and no type information
-    if (desc instanceof ExprNodeNullDesc) {
-      return new ExprNodeNullEvaluator((ExprNodeNullDesc) desc);
-    }
-
     throw new RuntimeException(
         "Cannot find ExprNodeEvaluator for the exprNodeDesc = " + desc);
   }
@@ -114,14 +110,14 @@ public final class ExprNodeEvaluatorFactory {
 
   private static class EvaluatorContext {
 
-    private final Map<ExprNodeDesc.ExprNodeDescEqualityWrapper, ExprNodeEvaluator> cached = 
+    private final Map<ExprNodeDesc.ExprNodeDescEqualityWrapper, ExprNodeEvaluator> cached =
         new HashMap<ExprNodeDesc.ExprNodeDescEqualityWrapper, ExprNodeEvaluator>();
 
     private boolean hasReference;
 
     public ExprNodeEvaluator getEvaluated(ExprNodeEvaluator eval) {
-      ExprNodeDesc.ExprNodeDescEqualityWrapper key = 
-          new ExprNodeDesc.ExprNodeDescEqualityWrapper(eval.expr); 
+      ExprNodeDesc.ExprNodeDescEqualityWrapper key =
+          new ExprNodeDesc.ExprNodeDescEqualityWrapper(eval.expr);
       ExprNodeEvaluator prev = cached.get(key);
       if (prev == null) {
         cached.put(key, eval);
