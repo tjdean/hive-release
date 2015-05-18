@@ -30,6 +30,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters.C
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
+import org.apache.hadoop.hive.serde2.objectinspector.primitive.VoidObjectInspector;
 
 /**
  * GenericUDFArray.
@@ -44,9 +45,7 @@ public class GenericUDFArray extends GenericUDF {
   @Override
   public ObjectInspector initialize(ObjectInspector[] arguments) throws UDFArgumentException {
 
-    GenericUDFUtils.ReturnObjectInspectorResolver returnOIResolver;
-
-    returnOIResolver = new GenericUDFUtils.ReturnObjectInspectorResolver(true);
+    GenericUDFUtils.ReturnObjectInspectorResolver returnOIResolver = new GenericUDFUtils.ReturnObjectInspectorResolver(true);
 
     for (int i = 0; i < arguments.length; i++) {
       if (!returnOIResolver.update(arguments[i])) {
