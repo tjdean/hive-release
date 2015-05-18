@@ -25,14 +25,12 @@ import org.apache.hadoop.hive.ql.exec.UDFArgumentException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentLengthException;
 import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.serde2.objectinspector.ListObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters.Converter;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
-import org.apache.hadoop.hive.serde2.objectinspector.primitive.VoidObjectInspector;
 
 /**
  * GenericUDFMap.
@@ -74,7 +72,7 @@ public class GenericUDFMap extends GenericUDF {
         }
       } else {
         // Values
-        if (!valueOIResolver.update(arguments[i]) && !compatibleTypes(arguments[i], arguments[i-2])) {
+        if (!valueOIResolver.update(arguments[i])) {
           throw new UDFArgumentTypeException(i, "Value type \""
               + arguments[i].getTypeName()
               + "\" is different from preceding value types. "
@@ -104,21 +102,6 @@ public class GenericUDFMap extends GenericUDF {
     }
 
     return ObjectInspectorFactory.getStandardMapObjectInspector(keyOI, valueOI);
-  }
-
-  private boolean compatibleTypes(ObjectInspector current, ObjectInspector prev) {
-
-    if (current instanceof VoidObjectInspector || prev instanceof VoidObjectInspector) {
-      // we allow null values for map.
-      return true;
-    }
-    if (current instanceof ListObjectInspector && prev instanceof ListObjectInspector && (
-      ((ListObjectInspector)current).getListElementObjectInspector() instanceof VoidObjectInspector ||
-      ((ListObjectInspector)prev).getListElementObjectInspector() instanceof VoidObjectInspector)) {
-      // array<null> is compatible with any other array<type>
-      return true;
-    }
-    return false;
   }
 
   @Override
