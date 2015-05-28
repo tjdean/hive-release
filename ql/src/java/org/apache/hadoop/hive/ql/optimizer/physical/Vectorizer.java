@@ -1071,6 +1071,10 @@ public class Vectorizer implements PhysicalPlanResolver {
       LOG.info("Grouping sets not supported in vector mode");
       return false;
     }
+    if (desc.pruneGroupingSetId()) {
+      LOG.info("Pruning grouping set id not supported in vector mode");
+      return false;
+    }
     boolean ret = validateExprNodeDesc(desc.getKeys());
     if (!ret) {
       return false;
