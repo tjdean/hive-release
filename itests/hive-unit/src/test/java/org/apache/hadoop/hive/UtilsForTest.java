@@ -24,7 +24,7 @@ import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 /**
  * Test utilities
  */
-public class TestUtil {
+public class UtilsForTest {
   /**
    * Use this if you want a fresh metastore for your test, without any existing entries.
    * It updates the configuration to point to new derby dir location
