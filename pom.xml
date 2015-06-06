@@ -1265,6 +1265,7 @@
             </plugins>
         </build>
 	</profile>
+    <profile>
       <id>spark-test</id>
       <activation>
 	<property>
