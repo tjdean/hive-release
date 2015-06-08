@@ -30,6 +30,7 @@
   <properties>
     <hive.path.to.root>../..</hive.path.to.root>
     <spark.home>${basedir}/${hive.path.to.root}/itests/hive-unit/target/spark</spark.home>
+    <exclude.hiveunit.tests>None</exclude.hiveunit.tests>
   </properties>
 
   <dependencies>
@@ -363,6 +364,16 @@
         </dependency>
       </dependencies>
     </profile>
+    <profile>
+      <activation>
+	<os>
+	  <family>Windows</family>
+        </os>
+      </activation>
+      <properties>
+        <exclude.hiveunit.tests>**/jdbc/*.java</exclude.hiveunit.tests>
+      </properties>
+    </profile>
   </profiles>
 
   <build>
@@ -400,6 +411,15 @@
            </execution>
          </executions>
        </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+         <configuration>
+           <excludes>
+             <exclude>${exclude.hiveunit.tests}</exclude>
+           </excludes>
+         </configuration>
+      </plugin>
     </plugins>
   </build>
 
