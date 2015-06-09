@@ -20,10 +20,8 @@ package org.apache.hadoop.hive.ql.exec;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.ql.exec.FunctionInfo.FunctionResource;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -45,12 +43,9 @@ import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.util.ReflectionUtils;
 
-import java.io.IOException;
-import java.net.URLClassLoader;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -71,7 +66,6 @@ public class Registry {
    */
   private final Map<String, FunctionInfo> mFunctions = new LinkedHashMap<String, FunctionInfo>();
   private final Set<Class<?>> builtIns = Collections.synchronizedSet(new HashSet<Class<?>>());
-  private final Set<ClassLoader> mSessionUDFLoaders = new LinkedHashSet<ClassLoader>();
 
   private final boolean isNative;
 
@@ -449,6 +443,7 @@ public class Registry {
   // should be called after session registry is checked
   private FunctionInfo registerToSessionRegistry(String qualifiedName, FunctionInfo function) {
     FunctionInfo ret = null;
+
     ClassLoader prev = Utilities.getSessionSpecifiedClassLoader();
     try {
       // Found UDF in metastore - now add it to the function registry
@@ -460,15 +455,13 @@ public class Registry {
         LOG.error("Unable to load resources for " + qualifiedName + ":" + e, e);
         return null;
       }
+
       ClassLoader loader = Utilities.getSessionSpecifiedClassLoader();
       Class<?> udfClass = Class.forName(function.getClassName(), true, loader);
 
       ret = FunctionRegistry.registerTemporaryUDF(qualifiedName, udfClass, resources);
       if (ret == null) {
         LOG.error(function.getClassName() + " is not a valid UDF class and was not registered.");
-      }
-      if (SessionState.get().isHiveServerQuery()) {
-        SessionState.getRegistryForWrite().addToUDFLoaders(loader);
       }
     } catch (ClassNotFoundException e) {
       // Lookup of UDf class failed
@@ -494,24 +487,6 @@ public class Registry {
     }
     mFunctions.clear();
     builtIns.clear();
-  }
-
-  public synchronized void closeCUDFLoaders() {
-    try {
-      for(ClassLoader loader: mSessionUDFLoaders) {
-        JavaUtils.closeClassLoader(loader);
-      }
-    } catch (IOException ie) {
-        LOG.error("Error in close loader: " + ie);
-    }
-    mSessionUDFLoaders.clear();
-  }
-
-  public synchronized void addToUDFLoaders(ClassLoader loader) {
-    mSessionUDFLoaders.add(loader);
-  }
-  public synchronized void removeFromUDFLoaders(ClassLoader loader) {
-    mSessionUDFLoaders.remove(loader);
   }
 
   /**
