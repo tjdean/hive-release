@@ -14008,10 +14008,10 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         WindowSpec wndSpec = ((WindowFunctionSpec) wExpSpec).getWindowSpec();
         List<RexNode> partitionKeys = getPartitionKeys(wndSpec.getPartition(), converter, inputRR);
         List<RexFieldCollation> orderKeys = getOrderKeys(wndSpec.getOrder(), converter, inputRR);
-        RexWindowBound upperBound = getBound(wndSpec.windowFrame.start, converter);
-        RexWindowBound lowerBound = getBound(wndSpec.windowFrame.end, converter);
-        boolean isRows = ((wndSpec.windowFrame.start instanceof RangeBoundarySpec) || (wndSpec.windowFrame.end instanceof RangeBoundarySpec)) ? true
-            : false;
+        RexWindowBound upperBound = getBound(wndSpec.getWindowFrame().start, converter);
+        RexWindowBound lowerBound = getBound(wndSpec.getWindowFrame().end, converter);
+        boolean isRows = ((wndSpec.getWindowFrame().start instanceof RangeBoundarySpec) ||
+            (wndSpec.getWindowFrame().end instanceof RangeBoundarySpec)) ? true : false;
 
         w = cluster.getRexBuilder().makeOver(optiqAggFnRetType, optiqAggFn, optiqAggFnArgs,
             partitionKeys, ImmutableList.<RexFieldCollation> copyOf(orderKeys), lowerBound,
