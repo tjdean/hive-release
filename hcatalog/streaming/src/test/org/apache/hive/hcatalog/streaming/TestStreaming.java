@@ -52,6 +52,7 @@ import org.apache.hadoop.mapred.Reporter;
 import org.apache.thrift.TException;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -476,6 +477,7 @@ public class TestStreaming {
   }
 
   @Test
+  @Ignore
   public void testTransactionBatchAbort() throws Exception {
 
     HiveEndPoint endPt = new HiveEndPoint(metaStoreURI, dbName, tblName,
