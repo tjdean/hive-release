@@ -30,6 +30,7 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.security.auth.login.LoginException;
@@ -620,6 +621,11 @@ public interface HadoopShims {
      * given timestamp.
      */
     public void killJobs(String tag, long timestamp);
+    /**
+     * Returns all jobs tagged with the given tag that have been started after the
+     * given timestamp. Returned jobIds are MapReduce JobIds.
+     */
+    public Set<String> getJobs(String tag, long timestamp);
   }
 
   /**
