@@ -1959,7 +1959,7 @@ class WriterImpl implements Writer, MemoryManager.Callback {
   FSDataOutputStream getStream() throws IOException {
     if (rawWriter == null) {
       rawWriter = fs.create(path, false, HDFS_BUFFER_SIZE,
-                            fs.getDefaultReplication(), blockSize);
+                            fs.getDefaultReplication(path), blockSize);
       rawWriter.writeBytes(OrcFile.MAGIC);
       headerLength = rawWriter.getPos();
       writer = new OutStream("metadata", bufferSize, codec,
