@@ -401,7 +401,7 @@
         </property>
       </activation>
       <properties>
-        <skip.accumulo.tests>false</skip.accumulo.tests>
+        <skip.accumulo.tests>true</skip.accumulo.tests>
       </properties>
       <dependencies>
       	<dependency>
