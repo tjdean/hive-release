@@ -1026,7 +1026,12 @@ public class Server {
       JobItemBean jobItem = new JobItemBean();
       jobItem.id = job;
       if (showDetails) {
-        StatusDelegator sd = new StatusDelegator(appConf);
+        //The global JobClient retry is too aggressive for this operation,
+        //remove the retry to avoid timeouts
+        final AppConfig sdConf = new AppConfig(appConf);
+        sdConf.set("mapreduce.jobclient.getjob.max.retry", "1");
+        sdConf.set("yarn.app.mapreduce.client.job.max-retries", "0");
+        StatusDelegator sd = new StatusDelegator(sdConf);
         try {
           jobItem.detail = sd.run(getDoAsUser(), job);
         }

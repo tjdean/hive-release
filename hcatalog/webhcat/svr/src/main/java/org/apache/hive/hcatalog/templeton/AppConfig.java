@@ -168,6 +168,10 @@ public class AppConfig extends Configuration {
     init();
     LOG.info("Using Hadoop version " + VersionInfo.getVersion());
   }
+  
+  public AppConfig(AppConfig appConf) {
+    super(appConf);
+  }
 
   private void init() {
     for (Map.Entry<String, String> e : System.getenv().entrySet())
