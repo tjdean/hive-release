@@ -36,3 +36,36 @@ select count(*) from tab s1 join tab s3 on s1.key=s3.key;
 select s1.key, s1.value, s3.value from tab s1 join tab s3 on s1.key=s3.key;
 select count(*) from tab s2;
 
+set hive.convert.join.bucket.mapjoin.tez = false;
+explain
+select count(*) from
+tab vt1
+join
+(select rt2.id from
+(select t2.key as id, t2.value as od from tab_part t2 order by id, od) rt2) vt2
+where vt1.key=vt2.id;
+
+select count(*) from
+tab vt1
+join
+(select rt2.id from
+(select t2.key as id, t2.value as od from tab_part t2 order by id, od) rt2) vt2
+where vt1.key=vt2.id;
+
+explain
+select count(*) from
+(select rt2.id from
+(select t2.key as id, t2.value as od from tab_part t2 order by id, od) rt2) vt2
+join
+tab vt1
+where vt1.key=vt2.id;
+
+select count(*) from
+(select rt2.id from
+(select t2.key as id, t2.value as od from tab_part t2 order by id, od) rt2) vt2
+join
+tab vt1
+where vt1.key=vt2.id;
+
+set hive.auto.convert.join=false;
+
