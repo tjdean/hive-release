@@ -121,7 +121,6 @@ ltrim
 map
 map_keys
 map_values
-matchpath
 max
 min
 minute
@@ -324,7 +323,6 @@ POSTHOOK: type: SHOWFUNCTIONS
 map
 map_keys
 map_values
-matchpath
 max
 min
 minute

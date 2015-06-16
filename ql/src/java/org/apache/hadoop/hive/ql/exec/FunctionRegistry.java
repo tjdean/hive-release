@@ -105,7 +105,6 @@ import org.apache.hadoop.hive.ql.udf.UDFUnhex;
 import org.apache.hadoop.hive.ql.udf.UDFWeekOfYear;
 import org.apache.hadoop.hive.ql.udf.UDFYear;
 import org.apache.hadoop.hive.ql.udf.generic.*;
-import org.apache.hadoop.hive.ql.udf.ptf.MatchPath.MatchPathResolver;
 import org.apache.hadoop.hive.ql.udf.ptf.Noop.NoopResolver;
 import org.apache.hadoop.hive.ql.udf.ptf.NoopStreaming.NoopStreamingResolver;
 import org.apache.hadoop.hive.ql.udf.ptf.NoopWithMap.NoopWithMapResolver;
@@ -159,7 +158,6 @@ public final class FunctionRegistry {
   private static final String NOOP_MAP_TABLE_FUNCTION = "noopwithmap";
   private static final String NOOP_STREAMING_TABLE_FUNCTION = "noopstreaming";
   private static final String NOOP_STREAMING_MAP_TABLE_FUNCTION = "noopwithmapstreaming";
-  private static final String MATCH_PATH_TABLE_FUNCTION = "matchpath";
 
   public static final Set<String> HIVE_OPERATORS = new HashSet<String>();
 
@@ -450,7 +448,6 @@ public final class FunctionRegistry {
     system.registerTableFunction(NOOP_STREAMING_TABLE_FUNCTION, NoopStreamingResolver.class);
     system.registerTableFunction(NOOP_STREAMING_MAP_TABLE_FUNCTION, NoopWithMapStreamingResolver.class);
     system.registerTableFunction(WINDOWING_TABLE_FUNCTION, WindowingTableFunctionResolver.class);
-    system.registerTableFunction(MATCH_PATH_TABLE_FUNCTION, MatchPathResolver.class);
   }
 
   public static String getNormalizedFunctionName(String fn) throws SemanticException {
