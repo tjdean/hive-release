@@ -51,6 +51,7 @@ public class AppMasterEventOperator extends Operator<AppMasterEventDesc> {
 
   @Override
   public void initializeOp(Configuration hconf) throws HiveException {
+    super.initializeOp(hconf);
     MAX_SIZE = HiveConf.getLongVar(hconf, ConfVars.TEZ_DYNAMIC_PARTITION_PRUNING_MAX_EVENT_SIZE);
     serializer =
         (Serializer) ReflectionUtils.newInstance(conf.getTable().getDeserializerClass(), null);
