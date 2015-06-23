@@ -417,6 +417,8 @@
          <configuration>
            <excludes>
              <exclude>${exclude.hiveunit.tests}</exclude>
+             <exclude>**/TestMultiSessionsHS2WithLocalClusterSpark.java</exclude>
+             <exclude>**/TestJdbcWithLocalClusterSpark.java</exclude>
            </excludes>
          </configuration>
       </plugin>
