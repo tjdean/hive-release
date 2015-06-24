@@ -1,4 +1,6 @@
-PREHOOK: query: -- test comment indent processing for multi-line comments
+PREHOOK: query: -- Exclude test on Windows due to differences in CR characters in the table comments
+-- EXCLUDE_OS_WINDOWS
+-- test comment indent processing for multi-line comments
 
 CREATE TABLE test_table(
     col1 INT COMMENT 'col1 one line comment',
@@ -12,7 +14,9 @@ two lines'
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
 PREHOOK: Output: default@test_table
-POSTHOOK: query: -- test comment indent processing for multi-line comments
+POSTHOOK: query: -- Exclude test on Windows due to differences in CR characters in the table comments
+-- EXCLUDE_OS_WINDOWS
+-- test comment indent processing for multi-line comments
 
 CREATE TABLE test_table(
     col1 INT COMMENT 'col1 one line comment',

@@ -1,3 +1,5 @@
+-- Exclude test on Windows due to differences in CR characters in the table comments
+-- EXCLUDE_OS_WINDOWS
 -- test comment indent processing for multi-line comments
 
 CREATE TABLE test_table(
