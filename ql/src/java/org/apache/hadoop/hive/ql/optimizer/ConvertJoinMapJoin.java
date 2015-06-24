@@ -651,7 +651,7 @@ public class ConvertJoinMapJoin implements NodeProcessor {
         // we might have generated a dynamic partition operator chain. Since
         // we're removing the reduce sink we need do remove that too.
         Set<Operator<?>> dynamicPartitionOperators = new HashSet<Operator<?>>();
-        Map<Operator<?>, AppMasterEventOperator> opEventPairs = new HashMap<>();
+        Map<Operator<?>, AppMasterEventOperator> opEventPairs = new HashMap<Operator<?>, AppMasterEventOperator>();
         for (Operator<?> c : p.getChildOperators()) {
           AppMasterEventOperator event = findDynamicPartitionBroadcast(c);
           if (event != null) {
