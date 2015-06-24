@@ -1,6 +1,7 @@
 set hive.stats.dbclass=fs;
 set hive.fetch.task.conversion=none;
 
+-- EXCLUDE_OS_WINDOWS
 -- SORT_QUERY_RESULTS
 -- test automatic use of index on table with partitions
 CREATE INDEX src_part_index ON TABLE srcpart(key) as 'COMPACT' WITH DEFERRED REBUILD;

@@ -1,3 +1,4 @@
+-- EXCLUDE_OS_WINDOWS
 -- SORT_QUERY_RESULTS
 -- try the query without indexing, with manual indexing, and with automatic indexing
 

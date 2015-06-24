@@ -1,10 +1,12 @@
-PREHOOK: query: -- SORT_QUERY_RESULTS
+PREHOOK: query: -- EXCLUDE_OS_WINDOWS
+-- SORT_QUERY_RESULTS
 
 -- test automatic use of index on table with partitions
 CREATE INDEX src_part_index ON TABLE srcpart(key) as 'BITMAP' WITH DEFERRED REBUILD
 PREHOOK: type: CREATEINDEX
 PREHOOK: Input: default@srcpart
-POSTHOOK: query: -- SORT_QUERY_RESULTS
+POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
+-- SORT_QUERY_RESULTS
 
 -- test automatic use of index on table with partitions
 CREATE INDEX src_part_index ON TABLE srcpart(key) as 'BITMAP' WITH DEFERRED REBUILD
