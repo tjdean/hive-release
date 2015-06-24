@@ -29,6 +29,7 @@ import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.util.Shell;
 import org.apache.hive.hcatalog.HcatTestUtils;
 import org.apache.hive.hcatalog.api.HCatAddPartitionDesc;
 import org.apache.hive.hcatalog.api.HCatClient;
@@ -371,6 +372,12 @@ public class TestCommands {
 
   @Test
   public void testBasicReplEximCommands() throws IOException, CommandNeedRetryException {
+
+    if (Shell.WINDOWS){
+      return;
+      // Disabling this test on windows for now, as a result of https://hortonworks.jira.com/browse/BUG-39920
+    }
+
     // repl export, has repl.last.id and repl.scope=all in it
     // import repl dump, table has repl.last.id on it (will likely be 0)
     int evid = 111;
