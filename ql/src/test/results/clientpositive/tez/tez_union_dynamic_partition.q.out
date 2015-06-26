@@ -64,10 +64,10 @@ STAGE PLANS:
                 TableScan
                   alias: dummy
                   Select Operator
-                    expressions: 2 (type: int), '2014' (type: string)
-                    outputColumnNames: _col0, _col1
+                    expressions: 2 (type: int)
+                    outputColumnNames: _col0
                     Select Operator
-                      expressions: _col0 (type: int), _col1 (type: string)
+                      expressions: _col0 (type: int), '2014' (type: string)
                       outputColumnNames: _col0, _col1
                       File Output Operator
                         compressed: false
@@ -81,10 +81,10 @@ STAGE PLANS:
                 TableScan
                   alias: dummy
                   Select Operator
-                    expressions: 1 (type: int), '2014' (type: string)
-                    outputColumnNames: _col0, _col1
+                    expressions: 1 (type: int)
+                    outputColumnNames: _col0
                     Select Operator
-                      expressions: _col0 (type: int), _col1 (type: string)
+                      expressions: _col0 (type: int), '2014' (type: string)
                       outputColumnNames: _col0, _col1
                       File Output Operator
                         compressed: false
