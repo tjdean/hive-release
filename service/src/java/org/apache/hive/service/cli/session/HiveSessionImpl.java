@@ -332,7 +332,7 @@ public class HiveSessionImpl implements HiveSession {
     } catch (HiveException e) {
       throw new HiveSQLException("Failed to get metastore connection", e);
     } catch (MetaException e) {
-      throw new HiveSQLException("Failed to get metastore connection", e);
+      throw new HiveSQLException("Failed to get metastore connection: " + e, e);
     }
   }
 
