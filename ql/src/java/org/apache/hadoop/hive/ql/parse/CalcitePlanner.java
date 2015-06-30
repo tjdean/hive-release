@@ -143,6 +143,7 @@ import org.apache.hadoop.hive.ql.optimizer.calcite.rules.HiveFilterSetOpTranspos
 import org.apache.hadoop.hive.ql.optimizer.calcite.rules.HiveInsertExchange4JoinRule;
 import org.apache.hadoop.hive.ql.optimizer.calcite.rules.HiveJoinAddNotNullRule;
 import org.apache.hadoop.hive.ql.optimizer.calcite.rules.HiveJoinCommuteRule;
+import org.apache.hadoop.hive.ql.optimizer.calcite.rules.HiveJoinPushTransitivePredicatesRule;
 import org.apache.hadoop.hive.ql.optimizer.calcite.rules.HiveJoinToMultiJoinRule;
 import org.apache.hadoop.hive.ql.optimizer.calcite.rules.HivePartitionPruneRule;
 import org.apache.hadoop.hive.ql.optimizer.calcite.rules.HivePreFilteringRule;
@@ -256,21 +257,23 @@ public class CalcitePlanner extends SemanticAnalyzer {
               setAST(newAST);
               newAST = reAnalyzeCtasAfterCbo(newAST);
             }
-          Phase1Ctx ctx_1 = initPhase1Ctx();
-          if (!doPhase1(newAST, getQB(), ctx_1, null)) {
-            throw new RuntimeException("Couldn't do phase1 on CBO optimized query plan");
-          }
-          // unfortunately making prunedPartitions immutable is not possible
-          // here with SemiJoins not all tables are costed in CBO, so their
-          // PartitionList is not evaluated until the run phase.
-          getMetaData(getQB());
+            Phase1Ctx ctx_1 = initPhase1Ctx();
+            if (!doPhase1(newAST, getQB(), ctx_1, null)) {
+              throw new RuntimeException("Couldn't do phase1 on CBO optimized query plan");
+            }
+            // unfortunately making prunedPartitions immutable is not possible
+            // here with SemiJoins not all tables are costed in CBO, so their
+            // PartitionList is not evaluated until the run phase.
+            getMetaData(getQB());
 
-          disableJoinMerge = false;
-          sinkOp = genPlan(getQB());
-          LOG.info("CBO Succeeded; optimized logical plan.");
-          this.ctx.setCboInfo("Plan optimized by CBO.");
-          this.ctx.setCboSucceeded(true);
-          LOG.debug(newAST.dump());
+            disableJoinMerge = false;
+            sinkOp = genPlan(getQB());
+            LOG.info("CBO Succeeded; optimized logical plan.");
+            this.ctx.setCboInfo("Plan optimized by CBO.");
+            this.ctx.setCboSucceeded(true);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug(newAST.dump());
+            }
           }
         } catch (Exception e) {
           boolean isMissingStats = noColsMissingStats.get() > 0;
@@ -960,7 +963,7 @@ public class CalcitePlanner extends SemanticAnalyzer {
               HiveFilter.DEFAULT_FILTER_FACTORY, Aggregate.class));
 
       // 4. Transitive inference & Partition Pruning
-      basePlan = hepPlan(basePlan, false, mdProvider, new JoinPushTransitivePredicatesRule(
+      basePlan = hepPlan(basePlan, false, mdProvider, new HiveJoinPushTransitivePredicatesRule(
           Join.class, HiveFilter.DEFAULT_FILTER_FACTORY),
           new HivePartitionPruneRule(conf));
 
