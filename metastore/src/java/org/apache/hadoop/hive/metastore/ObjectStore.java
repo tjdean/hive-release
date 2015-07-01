@@ -22,7 +22,6 @@ import static org.apache.commons.lang.StringUtils.join;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -57,6 +56,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.common.ObjectPair;
 import org.apache.hadoop.hive.common.classification.InterfaceAudience;
@@ -64,7 +64,6 @@ import org.apache.hadoop.hive.common.classification.InterfaceStability;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.api.AggrStats;
-import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.ColumnStatistics;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsDesc;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsObj;
@@ -92,7 +91,6 @@ import org.apache.hadoop.hive.metastore.api.ResourceType;
 import org.apache.hadoop.hive.metastore.api.ResourceUri;
 import org.apache.hadoop.hive.metastore.api.Role;
 import org.apache.hadoop.hive.metastore.api.SerDeInfo;
-import org.apache.hadoop.hive.metastore.api.SetPartitionsStatsRequest;
 import org.apache.hadoop.hive.metastore.api.SkewedInfo;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -5537,10 +5535,8 @@ public class ObjectStore implements RawStore, Configurable {
         URI locationURI = null;
         String location = mDB.getLocationUri();
         try {
-          locationURI = new URI(location);
-        } catch(URISyntaxException e) {
-          badRecords.add(location);
-        } catch (NullPointerException e) {
+          locationURI = new Path(location).toUri();
+        } catch (IllegalArgumentException e) {
           badRecords.add(location);
         }
         if (locationURI == null) {
@@ -5619,12 +5615,10 @@ public class ObjectStore implements RawStore, Configurable {
         if (mSDS.getParameters().containsKey(tblPropKey)) {
           String tablePropLocation = mSDS.getParameters().get(tblPropKey);
           try {
-              tablePropLocationURI = new URI(tablePropLocation);
-            } catch (URISyntaxException e) {
-              badRecords.add(tablePropLocation);
-            } catch (NullPointerException e) {
-              badRecords.add(tablePropLocation);
-            }
+            tablePropLocationURI = new Path(tablePropLocation).toUri();
+          } catch (IllegalArgumentException e) {
+            badRecords.add(tablePropLocation);
+          }
             // if tablePropKey that was passed in lead to a valid URI resolution, update it if
             //parts of it match the old-NN-loc, else add to badRecords
             if (tablePropLocationURI == null) {
@@ -5704,10 +5698,8 @@ public class ObjectStore implements RawStore, Configurable {
         URI locationURI = null;
         String location = mSDS.getLocation();
         try {
-          locationURI = new URI(location);
-        } catch (URISyntaxException e) {
-          badRecords.add(location);
-        } catch (NullPointerException e) {
+          locationURI = new Path(location).toUri();
+        } catch (IllegalArgumentException e) {
           badRecords.add(location);
         }
         if (locationURI == null) {
@@ -5785,10 +5777,8 @@ public class ObjectStore implements RawStore, Configurable {
           String schemaLoc = mSerde.getParameters().get(serdeProp);
           URI schemaLocURI = null;
           try {
-            schemaLocURI = new URI(schemaLoc);
-          } catch (URISyntaxException e) {
-            badRecords.add(schemaLoc);
-          } catch (NullPointerException e) {
+            schemaLocURI = new Path(schemaLoc).toUri();
+          } catch (IllegalArgumentException e) {
             badRecords.add(schemaLoc);
           }
           if (schemaLocURI == null) {
