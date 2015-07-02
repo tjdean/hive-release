@@ -44,6 +44,7 @@ import org.apache.hadoop.hive.ql.lib.Node;
 import org.apache.hadoop.hive.ql.lib.NodeProcessor;
 import org.apache.hadoop.hive.ql.lib.Rule;
 import org.apache.hadoop.hive.ql.lib.RuleRegExp;
+import org.apache.hadoop.hive.ql.optimizer.ConstantPropagateProcCtx.ConstantPropagateOption;
 import org.apache.hadoop.hive.ql.parse.OpParseContext;
 import org.apache.hadoop.hive.ql.parse.ParseContext;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
@@ -66,8 +67,15 @@ public class ConstantPropagate implements Transform {
   private static final Log LOG = LogFactory.getLog(ConstantPropagate.class);
   protected ParseContext pGraphContext;
   private Map<Operator<? extends OperatorDesc>, OpParseContext> opToParseCtxMap;
+  private ConstantPropagateOption constantPropagateOption;
 
-  public ConstantPropagate() {}
+  public ConstantPropagate() {
+    this(ConstantPropagateOption.FULL);
+  }
+
+  public ConstantPropagate(ConstantPropagateOption option) {
+    this.constantPropagateOption = option;
+  }
 
   /**
    * Transform the query tree.
@@ -81,7 +89,7 @@ public class ConstantPropagate implements Transform {
     opToParseCtxMap = pGraphContext.getOpParseCtx();
 
     // generate pruned column list for all relevant operators
-    ConstantPropagateProcCtx cppCtx = new ConstantPropagateProcCtx(opToParseCtxMap);
+    ConstantPropagateProcCtx cppCtx = new ConstantPropagateProcCtx(opToParseCtxMap, constantPropagateOption);
 
     // create a walker which walks the tree in a DFS manner while maintaining
     // the operator stack. The dispatcher

@@ -47,6 +47,7 @@ import org.apache.hadoop.hive.ql.lib.Node;
 import org.apache.hadoop.hive.ql.lib.NodeProcessor;
 import org.apache.hadoop.hive.ql.lib.NodeProcessorCtx;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.optimizer.ConstantPropagateProcCtx.ConstantPropagateOption;
 import org.apache.hadoop.hive.ql.parse.RowResolver;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.plan.DynamicPartitionCtx;
@@ -205,6 +206,67 @@ public final class ConstantPropagateProcFactory {
   /**
    * Fold input expression desc.
    *
+   * @param desc folding expression
+   * @param constants current propagated constant map
+   * @param cppCtx
+   * @param op processing operator
+   * @param propagate if true, assignment expressions will be added to constants.
+   * @return fold expression
+   */
+  private static ExprNodeDesc foldExpr(ExprNodeDesc desc, Map<ColumnInfo, ExprNodeDesc> constants,
+      ConstantPropagateProcCtx cppCtx, Operator<? extends Serializable> op, int tag,
+      boolean propagate) {
+    if (cppCtx.getConstantPropagateOption() == ConstantPropagateOption.SHORTCUT) {
+      return foldExprShortcut(desc, constants, cppCtx, op, tag, propagate);
+    }
+    return foldExprFull(desc, constants, cppCtx, op, tag, propagate);
+  }
+
+  /**
+   * Fold input expression desc, only performing short-cutting.
+   *
+   * Unnecessary AND/OR operations involving a constant true/false value will be eliminated.
+   *
+   * @param desc folding expression
+   * @param constants current propagated constant map
+   * @param cppCtx
+   * @param op processing operator
+   * @param propagate if true, assignment expressions will be added to constants.
+   * @return fold expression
+   */
+  private static ExprNodeDesc foldExprShortcut(ExprNodeDesc desc, Map<ColumnInfo, ExprNodeDesc> constants,
+      ConstantPropagateProcCtx cppCtx, Operator<? extends Serializable> op, int tag,
+      boolean propagate) {
+    if (desc instanceof ExprNodeGenericFuncDesc) {
+      ExprNodeGenericFuncDesc funcDesc = (ExprNodeGenericFuncDesc) desc;
+
+      // The function must be deterministic, or we can't fold it.
+      GenericUDF udf = funcDesc.getGenericUDF();
+      if (!isDeterministicUdf(udf)) {
+        LOG.debug("Function " + udf.getClass() + " undeterministic, quit folding.");
+        return desc;
+      }
+
+      boolean propagateNext = propagate && propagatableUdfs.contains(udf.getClass());
+      List<ExprNodeDesc> newExprs = new ArrayList<ExprNodeDesc>();
+      for (ExprNodeDesc childExpr : desc.getChildren()) {
+        newExprs.add(foldExpr(childExpr, constants, cppCtx, op, tag, propagateNext));
+      }
+
+      // Check if the function can be short cut.
+      ExprNodeDesc shortcut = shortcutFunction(udf, newExprs);
+      if (shortcut != null) {
+        LOG.debug("Folding expression:" + desc + " -> " + shortcut);
+        return shortcut;
+      }
+      ((ExprNodeGenericFuncDesc) desc).setChildren(newExprs);
+    }
+    return desc;
+  }
+
+  /**
+   * Fold input expression desc.
+   *
    * If desc is a UDF and all parameters are constants, evaluate it. If desc is a column expression,
    * find it from propagated constants, and if there is, replace it with constant.
    *
@@ -215,7 +277,7 @@ public final class ConstantPropagateProcFactory {
    * @param propagate if true, assignment expressions will be added to constants.
    * @return fold expression
    */
-  private static ExprNodeDesc foldExpr(ExprNodeDesc desc, Map<ColumnInfo, ExprNodeDesc> constants,
+  private static ExprNodeDesc foldExprFull(ExprNodeDesc desc, Map<ColumnInfo, ExprNodeDesc> constants,
       ConstantPropagateProcCtx cppCtx, Operator<? extends Serializable> op, int tag,
       boolean propagate) {
     if (desc instanceof ExprNodeGenericFuncDesc) {
