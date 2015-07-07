@@ -79,10 +79,10 @@ STAGE PLANS:
               Select Operator
                 expressions: _col0 (type: string), _col1 (type: string)
                 outputColumnNames: _col0, _col1
-                Statistics: Num rows: 26 Data size: 7072 Basic stats: COMPLETE Column stats: PARTIAL
+                Statistics: Num rows: 26 Data size: 0 Basic stats: PARTIAL Column stats: PARTIAL
                 File Output Operator
                   compressed: false
-                  Statistics: Num rows: 26 Data size: 7072 Basic stats: COMPLETE Column stats: PARTIAL
+                  Statistics: Num rows: 26 Data size: 0 Basic stats: PARTIAL Column stats: PARTIAL
                   table:
                       input format: org.apache.hadoop.mapred.TextInputFormat
                       output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
@@ -100,10 +100,10 @@ STAGE PLANS:
                 Select Operator
                   expressions: _col0 (type: string), _col1 (type: string)
                   outputColumnNames: _col0, _col1
-                  Statistics: Num rows: 26 Data size: 7072 Basic stats: COMPLETE Column stats: PARTIAL
+                  Statistics: Num rows: 26 Data size: 0 Basic stats: PARTIAL Column stats: PARTIAL
                   File Output Operator
                     compressed: false
-                    Statistics: Num rows: 26 Data size: 7072 Basic stats: COMPLETE Column stats: PARTIAL
+                    Statistics: Num rows: 26 Data size: 0 Basic stats: PARTIAL Column stats: PARTIAL
                     table:
                         input format: org.apache.hadoop.mapred.TextInputFormat
                         output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
