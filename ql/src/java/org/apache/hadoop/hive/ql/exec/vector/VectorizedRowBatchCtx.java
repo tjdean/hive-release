@@ -170,9 +170,8 @@ public class VectorizedRowBatchCtx {
             split.getPath(), IOPrepareCache.get().getPartitionDescMap());
 
     String partitionPath = split.getPath().getParent().toString();
-    scratchColumnTypeMap = Utilities
-        .getMapWorkAllScratchColumnVectorTypeMaps(hiveConf)
-        .get(partitionPath);
+    scratchColumnTypeMap = Utilities.getMapWorkVectorScratchColumnTypeMap(hiveConf);
+    // LOG.info("VectorizedRowBatchCtx init scratchColumnTypeMap " + scratchColumnTypeMap.toString());
 
     Properties partProps =
         (part.getPartSpec() == null || part.getPartSpec().isEmpty()) ?

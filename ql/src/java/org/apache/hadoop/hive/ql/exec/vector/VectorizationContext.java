@@ -125,6 +125,9 @@ public class VectorizationContext {
   private static final Log LOG = LogFactory.getLog(
       VectorizationContext.class.getName());
 
+  private final String contextName;
+  private final int level;
+
   VectorExpressionDescriptor vMap;
 
   private List<Integer> projectedColumns;
@@ -137,7 +140,10 @@ public class VectorizationContext {
 
   // Convenient constructor for initial batch creation takes
   // a list of columns names and maps them to 0..n-1 indices.
-  public VectorizationContext(List<String> initialColumnNames) {
+  public VectorizationContext(String contextName, List<String> initialColumnNames) {
+    this.contextName = contextName;
+    level = 0;
+    LOG.info("VectorizationContext consructor contextName " + contextName + " level " + level + " initialColumnNames " + initialColumnNames.toString());
     this.projectionColumnNames = initialColumnNames;
 
     projectedColumns = new ArrayList<Integer>();
@@ -154,7 +160,10 @@ public class VectorizationContext {
 
   // Constructor to with the individual addInitialColumn method
   // followed by a call to finishedAddingInitialColumns.
-  public VectorizationContext() {
+  public VectorizationContext(String contextName) {
+    this.contextName = contextName;
+    level = 0;
+    LOG.info("VectorizationContext consructor contextName " + contextName + " level " + level);
     projectedColumns = new ArrayList<Integer>();
     projectionColumnNames = new ArrayList<String>();
     projectionColumnMap = new HashMap<String, Integer>();
@@ -166,7 +175,10 @@ public class VectorizationContext {
   // Constructor useful making a projection vectorization context.
   // Use with resetProjectionColumns and addProjectionColumn.
   // Keeps existing output column map, etc.
-  public VectorizationContext(VectorizationContext vContext) {
+  public VectorizationContext(String contextName, VectorizationContext vContext) {
+    this.contextName = contextName;
+    level = vContext.level + 1;
+    LOG.info("VectorizationContext consructor reference contextName " + contextName + " level " + level);
     this.projectedColumns = new ArrayList<Integer>();
     this.projectionColumnNames = new ArrayList<String>();
     this.projectionColumnMap = new HashMap<String, Integer>();
@@ -235,13 +247,6 @@ public class VectorizationContext {
   //Map column number to type
   private OutputColumnManager ocm;
 
-  // File key is used by operators to retrieve the scratch vectors
-  // from mapWork at runtime. The operators that modify the structure of
-  // a vector row batch, need to allocate scratch vectors as well. Every
-  // operator that creates a new Vectorization context should set a unique
-  // fileKey.
-  private String fileKey = null;
-
   // Set of UDF classes for type casting data types in row-mode.
   private static Set<Class<?>> castExpressionUdfs = new HashSet<Class<?>>();
   static {
@@ -263,14 +268,6 @@ public class VectorizationContext {
     castExpressionUdfs.add(UDFToShort.class);
   }
 
-  public String getFileKey() {
-    return fileKey;
-  }
-
-  public void setFileKey(String fileKey) {
-    this.fileKey = fileKey;
-  }
-
   protected int getInputColumnIndex(String name) throws HiveException {
     if (name == null) {
       throw new HiveException("Null column name");
@@ -282,8 +279,9 @@ public class VectorizationContext {
     return projectionColumnMap.get(name);
   }
 
-  protected int getInputColumnIndex(ExprNodeColumnDesc colExpr) {
-    return projectionColumnMap.get(colExpr.getColumn());
+  protected int getInputColumnIndex(ExprNodeColumnDesc colExpr) throws HiveException {
+    // Call the regular method since it does error checking.
+    return getInputColumnIndex(colExpr.getColumn());
   }
 
   private static class OutputColumnManager {
@@ -2075,9 +2073,10 @@ public class VectorizationContext {
     return map;
   }
 
+  @Override
   public String toString() {
     StringBuilder sb = new StringBuilder(32);
-    sb.append("Context key ").append(getFileKey()).append(", ");
+    sb.append("Context name ").append(contextName).append(", level " + level + ", ");
 
     Comparator<Integer> comparerInteger = new Comparator<Integer>() {
         @Override
@@ -2089,11 +2088,11 @@ public class VectorizationContext {
     for (Map.Entry<String, Integer> entry : projectionColumnMap.entrySet()) {
       sortedColumnMap.put(entry.getValue(), entry.getKey());
     }
-    sb.append("sortedProjectionColumnMap ").append(sortedColumnMap).append(", ");
+    sb.append("sorted projectionColumnMap ").append(sortedColumnMap).append(", ");
 
     Map<Integer, String> sortedScratchColumnTypeMap = new TreeMap<Integer, String>(comparerInteger);
     sortedScratchColumnTypeMap.putAll(getScratchColumnTypeMap());
-    sb.append("sortedScratchColumnTypeMap ").append(sortedScratchColumnTypeMap);
+    sb.append("sorted scratchColumnTypeMap ").append(sortedScratchColumnTypeMap);
 
     return sb.toString();
   }

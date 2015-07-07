@@ -1315,9 +1315,6 @@ public class TestInputOutputFormat {
     }
     mapWork.setPathToAliases(aliasMap);
     mapWork.setPathToPartitionInfo(partMap);
-    mapWork.setAllColumnVectorMaps(new HashMap<String, Map<String, Integer>>());
-    mapWork.setAllScratchColumnVectorTypeMaps(new HashMap<String,
-        Map<Integer, String>>());
 
     // write the plan out
     FileSystem localFs = FileSystem.getLocal(conf).getRaw();

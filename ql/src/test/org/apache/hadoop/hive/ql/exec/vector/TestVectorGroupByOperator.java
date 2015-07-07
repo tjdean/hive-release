@@ -172,7 +172,7 @@ public class TestVectorGroupByOperator {
     List<String> mapColumnNames = new ArrayList<String>();
     mapColumnNames.add("Key");
     mapColumnNames.add("Value");
-    VectorizationContext ctx = new VectorizationContext(mapColumnNames);
+    VectorizationContext ctx = new VectorizationContext("name", mapColumnNames);
 
     GroupByDesc desc = buildKeyGroupByDesc (ctx, "max",
         "Value", TypeInfoFactory.longTypeInfo,
@@ -1709,7 +1709,7 @@ public class TestVectorGroupByOperator {
 
     mapColumnNames.put("value", i);
     outputColumnNames.add("value");
-    VectorizationContext ctx = new VectorizationContext(outputColumnNames);
+    VectorizationContext ctx = new VectorizationContext("name", outputColumnNames);
 
     ArrayList<AggregationDesc> aggs = new ArrayList(1);
     aggs.add(
@@ -1820,7 +1820,7 @@ public class TestVectorGroupByOperator {
     List<String> mapColumnNames = new ArrayList<String>();
     mapColumnNames.add("Key");
     mapColumnNames.add("Value");
-    VectorizationContext ctx = new VectorizationContext(mapColumnNames);
+    VectorizationContext ctx = new VectorizationContext("name", mapColumnNames);
     Set<Object> keys = new HashSet<Object>();
 
     AggregationDesc agg = buildAggregationDesc(ctx, aggregateName,
@@ -2234,7 +2234,7 @@ public class TestVectorGroupByOperator {
       Object expected) throws HiveException {
     List<String> mapColumnNames = new ArrayList<String>();
     mapColumnNames.add("A");
-    VectorizationContext ctx = new VectorizationContext(mapColumnNames);
+    VectorizationContext ctx = new VectorizationContext("name", mapColumnNames);
 
     GroupByDesc desc = buildGroupByDescCountStar (ctx);
 
@@ -2263,7 +2263,7 @@ public class TestVectorGroupByOperator {
       Object expected) throws HiveException {
     List<String> mapColumnNames = new ArrayList<String>();
     mapColumnNames.add("A");
-    VectorizationContext ctx = new VectorizationContext(mapColumnNames);
+    VectorizationContext ctx = new VectorizationContext("name", mapColumnNames);
 
     GroupByDesc desc = buildGroupByDescType(ctx, "count", "A", TypeInfoFactory.longTypeInfo);
     VectorGroupByDesc vectorDesc = desc.getVectorDesc();
@@ -2295,7 +2295,7 @@ public class TestVectorGroupByOperator {
       Object expected) throws HiveException {
     List<String> mapColumnNames = new ArrayList<String>();
     mapColumnNames.add("A");
-    VectorizationContext ctx = new VectorizationContext(mapColumnNames);
+    VectorizationContext ctx = new VectorizationContext("name", mapColumnNames);
 
     GroupByDesc desc = buildGroupByDescType(ctx, aggregateName, "A",
         TypeInfoFactory.stringTypeInfo);
@@ -2326,7 +2326,7 @@ public class TestVectorGroupByOperator {
           Object expected) throws HiveException {
           List<String> mapColumnNames = new ArrayList<String>();
           mapColumnNames.add("A");
-          VectorizationContext ctx = new VectorizationContext(mapColumnNames);
+          VectorizationContext ctx = new VectorizationContext("name", mapColumnNames);
 
         GroupByDesc desc = buildGroupByDescType(ctx, aggregateName, "A",
             TypeInfoFactory.getDecimalTypeInfo(30, 4));
@@ -2358,7 +2358,7 @@ public class TestVectorGroupByOperator {
       Object expected) throws HiveException {
     List<String> mapColumnNames = new ArrayList<String>();
     mapColumnNames.add("A");
-    VectorizationContext ctx = new VectorizationContext(mapColumnNames);
+    VectorizationContext ctx = new VectorizationContext("name", mapColumnNames);
 
     GroupByDesc desc = buildGroupByDescType (ctx, aggregateName, "A",
         TypeInfoFactory.doubleTypeInfo);
@@ -2389,7 +2389,7 @@ public class TestVectorGroupByOperator {
       Object expected) throws HiveException {
     List<String> mapColumnNames = new ArrayList<String>();
     mapColumnNames.add("A");
-    VectorizationContext ctx = new VectorizationContext(mapColumnNames);
+    VectorizationContext ctx = new VectorizationContext("name", mapColumnNames);
 
     GroupByDesc desc = buildGroupByDescType(ctx, aggregateName, "A", TypeInfoFactory.longTypeInfo);
 
@@ -2420,7 +2420,7 @@ public class TestVectorGroupByOperator {
     List<String> mapColumnNames = new ArrayList<String>();
     mapColumnNames.add("Key");
     mapColumnNames.add("Value");
-    VectorizationContext ctx = new VectorizationContext(mapColumnNames);
+    VectorizationContext ctx = new VectorizationContext("name", mapColumnNames);
 
     Set<Object> keys = new HashSet<Object>();
 
@@ -2487,7 +2487,7 @@ public class TestVectorGroupByOperator {
     List<String> mapColumnNames = new ArrayList<String>();
     mapColumnNames.add("Key");
     mapColumnNames.add("Value");
-    VectorizationContext ctx = new VectorizationContext(mapColumnNames);
+    VectorizationContext ctx = new VectorizationContext("name", mapColumnNames);
     Set<Object> keys = new HashSet<Object>();
 
     GroupByDesc desc = buildKeyGroupByDesc (ctx, aggregateName, "Value",

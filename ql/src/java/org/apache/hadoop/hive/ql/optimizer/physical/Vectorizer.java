@@ -390,13 +390,12 @@ public class Vectorizer implements PhysicalPlanResolver {
       HashMap<Node, Object> nodeOutput = new HashMap<Node, Object>();
       ogw.startWalking(topNodes, nodeOutput);
 
-      Map<String, Map<Integer, String>> allScratchColumnVectorTypeMaps = vnp.getAllScratchColumnVectorTypeMaps();
-      mapWork.setAllScratchColumnVectorTypeMaps(allScratchColumnVectorTypeMaps);
-      Map<String, Map<String, Integer>> allColumnVectorMaps = vnp.getAllColumnVectorMaps();
-      mapWork.setAllColumnVectorMaps(allColumnVectorMaps);
+      mapWork.setVectorColumnNameMap(vnp.getVectorColumnNameMap());
+      mapWork.setVectorColumnTypeMap(vnp.getVectorColumnTypeMap());
+      mapWork.setVectorScratchColumnTypeMap(vnp.getVectorScratchColumnTypeMap());
 
       if (LOG.isDebugEnabled()) {
-        debugDisplayAllMaps(allColumnVectorMaps, allScratchColumnVectorTypeMaps);
+        debugDisplayAllMaps(mapWork);
       }
 
       return;
@@ -493,7 +492,7 @@ public class Vectorizer implements PhysicalPlanResolver {
       // VectorizationContext...  Do we use PreOrderWalker instead of DefaultGraphWalker.
       Map<Rule, NodeProcessor> opRules = new LinkedHashMap<Rule, NodeProcessor>();
       ReduceWorkVectorizationNodeProcessor vnp =
-              new ReduceWorkVectorizationNodeProcessor(reduceColumnNames);
+              new ReduceWorkVectorizationNodeProcessor(reduceColumnNames, reduceTypeInfos);
       addReduceWorkRules(opRules, vnp);
       Dispatcher disp = new DefaultRuleDispatcher(vnp, opRules, null);
       GraphWalker ogw = new PreOrderWalker(disp);
@@ -513,14 +512,12 @@ public class Vectorizer implements PhysicalPlanResolver {
         ((VectorExtractOperator)reducer).setReduceTypeInfos(reduceTypeInfos);
       }
 
-      Map<String, Map<Integer, String>> allScratchColumnVectorTypeMaps = vnp.getAllScratchColumnVectorTypeMaps();
-      reduceWork.setAllScratchColumnVectorTypeMaps(allScratchColumnVectorTypeMaps);
-      Map<String, Map<String, Integer>> allColumnVectorMaps = vnp.getAllColumnVectorMaps();
-      reduceWork.setAllColumnVectorMaps(allColumnVectorMaps);
-
+      reduceWork.setVectorColumnNameMap(vnp.getVectorColumnNameMap());
+      reduceWork.setVectorColumnTypeMap(vnp.getVectorColumnTypeMap());
+      reduceWork.setVectorScratchColumnTypeMap(vnp.getVectorScratchColumnTypeMap());
 
       if (LOG.isDebugEnabled()) {
-        debugDisplayAllMaps(allColumnVectorMaps, allScratchColumnVectorTypeMaps);
+        debugDisplayAllMaps(reduceWork);
       }
     }
   }
@@ -577,37 +574,33 @@ public class Vectorizer implements PhysicalPlanResolver {
   // ReduceWorkVectorizationNodeProcessor.
   class VectorizationNodeProcessor implements NodeProcessor {
 
-    // This is used to extract scratch column types for each file key
-    protected final Map<String, VectorizationContext> scratchColumnContext =
-        new HashMap<String, VectorizationContext>();
+    // The vectorization context for the Map or Reduce task.
+    protected VectorizationContext taskVectorizationContext;
 
-    protected final Map<Operator<? extends OperatorDesc>, VectorizationContext> vContextsByOp =
-        new HashMap<Operator<? extends OperatorDesc>, VectorizationContext>();
+    // The input projection column type name map for the Map or Reduce task.
+    protected Map<Integer, String> taskColumnTypeNameMap;
+
+    VectorizationNodeProcessor() {
+      taskColumnTypeNameMap = new HashMap<Integer, String>();
+    }
+
+    public Map<String, Integer> getVectorColumnNameMap() {
+      return taskVectorizationContext.getProjectionColumnMap();
+    }
+
+    public Map<Integer, String> getVectorColumnTypeMap() {
+      return taskColumnTypeNameMap;
+    }
+
+    public Map<Integer, String> getVectorScratchColumnTypeMap() {
+      return taskVectorizationContext.getScratchColumnTypeMap();
+    }
 
     protected final Set<Operator<? extends OperatorDesc>> opsDone =
         new HashSet<Operator<? extends OperatorDesc>>();
 
-    public Map<String, Map<Integer, String>> getAllScratchColumnVectorTypeMaps() {
-      Map<String, Map<Integer, String>> allScratchColumnVectorTypeMaps =
-          new HashMap<String, Map<Integer, String>>();
-      for (String onefile : scratchColumnContext.keySet()) {
-        VectorizationContext vc = scratchColumnContext.get(onefile);
-        Map<Integer, String> cmap = vc.getScratchColumnTypeMap();
-        allScratchColumnVectorTypeMaps.put(onefile, cmap);
-      }
-      return allScratchColumnVectorTypeMaps;
-    }
-
-    public Map<String, Map<String, Integer>> getAllColumnVectorMaps() {
-      Map<String, Map<String, Integer>> allColumnVectorMaps =
-          new HashMap<String, Map<String, Integer>>();
-      for(String oneFile: scratchColumnContext.keySet()) {
-        VectorizationContext vc = scratchColumnContext.get(oneFile);
-        Map<String, Integer> cmap = vc.getProjectionColumnMap();
-        allColumnVectorMaps.put(oneFile, cmap);
-      }
-      return allColumnVectorMaps;
-    }
+    protected final Map<Operator<? extends OperatorDesc>, Operator<? extends OperatorDesc>> opToVectorOpMap =
+        new HashMap<Operator<? extends OperatorDesc>, Operator<? extends OperatorDesc>>();
 
     public VectorizationContext walkStackToFindVectorizationContext(Stack<Node> stack,
             Operator<? extends OperatorDesc> op) throws SemanticException {
@@ -625,7 +618,18 @@ public class Vectorizer implements PhysicalPlanResolver {
           return null;
         }
         Operator<? extends OperatorDesc> opParent = (Operator<? extends OperatorDesc>) stack.get(i);
-        vContext = vContextsByOp.get(opParent);
+        Operator<? extends OperatorDesc> vectorOpParent = opToVectorOpMap.get(opParent);
+        if (vectorOpParent != null) {
+          if (vectorOpParent instanceof VectorizationContextRegion) {
+            VectorizationContextRegion vcRegion = (VectorizationContextRegion) vectorOpParent;
+            vContext = vcRegion.getOuputVectorizationContext();
+            LOG.info("walkStackToFindVectorizationContext " + vectorOpParent.getName() + " has new vectorization context " + vContext.toString());
+          } else {
+            LOG.info("walkStackToFindVectorizationContext " + vectorOpParent.getName() + " does not have new vectorization context");
+          }
+        } else {
+          LOG.info("walkStackToFindVectorizationContext " + opParent.getName() + " is not vectorized");
+        }
         --i;
       }
       return vContext;
@@ -639,13 +643,8 @@ public class Vectorizer implements PhysicalPlanResolver {
           vectorOp = vectorizeOperator(op, vContext);
           opsDone.add(op);
           if (vectorOp != op) {
+            opToVectorOpMap.put(op, vectorOp);
             opsDone.add(vectorOp);
-          }
-          if (vectorOp instanceof VectorizationContextRegion) {
-            VectorizationContextRegion vcRegion = (VectorizationContextRegion) vectorOp;
-            VectorizationContext vOutContext = vcRegion.getOuputVectorizationContext();
-            vContextsByOp.put(op, vOutContext);
-            scratchColumnContext.put(vOutContext.getFileKey(), vOutContext);
           }
         }
       } catch (HiveException e) {
@@ -660,12 +659,13 @@ public class Vectorizer implements PhysicalPlanResolver {
       throw new SemanticException("Must be overridden");
     }
   }
-  
+
   class MapWorkVectorizationNodeProcessor extends VectorizationNodeProcessor {
 
     private final MapWork mWork;
 
     public MapWorkVectorizationNodeProcessor(MapWork mWork) {
+      super();
       this.mWork = mWork;
     }
 
@@ -679,32 +679,16 @@ public class Vectorizer implements PhysicalPlanResolver {
       VectorizationContext vContext = null;
 
       if (op instanceof TableScanOperator) {
-        vContext = getVectorizationContext(op, physicalContext);
-        for (String onefile : mWork.getPathToAliases().keySet()) {
-          List<String> aliases = mWork.getPathToAliases().get(onefile);
-          for (String alias : aliases) {
-            Operator<? extends OperatorDesc> opRoot = mWork.getAliasToWork().get(alias);
-            if (op == opRoot) {
-              // The same vectorization context is copied multiple times into
-              // the MapWork scratch columnMap
-              // Each partition gets a copy
-              //
-              vContext.setFileKey(onefile);
-              scratchColumnContext.put(onefile, vContext);
-              if (LOG.isDebugEnabled()) {
-                LOG.debug("Vectorized MapWork operator " + op.getName() + " vectorization context " + vContext.toString());
-              }
-              break;
-            }
-          }
+        if (taskVectorizationContext == null) {
+          taskVectorizationContext = getVectorizationContext(op.getSchema(), op.getName(),
+                  taskColumnTypeNameMap);
         }
-        vContextsByOp.put(op, vContext);
+        vContext = taskVectorizationContext;
       } else {
         vContext = walkStackToFindVectorizationContext(stack, op);
         if (vContext == null) {
-          throw new SemanticException(
-              String.format("Did not find vectorization context for operator %s in operator stack",
-                      op.getName()));
+          // No operator has "pushed" a new context -- so use the task vectorization context.
+          vContext = taskVectorizationContext;
         }
       }
 
@@ -726,8 +710,8 @@ public class Vectorizer implements PhysicalPlanResolver {
         LOG.debug("Vectorized MapWork operator " + vectorOp.getName() + " vectorization context " + vContext.toString());
         if (vectorOp instanceof VectorizationContextRegion) {
           VectorizationContextRegion vcRegion = (VectorizationContextRegion) vectorOp;
-          VectorizationContext vOutContext = vcRegion.getOuputVectorizationContext();
-          LOG.debug("Vectorized MapWork operator " + vectorOp.getName() + " added vectorization context " + vContext.toString());
+          VectorizationContext vNewContext = vcRegion.getOuputVectorizationContext();
+          LOG.debug("Vectorized MapWork operator " + vectorOp.getName() + " added vectorization context " + vNewContext.toString());
         }
       }
 
@@ -737,9 +721,8 @@ public class Vectorizer implements PhysicalPlanResolver {
 
   class ReduceWorkVectorizationNodeProcessor extends VectorizationNodeProcessor {
 
-    private List<String> reduceColumnNames;
-    
-    private VectorizationContext reduceShuffleVectorizationContext;
+    private final List<String> reduceColumnNames;
+    private final List<TypeInfo> reduceTypeInfos;
 
     private Operator<? extends OperatorDesc> rootVectorOp;
 
@@ -747,10 +730,11 @@ public class Vectorizer implements PhysicalPlanResolver {
       return rootVectorOp;
     }
 
-    public ReduceWorkVectorizationNodeProcessor(List<String> reduceColumnNames) {
+    public ReduceWorkVectorizationNodeProcessor(List<String> reduceColumnNames,
+             List<TypeInfo> reduceTypeInfos) {
       this.reduceColumnNames =  reduceColumnNames;
+      this.reduceTypeInfos = reduceTypeInfos;
       rootVectorOp = null;
-      reduceShuffleVectorizationContext = null;
     }
 
     @Override
@@ -768,10 +752,13 @@ public class Vectorizer implements PhysicalPlanResolver {
       if (op.getParentOperators().size() == 0) {
         LOG.info("ReduceWorkVectorizationNodeProcessor process reduceColumnNames " + reduceColumnNames.toString());
 
-        vContext = new VectorizationContext(reduceColumnNames);
-        vContext.setFileKey("_REDUCE_SHUFFLE_");
-        scratchColumnContext.put("_REDUCE_SHUFFLE_", vContext);
-        reduceShuffleVectorizationContext = vContext;
+        vContext = new VectorizationContext("__Reduce_Shuffle__", reduceColumnNames);
+        taskVectorizationContext = vContext;
+        int i = 0;
+        for (TypeInfo typeInfo : reduceTypeInfos) {
+          taskColumnTypeNameMap.put(i, typeInfo.getTypeName());
+          i++;
+        }
         saveRootVectorOp = true;
 
         if (LOG.isDebugEnabled()) {
@@ -782,7 +769,7 @@ public class Vectorizer implements PhysicalPlanResolver {
         if (vContext == null) {
           // If we didn't find a context among the operators, assume the top -- reduce shuffle's
           // vectorization context.
-          vContext = reduceShuffleVectorizationContext;
+          vContext = taskVectorizationContext;
         }
       }
 
@@ -804,14 +791,9 @@ public class Vectorizer implements PhysicalPlanResolver {
         LOG.debug("Vectorized ReduceWork operator " + vectorOp.getName() + " vectorization context " + vContext.toString());
         if (vectorOp instanceof VectorizationContextRegion) {
           VectorizationContextRegion vcRegion = (VectorizationContextRegion) vectorOp;
-          VectorizationContext vOutContext = vcRegion.getOuputVectorizationContext();
-          LOG.debug("Vectorized ReduceWork operator " + vectorOp.getName() + " added vectorization context " + vContext.toString());
+          VectorizationContext vNewContext = vcRegion.getOuputVectorizationContext();
+          LOG.debug("Vectorized ReduceWork operator " + vectorOp.getName() + " added vectorization context " + vNewContext.toString());
         }
-      }
-      if (vectorOp instanceof VectorGroupByOperator) {
-        VectorGroupByOperator groupBy = (VectorGroupByOperator) vectorOp;
-        VectorGroupByDesc vectorDesc = groupBy.getConf().getVectorDesc();
-        vectorDesc.setVectorGroupBatches(true);
       }
       if (saveRootVectorOp && op != vectorOp) {
         rootVectorOp = vectorOp;
@@ -823,7 +805,7 @@ public class Vectorizer implements PhysicalPlanResolver {
 
   private static class ValidatorVectorizationContext extends VectorizationContext {
     private ValidatorVectorizationContext() {
-      super();
+      super("No Name");
     }
 
     @Override
@@ -1036,7 +1018,7 @@ public class Vectorizer implements PhysicalPlanResolver {
     MapJoinDesc desc = op.getConf();
     return validateMapJoinDesc(desc);
   }
-  
+
   private boolean validateMapJoinDesc(MapJoinDesc desc) {
     byte posBigTable = (byte) desc.getPosBigTable();
     List<ExprNodeDesc> filterExprs = desc.getFilters().get(posBigTable);
@@ -1285,17 +1267,20 @@ public class Vectorizer implements PhysicalPlanResolver {
     return supportedDataTypesPattern.matcher(type.toLowerCase()).matches();
   }
 
-  private VectorizationContext getVectorizationContext(Operator op,
-      PhysicalContext pctx) {
-    RowSchema rs = op.getSchema();
+  private VectorizationContext getVectorizationContext(RowSchema rowSchema, String contextName,
+    Map<Integer, String> typeNameMap) {
+
+    VectorizationContext vContext = new VectorizationContext(contextName);
 
     // Add all non-virtual columns to make a vectorization context for
     // the TableScan operator.
-    VectorizationContext vContext = new VectorizationContext();
-    for (ColumnInfo c : rs.getSignature()) {
+    int i = 0;
+    for (ColumnInfo c : rowSchema.getSignature()) {
       // Earlier, validation code should have eliminated virtual columns usage (HIVE-5560).
       if (!isVirtualColumn(c)) {
         vContext.addInitialColumn(c.getInternalName());
+        typeNameMap.put(i, c.getTypeName());
+        i++;
       }
     }
     vContext.finishedAddingInitialColumns();
@@ -1378,40 +1363,14 @@ public class Vectorizer implements PhysicalPlanResolver {
     return false;
   }
 
-  public void debugDisplayAllMaps(Map<String, Map<String, Integer>> allColumnVectorMaps, 
-          Map<String, Map<Integer, String>> allScratchColumnVectorTypeMaps) {
+  public void debugDisplayAllMaps(BaseWork work) {
 
-    // Context keys grow in length since they are a path...
-    Comparator<String> comparerShorterString = new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        Integer length1 = o1.length();
-        Integer length2 = o2.length();
-        return length1.compareTo(length2);
-      }};
+    Map<String, Integer> columnNameMap = work.getVectorColumnNameMap();
+    Map<Integer, String> columnTypeMap = work.getVectorColumnTypeMap();
+    Map<Integer, String> scratchColumnTypeMap = work.getVectorScratchColumnTypeMap();
 
-    Comparator<Integer> comparerInteger = new Comparator<Integer>() {
-      @Override
-      public int compare(Integer o1, Integer o2) {
-        return o1.compareTo(o2);
-      }};
-
-    Map<String, Map<Integer, String>> sortedAllColumnVectorMaps = new TreeMap<String, Map<Integer, String>>(comparerShorterString);
-    for (Map.Entry<String, Map<String, Integer>> entry : allColumnVectorMaps.entrySet()) {
-      Map<Integer, String> sortedColumnMap = new TreeMap<Integer, String>(comparerInteger);
-      for (Map.Entry<String, Integer> innerEntry : entry.getValue().entrySet()) {
-        sortedColumnMap.put(innerEntry.getValue(), innerEntry.getKey());
-      }
-      sortedAllColumnVectorMaps.put(entry.getKey(), sortedColumnMap);
-    }
-    LOG.debug("sortedAllColumnVectorMaps " + sortedAllColumnVectorMaps);
-
-    Map<String, Map<Integer, String>> sortedAllScratchColumnVectorTypeMap = new TreeMap<String, Map<Integer, String>>(comparerShorterString);
-    for (Map.Entry<String, Map<Integer, String>> entry : allScratchColumnVectorTypeMaps.entrySet()) {
-      Map<Integer, String> sortedScratchColumnTypeMap = new TreeMap<Integer, String>(comparerInteger);
-      sortedScratchColumnTypeMap.putAll(entry.getValue());
-      sortedAllScratchColumnVectorTypeMap.put(entry.getKey(), sortedScratchColumnTypeMap);
-    }
-    LOG.debug("sortedAllScratchColumnVectorTypeMap " + sortedAllScratchColumnVectorTypeMap);
+    LOG.debug("debugDisplayAllMaps columnNameMap " + columnNameMap.toString());
+    LOG.debug("debugDisplayAllMaps columnTypeMap " + columnTypeMap.toString());
+    LOG.debug("debugDisplayAllMaps scratchColumnTypeMap " + scratchColumnTypeMap.toString());
   }
 }

@@ -89,8 +89,7 @@ public class VectorSMBMapJoinOuterFilteredOperator extends SMBMapJoinOperator im
     }
 
     // We are making a new output vectorized row batch.
-    vOutContext = new VectorizationContext(desc.getOutputColumnNames());
-    vOutContext.setFileKey(vContext.getFileKey() + "/SMB_JOIN_" + desc.getBigTableAlias());
+    vOutContext = new VectorizationContext(getName(), desc.getOutputColumnNames());
   }
 
   @Override

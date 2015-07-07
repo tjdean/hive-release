@@ -59,10 +59,7 @@ public class VectorExtractOperator extends ExtractOperator implements Vectorizat
      * Create a new vectorization context as projection of just the values columns, but 
      * keep same output column manager must be inherited to track the scratch the columns.
      */
-    vOutContext = new VectorizationContext(vContext);
-
-    // Set a fileKey with vectorization context.
-    vOutContext.setFileKey(vContext.getFileKey() + "/_EXTRACT_");
+    vOutContext = new VectorizationContext(getName(), vContext);
 
     // Remove "VALUE." prefix from value columns and create a new projection
     vOutContext.resetProjectionColumns();

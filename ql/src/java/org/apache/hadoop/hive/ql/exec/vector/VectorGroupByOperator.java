@@ -117,9 +117,11 @@ public class VectorGroupByOperator extends GroupByOperator implements Vectorizat
   private abstract class ProcessingModeBase implements IProcessingMode {
 
     // Overridden and used in sorted reduce group batch processing mode.
+    @Override
     public void startGroup() throws HiveException {
       // Do nothing.
     }
+    @Override
     public void endGroup() throws HiveException {
       // Do nothing.
     }
@@ -752,8 +754,7 @@ public class VectorGroupByOperator extends GroupByOperator implements Vectorizat
     
     isVectorOutput = desc.getVectorDesc().isVectorOutput();
 
-    vOutContext = new VectorizationContext(desc.getOutputColumnNames());
-    vOutContext.setFileKey(vContext.getFileKey() + "/_GROUPBY_");
+    vOutContext = new VectorizationContext(getName(), desc.getOutputColumnNames());
   }
 
   public VectorGroupByOperator() {
