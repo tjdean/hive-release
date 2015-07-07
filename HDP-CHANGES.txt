@@ -1,0 +1,36 @@
+Changes only in Hortonworks git repo and not in released hive-1.2.1
+===================================================================
+
+INCOMPATIBLE CHANGES
+
+    HIVE-11118 : Load data query should validate file formats with destination tables
+
+NEW FEATURES
+
+    HIVE-10233 : Hive on tez: memory manager for grace hash join
+
+IMPROVEMENTS
+
+    HIVE-11164 : WebHCat should log contents of HiveConf on startup
+    HIVE-11037 : HiveOnTez: make explain user level = true as default
+
+BUG FIXES
+
+    HIVE-11147 : MetaTool doesn't update FS root location for partitions with space in name
+    HIVE-11104 : Select operator doesn't propagate constants appearing in expressions
+    HIVE-11074 : Update tests for HIVE-9302 after removing binaries
+    HIVE-11051 : Hive 1.2.0 MapJoin w/Tez - LazyBinaryArray cannot be cast to [Ljava.lang.Object;
+    HIVE-11090 : ordering issues with windows unit test runs
+    HIVE-11079 : Fix qfile tests that fail on Windows due to CR/character escape differences
+    HIVE-11083 : Make test cbo_windowing robust
+    HIVE-10996 : Aggregation / Projection over Multi-Join Inner Query producing incorrect results
+    HIVE-11076 : Explicitly set hive.cbo.enable=true for some tests
+    HIVE-11060 : Make test windowing.q robust
+    HIVE-11059 : hcatalog-server-extensions tests scope should depend on hive-exec
+    HIVE-11066 : Ensure tests don't share directories on FS
+    HIVE-11050 : testCliDriver_vector_outer_join.* failures in Unit tests due to unstable data creation queries
+    HIVE-11048 : Make test cbo_windowing robust
+    HIVE-11028 : Tez: table self join and join with another table fails with IndexOutOfBoundsException
+    Revert HIVE-10453
+    HIVE-10251 : HIVE-9664 makes hive depend on ivysettings.xml (using HIVE-10251.simple.patch)
+
