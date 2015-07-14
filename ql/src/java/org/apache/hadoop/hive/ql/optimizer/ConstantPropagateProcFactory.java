@@ -810,7 +810,7 @@ public final class ConstantPropagateProcFactory {
             }
           }
           colList.set(i, newCol);
-          if (newCol instanceof ExprNodeConstantDesc && op.getSchema() != null) {
+          if (newCol instanceof ExprNodeConstantDesc && ((ExprNodeConstantDesc)newCol).getValue() != null && op.getSchema() != null) {
             constants.put(op.getSchema().getSignature().get(i), newCol);
           }
           if (columnExprMap != null) {
