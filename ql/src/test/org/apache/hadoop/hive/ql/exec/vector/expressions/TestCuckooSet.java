@@ -78,6 +78,15 @@ public class TestCuckooSet {
     }
 
   }
+  @Test
+  public void testSetLong2 () {
+
+    Long[] values = {1L,3L,4L,6L,9L,10L,11L,119L,123L,127L,460L,461L,516L,518L,541L,790L,794L,799L,801L};
+    CuckooSetLong s = new CuckooSetLong(values.length);
+    for(Long v : values) {
+      s.insert(v);
+    }
+  }
 
   // load multiple random sets of Long values
   @Test
