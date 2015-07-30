@@ -23,8 +23,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.ql.metadata.TableIterable;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hive.service.cli.ColumnDescriptor;
 import org.apache.hive.service.cli.FetchOrientation;
 import org.apache.hive.service.cli.HiveSQLException;
@@ -129,10 +132,11 @@ public class GetColumnsOperation extends MetadataOperation {
 
       List<String> dbNames = metastoreClient.getDatabases(schemaPattern);
       Collections.sort(dbNames);
+      int maxBatchSize = SessionState.get().getConf().getIntVar(ConfVars.METASTORE_BATCH_RETRIEVE_MAX);
       for (String dbName : dbNames) {
         List<String> tableNames = metastoreClient.getTables(dbName, tablePattern);
         Collections.sort(tableNames);
-        for (Table table : metastoreClient.getTableObjectsByName(dbName, tableNames)) {
+        for (Table table :  new TableIterable(metastoreClient, dbName, tableNames, maxBatchSize)) {
           TableSchema schema = new TableSchema(metastoreClient.getSchema(dbName, table.getTableName()));
           for (ColumnDescriptor column : schema.getColumnDescriptors()) {
             if (columnPattern != null && !columnPattern.matcher(column.getName()).matches()) {
