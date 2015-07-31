@@ -382,8 +382,7 @@ public final class Utilities {
           in = new ByteArrayInputStream(planBytes);
           in = new InflaterInputStream(in);
         } else {
-          FileSystem fs = path.getFileSystem(conf);
-          in = fs.open(path);
+          in = new FileInputStream(localPath.toUri().getPath());
         }
 
         if(MAP_PLAN_NAME.equals(name)){
