@@ -60,6 +60,7 @@ import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.EnvironmentContext;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Function;
+import org.apache.hadoop.hive.metastore.api.GetAllFunctionsResponse;
 import org.apache.hadoop.hive.metastore.api.GetPrincipalsInRoleRequest;
 import org.apache.hadoop.hive.metastore.api.GetPrincipalsInRoleResponse;
 import org.apache.hadoop.hive.metastore.api.GetRoleGrantsForPrincipalRequest;
@@ -1156,6 +1157,9 @@ public interface IMetaStoreClient {
 
   List<String> getFunctions(String dbName, String pattern)
       throws MetaException, TException;
+
+  GetAllFunctionsResponse getAllFunctions()
+          throws MetaException, TException;
 
   /**
    * Get a structure that details valid transactions.

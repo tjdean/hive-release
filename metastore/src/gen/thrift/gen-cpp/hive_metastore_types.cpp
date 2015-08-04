@@ -14723,6 +14723,114 @@ void FireEventResponse::printTo(std::ostream& out) const {
 }
 
 
+GetAllFunctionsResponse::~GetAllFunctionsResponse() throw() {
+}
+
+
+void GetAllFunctionsResponse::__set_functions(const std::vector<Function> & val) {
+  this->functions = val;
+__isset.functions = true;
+}
+
+uint32_t GetAllFunctionsResponse::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_LIST) {
+          {
+            this->functions.clear();
+            uint32_t _size627;
+            ::apache::thrift::protocol::TType _etype630;
+            xfer += iprot->readListBegin(_etype630, _size627);
+            this->functions.resize(_size627);
+            uint32_t _i631;
+            for (_i631 = 0; _i631 < _size627; ++_i631)
+            {
+              xfer += this->functions[_i631].read(iprot);
+            }
+            xfer += iprot->readListEnd();
+          }
+          this->__isset.functions = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t GetAllFunctionsResponse::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("GetAllFunctionsResponse");
+
+  if (this->__isset.functions) {
+    xfer += oprot->writeFieldBegin("functions", ::apache::thrift::protocol::T_LIST, 1);
+    {
+      xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->functions.size()));
+      std::vector<Function> ::const_iterator _iter632;
+      for (_iter632 = this->functions.begin(); _iter632 != this->functions.end(); ++_iter632)
+      {
+        xfer += (*_iter632).write(oprot);
+      }
+      xfer += oprot->writeListEnd();
+    }
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+void swap(GetAllFunctionsResponse &a, GetAllFunctionsResponse &b) {
+  using ::std::swap;
+  swap(a.functions, b.functions);
+  swap(a.__isset, b.__isset);
+}
+
+GetAllFunctionsResponse::GetAllFunctionsResponse(const GetAllFunctionsResponse& other633) {
+  functions = other633.functions;
+  __isset = other633.__isset;
+}
+GetAllFunctionsResponse& GetAllFunctionsResponse::operator=(const GetAllFunctionsResponse& other634) {
+  functions = other634.functions;
+  __isset = other634.__isset;
+  return *this;
+}
+void GetAllFunctionsResponse::printTo(std::ostream& out) const {
+  using ::apache::thrift::to_string;
+  out << "GetAllFunctionsResponse(";
+  out << "functions="; (__isset.functions ? (out << to_string(functions)) : (out << "<null>"));
+  out << ")";
+}
+
+
 MetaException::~MetaException() throw() {
 }
 
@@ -14792,13 +14900,13 @@ void swap(MetaException &a, MetaException &b) {
   swap(a.__isset, b.__isset);
 }
 
-MetaException::MetaException(const MetaException& other627) : TException() {
-  message = other627.message;
-  __isset = other627.__isset;
+MetaException::MetaException(const MetaException& other635) : TException() {
+  message = other635.message;
+  __isset = other635.__isset;
 }
-MetaException& MetaException::operator=(const MetaException& other628) {
-  message = other628.message;
-  __isset = other628.__isset;
+MetaException& MetaException::operator=(const MetaException& other636) {
+  message = other636.message;
+  __isset = other636.__isset;
   return *this;
 }
 void MetaException::printTo(std::ostream& out) const {
@@ -14889,13 +14997,13 @@ void swap(UnknownTableException &a, UnknownTableException &b) {
   swap(a.__isset, b.__isset);
 }
 
-UnknownTableException::UnknownTableException(const UnknownTableException& other629) : TException() {
-  message = other629.message;
-  __isset = other629.__isset;
+UnknownTableException::UnknownTableException(const UnknownTableException& other637) : TException() {
+  message = other637.message;
+  __isset = other637.__isset;
 }
-UnknownTableException& UnknownTableException::operator=(const UnknownTableException& other630) {
-  message = other630.message;
-  __isset = other630.__isset;
+UnknownTableException& UnknownTableException::operator=(const UnknownTableException& other638) {
+  message = other638.message;
+  __isset = other638.__isset;
   return *this;
 }
 void UnknownTableException::printTo(std::ostream& out) const {
@@ -14986,13 +15094,13 @@ void swap(UnknownDBException &a, UnknownDBException &b) {
   swap(a.__isset, b.__isset);
 }
 
-UnknownDBException::UnknownDBException(const UnknownDBException& other631) : TException() {
-  message = other631.message;
-  __isset = other631.__isset;
+UnknownDBException::UnknownDBException(const UnknownDBException& other639) : TException() {
+  message = other639.message;
+  __isset = other639.__isset;
 }
-UnknownDBException& UnknownDBException::operator=(const UnknownDBException& other632) {
-  message = other632.message;
-  __isset = other632.__isset;
+UnknownDBException& UnknownDBException::operator=(const UnknownDBException& other640) {
+  message = other640.message;
+  __isset = other640.__isset;
   return *this;
 }
 void UnknownDBException::printTo(std::ostream& out) const {
@@ -15083,13 +15191,13 @@ void swap(AlreadyExistsException &a, AlreadyExistsException &b) {
   swap(a.__isset, b.__isset);
 }
 
-AlreadyExistsException::AlreadyExistsException(const AlreadyExistsException& other633) : TException() {
-  message = other633.message;
-  __isset = other633.__isset;
+AlreadyExistsException::AlreadyExistsException(const AlreadyExistsException& other641) : TException() {
+  message = other641.message;
+  __isset = other641.__isset;
 }
-AlreadyExistsException& AlreadyExistsException::operator=(const AlreadyExistsException& other634) {
-  message = other634.message;
-  __isset = other634.__isset;
+AlreadyExistsException& AlreadyExistsException::operator=(const AlreadyExistsException& other642) {
+  message = other642.message;
+  __isset = other642.__isset;
   return *this;
 }
 void AlreadyExistsException::printTo(std::ostream& out) const {
@@ -15180,13 +15288,13 @@ void swap(InvalidPartitionException &a, InvalidPartitionException &b) {
   swap(a.__isset, b.__isset);
 }
 
-InvalidPartitionException::InvalidPartitionException(const InvalidPartitionException& other635) : TException() {
-  message = other635.message;
-  __isset = other635.__isset;
+InvalidPartitionException::InvalidPartitionException(const InvalidPartitionException& other643) : TException() {
+  message = other643.message;
+  __isset = other643.__isset;
 }
-InvalidPartitionException& InvalidPartitionException::operator=(const InvalidPartitionException& other636) {
-  message = other636.message;
-  __isset = other636.__isset;
+InvalidPartitionException& InvalidPartitionException::operator=(const InvalidPartitionException& other644) {
+  message = other644.message;
+  __isset = other644.__isset;
   return *this;
 }
 void InvalidPartitionException::printTo(std::ostream& out) const {
@@ -15277,13 +15385,13 @@ void swap(UnknownPartitionException &a, UnknownPartitionException &b) {
   swap(a.__isset, b.__isset);
 }
 
-UnknownPartitionException::UnknownPartitionException(const UnknownPartitionException& other637) : TException() {
-  message = other637.message;
-  __isset = other637.__isset;
+UnknownPartitionException::UnknownPartitionException(const UnknownPartitionException& other645) : TException() {
+  message = other645.message;
+  __isset = other645.__isset;
 }
-UnknownPartitionException& UnknownPartitionException::operator=(const UnknownPartitionException& other638) {
-  message = other638.message;
-  __isset = other638.__isset;
+UnknownPartitionException& UnknownPartitionException::operator=(const UnknownPartitionException& other646) {
+  message = other646.message;
+  __isset = other646.__isset;
   return *this;
 }
 void UnknownPartitionException::printTo(std::ostream& out) const {
@@ -15374,13 +15482,13 @@ void swap(InvalidObjectException &a, InvalidObjectException &b) {
   swap(a.__isset, b.__isset);
 }
 
-InvalidObjectException::InvalidObjectException(const InvalidObjectException& other639) : TException() {
-  message = other639.message;
-  __isset = other639.__isset;
+InvalidObjectException::InvalidObjectException(const InvalidObjectException& other647) : TException() {
+  message = other647.message;
+  __isset = other647.__isset;
 }
-InvalidObjectException& InvalidObjectException::operator=(const InvalidObjectException& other640) {
-  message = other640.message;
-  __isset = other640.__isset;
+InvalidObjectException& InvalidObjectException::operator=(const InvalidObjectException& other648) {
+  message = other648.message;
+  __isset = other648.__isset;
   return *this;
 }
 void InvalidObjectException::printTo(std::ostream& out) const {
@@ -15471,13 +15579,13 @@ void swap(NoSuchObjectException &a, NoSuchObjectException &b) {
   swap(a.__isset, b.__isset);
 }
 
-NoSuchObjectException::NoSuchObjectException(const NoSuchObjectException& other641) : TException() {
-  message = other641.message;
-  __isset = other641.__isset;
+NoSuchObjectException::NoSuchObjectException(const NoSuchObjectException& other649) : TException() {
+  message = other649.message;
+  __isset = other649.__isset;
 }
-NoSuchObjectException& NoSuchObjectException::operator=(const NoSuchObjectException& other642) {
-  message = other642.message;
-  __isset = other642.__isset;
+NoSuchObjectException& NoSuchObjectException::operator=(const NoSuchObjectException& other650) {
+  message = other650.message;
+  __isset = other650.__isset;
   return *this;
 }
 void NoSuchObjectException::printTo(std::ostream& out) const {
@@ -15568,13 +15676,13 @@ void swap(IndexAlreadyExistsException &a, IndexAlreadyExistsException &b) {
   swap(a.__isset, b.__isset);
 }
 
-IndexAlreadyExistsException::IndexAlreadyExistsException(const IndexAlreadyExistsException& other643) : TException() {
-  message = other643.message;
-  __isset = other643.__isset;
+IndexAlreadyExistsException::IndexAlreadyExistsException(const IndexAlreadyExistsException& other651) : TException() {
+  message = other651.message;
+  __isset = other651.__isset;
 }
-IndexAlreadyExistsException& IndexAlreadyExistsException::operator=(const IndexAlreadyExistsException& other644) {
-  message = other644.message;
-  __isset = other644.__isset;
+IndexAlreadyExistsException& IndexAlreadyExistsException::operator=(const IndexAlreadyExistsException& other652) {
+  message = other652.message;
+  __isset = other652.__isset;
   return *this;
 }
 void IndexAlreadyExistsException::printTo(std::ostream& out) const {
@@ -15665,13 +15773,13 @@ void swap(InvalidOperationException &a, InvalidOperationException &b) {
   swap(a.__isset, b.__isset);
 }
 
-InvalidOperationException::InvalidOperationException(const InvalidOperationException& other645) : TException() {
-  message = other645.message;
-  __isset = other645.__isset;
+InvalidOperationException::InvalidOperationException(const InvalidOperationException& other653) : TException() {
+  message = other653.message;
+  __isset = other653.__isset;
 }
-InvalidOperationException& InvalidOperationException::operator=(const InvalidOperationException& other646) {
-  message = other646.message;
-  __isset = other646.__isset;
+InvalidOperationException& InvalidOperationException::operator=(const InvalidOperationException& other654) {
+  message = other654.message;
+  __isset = other654.__isset;
   return *this;
 }
 void InvalidOperationException::printTo(std::ostream& out) const {
@@ -15762,13 +15870,13 @@ void swap(ConfigValSecurityException &a, ConfigValSecurityException &b) {
   swap(a.__isset, b.__isset);
 }
 
-ConfigValSecurityException::ConfigValSecurityException(const ConfigValSecurityException& other647) : TException() {
-  message = other647.message;
-  __isset = other647.__isset;
+ConfigValSecurityException::ConfigValSecurityException(const ConfigValSecurityException& other655) : TException() {
+  message = other655.message;
+  __isset = other655.__isset;
 }
-ConfigValSecurityException& ConfigValSecurityException::operator=(const ConfigValSecurityException& other648) {
-  message = other648.message;
-  __isset = other648.__isset;
+ConfigValSecurityException& ConfigValSecurityException::operator=(const ConfigValSecurityException& other656) {
+  message = other656.message;
+  __isset = other656.__isset;
   return *this;
 }
 void ConfigValSecurityException::printTo(std::ostream& out) const {
@@ -15859,13 +15967,13 @@ void swap(InvalidInputException &a, InvalidInputException &b) {
   swap(a.__isset, b.__isset);
 }
 
-InvalidInputException::InvalidInputException(const InvalidInputException& other649) : TException() {
-  message = other649.message;
-  __isset = other649.__isset;
+InvalidInputException::InvalidInputException(const InvalidInputException& other657) : TException() {
+  message = other657.message;
+  __isset = other657.__isset;
 }
-InvalidInputException& InvalidInputException::operator=(const InvalidInputException& other650) {
-  message = other650.message;
-  __isset = other650.__isset;
+InvalidInputException& InvalidInputException::operator=(const InvalidInputException& other658) {
+  message = other658.message;
+  __isset = other658.__isset;
   return *this;
 }
 void InvalidInputException::printTo(std::ostream& out) const {
@@ -15956,13 +16064,13 @@ void swap(NoSuchTxnException &a, NoSuchTxnException &b) {
   swap(a.__isset, b.__isset);
 }
 
-NoSuchTxnException::NoSuchTxnException(const NoSuchTxnException& other651) : TException() {
-  message = other651.message;
-  __isset = other651.__isset;
+NoSuchTxnException::NoSuchTxnException(const NoSuchTxnException& other659) : TException() {
+  message = other659.message;
+  __isset = other659.__isset;
 }
-NoSuchTxnException& NoSuchTxnException::operator=(const NoSuchTxnException& other652) {
-  message = other652.message;
-  __isset = other652.__isset;
+NoSuchTxnException& NoSuchTxnException::operator=(const NoSuchTxnException& other660) {
+  message = other660.message;
+  __isset = other660.__isset;
   return *this;
 }
 void NoSuchTxnException::printTo(std::ostream& out) const {
@@ -16053,13 +16161,13 @@ void swap(TxnAbortedException &a, TxnAbortedException &b) {
   swap(a.__isset, b.__isset);
 }
 
-TxnAbortedException::TxnAbortedException(const TxnAbortedException& other653) : TException() {
-  message = other653.message;
-  __isset = other653.__isset;
+TxnAbortedException::TxnAbortedException(const TxnAbortedException& other661) : TException() {
+  message = other661.message;
+  __isset = other661.__isset;
 }
-TxnAbortedException& TxnAbortedException::operator=(const TxnAbortedException& other654) {
-  message = other654.message;
-  __isset = other654.__isset;
+TxnAbortedException& TxnAbortedException::operator=(const TxnAbortedException& other662) {
+  message = other662.message;
+  __isset = other662.__isset;
   return *this;
 }
 void TxnAbortedException::printTo(std::ostream& out) const {
@@ -16150,13 +16258,13 @@ void swap(TxnOpenException &a, TxnOpenException &b) {
   swap(a.__isset, b.__isset);
 }
 
-TxnOpenException::TxnOpenException(const TxnOpenException& other655) : TException() {
-  message = other655.message;
-  __isset = other655.__isset;
+TxnOpenException::TxnOpenException(const TxnOpenException& other663) : TException() {
+  message = other663.message;
+  __isset = other663.__isset;
 }
-TxnOpenException& TxnOpenException::operator=(const TxnOpenException& other656) {
-  message = other656.message;
-  __isset = other656.__isset;
+TxnOpenException& TxnOpenException::operator=(const TxnOpenException& other664) {
+  message = other664.message;
+  __isset = other664.__isset;
   return *this;
 }
 void TxnOpenException::printTo(std::ostream& out) const {
@@ -16247,13 +16355,13 @@ void swap(NoSuchLockException &a, NoSuchLockException &b) {
   swap(a.__isset, b.__isset);
 }
 
-NoSuchLockException::NoSuchLockException(const NoSuchLockException& other657) : TException() {
-  message = other657.message;
-  __isset = other657.__isset;
+NoSuchLockException::NoSuchLockException(const NoSuchLockException& other665) : TException() {
+  message = other665.message;
+  __isset = other665.__isset;
 }
-NoSuchLockException& NoSuchLockException::operator=(const NoSuchLockException& other658) {
-  message = other658.message;
-  __isset = other658.__isset;
+NoSuchLockException& NoSuchLockException::operator=(const NoSuchLockException& other666) {
+  message = other666.message;
+  __isset = other666.__isset;
   return *this;
 }
 void NoSuchLockException::printTo(std::ostream& out) const {
