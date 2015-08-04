@@ -342,6 +342,8 @@ class CmRecycleRequest;
 
 class CmRecycleResponse;
 
+class GetAllFunctionsResponse;
+
 class MetaException;
 
 class UnknownTableException;
@@ -6156,6 +6158,54 @@ class CmRecycleResponse {
 void swap(CmRecycleResponse &a, CmRecycleResponse &b);
 
 inline std::ostream& operator<<(std::ostream& out, const CmRecycleResponse& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _GetAllFunctionsResponse__isset {
+  _GetAllFunctionsResponse__isset() : functions(false) {}
+  bool functions :1;
+} _GetAllFunctionsResponse__isset;
+
+class GetAllFunctionsResponse {
+ public:
+
+  GetAllFunctionsResponse(const GetAllFunctionsResponse&);
+  GetAllFunctionsResponse& operator=(const GetAllFunctionsResponse&);
+  GetAllFunctionsResponse() {
+  }
+
+  virtual ~GetAllFunctionsResponse() throw();
+  std::vector<Function>  functions;
+
+  _GetAllFunctionsResponse__isset __isset;
+
+  void __set_functions(const std::vector<Function> & val);
+
+  bool operator == (const GetAllFunctionsResponse & rhs) const
+  {
+    if (__isset.functions != rhs.__isset.functions)
+      return false;
+    else if (__isset.functions && !(functions == rhs.functions))
+      return false;
+    return true;
+  }
+  bool operator != (const GetAllFunctionsResponse &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const GetAllFunctionsResponse & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(GetAllFunctionsResponse &a, GetAllFunctionsResponse &b);
+
+inline std::ostream& operator<<(std::ostream& out, const GetAllFunctionsResponse& obj)
 {
   obj.printTo(out);
   return out;

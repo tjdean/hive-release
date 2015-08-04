@@ -21,6 +21,7 @@ package org.apache.hive.hcatalog.listener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Collections;
 
 import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
@@ -153,6 +154,12 @@ public class DummyRawStoreFailEvent implements RawStore, Configurable {
   @Override
   public List<String> getAllDatabases() throws MetaException {
     return objectStore.getAllDatabases();
+  }
+
+  @Override
+  public List<Function> getAllFunctions()
+      throws MetaException {
+    return Collections.emptyList();
   }
 
   @Override
