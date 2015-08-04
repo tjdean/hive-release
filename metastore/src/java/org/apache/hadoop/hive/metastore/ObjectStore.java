@@ -7068,6 +7068,17 @@ public class ObjectStore implements RawStore, Configurable {
     return func;
   }
 
+  private List<Function> convertToFunctions(List<MFunction> mfuncs) {
+    if (mfuncs == null) {
+      return null;
+    }
+    List<Function> functions = new ArrayList<>();
+    for (MFunction mfunc : mfuncs) {
+      functions.add(convertToFunction(mfunc));
+    }
+    return functions;
+  }
+
   private MFunction convertToMFunction(Function func) throws InvalidObjectException {
     if (func == null) {
       return null;
@@ -7222,6 +7233,23 @@ public class ObjectStore implements RawStore, Configurable {
     return func;
   }
 
+  @Override
+  public List<Function> getAllFunctions() throws MetaException {
+    boolean commited = false;
+    try {
+      openTransaction();
+      Query query = pm.newQuery(MFunction.class);
+      List<MFunction> allFunctions = (List<MFunction>) query.execute();
+      pm.retrieveAll(allFunctions);
+      commited = commitTransaction();
+      return convertToFunctions(allFunctions);
+    } finally {
+      if (!commited) {
+        rollbackTransaction();
+      }
+    }
+  }
+  
   @Override
   public List<String> getFunctions(String dbName, String pattern)
       throws MetaException {

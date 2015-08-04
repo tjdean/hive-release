@@ -111,6 +111,7 @@ class ThriftHiveMetastoreIf : virtual public  ::facebook::fb303::FacebookService
   virtual void alter_function(const std::string& dbName, const std::string& funcName, const Function& newFunc) = 0;
   virtual void get_functions(std::vector<std::string> & _return, const std::string& dbName, const std::string& pattern) = 0;
   virtual void get_function(Function& _return, const std::string& dbName, const std::string& funcName) = 0;
+  virtual void get_all_functions(GetAllFunctionsResponse& _return) = 0;
   virtual bool create_role(const Role& role) = 0;
   virtual bool drop_role(const std::string& role_name) = 0;
   virtual void get_role_names(std::vector<std::string> & _return) = 0;
@@ -457,6 +458,9 @@ class ThriftHiveMetastoreNull : virtual public ThriftHiveMetastoreIf , virtual p
     return;
   }
   void get_function(Function& /* _return */, const std::string& /* dbName */, const std::string& /* funcName */) {
+    return;
+  }
+  void get_all_functions(GetAllFunctionsResponse& /* _return */) {
     return;
   }
   bool create_role(const Role& /* role */) {
@@ -12364,6 +12368,106 @@ class ThriftHiveMetastore_get_function_presult {
 
 };
 
+
+class ThriftHiveMetastore_get_all_functions_args {
+ public:
+
+  ThriftHiveMetastore_get_all_functions_args(const ThriftHiveMetastore_get_all_functions_args&);
+  ThriftHiveMetastore_get_all_functions_args& operator=(const ThriftHiveMetastore_get_all_functions_args&);
+  ThriftHiveMetastore_get_all_functions_args() {
+  }
+
+  virtual ~ThriftHiveMetastore_get_all_functions_args() throw();
+
+  bool operator == (const ThriftHiveMetastore_get_all_functions_args & /* rhs */) const
+  {
+    return true;
+  }
+  bool operator != (const ThriftHiveMetastore_get_all_functions_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ThriftHiveMetastore_get_all_functions_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ThriftHiveMetastore_get_all_functions_pargs {
+ public:
+
+
+  virtual ~ThriftHiveMetastore_get_all_functions_pargs() throw();
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ThriftHiveMetastore_get_all_functions_result__isset {
+  _ThriftHiveMetastore_get_all_functions_result__isset() : success(false), o1(false) {}
+  bool success :1;
+  bool o1 :1;
+} _ThriftHiveMetastore_get_all_functions_result__isset;
+
+class ThriftHiveMetastore_get_all_functions_result {
+ public:
+
+  ThriftHiveMetastore_get_all_functions_result(const ThriftHiveMetastore_get_all_functions_result&);
+  ThriftHiveMetastore_get_all_functions_result& operator=(const ThriftHiveMetastore_get_all_functions_result&);
+  ThriftHiveMetastore_get_all_functions_result() {
+  }
+
+  virtual ~ThriftHiveMetastore_get_all_functions_result() throw();
+  GetAllFunctionsResponse success;
+  MetaException o1;
+
+  _ThriftHiveMetastore_get_all_functions_result__isset __isset;
+
+  void __set_success(const GetAllFunctionsResponse& val);
+
+  void __set_o1(const MetaException& val);
+
+  bool operator == (const ThriftHiveMetastore_get_all_functions_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(o1 == rhs.o1))
+      return false;
+    return true;
+  }
+  bool operator != (const ThriftHiveMetastore_get_all_functions_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ThriftHiveMetastore_get_all_functions_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ThriftHiveMetastore_get_all_functions_presult__isset {
+  _ThriftHiveMetastore_get_all_functions_presult__isset() : success(false), o1(false) {}
+  bool success :1;
+  bool o1 :1;
+} _ThriftHiveMetastore_get_all_functions_presult__isset;
+
+class ThriftHiveMetastore_get_all_functions_presult {
+ public:
+
+
+  virtual ~ThriftHiveMetastore_get_all_functions_presult() throw();
+  GetAllFunctionsResponse* success;
+  MetaException o1;
+
+  _ThriftHiveMetastore_get_all_functions_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ThriftHiveMetastore_create_role_args__isset {
   _ThriftHiveMetastore_create_role_args__isset() : role(false) {}
   bool role :1;
@@ -16634,6 +16738,9 @@ class ThriftHiveMetastoreClient : virtual public ThriftHiveMetastoreIf, public  
   void get_function(Function& _return, const std::string& dbName, const std::string& funcName);
   void send_get_function(const std::string& dbName, const std::string& funcName);
   void recv_get_function(Function& _return);
+  void get_all_functions(GetAllFunctionsResponse& _return);
+  void send_get_all_functions();
+  void recv_get_all_functions(GetAllFunctionsResponse& _return);
   bool create_role(const Role& role);
   void send_create_role(const Role& role);
   bool recv_create_role();
@@ -16841,6 +16948,7 @@ class ThriftHiveMetastoreProcessor : public  ::facebook::fb303::FacebookServiceP
   void process_alter_function(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_functions(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_function(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_get_all_functions(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_create_role(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_drop_role(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_role_names(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
@@ -16970,6 +17078,7 @@ class ThriftHiveMetastoreProcessor : public  ::facebook::fb303::FacebookServiceP
     processMap_["alter_function"] = &ThriftHiveMetastoreProcessor::process_alter_function;
     processMap_["get_functions"] = &ThriftHiveMetastoreProcessor::process_get_functions;
     processMap_["get_function"] = &ThriftHiveMetastoreProcessor::process_get_function;
+    processMap_["get_all_functions"] = &ThriftHiveMetastoreProcessor::process_get_all_functions;
     processMap_["create_role"] = &ThriftHiveMetastoreProcessor::process_create_role;
     processMap_["drop_role"] = &ThriftHiveMetastoreProcessor::process_drop_role;
     processMap_["get_role_names"] = &ThriftHiveMetastoreProcessor::process_get_role_names;
@@ -17892,6 +18001,16 @@ class ThriftHiveMetastoreMultiface : virtual public ThriftHiveMetastoreIf, publi
     return;
   }
 
+  void get_all_functions(GetAllFunctionsResponse& _return) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->get_all_functions(_return);
+    }
+    ifaces_[i]->get_all_functions(_return);
+    return;
+  }
+
   bool create_role(const Role& role) {
     size_t sz = ifaces_.size();
     size_t i = 0;
@@ -18520,6 +18639,9 @@ class ThriftHiveMetastoreConcurrentClient : virtual public ThriftHiveMetastoreIf
   void get_function(Function& _return, const std::string& dbName, const std::string& funcName);
   int32_t send_get_function(const std::string& dbName, const std::string& funcName);
   void recv_get_function(Function& _return, const int32_t seqid);
+  void get_all_functions(GetAllFunctionsResponse& _return);
+  int32_t send_get_all_functions();
+  void recv_get_all_functions(GetAllFunctionsResponse& _return, const int32_t seqid);
   bool create_role(const Role& role);
   int32_t send_create_role(const Role& role);
   bool recv_create_role(const int32_t seqid);
