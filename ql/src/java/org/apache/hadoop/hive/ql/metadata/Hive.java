@@ -2422,37 +2422,13 @@ private void constructOneLBLocationMap(FileStatus fSta,
           // For NOT local src file and same FS, rename the file
           success = fs.rename(srcf, destf);
         } else {
-        	String hadoopExec = conf.getVar(HiveConf.ConfVars.HADOOPBIN);
-        	cmdLine = hadoopExec + " distcp  " + srcf + " " + destf;
-        	Process mvProcess =  Runtime.getRuntime().exec(cmdLine);
-        	int exitVal = -101;
-        	try {
-		          /* Capture the input stream and error stream */
-		          InputStream inStream = mvProcess.getInputStream();
-		          new InputStreamHandler( inBuffer, inStream );
-                  InputStream errStream = mvProcess.getErrorStream();
-                  new InputStreamHandler( errBuffer , errStream ); 
-        	      exitVal = mvProcess.waitFor(); //TODO: poll periodically
-        	} catch (InterruptedException e) {
-                  LOG.error("Unable to move using hadoop distcp,  source " +
-                             srcf + " to destination " + destf + " using command: " + cmdLine);
-                  LOG.error("Input stream captured for hadoop dist command: " + inBuffer);
-                  LOG.error("Error stream captured for hadoop dist command: " + errBuffer);
-        	  throw new HiveException("Unable to move using hadoop distcp,  source " + 
-        				   srcf + " to destination " + destf, e);
-        	}
-        	if (exitVal != 0) {
-                  LOG.error("Unable to move using hadoop distcp,  source " +
-                             srcf + " to destination " + destf + " using command: " + cmdLine);
-                  LOG.error("Exit value for hadoop distcp command " + exitVal);
-		          LOG.error("Input stream captured for hadoop dist command: " + inBuffer);
-		          LOG.error("Error stream captured for hadoop dist command: " + errBuffer);	
-        	      success = false;
-        	} else {
-			      /* Remove the source file */
-			      srcf.getFileSystem(conf).delete(srcf, true);
-                  success = true;
-        	}
+          // File systems are different - copy file to dest FS and remove original file from src FS
+          success = FileUtils.copy(
+              srcf.getFileSystem(conf), srcf,
+              destf.getFileSystem(conf), destf,
+              true,    // deleteSource
+              replace, // overwrite
+              conf);
         }
       } else {
         // For local src file, copy to hdfs
