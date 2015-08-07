@@ -288,6 +288,28 @@ STAGE PLANS:
                 Map-reduce partition columns: key (type: string)
                 Statistics: Num rows: 13 Data size: 99 Basic stats: COMPLETE Column stats: NONE
           TableScan
+            alias: y
+            Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
+            Filter Operator
+              predicate: key is not null (type: boolean)
+              Statistics: Num rows: 250 Data size: 2656 Basic stats: COMPLETE Column stats: NONE
+              Reduce Output Operator
+                key expressions: key (type: string)
+                sort order: +
+                Map-reduce partition columns: key (type: string)
+                Statistics: Num rows: 250 Data size: 2656 Basic stats: COMPLETE Column stats: NONE
+          TableScan
+            alias: y
+            Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
+            Filter Operator
+              predicate: key is not null (type: boolean)
+              Statistics: Num rows: 250 Data size: 2656 Basic stats: COMPLETE Column stats: NONE
+              Reduce Output Operator
+                key expressions: key (type: string)
+                sort order: +
+                Map-reduce partition columns: key (type: string)
+                Statistics: Num rows: 250 Data size: 2656 Basic stats: COMPLETE Column stats: NONE
+          TableScan
             alias: x
             Statistics: Num rows: 25 Data size: 191 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
@@ -299,28 +321,6 @@ STAGE PLANS:
                 Map-reduce partition columns: key (type: string)
                 Statistics: Num rows: 13 Data size: 99 Basic stats: COMPLETE Column stats: NONE
                 value expressions: value (type: string)
-          TableScan
-            alias: y
-            Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
-            Filter Operator
-              predicate: key is not null (type: boolean)
-              Statistics: Num rows: 250 Data size: 2656 Basic stats: COMPLETE Column stats: NONE
-              Reduce Output Operator
-                key expressions: key (type: string)
-                sort order: +
-                Map-reduce partition columns: key (type: string)
-                Statistics: Num rows: 250 Data size: 2656 Basic stats: COMPLETE Column stats: NONE
-          TableScan
-            alias: y
-            Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
-            Filter Operator
-              predicate: key is not null (type: boolean)
-              Statistics: Num rows: 250 Data size: 2656 Basic stats: COMPLETE Column stats: NONE
-              Reduce Output Operator
-                key expressions: key (type: string)
-                sort order: +
-                Map-reduce partition columns: key (type: string)
-                Statistics: Num rows: 250 Data size: 2656 Basic stats: COMPLETE Column stats: NONE
       Reduce Operator Tree:
         Demux Operator
           Statistics: Num rows: 526 Data size: 5510 Basic stats: COMPLETE Column stats: NONE
@@ -981,6 +981,28 @@ STAGE PLANS:
                 Statistics: Num rows: 13 Data size: 99 Basic stats: COMPLETE Column stats: NONE
                 value expressions: value (type: string)
           TableScan
+            alias: y
+            Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
+            Filter Operator
+              predicate: key is not null (type: boolean)
+              Statistics: Num rows: 250 Data size: 2656 Basic stats: COMPLETE Column stats: NONE
+              Reduce Output Operator
+                key expressions: key (type: string)
+                sort order: +
+                Map-reduce partition columns: key (type: string)
+                Statistics: Num rows: 250 Data size: 2656 Basic stats: COMPLETE Column stats: NONE
+          TableScan
+            alias: y
+            Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
+            Filter Operator
+              predicate: key is not null (type: boolean)
+              Statistics: Num rows: 250 Data size: 2656 Basic stats: COMPLETE Column stats: NONE
+              Reduce Output Operator
+                key expressions: key (type: string)
+                sort order: +
+                Map-reduce partition columns: key (type: string)
+                Statistics: Num rows: 250 Data size: 2656 Basic stats: COMPLETE Column stats: NONE
+          TableScan
             alias: x
             Statistics: Num rows: 25 Data size: 191 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
@@ -991,28 +1013,6 @@ STAGE PLANS:
                 sort order: +
                 Map-reduce partition columns: key (type: string)
                 Statistics: Num rows: 13 Data size: 99 Basic stats: COMPLETE Column stats: NONE
-          TableScan
-            alias: y
-            Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
-            Filter Operator
-              predicate: key is not null (type: boolean)
-              Statistics: Num rows: 250 Data size: 2656 Basic stats: COMPLETE Column stats: NONE
-              Reduce Output Operator
-                key expressions: key (type: string)
-                sort order: +
-                Map-reduce partition columns: key (type: string)
-                Statistics: Num rows: 250 Data size: 2656 Basic stats: COMPLETE Column stats: NONE
-          TableScan
-            alias: y
-            Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
-            Filter Operator
-              predicate: key is not null (type: boolean)
-              Statistics: Num rows: 250 Data size: 2656 Basic stats: COMPLETE Column stats: NONE
-              Reduce Output Operator
-                key expressions: key (type: string)
-                sort order: +
-                Map-reduce partition columns: key (type: string)
-                Statistics: Num rows: 250 Data size: 2656 Basic stats: COMPLETE Column stats: NONE
       Reduce Operator Tree:
         Demux Operator
           Statistics: Num rows: 526 Data size: 5510 Basic stats: COMPLETE Column stats: NONE

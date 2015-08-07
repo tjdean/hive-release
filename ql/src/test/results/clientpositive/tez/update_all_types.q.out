@@ -105,7 +105,7 @@ PREHOOK: query: update acid_uat set
     f = 3.14,
     d = 6.28,
     de = 5.99,
-    t = '2014-09-01 09:44.23.23',
+    t = '2014-09-01 09:44:23.23',
     dt = '2014-09-01',
     s = 'its a beautiful day in the neighbhorhood',
     vc = 'a beautiful day for a neighbor',
@@ -123,7 +123,7 @@ POSTHOOK: query: update acid_uat set
     f = 3.14,
     d = 6.28,
     de = 5.99,
-    t = '2014-09-01 09:44.23.23',
+    t = '2014-09-01 09:44:23.23',
     dt = '2014-09-01',
     s = 'its a beautiful day in the neighbhorhood',
     vc = 'a beautiful day for a neighbor',
@@ -150,7 +150,7 @@ NULL	-5470	-1072076362	1864027286	NULL	-5470.0	NULL	NULL	1970-01-01	2uLyD28144vk
 8	NULL	-1071363017	1349676361	8.0	NULL	8	1969-12-31 16:00:15.892	NULL	Anj0oF	Anj0oF	IwE1G7Qb0B1NEfV030g                 	true
 NULL	-947	-1070551679	1864027286	NULL	-947.0	NULL	NULL	1970-01-01	iUR3Q	iUR3Q	4KWs6gw7lv2WYd66P                   	false
 11	NULL	-1069736047	-453772520	11.0	NULL	11	1969-12-31 16:00:02.351	NULL	k17Am8uPHWk02cEf1jet	k17Am8uPHWk02cEf1jet	qrXLLNX1                            	true
-1	2	3	4	3.14	6.28	5.99	NULL	2014-09-01	its a beautiful day in the neighbhorhood	a beautiful day for a neighbor	wont you be mine                    	true
+1	2	3	4	3.14	6.28	5.99	2014-09-01 09:44:23.23	2014-09-01	its a beautiful day in the neighbhorhood	a beautiful day for a neighbor	wont you be mine                    	true
 PREHOOK: query: update acid_uat set
   ti = ti * 2,
   si = cast(f as int),
@@ -184,4 +184,4 @@ NULL	-5470	-1072076362	1864027286	NULL	-5470.0	NULL	NULL	1970-01-01	2uLyD28144vk
 8	NULL	-1071363017	1349676361	8.0	NULL	8	1969-12-31 16:00:15.892	NULL	Anj0oF	Anj0oF	IwE1G7Qb0B1NEfV030g                 	true
 NULL	-947	-1070551679	1864027286	NULL	-947.0	NULL	NULL	1970-01-01	iUR3Q	iUR3Q	4KWs6gw7lv2WYd66P                   	false
 11	NULL	-1069736047	-453772520	11.0	NULL	11	1969-12-31 16:00:02.351	NULL	k17Am8uPHWk02cEf1jet	k17Am8uPHWk02cEf1jet	qrXLLNX1                            	true
-1	2	3	4	3.14	6.28	5.99	NULL	2014-09-01	its a beautiful day in the neighbhorhood	a beautiful day for a neighbor	wont you be mine                    	true
+1	2	3	4	3.14	6.28	5.99	2014-09-01 09:44:23.23	2014-09-01	its a beautiful day in the neighbhorhood	a beautiful day for a neighbor	wont you be mine                    	true

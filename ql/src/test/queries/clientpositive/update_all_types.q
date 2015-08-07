@@ -42,7 +42,7 @@ update acid_uat set
     f = 3.14,
     d = 6.28,
     de = 5.99,
-    t = '2014-09-01 09:44.23.23',
+    t = '2014-09-01 09:44:23.23',
     dt = '2014-09-01',
     s = 'its a beautiful day in the neighbhorhood',
     vc = 'a beautiful day for a neighbor',

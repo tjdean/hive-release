@@ -1,15 +1,16 @@
 #### A masked pattern was here ####
 PREHOOK: type: CREATEDATABASE
+PREHOOK: Output: /tmp
 PREHOOK: Output: database:newDB
 #### A masked pattern was here ####
 POSTHOOK: type: CREATEDATABASE
+POSTHOOK: Output: /tmp
 POSTHOOK: Output: database:newDB
-#### A masked pattern was here ####
 PREHOOK: query: describe database extended newDB
 PREHOOK: type: DESCDATABASE
 POSTHOOK: query: describe database extended newDB
 POSTHOOK: type: DESCDATABASE
-newdb    location/in/test  hive_test_user  USER  
+newdb		location/in/test	hive_test_user	USER	
 PREHOOK: query: use newDB
 PREHOOK: type: SWITCHDATABASE
 PREHOOK: Input: database:newdb
