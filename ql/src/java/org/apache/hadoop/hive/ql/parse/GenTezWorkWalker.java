@@ -54,7 +54,7 @@ public class GenTezWorkWalker extends DefaultGraphWalker {
     ctx.currentRootOperator = (Operator<? extends OperatorDesc>) nd;
     ctx.preceedingWork = null;
     ctx.parentOfRoot = null;
-    ctx.currentUnionOperators = new ArrayList<>();
+    ctx.currentUnionOperators = new ArrayList();
   }
 
   /**
@@ -103,7 +103,7 @@ public class GenTezWorkWalker extends DefaultGraphWalker {
         ctx.currentRootOperator = currentRoot;
         ctx.parentOfRoot = parentOfRoot;
         ctx.preceedingWork = preceedingWork;
-        ctx.currentUnionOperators = new ArrayList<>();
+        ctx.currentUnionOperators = new ArrayList();
         ctx.currentUnionOperators.addAll(currentUnionOperators);
 
         walk(ch);
