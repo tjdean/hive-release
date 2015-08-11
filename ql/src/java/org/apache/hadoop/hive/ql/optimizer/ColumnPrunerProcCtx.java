@@ -23,7 +23,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.hadoop.hive.ql.exec.ColumnInfo;
 import org.apache.hadoop.hive.ql.exec.CommonJoinOperator;
 import org.apache.hadoop.hive.ql.exec.Operator;
 import org.apache.hadoop.hive.ql.exec.SelectOperator;
@@ -129,16 +128,9 @@ public class ColumnPrunerProcCtx implements NodeProcessorCtx {
   public List<String> getColsFromSelectExpr(SelectOperator op) {
     List<String> cols = new ArrayList<String>();
     SelectDesc conf = op.getConf();
-    if(conf.isSelStarNoCompute()) {
-      for (ColumnInfo colInfo : op.getSchema().getSignature()) {
-        cols.add(colInfo.getInternalName());
-      }
-    }
-    else {
-      List<ExprNodeDesc> exprList = conf.getColList();
-        for (ExprNodeDesc expr : exprList) {
-          cols = Utilities.mergeUniqElems(cols, expr.getCols());
-        }
+    List<ExprNodeDesc> exprList = conf.getColList();
+    for (ExprNodeDesc expr : exprList) {
+      cols = Utilities.mergeUniqElems(cols, expr.getCols());
     }
     return cols;
   }
