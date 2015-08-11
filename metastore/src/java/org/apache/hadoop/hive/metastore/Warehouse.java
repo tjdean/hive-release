@@ -396,7 +396,7 @@ public class Warehouse {
     assert name != null;
     String[] parts = slash.split(name, 0);
     if (result == null) {
-      result = new ArrayList<>(parts.length);
+      result = new ArrayList(parts.length);
       for (int i = 0; i < parts.length; ++i) {
         result.add(null);
       }
