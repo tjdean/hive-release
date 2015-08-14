@@ -36,8 +36,9 @@ public class HiveSchemaHelper {
   public static final String DB_DERBY = "derby";
   public static final String DB_MSSQL = "mssql";
   public static final String DB_MYSQL = "mysql";
-  public static final String DB_POSTGRACE = "postgres";
+  public static final String DB_POSTGRES = "postgres";
   public static final String DB_ORACLE = "oracle";
+  public static final String DB_SQLANYWHERE = "sqlanywhere";
 
   /***
    * Get JDBC connection to metastore db
@@ -97,7 +98,7 @@ public class HiveSchemaHelper {
       COMMENT
     }
 
-    static final String DEFAUTL_DELIMITER = ";";
+    static final String DEFAULT_DELIMITER = ";";
 
     /**
      * Find the type of given command
@@ -203,7 +204,7 @@ public class HiveSchemaHelper {
 
     @Override
     public String getDelimiter() {
-      return DEFAUTL_DELIMITER;
+      return DEFAULT_DELIMITER;
     }
 
     @Override
@@ -323,7 +324,7 @@ public class HiveSchemaHelper {
   public static class MySqlCommandParser extends AbstractCommandParser {
     private static final String MYSQL_NESTING_TOKEN = "SOURCE";
     private static final String DELIMITER_TOKEN = "DELIMITER";
-    private String delimiter = DEFAUTL_DELIMITER;
+    private String delimiter = DEFAULT_DELIMITER;
 
     public MySqlCommandParser(String dbOpts, String msUsername, String msPassword,
         HiveConf hiveConf) {
@@ -473,6 +474,30 @@ public class HiveSchemaHelper {
     }
   }
 
+  //SQLAnywhere specific parser
+  public static class SqlAnywhereDBCommandParser extends AbstractCommandParser {
+    private static String SQLANYWHERE_NESTING_TOKEN = "READ";
+
+    public SqlAnywhereDBCommandParser(String dbOpts, String msUsername, String msPassword,
+        HiveConf hiveConf) {
+      super(dbOpts, msUsername, msPassword, hiveConf);
+    }
+
+    @Override
+    public String getScriptName(String dbCommand) throws IllegalArgumentException {
+      String[] tokens = dbCommand.split(" ");
+      if (tokens.length != 2) {
+        throw new IllegalArgumentException("Couldn't parse line " + dbCommand);
+      }
+      return tokens[1];
+    }
+
+    @Override
+    public boolean isNestedScript(String dbCommand) {
+      return dbCommand.startsWith(SQLANYWHERE_NESTING_TOKEN);
+    }
+  }
+
   public static NestedScriptParser getDbCommandParser(String dbName) {
     return getDbCommandParser(dbName, null, null, null, null);
   }
@@ -486,10 +511,12 @@ public class HiveSchemaHelper {
       return new MSSQLCommandParser(dbOpts, msUsername, msPassword, hiveConf);
     } else if (dbName.equalsIgnoreCase(DB_MYSQL)) {
       return new MySqlCommandParser(dbOpts, msUsername, msPassword, hiveConf);
-    } else if (dbName.equalsIgnoreCase(DB_POSTGRACE)) {
+    } else if (dbName.equalsIgnoreCase(DB_POSTGRES)) {
       return new PostgresCommandParser(dbOpts, msUsername, msPassword, hiveConf);
     } else if (dbName.equalsIgnoreCase(DB_ORACLE)) {
       return new OracleCommandParser(dbOpts, msUsername, msPassword, hiveConf);
+    } else if (dbName.equalsIgnoreCase(DB_SQLANYWHERE)) {
+      return new SqlAnywhereDBCommandParser(dbOpts, msUsername, msPassword, hiveConf);
     } else {
       throw new IllegalArgumentException("Unknown dbType " + dbName);
     }

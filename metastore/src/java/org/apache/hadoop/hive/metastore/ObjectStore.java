@@ -362,6 +362,10 @@ public class ObjectStore implements RawStore, Configurable {
 
   private static synchronized PersistenceManagerFactory getPMF() {
     if (pmf == null) {
+      LOG.debug("Instantiating PMF with following properties:");
+      for (Object key : prop.keySet()){
+        LOG.debug("\t"+key+"=>"+prop.get(key));
+      }
       pmf = JDOHelper.getPersistenceManagerFactory(prop);
       DataStoreCache dsc = pmf.getDataStoreCache();
       if (dsc != null) {

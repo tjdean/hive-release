@@ -90,6 +90,7 @@ class MetaStoreDirectSql {
     ORACLE,
     MSSQL,
     DERBY,
+    SQLANYWHERE,
     OTHER
   }
 
@@ -148,18 +149,25 @@ class MetaStoreDirectSql {
 
   private DB determineDbType() {
     DB dbType = DB.OTHER;
+    String productName = getProductName();
+    if (productName != null){
+      String lcProductName = productName.toLowerCase();
+      if (lcProductName.contains("derby")){
+        return DB.DERBY;
+      } else if (lcProductName.matches("(?s).*sql\\s+anywhere.*")) {
+        return DB.SQLANYWHERE;
+      } else {
+        LOG.warn("DB Product name["+productName+"] obtained, but not used to determine db type. Falling back to using SQL to determine which db we're using");
+      }
+    } else {
+      LOG.warn("Could not fetch product name from driver, trying various SQL statements to figure out which db we're using.");
+    }
     if (runDbCheck("SET @@session.sql_mode=ANSI_QUOTES", "MySql")) {
       dbType = DB.MYSQL;
     } else if (runDbCheck("SELECT version FROM v$instance", "Oracle")) {
       dbType = DB.ORACLE;
     } else if (runDbCheck("SELECT @@version", "MSSQL")) {
       dbType = DB.MSSQL;
-    } else {
-      // TODO: maybe we should use getProductName to identify all the DBs
-      String productName = getProductName();
-      if (productName != null && productName.toLowerCase().contains("derby")) {
-        dbType = DB.DERBY;
-      }
     }
     return dbType;
   }
