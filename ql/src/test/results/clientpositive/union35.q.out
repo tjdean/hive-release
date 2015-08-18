@@ -1,0 +1,52 @@
+PREHOOK: query: select * from (
+     select * from ( select 1 as id , 'foo' as str_1 from src limit 5) f
+ union all
+     select * from ( select 2 as id , 'bar' as str_2 from src limit 5) g
+) e
+PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
+POSTHOOK: query: select * from (
+     select * from ( select 1 as id , 'foo' as str_1 from src limit 5) f
+ union all
+     select * from ( select 2 as id , 'bar' as str_2 from src limit 5) g
+) e
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
+2	bar
+2	bar
+2	bar
+2	bar
+2	bar
+1	foo
+1	foo
+1	foo
+1	foo
+1	foo
+PREHOOK: query: select * from (
+     select * from ( select 1 as id , 'foo' as str_1 from src limit 5) f
+ union all
+     select * from ( select 2 as id , 'bar' as str_2 from src limit 5) g
+) e
+PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
+POSTHOOK: query: select * from (
+     select * from ( select 1 as id , 'foo' as str_1 from src limit 5) f
+ union all
+     select * from ( select 2 as id , 'bar' as str_2 from src limit 5) g
+) e
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
+2	bar
+2	bar
+2	bar
+2	bar
+2	bar
+1	foo
+1	foo
+1	foo
+1	foo
+1	foo
