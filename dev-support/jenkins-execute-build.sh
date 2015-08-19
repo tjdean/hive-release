@@ -51,7 +51,7 @@ fi
 test -d hive/build/ || mkdir -p hive/build/
 cd hive/build/
 rm -rf hive
-git clone --depth 1 https://git-wip-us.apache.org/repos/asf/hive.git
+git clone --branch $BRANCH --depth 1 git@github.com:hortonworks/hive.git
 cd hive/testutils/ptest2
 
 mvn clean package -DskipTests -Drat.numUnapprovedLicenses=1000 -Dmaven.repo.local=$WORKSPACE/.m2
