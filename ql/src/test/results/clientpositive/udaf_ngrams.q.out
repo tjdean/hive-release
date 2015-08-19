@@ -67,3 +67,55 @@ POSTHOOK: query: DROP TABLE kafka
 POSTHOOK: type: DROPTABLE
 POSTHOOK: Input: default@kafka
 POSTHOOK: Output: default@kafka
+PREHOOK: query: CREATE TABLE ngramtest (col1 INT, col2 STRING)
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@ngramtest
+POSTHOOK: query: CREATE TABLE ngramtest (col1 INT, col2 STRING)
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@ngramtest
+PREHOOK: query: INSERT INTO TABLE ngramtest VALUES
+(0, 'I am a boy'),
+(0, 'I am a girl'),
+(0, 'I am an apple'),
+(1, 'I am a banana'),
+(2, 'We are not animals'),
+(0, null)
+PREHOOK: type: QUERY
+PREHOOK: Input: default@values__tmp__table__1
+PREHOOK: Output: default@ngramtest
+POSTHOOK: query: INSERT INTO TABLE ngramtest VALUES
+(0, 'I am a boy'),
+(0, 'I am a girl'),
+(0, 'I am an apple'),
+(1, 'I am a banana'),
+(2, 'We are not animals'),
+(0, null)
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@values__tmp__table__1
+POSTHOOK: Output: default@ngramtest
+POSTHOOK: Lineage: ngramtest.col1 EXPRESSION [(values__tmp__table__1)values__tmp__table__1.FieldSchema(name:tmp_values_col1, type:string, comment:), ]
+POSTHOOK: Lineage: ngramtest.col2 SIMPLE [(values__tmp__table__1)values__tmp__table__1.FieldSchema(name:tmp_values_col2, type:string, comment:), ]
+PREHOOK: query: SELECT explode(ngrams(sentences(lower(t.col2)), 2, 10)) as x FROM (SELECT col2 FROM ngramtest WHERE col1=0) t
+PREHOOK: type: QUERY
+PREHOOK: Input: default@ngramtest
+#### A masked pattern was here ####
+POSTHOOK: query: SELECT explode(ngrams(sentences(lower(t.col2)), 2, 10)) as x FROM (SELECT col2 FROM ngramtest WHERE col1=0) t
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@ngramtest
+#### A masked pattern was here ####
+{"ngram":["i","am"],"estfrequency":3.0}
+{"ngram":["am","a"],"estfrequency":2.0}
+{"ngram":["a","boy"],"estfrequency":1.0}
+{"ngram":["a","girl"],"estfrequency":1.0}
+{"ngram":["am","an"],"estfrequency":1.0}
+{"ngram":["an","apple"],"estfrequency":1.0}
+PREHOOK: query: DROP TABLE ngramtest
+PREHOOK: type: DROPTABLE
+PREHOOK: Input: default@ngramtest
+PREHOOK: Output: default@ngramtest
+POSTHOOK: query: DROP TABLE ngramtest
+POSTHOOK: type: DROPTABLE
+POSTHOOK: Input: default@ngramtest
+POSTHOOK: Output: default@ngramtest
