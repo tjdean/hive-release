@@ -15,7 +15,7 @@ DROP TABLE IF EXISTS T2;
 -- table location doesn't have scheme
 CREATE TABLE T2 (key STRING, val STRING)
 STORED AS TEXTFILE
-LOCATION 'tmp/t2';
+LOCATION '/tmp/t2';
 
 SELECT * FROM T2;
 

@@ -35,7 +35,7 @@ CREATE TABLE T2 (key STRING, val STRING)
 STORED AS TEXTFILE
 #### A masked pattern was here ####
 PREHOOK: type: CREATETABLE
-PREHOOK: Input: tmp/t2
+#### A masked pattern was here ####
 PREHOOK: Output: database:default
 PREHOOK: Output: default@T2
 POSTHOOK: query: -- table location doesn't have scheme
@@ -43,7 +43,7 @@ CREATE TABLE T2 (key STRING, val STRING)
 STORED AS TEXTFILE
 #### A masked pattern was here ####
 POSTHOOK: type: CREATETABLE
-POSTHOOK: Input: tmp/t2
+#### A masked pattern was here ####
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@T2
 PREHOOK: query: SELECT * FROM T2
