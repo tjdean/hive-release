@@ -1,0 +1,40 @@
+PREHOOK: query: drop table page
+PREHOOK: type: DROPTABLE
+POSTHOOK: query: drop table page
+POSTHOOK: type: DROPTABLE
+PREHOOK: query: create table page (id string, list array<struct<a:int,b:string>>)
+row format delimited fields terminated by '|' stored as textfile
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@page
+POSTHOOK: query: create table page (id string, list array<struct<a:int,b:string>>)
+row format delimited fields terminated by '|' stored as textfile
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@page
+PREHOOK: query: LOAD DATA LOCAL INPATH '../../data/files/page.txt' INTO TABLE page
+PREHOOK: type: LOAD
+#### A masked pattern was here ####
+PREHOOK: Output: default@page
+POSTHOOK: query: LOAD DATA LOCAL INPATH '../../data/files/page.txt' INTO TABLE page
+POSTHOOK: type: LOAD
+#### A masked pattern was here ####
+POSTHOOK: Output: default@page
+PREHOOK: query: select * from page lateral view inline(page.list) page
+PREHOOK: type: QUERY
+PREHOOK: Input: default@page
+#### A masked pattern was here ####
+POSTHOOK: query: select * from page lateral view inline(page.list) page
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@page
+#### A masked pattern was here ####
+PREHOOK: query: select * from page
+PREHOOK: type: QUERY
+PREHOOK: Input: default@page
+#### A masked pattern was here ####
+POSTHOOK: query: select * from page
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@page
+#### A masked pattern was here ####
+1	[]
+2	[]
