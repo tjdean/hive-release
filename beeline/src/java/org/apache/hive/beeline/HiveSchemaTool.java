@@ -125,10 +125,12 @@ public class HiveSchemaTool {
    */
   public void showInfo() throws HiveMetaException {
     Connection metastoreConn = getConnectionToMetastore(true);
-    System.out.println("Hive distribution version:\t " +
-        MetaStoreSchemaInfo.getHiveSchemaVersion());
-    System.out.println("Metastore schema version:\t " +
-        getMetaStoreSchemaVersion(metastoreConn));
+    String hiveVersion = MetaStoreSchemaInfo.getHiveSchemaVersion();
+    String dbVersion = getMetaStoreSchemaVersion(metastoreConn);
+    System.out.println("Hive distribution version:\t " + hiveVersion);
+    System.out.println("Metastore schema version:\t " + dbVersion);
+    assertSameVersion(hiveVersion, dbVersion);
+
   }
 
   // read schema version from metastore
@@ -177,8 +179,15 @@ public class HiveSchemaTool {
     String newSchemaVersion = getMetaStoreSchemaVersion(
         getConnectionToMetastore(false));
     // verify that the new version is added to schema
-    if (!MetaStoreSchemaInfo.getHiveSchemaVersion().equalsIgnoreCase(newSchemaVersion)) {
-      throw new HiveMetaException("Found unexpected schema version " + newSchemaVersion);
+    assertSameVersion(MetaStoreSchemaInfo.getHiveSchemaVersion(), newSchemaVersion);
+
+  }
+
+  private void assertSameVersion(String hiveSchemaVersion, String dbSchemaVersion)
+      throws HiveMetaException {
+    if (!hiveSchemaVersion.equalsIgnoreCase(dbSchemaVersion)) {
+      throw new HiveMetaException("Expected schema version " + hiveSchemaVersion
+          + ", found version " + dbSchemaVersion);
     }
   }
 
@@ -433,7 +442,7 @@ public class HiveSchemaTool {
       if ((!dbType.equalsIgnoreCase(HiveSchemaHelper.DB_DERBY) &&
           !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_MSSQL) &&
           !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_MYSQL) &&
-          !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_POSTGRACE) && 
+          !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_POSTGRACE) &&
           !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_ORACLE) &&
           !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_AZURE))) {
         System.err.println("Unsupported dbType " + dbType);
