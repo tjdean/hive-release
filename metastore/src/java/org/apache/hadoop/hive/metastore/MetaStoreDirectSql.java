@@ -201,6 +201,9 @@ class MetaStoreDirectSql {
 
   private boolean runTestQuery() {
     Transaction tx = pm.currentTransaction();
+    if (!tx.isActive()) {
+      tx.begin();
+    }
     // Run a self-test query. If it doesn't work, we will self-disable. What a PITA...
     String selfTestQuery = "select \"DB_ID\" from \"DBS\"";
     try {
