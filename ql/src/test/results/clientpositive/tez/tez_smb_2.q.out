@@ -1,0 +1,313 @@
+PREHOOK: query: drop table if exists srcbucket_mapjoin
+PREHOOK: type: DROPTABLE
+POSTHOOK: query: drop table if exists srcbucket_mapjoin
+POSTHOOK: type: DROPTABLE
+PREHOOK: query: drop table if exists tab_part
+PREHOOK: type: DROPTABLE
+POSTHOOK: query: drop table if exists tab_part
+POSTHOOK: type: DROPTABLE
+PREHOOK: query: drop table if exists srcbucket_mapjoin
+PREHOOK: type: DROPTABLE
+POSTHOOK: query: drop table if exists srcbucket_mapjoin
+POSTHOOK: type: DROPTABLE
+PREHOOK: query: CREATE TABLE srcbucket_mapjoin(key int, value string) partitioned by (ds decimal(5,2)) CLUSTERED BY (key) INTO 2 BUCKETS STORED AS TEXTFILE
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@srcbucket_mapjoin
+POSTHOOK: query: CREATE TABLE srcbucket_mapjoin(key int, value string) partitioned by (ds decimal(5,2)) CLUSTERED BY (key) INTO 2 BUCKETS STORED AS TEXTFILE
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@srcbucket_mapjoin
+PREHOOK: query: CREATE TABLE tab_part (key int, value string) PARTITIONED BY(ds decimal(5,2)) CLUSTERED BY (key) SORTED BY (key) INTO 4 BUCKETS STORED AS TEXTFILE
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@tab_part
+POSTHOOK: query: CREATE TABLE tab_part (key int, value string) PARTITIONED BY(ds decimal(5,2)) CLUSTERED BY (key) SORTED BY (key) INTO 4 BUCKETS STORED AS TEXTFILE
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@tab_part
+PREHOOK: query: CREATE TABLE srcbucket_mapjoin_part (key int, value string) partitioned by (ds decimal(5,2)) CLUSTERED BY (key) INTO 4 BUCKETS STORED AS TEXTFILE
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@srcbucket_mapjoin_part
+POSTHOOK: query: CREATE TABLE srcbucket_mapjoin_part (key int, value string) partitioned by (ds decimal(5,2)) CLUSTERED BY (key) INTO 4 BUCKETS STORED AS TEXTFILE
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@srcbucket_mapjoin_part
+PREHOOK: query: load data local inpath '../../data/files/srcbucket20.txt' INTO TABLE srcbucket_mapjoin partition(ds=100)
+PREHOOK: type: LOAD
+#### A masked pattern was here ####
+PREHOOK: Output: default@srcbucket_mapjoin
+POSTHOOK: query: load data local inpath '../../data/files/srcbucket20.txt' INTO TABLE srcbucket_mapjoin partition(ds=100)
+POSTHOOK: type: LOAD
+#### A masked pattern was here ####
+POSTHOOK: Output: default@srcbucket_mapjoin
+POSTHOOK: Output: default@srcbucket_mapjoin@ds=100
+PREHOOK: query: load data local inpath '../../data/files/srcbucket22.txt' INTO TABLE srcbucket_mapjoin partition(ds=100)
+PREHOOK: type: LOAD
+#### A masked pattern was here ####
+PREHOOK: Output: default@srcbucket_mapjoin@ds=100
+POSTHOOK: query: load data local inpath '../../data/files/srcbucket22.txt' INTO TABLE srcbucket_mapjoin partition(ds=100)
+POSTHOOK: type: LOAD
+#### A masked pattern was here ####
+POSTHOOK: Output: default@srcbucket_mapjoin@ds=100
+PREHOOK: query: load data local inpath '../../data/files/srcbucket20.txt' INTO TABLE srcbucket_mapjoin_part partition(ds=100)
+PREHOOK: type: LOAD
+#### A masked pattern was here ####
+PREHOOK: Output: default@srcbucket_mapjoin_part
+POSTHOOK: query: load data local inpath '../../data/files/srcbucket20.txt' INTO TABLE srcbucket_mapjoin_part partition(ds=100)
+POSTHOOK: type: LOAD
+#### A masked pattern was here ####
+POSTHOOK: Output: default@srcbucket_mapjoin_part
+POSTHOOK: Output: default@srcbucket_mapjoin_part@ds=100
+PREHOOK: query: load data local inpath '../../data/files/srcbucket21.txt' INTO TABLE srcbucket_mapjoin_part partition(ds=100)
+PREHOOK: type: LOAD
+#### A masked pattern was here ####
+PREHOOK: Output: default@srcbucket_mapjoin_part@ds=100
+POSTHOOK: query: load data local inpath '../../data/files/srcbucket21.txt' INTO TABLE srcbucket_mapjoin_part partition(ds=100)
+POSTHOOK: type: LOAD
+#### A masked pattern was here ####
+POSTHOOK: Output: default@srcbucket_mapjoin_part@ds=100
+PREHOOK: query: load data local inpath '../../data/files/srcbucket22.txt' INTO TABLE srcbucket_mapjoin_part partition(ds=100)
+PREHOOK: type: LOAD
+#### A masked pattern was here ####
+PREHOOK: Output: default@srcbucket_mapjoin_part@ds=100
+POSTHOOK: query: load data local inpath '../../data/files/srcbucket22.txt' INTO TABLE srcbucket_mapjoin_part partition(ds=100)
+POSTHOOK: type: LOAD
+#### A masked pattern was here ####
+POSTHOOK: Output: default@srcbucket_mapjoin_part@ds=100
+PREHOOK: query: load data local inpath '../../data/files/srcbucket23.txt' INTO TABLE srcbucket_mapjoin_part partition(ds=100)
+PREHOOK: type: LOAD
+#### A masked pattern was here ####
+PREHOOK: Output: default@srcbucket_mapjoin_part@ds=100
+POSTHOOK: query: load data local inpath '../../data/files/srcbucket23.txt' INTO TABLE srcbucket_mapjoin_part partition(ds=100)
+POSTHOOK: type: LOAD
+#### A masked pattern was here ####
+POSTHOOK: Output: default@srcbucket_mapjoin_part@ds=100
+PREHOOK: query: insert overwrite table tab_part partition (ds=100)
+select key,value from srcbucket_mapjoin_part
+PREHOOK: type: QUERY
+PREHOOK: Input: default@srcbucket_mapjoin_part
+PREHOOK: Input: default@srcbucket_mapjoin_part@ds=100
+PREHOOK: Output: default@tab_part@ds=100
+POSTHOOK: query: insert overwrite table tab_part partition (ds=100)
+select key,value from srcbucket_mapjoin_part
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@srcbucket_mapjoin_part
+POSTHOOK: Input: default@srcbucket_mapjoin_part@ds=100
+POSTHOOK: Output: default@tab_part@ds=100
+POSTHOOK: Lineage: tab_part PARTITION(ds=100).key SIMPLE [(srcbucket_mapjoin_part)srcbucket_mapjoin_part.FieldSchema(name:key, type:int, comment:null), ]
+POSTHOOK: Lineage: tab_part PARTITION(ds=100).value SIMPLE [(srcbucket_mapjoin_part)srcbucket_mapjoin_part.FieldSchema(name:value, type:string, comment:null), ]
+PREHOOK: query: CREATE TABLE tab(key int, value string) PARTITIONED BY(ds STRING) CLUSTERED BY (key) SORTED BY (key) INTO 2 BUCKETS STORED AS TEXTFILE
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@tab
+POSTHOOK: query: CREATE TABLE tab(key int, value string) PARTITIONED BY(ds STRING) CLUSTERED BY (key) SORTED BY (key) INTO 2 BUCKETS STORED AS TEXTFILE
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@tab
+PREHOOK: query: insert overwrite table tab partition (ds=100)
+select key,value from srcbucket_mapjoin
+PREHOOK: type: QUERY
+PREHOOK: Input: default@srcbucket_mapjoin
+PREHOOK: Input: default@srcbucket_mapjoin@ds=100
+PREHOOK: Output: default@tab@ds=100
+POSTHOOK: query: insert overwrite table tab partition (ds=100)
+select key,value from srcbucket_mapjoin
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@srcbucket_mapjoin
+POSTHOOK: Input: default@srcbucket_mapjoin@ds=100
+POSTHOOK: Output: default@tab@ds=100
+POSTHOOK: Lineage: tab PARTITION(ds=100).key SIMPLE [(srcbucket_mapjoin)srcbucket_mapjoin.FieldSchema(name:key, type:int, comment:null), ]
+POSTHOOK: Lineage: tab PARTITION(ds=100).value SIMPLE [(srcbucket_mapjoin)srcbucket_mapjoin.FieldSchema(name:value, type:string, comment:null), ]
+PREHOOK: query: explain
+select s1.key, s1.value, s3.ds from tab s1 join tab s3 on s1.key=s3.key order by s1.key limit 10
+PREHOOK: type: QUERY
+POSTHOOK: query: explain
+select s1.key, s1.value, s3.ds from tab s1 join tab s3 on s1.key=s3.key order by s1.key limit 10
+POSTHOOK: type: QUERY
+STAGE DEPENDENCIES:
+  Stage-1 is a root stage
+  Stage-0 depends on stages: Stage-1
+
+STAGE PLANS:
+  Stage: Stage-1
+    Tez
+      Edges:
+        Reducer 2 <- Map 1 (SIMPLE_EDGE)
+#### A masked pattern was here ####
+      Vertices:
+        Map 1 
+            Map Operator Tree:
+                TableScan
+                  alias: s3
+                  Statistics: Num rows: 242 Data size: 2566 Basic stats: COMPLETE Column stats: NONE
+                  Filter Operator
+                    predicate: key is not null (type: boolean)
+                    Statistics: Num rows: 121 Data size: 1283 Basic stats: COMPLETE Column stats: NONE
+            Map Operator Tree:
+                TableScan
+                  alias: s1
+                  Statistics: Num rows: 242 Data size: 2566 Basic stats: COMPLETE Column stats: NONE
+                  Filter Operator
+                    predicate: key is not null (type: boolean)
+                    Statistics: Num rows: 121 Data size: 1283 Basic stats: COMPLETE Column stats: NONE
+                    Merge Join Operator
+                      condition map:
+                           Inner Join 0 to 1
+                      condition expressions:
+                        0 {key} {value}
+                        1 {ds}
+                      keys:
+                        0 key (type: int)
+                        1 key (type: int)
+                      outputColumnNames: _col0, _col1, _col8
+                      Statistics: Num rows: 133 Data size: 1411 Basic stats: COMPLETE Column stats: NONE
+                      Select Operator
+                        expressions: _col0 (type: int), _col1 (type: string), _col8 (type: string)
+                        outputColumnNames: _col0, _col1, _col2
+                        Statistics: Num rows: 133 Data size: 1411 Basic stats: COMPLETE Column stats: NONE
+                        Reduce Output Operator
+                          key expressions: _col0 (type: int)
+                          sort order: +
+                          Statistics: Num rows: 133 Data size: 1411 Basic stats: COMPLETE Column stats: NONE
+                          value expressions: _col1 (type: string), _col2 (type: string)
+        Reducer 2 
+            Reduce Operator Tree:
+              Select Operator
+                expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: string), VALUE._col1 (type: string)
+                outputColumnNames: _col0, _col1, _col2
+                Statistics: Num rows: 133 Data size: 1411 Basic stats: COMPLETE Column stats: NONE
+                Limit
+                  Number of rows: 10
+                  Statistics: Num rows: 10 Data size: 100 Basic stats: COMPLETE Column stats: NONE
+                  File Output Operator
+                    compressed: false
+                    Statistics: Num rows: 10 Data size: 100 Basic stats: COMPLETE Column stats: NONE
+                    table:
+                        input format: org.apache.hadoop.mapred.TextInputFormat
+                        output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+                        serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+
+  Stage: Stage-0
+    Fetch Operator
+      limit: 10
+      Processor Tree:
+        ListSink
+
+PREHOOK: query: select s1.key, s1.value, s3.ds from tab s1 join tab s3 on s1.key=s3.key order by s1.key limit 10
+PREHOOK: type: QUERY
+PREHOOK: Input: default@tab
+PREHOOK: Input: default@tab@ds=100
+#### A masked pattern was here ####
+POSTHOOK: query: select s1.key, s1.value, s3.ds from tab s1 join tab s3 on s1.key=s3.key order by s1.key limit 10
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@tab
+POSTHOOK: Input: default@tab@ds=100
+#### A masked pattern was here ####
+0	val_0	100
+0	val_0	100
+0	val_0	100
+0	val_0	100
+0	val_0	100
+0	val_0	100
+0	val_0	100
+0	val_0	100
+0	val_0	100
+2	val_2	100
+PREHOOK: query: explain
+select s1.key, s1.value, s3.ds from tab s1 join tab s3 on s1.key=s3.key order by s1.key limit 10
+PREHOOK: type: QUERY
+POSTHOOK: query: explain
+select s1.key, s1.value, s3.ds from tab s1 join tab s3 on s1.key=s3.key order by s1.key limit 10
+POSTHOOK: type: QUERY
+STAGE DEPENDENCIES:
+  Stage-1 is a root stage
+  Stage-0 depends on stages: Stage-1
+
+STAGE PLANS:
+  Stage: Stage-1
+    Tez
+      Edges:
+        Reducer 2 <- Map 1 (SIMPLE_EDGE)
+#### A masked pattern was here ####
+      Vertices:
+        Map 1 
+            Map Operator Tree:
+                TableScan
+                  alias: s3
+                  Statistics: Num rows: 242 Data size: 2566 Basic stats: COMPLETE Column stats: NONE
+                  Filter Operator
+                    predicate: key is not null (type: boolean)
+                    Statistics: Num rows: 121 Data size: 1283 Basic stats: COMPLETE Column stats: NONE
+            Map Operator Tree:
+                TableScan
+                  alias: s1
+                  Statistics: Num rows: 242 Data size: 2566 Basic stats: COMPLETE Column stats: NONE
+                  Filter Operator
+                    predicate: key is not null (type: boolean)
+                    Statistics: Num rows: 121 Data size: 1283 Basic stats: COMPLETE Column stats: NONE
+                    Merge Join Operator
+                      condition map:
+                           Inner Join 0 to 1
+                      condition expressions:
+                        0 {key} {value}
+                        1 {ds}
+                      keys:
+                        0 key (type: int)
+                        1 key (type: int)
+                      outputColumnNames: _col0, _col1, _col8
+                      Statistics: Num rows: 133 Data size: 1411 Basic stats: COMPLETE Column stats: NONE
+                      Select Operator
+                        expressions: _col0 (type: int), _col1 (type: string), _col8 (type: string)
+                        outputColumnNames: _col0, _col1, _col2
+                        Statistics: Num rows: 133 Data size: 1411 Basic stats: COMPLETE Column stats: NONE
+                        Reduce Output Operator
+                          key expressions: _col0 (type: int)
+                          sort order: +
+                          Statistics: Num rows: 133 Data size: 1411 Basic stats: COMPLETE Column stats: NONE
+                          value expressions: _col1 (type: string), _col2 (type: string)
+        Reducer 2 
+            Reduce Operator Tree:
+              Select Operator
+                expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: string), VALUE._col1 (type: string)
+                outputColumnNames: _col0, _col1, _col2
+                Statistics: Num rows: 133 Data size: 1411 Basic stats: COMPLETE Column stats: NONE
+                Limit
+                  Number of rows: 10
+                  Statistics: Num rows: 10 Data size: 100 Basic stats: COMPLETE Column stats: NONE
+                  File Output Operator
+                    compressed: false
+                    Statistics: Num rows: 10 Data size: 100 Basic stats: COMPLETE Column stats: NONE
+                    table:
+                        input format: org.apache.hadoop.mapred.TextInputFormat
+                        output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+                        serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+            Execution mode: vectorized
+
+  Stage: Stage-0
+    Fetch Operator
+      limit: 10
+      Processor Tree:
+        ListSink
+
+PREHOOK: query: select s1.key, s1.value, s3.ds from tab s1 join tab s3 on s1.key=s3.key order by s1.key limit 10
+PREHOOK: type: QUERY
+PREHOOK: Input: default@tab
+PREHOOK: Input: default@tab@ds=100
+#### A masked pattern was here ####
+POSTHOOK: query: select s1.key, s1.value, s3.ds from tab s1 join tab s3 on s1.key=s3.key order by s1.key limit 10
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@tab
+POSTHOOK: Input: default@tab@ds=100
+#### A masked pattern was here ####
+0	val_0	100
+0	val_0	100
+0	val_0	100
+0	val_0	100
+0	val_0	100
+0	val_0	100
+0	val_0	100
+0	val_0	100
+0	val_0	100
+2	val_2	100
