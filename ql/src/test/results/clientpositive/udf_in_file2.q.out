@@ -1,0 +1,17 @@
+PREHOOK: query: SELECT * from src where in_file("303", "../../data/files/test2.dat") limit 1
+PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
+POSTHOOK: query: SELECT * from src where in_file("303", "../../data/files/test2.dat") limit 1
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
+238	val_238
+PREHOOK: query: SELECT * from src where in_file(cast(null as string), "../../data/files/test2.dat") limit 1
+PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+#### A masked pattern was here ####
+POSTHOOK: query: SELECT * from src where in_file(cast(null as string), "../../data/files/test2.dat") limit 1
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+#### A masked pattern was here ####
