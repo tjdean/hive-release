@@ -24,12 +24,14 @@ import java.sql.Timestamp;
 import junit.framework.TestCase;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredJavaObject;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredObject;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFDateSub;
 import org.apache.hadoop.hive.serde2.io.DateWritable;
 import org.apache.hadoop.hive.serde2.io.TimestampWritable;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.io.Text;
 
@@ -111,4 +113,19 @@ public class TestGenericUDFDateSub extends TestCase {
     assertNull("date_add() both args null", udf.evaluate(args));
   }
 
+  public void testBadArgs() throws HiveException {
+    GenericUDFDateSub udf = new GenericUDFDateSub();
+    ObjectInspector valueOI1 = PrimitiveObjectInspectorFactory.writableDateObjectInspector;
+    // Non-primitive arg2 should not be allowed
+    ObjectInspector valueOI2 = ObjectInspectorFactory.getStandardListObjectInspector(
+        PrimitiveObjectInspectorFactory.javaIntObjectInspector);
+    ObjectInspector[] arguments = {valueOI1, valueOI2};
+    SemanticException caughtException = null;
+    try {
+      udf.initialize(arguments);
+    } catch (SemanticException err) {
+      caughtException = err;
+    }
+    assertNotNull(caughtException);
+  }
 }
