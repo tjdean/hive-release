@@ -17,16 +17,21 @@
  */
 package org.apache.hadoop.hive.serde2.objectinspector;
 
+import java.util.ArrayList;
+
 import junit.framework.TestCase;
 
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.serde2.NullStructSerDe;
 import org.apache.hadoop.hive.serde2.io.ByteWritable;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.hive.serde2.io.ShortWritable;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters.Converter;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.VarcharTypeInfo;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.BytesWritable;
@@ -191,5 +196,15 @@ public class TestObjectInspectorConverters extends TestCase {
         ObjectInspectorConverters.getConvertedOI(varchar10OI, varchar5OI);
     VarcharTypeInfo vcParams = (VarcharTypeInfo) poi.getTypeInfo();
     assertEquals("varchar length doesn't match", 5, vcParams.getLength());
+  }
+
+  public void testGetConvertedOI2() throws Throwable {
+    TypeInfo emptyStructTI = TypeInfoFactory.getStructTypeInfo(
+        new ArrayList<String>(), new ArrayList<TypeInfo>());
+    ObjectInspector emptyStructOI =
+        TypeInfoUtils.getStandardWritableObjectInspectorFromTypeInfo(emptyStructTI);
+    ObjectInspector nullStructOI = new NullStructSerDe().getObjectInspector();
+    ObjectInspector result = ObjectInspectorConverters.getConvertedOI(emptyStructOI, nullStructOI);
+    System.out.println("resulting OI is " + result);
   }
 }
