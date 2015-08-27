@@ -141,16 +141,16 @@ class MetaStoreDirectSql {
 
   private DB determineDbType() {
     DB dbType = DB.OTHER;
-    if (runDbCheck("SET @@session.sql_mode=ANSI_QUOTES", "MySql")) {
-      dbType = DB.MYSQL;
-    } else if (runDbCheck("SELECT version FROM v$instance", "Oracle")) {
-      dbType = DB.ORACLE;
-    } else if (runDbCheck("SELECT @@version", "MSSQL")) {
-      dbType = DB.MSSQL;
-    } else {
-      // TODO: maybe we should use getProductName to identify all the DBs
-      String productName = getProductName();
-      if (productName != null && productName.toLowerCase().contains("derby")) {
+    String productName = getProductName();
+    if (productName != null) {
+      productName = productName.toLowerCase();
+      if (productName.contains("mysql")) {
+        dbType = DB.MYSQL;
+      } else if (productName.contains("oracle")) {
+        dbType = DB.ORACLE;
+      } else if (productName.contains("microsoft sql server")) {
+        dbType = DB.MSSQL;
+      } else if (productName.contains("derby")) {
         dbType = DB.DERBY;
       }
     }
@@ -227,23 +227,6 @@ class MetaStoreDirectSql {
       timingTrace(doTrace, queryText, start, doTrace ? System.nanoTime() : 0);
     } finally {
       jdoConn.close(); // We must release the connection before we call other pm methods.
-    }
-  }
-
-  private boolean runDbCheck(String queryText, String name) {
-    Transaction tx = pm.currentTransaction();
-    if (!tx.isActive()) {
-      tx.begin();
-    }
-    try {
-      executeNoResult(queryText);
-      return true;
-    } catch (Throwable t) {
-      LOG.debug(name + " check failed, assuming we are not on " + name + ": " + t.getMessage());
-      tx.rollback();
-      tx = pm.currentTransaction();
-      tx.begin();
-      return false;
     }
   }
 
