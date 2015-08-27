@@ -129,9 +129,7 @@
     <profile>
       <id>spark-test</id>
       <activation>
-        <property>
-          <name>!skipSparkTests</name>
-        </property>
+        <activeByDefault>false</activeByDefault>
       </activation>
       <dependencies>
         <dependency>
@@ -411,6 +409,19 @@
            </execution>
          </executions>
        </plugin>
+
+      <!-- Disable Spark tests from being compiled -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+         <configuration>
+           <testExcludes>
+             <exclude>**/TestMultiSessionsHS2WithLocalClusterSpark.java</exclude>
+             <exclude>**/TestJdbcWithLocalClusterSpark.java</exclude>
+           </testExcludes>
+         </configuration>
+      </plugin>
+
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
