@@ -150,24 +150,19 @@ class MetaStoreDirectSql {
   private DB determineDbType() {
     DB dbType = DB.OTHER;
     String productName = getProductName();
-    if (productName != null){
-      String lcProductName = productName.toLowerCase();
-      if (lcProductName.contains("derby")){
-        return DB.DERBY;
-      } else if (lcProductName.matches("(?s).*sql\\s+anywhere.*")) {
-        return DB.SQLANYWHERE;
-      } else {
-        LOG.warn("DB Product name["+productName+"] obtained, but not used to determine db type. Falling back to using SQL to determine which db we're using");
+    if (productName != null) {
+      productName = productName.toLowerCase();
+      if (productName.contains("mysql")) {
+        dbType = DB.MYSQL;
+      } else if (productName.contains("oracle")) {
+        dbType = DB.ORACLE;
+      } else if (productName.contains("microsoft sql server")) {
+        dbType = DB.MSSQL;
+      } else if (productName.contains("derby")) {
+        dbType = DB.DERBY;
+      } else if (productName.matches("(?s).*sql\\s+anywhere.*")) {
+        dbType = DB.SQLANYWHERE;
       }
-    } else {
-      LOG.warn("Could not fetch product name from driver, trying various SQL statements to figure out which db we're using.");
-    }
-    if (runDbCheck("SET @@session.sql_mode=ANSI_QUOTES", "MySql")) {
-      dbType = DB.MYSQL;
-    } else if (runDbCheck("SELECT version FROM v$instance", "Oracle")) {
-      dbType = DB.ORACLE;
-    } else if (runDbCheck("SELECT @@version", "MSSQL")) {
-      dbType = DB.MSSQL;
     }
     return dbType;
   }
@@ -245,23 +240,6 @@ class MetaStoreDirectSql {
       timingTrace(doTrace, queryText, start, doTrace ? System.nanoTime() : 0);
     } finally {
       jdoConn.close(); // We must release the connection before we call other pm methods.
-    }
-  }
-
-  private boolean runDbCheck(String queryText, String name) {
-    Transaction tx = pm.currentTransaction();
-    if (!tx.isActive()) {
-      tx.begin();
-    }
-    try {
-      executeNoResult(queryText);
-      return true;
-    } catch (Throwable t) {
-      LOG.debug(name + " check failed, assuming we are not on " + name + ": " + t.getMessage());
-      tx.rollback();
-      tx = pm.currentTransaction();
-      tx.begin();
-      return false;
     }
   }
 
