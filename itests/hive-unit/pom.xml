@@ -129,9 +129,7 @@
     <profile>
       <id>spark-test</id>
       <activation>
-        <property>
-          <name>!skipSparkTests</name>
-        </property>
+        <activeByDefault>false</activeByDefault>
       </activation>
       <dependencies>
         <dependency>

@@ -1280,9 +1280,7 @@
     <profile>
       <id>skip-spark-test</id>
       <activation>
-	<property>
-          <name>skipSparkTests</name>
-	</property>
+        <activeByDefault>true</activeByDefault>
       </activation>
       <properties>
         <skip.spark.file1>**/TestSparkSessionManagerImpl.java</skip.spark.file1>

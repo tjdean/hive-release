@@ -53,9 +53,7 @@
     <profile>
       <id>spark-test</id>
       <activation>
-	<property>
-          <name>!skipSparkTests</name>
-	</property>
+        <activeByDefault>false</activeByDefault>
       </activation>
       <modules>
         <module>qtest-spark</module>
