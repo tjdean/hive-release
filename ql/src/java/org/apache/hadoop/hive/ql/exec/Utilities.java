@@ -3747,17 +3747,4 @@ public final class Utilities {
   public static boolean isDefaultNameNode(HiveConf conf) {
     return !conf.getChangedProperties().containsKey(HiveConf.ConfVars.HADOOPFS.varname);
   }
-
-  /**
-   * Strips Hive password details from configuration
-   */
-  public static void stripHivePasswordDetails(Configuration conf) {
-    // Strip out all Hive related password information from the JobConf
-    if (HiveConf.getVar(conf, HiveConf.ConfVars.METASTOREPWD) != null) {
-      HiveConf.setVar(conf, HiveConf.ConfVars.METASTOREPWD, "");
-    }
-    if (HiveConf.getVar(conf, HiveConf.ConfVars.HIVE_SERVER2_SSL_KEYSTORE_PASSWORD) != null) {
-      HiveConf.setVar(conf, HiveConf.ConfVars.HIVE_SERVER2_SSL_KEYSTORE_PASSWORD, "");
-    }
-  }
 }
