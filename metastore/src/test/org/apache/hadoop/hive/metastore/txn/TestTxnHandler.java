@@ -1109,7 +1109,6 @@ public class TestTxnHandler {
   }
 
   @Test
-  @Ignore
   public void deadlockDetected() throws Exception {
     LOG.debug("Starting deadlock test");
     Connection conn = txnHandler.getDbConn(Connection.TRANSACTION_SERIALIZABLE);

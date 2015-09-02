@@ -963,7 +963,8 @@ public class TxnHandler {
 
     // If you change this function, remove the @Ignore from TestTxnHandler.deadlockIsDetected()
     // to test these changes.
-    // MySQL and MSSQL use 40001 as the state code for rollback.  Postgres uses 40001 and 40P01.
+    // MySQL, SQLAnywhere and MSSQL use 40001 as the state code for rollback.
+    // Postgres uses 40001 and 40P01.
     // Oracle seems to return different SQLStates and messages each time,
     // so I've tried to capture the different error messages (there appear to be fewer different
     // error messages than SQL states).
@@ -972,8 +973,10 @@ public class TxnHandler {
       determineDatabaseProduct(conn);
     }
     if (e instanceof SQLTransactionRollbackException ||
-      ((dbProduct == DatabaseProduct.MYSQL || dbProduct == DatabaseProduct.POSTGRES ||
-        dbProduct == DatabaseProduct.SQLSERVER) && e.getSQLState().equals("40001")) ||
+      (
+        (dbProduct == DatabaseProduct.MYSQL || dbProduct == DatabaseProduct.POSTGRES ||
+          dbProduct == DatabaseProduct.SQLSERVER || dbProduct == DatabaseProduct.SQLANYWHERE)
+        && e.getSQLState().equals("40001")) ||
       (dbProduct == DatabaseProduct.POSTGRES && e.getSQLState().equals("40P01")) ||
       (dbProduct == DatabaseProduct.ORACLE && (e.getMessage().contains("deadlock detected")
         || e.getMessage().contains("can't serialize access for this transaction")))) {
@@ -993,8 +996,9 @@ public class TxnHandler {
         deadlockCnt = 0;
       }
     }
-    else if(isRetryable(e)) {
-      //in MSSQL this means Communication Link Failure
+    else if(isRetryable(e,"08S01") || (dbProduct == DatabaseProduct.SQLANYWHERE && isRetryable(e,"08W12"))) {
+      //in MSSQL, 08S01 means Communication Link Failure, in others, it's a more generic communications failure
+      //in SQLAnywhere, 08W12 is "Communication error"
       if(retryNum++ < retryLimit) {
         LOG.warn("Retryable error detected in " + caller + ".  Will wait " + retryInterval +
           "ms and retry up to " + (retryLimit - retryNum + 1) + " times.  Error: " + getMessage(e));
@@ -1038,6 +1042,7 @@ public class TxnHandler {
         case MYSQL:
         case POSTGRES:
         case SQLSERVER:
+        case SQLANYWHERE:
           s = "select current_timestamp";
           break;
 
@@ -1076,7 +1081,8 @@ public class TxnHandler {
     return identifierQuoteString;
   }
 
-  protected enum DatabaseProduct { DERBY, MYSQL, POSTGRES, ORACLE, SQLSERVER}
+  protected enum DatabaseProduct { DERBY, MYSQL, POSTGRES, ORACLE, SQLSERVER, SQLANYWHERE }
+  // TODO : we have multiple sources of this info - one in DirectSQL, one in SchemaTool, and one here - we should consolidate.
 
   /**
    * Determine the database product type
@@ -1102,6 +1108,8 @@ public class TxnHandler {
           dbProduct = DatabaseProduct.ORACLE;
         } else if (s.equals("PostgreSQL")) {
           dbProduct = DatabaseProduct.POSTGRES;
+        } else if (s.equals("SQL Anywhere")){
+          dbProduct = DatabaseProduct.SQLANYWHERE;
         } else {
           String msg = "Unrecognized database product name <" + s + ">";
           LOG.error(msg);
@@ -2005,13 +2013,12 @@ public class TxnHandler {
     m2.put(LockState.WAITING, LockAction.WAIT);
   }
   /**
-   * Returns true if {@code ex} should be retried
+   * Returns true if {@code ex} should be retried where {@code retryableErrorCode} is retryable.
    */
-  private static boolean isRetryable(Exception ex) {
+  private static boolean isRetryable(Exception ex, String retryableErrorCode) {
     if(ex instanceof SQLException) {
       SQLException sqlException = (SQLException)ex;
-      if("08S01".equalsIgnoreCase(sqlException.getSQLState())) {
-        //in MSSQL this means Communication Link Failure
+      if(retryableErrorCode.equalsIgnoreCase(sqlException.getSQLState())) {
         return true;
       }
     }
