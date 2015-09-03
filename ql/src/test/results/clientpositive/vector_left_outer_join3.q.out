@@ -195,7 +195,6 @@ STAGE PLANS:
               Map-reduce partition columns: c1 (type: int)
               Statistics: Num rows: 4 Data size: 372 Basic stats: COMPLETE Column stats: NONE
               value expressions: c2 (type: char(2))
-      Execution mode: vectorized
       Reduce Operator Tree:
         Join Operator
           condition map:
