@@ -44,7 +44,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 1);
+WHERE (filter = 1) order by f1;
 
 insert into table union_all_bug_test_1 values (1,1);
 insert into table union_all_bug_test_2 values (1);
@@ -66,7 +66,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 1);
+WHERE (filter = 1) order by f1;
 
 SELECT f1
 FROM (
@@ -83,7 +83,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 0);
+WHERE (filter = 0) order by f1;
 
 SELECT f1
 FROM (
@@ -100,7 +100,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 1 or filter = 0);
+WHERE (filter = 1 or filter = 0) order by f1;
 
 SELECT f1
 FROM (
@@ -117,4 +117,4 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (f1 = 1);
+WHERE (f1 = 1) order by f1;

@@ -150,7 +150,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 1)
+WHERE (filter = 1) order by f1
 PREHOOK: type: QUERY
 PREHOOK: Input: default@union_all_bug_test_1
 PREHOOK: Input: default@union_all_bug_test_2
@@ -170,7 +170,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 1)
+WHERE (filter = 1) order by f1
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@union_all_bug_test_1
 POSTHOOK: Input: default@union_all_bug_test_2
@@ -228,7 +228,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 1)
+WHERE (filter = 1) order by f1
 PREHOOK: type: QUERY
 PREHOOK: Input: default@union_all_bug_test_1
 PREHOOK: Input: default@union_all_bug_test_2
@@ -248,7 +248,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 1)
+WHERE (filter = 1) order by f1
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@union_all_bug_test_1
 POSTHOOK: Input: default@union_all_bug_test_2
@@ -269,7 +269,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 0)
+WHERE (filter = 0) order by f1
 PREHOOK: type: QUERY
 PREHOOK: Input: default@union_all_bug_test_1
 PREHOOK: Input: default@union_all_bug_test_2
@@ -289,14 +289,14 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 0)
+WHERE (filter = 0) order by f1
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@union_all_bug_test_1
 POSTHOOK: Input: default@union_all_bug_test_2
 #### A masked pattern was here ####
 0
-1
 0
+1
 PREHOOK: query: SELECT f1
 FROM (
 
@@ -312,7 +312,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 1 or filter = 0)
+WHERE (filter = 1 or filter = 0) order by f1
 PREHOOK: type: QUERY
 PREHOOK: Input: default@union_all_bug_test_1
 PREHOOK: Input: default@union_all_bug_test_2
@@ -332,15 +332,15 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 1 or filter = 0)
+WHERE (filter = 1 or filter = 0) order by f1
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@union_all_bug_test_1
 POSTHOOK: Input: default@union_all_bug_test_2
 #### A masked pattern was here ####
-1
+0
 0
 1
-0
+1
 PREHOOK: query: SELECT f1
 FROM (
 
@@ -356,7 +356,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (f1 = 1)
+WHERE (f1 = 1) order by f1
 PREHOOK: type: QUERY
 PREHOOK: Input: default@union_all_bug_test_1
 PREHOOK: Input: default@union_all_bug_test_2
@@ -376,7 +376,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (f1 = 1)
+WHERE (f1 = 1) order by f1
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@union_all_bug_test_1
 POSTHOOK: Input: default@union_all_bug_test_2
