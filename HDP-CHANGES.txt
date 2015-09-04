@@ -4,6 +4,7 @@ BUG Fixes:
     HIVE-9445 Revert HIVE-5700 - enforce single date format for partition column storage
     HIVE-9509 Restore partition spec validation removed by HIVE-9445
     HIVE-5664: Drop cascade database fails when the db has any tables with indexes
+    HIVE-6308 : COLUMNS_V2 Metastore table not populated for tables created without an explicit column list.
     HIVE-6727: Table level stats for external tables are set incorrectly
     HIVE-7351:ANALYZE TABLE statement fails on postgres metastore
     HIVE-7997: Potential null pointer reference in ObjectInspectorUtils#compareTypes()
@@ -80,6 +81,8 @@ BUG Fixes:
     HIVE-10841: [WHERE col is not null] does not work sometimes for queries with many JOIN statements
     HIVE-10929: In Tez mode,dynamic partitioning query with union all fails at moveTask,Invalid partition key & values
     HIVE-10963: Hive throws NPE rather than meaningful error message when window is missing
+    HIVE-10992: WebHCat should not create delegation tokens when Kerberos is not enabled
+    HIVE-11008: webhcat GET /jobs retries on getting job details from history server is too agressive
     HIVE-11023: Disable directSQL if datanucleus.identifierFactory = datanucleus2
     HIVE-11027: Hive on tez: Bucket map joins fail when hashcode goes negative
     HIVE-11028: Tez: table self join and join with another table fails with IndexOutOfBoundsException
@@ -98,3 +101,12 @@ BUG Fixes:
     HIVE-11438: Join a ACID table with non-ACID table fail with MR on 1.0.0
     HIVE-11442: Remove commons-configuration.jar from Hive distribution
     HIVE-11493: Predicate with integer column equals double evaluates to false
+    HIVE-11613: schematool should return non zero exit status for info command, if state is inconsistent
+
+Hortonworks bug fixes, without a corresponding Apache Jira:
+    BUG-40858: (2.2-maint) vectorization with ACID table, count(1) fails with ArrayIndexOutOfBoundsException
+    BUG-42210: Replace use of distcp with FileUtils.copy(), during Hive.renameFile()
+    BUG-36685: (2.2) select operator missing column, wrong results in multiple left outer join with sub queries
+    BUG-39400: hive tez dynamic partition pruning hang on to-be-pruned Map Vertex initialization, when tez reuse containers
+    HIVE-631 : Cluster create failed with during schematool init with: There is already an object named NEXT_COMPACTION_QUEUE_ID_PK in the database
+    HIVE-629 - making azuredb schema.sql idepotent
