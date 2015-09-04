@@ -3,3 +3,98 @@ BUG Fixes:
     HIVE-8295 Add batch retrieve partition objects for metastore direct sql
     HIVE-9445 Revert HIVE-5700 - enforce single date format for partition column storage
     HIVE-9509 Restore partition spec validation removed by HIVE-9445
+    HIVE-5664: Drop cascade database fails when the db has any tables with indexes
+    HIVE-6727: Table level stats for external tables are set incorrectly
+    HIVE-7351:ANALYZE TABLE statement fails on postgres metastore
+    HIVE-7997: Potential null pointer reference in ObjectInspectorUtils#compareTypes()
+    HIVE-8099: IN operator for partition column fails when the partition column type is DATE
+    HIVE-8326:Using DbTxnManager with concurrency off results in run time error
+    HIVE-8330: HiveResultSet.findColumn() parameters are case sensitive
+    HIVE-8374: schematool fails on Postgres versions < 9.2
+    HIVE-8448: Union All might not work due to the type conversion issue
+    HIVE-8450: Create table like does not copy over table properties
+    HIVE-8518: Compile time skew join optimization returns duplicated results
+    HIVE-8518: Compile time skew join optimization returns duplicated results
+    HIVE-8594: Wrong condition in SettableConfigUpdater#setHiveConfWhiteList()
+    HIVE-8627: Compute stats on a table from impala caused the table to be corrupted
+    HIVE-8680: Set Max Message for Binary Thrift endpoints
+    HIVE-8706: Table statistic collection on counter failed due to table name character case.
+    HIVE-8784: Querying partition does not work with JDO enabled against PostgreSQL
+    HIVE-8863: Cannot drop table with uppercase name after compute statistics for columns
+    HIVE-8869: RowSchema not updated for some ops when columns are pruned
+    HIVE-8874: Error Accessing HBase from Hive via Oozie on Kerberos 5.0.1 cluster
+    HIVE-8889: JDBC Driver ResultSet.getXXXXXX(String columnLabel) methods Broken
+    HIVE-8926: Projections that only swap input columns are identified incorrectly as identity projections
+    HIVE-9024: NullPointerException when starting webhcat server if templeton.hive.properties is not set
+    HIVE-9060: Fix child operator references after NonBlockingOpDeDupProc
+    HIVE-9113: Explain on query failed with NPE
+    HIVE-9155:HIVE_LOCKS uses int instead of bigint hive-txn-schema-0.14.0.mssql.sql
+    HIVE-9177: Fix child operator references after NonBlockingOpDeDupProc
+    HIVE-9217: UnionProcessor misses results for multi-insert when hive.optimize.union.remove=true
+    HIVE-9228: Problem with subquery using windowing functions
+    HIVE-9301: Potential null dereference in MoveTask#createTargetPath
+    HIVE-9309: schematool fails on Postgres 8.1
+    HIVE-9322: Make null-checks consistent for MapObjectInspector subclasses.
+    HIVE-9347: Bug with max() together with rank() and grouping sets
+    HIVE-9377: UDF in_file() in WHERE predicate causes NPE.
+    HIVE-9397: SELECT max(bar) FROM foo is broken after ANALYZE ... FOR COLUMNS
+    HIVE-9437: Beeline does not add any existing HADOOP_CLASSPATH
+    HIVE-9471: Bad seek in uncompressed ORC, at row-group boundary.
+    HIVE-9507: Make "LATERAL VIEW inline(expression) mytable" tolerant to nulls
+    HIVE-9513: NULL POINTER EXCEPTION
+    HIVE-9526: ClassCastException thrown by HiveStatement
+    HIVE-9560: When hive.stats.collect.rawdatasize=true, 'rawDataSize' for an ORC table will result in value '0' after running 'analyze table TABLE_NAME compute statistics;'
+    HIVE-9567: JSON SerDe not escaping special chars when writing char/varchar data
+    HIVE-9592: fix ArrayIndexOutOfBoundsException in date_add and date_sub initialize
+    HIVE-9619: Uninitialized read of numBitVectors in NumDistinctValueEstimator
+    HIVE-9622: Getting NPE when trying to restart HS2 when metastore is configured to use org.apache.hadoop.hive.thrift.DBTokenStore
+    HIVE-9648: Null check key provider before doing set
+    HIVE-9655: Dynamic partition table insertion error
+    HIVE-9716: Map job fails when table's LOCATION does not have scheme
+    HIVE-9720: Metastore does not properly migrate column stats when renaming a table across databases
+    HIVE-9755: Hive built-in "ngram" UDAF fails when a mapper has no matches.
+    HIVE-9936: fix potential NPE in DefaultUDAFEvaluatorResolver
+    HIVE-9950: fix rehash in CuckooSetBytes and CuckooSetLong
+    HIVE-9952: fix NPE in CorrelationUtilities
+    HIVE-9953: fix NPE in WindowingTableFunction
+    HIVE-9975: Renaming a nonexisting partition should not throw out NullPointerException
+    HIVE-9984: JoinReorder's getOutputSize is exponential
+    HIVE-10062: HiveOnTez: Union followed by Multi-GB followed by Multi-insert loses data
+    HIVE-10122: Hive metastore filter-by-expression is broken for non-partition expressions
+    HIVE-10140: Window boundary is not compared correctly
+    HIVE-10183: [CBO] self-join failing in a test case
+    HIVE-10273: Union with partition tables which have no data fails with NPE
+    HIVE-10303: HIVE-9471 broke forward compatibility of ORC files
+    HIVE-10384: RetryingMetaStoreClient does not retry wrapped TTransportExceptions
+    HIVE-10450: More than one TableScan in MapWork not supported in Vectorization -- causes query to fail during vectorization
+    HIVE-10538: Fix NPE in FileSinkOperator from hashcode mismatch
+    HIVE-10578: update sql standard authorization configuration whitelist
+    HIVE-10595: Dropping a table can cause NPEs in the compactor
+    HIVE-10607: Combination of ReducesinkDedup + TopN optimization yields incorrect result if there are multiple GBY in reducer
+    HIVE-10685: Alter table concatenate oparetor will cause duplicate data
+    HIVE-10698: query on view results fails with table not found error if view is created with subquery alias (CTE).
+    HIVE-10719: Hive metastore failure when alter table rename is attempted.
+    HIVE-10722: external table creation with msck in Hive can create unusable partition
+    HIVE-10808: Inner join on Null throwing Cast Exception
+    HIVE-10816: NPE in ExecDriver:handleSampling when submitted via child JVM
+    HIVE-10841: [WHERE col is not null] does not work sometimes for queries with many JOIN statements
+    HIVE-10929: In Tez mode,dynamic partitioning query with union all fails at moveTask,Invalid partition key & values
+    HIVE-10963: Hive throws NPE rather than meaningful error message when window is missing
+    HIVE-11023: Disable directSQL if datanucleus.identifierFactory = datanucleus2
+    HIVE-11027: Hive on tez: Bucket map joins fail when hashcode goes negative
+    HIVE-11028: Tez: table self join and join with another table fails with IndexOutOfBoundsException
+    HIVE-11031: ORC concatenation of old files can fail while merging column statistics
+    HIVE-11035: PPD: Orc Split elimination fails because filterColumns=[-1]
+    HIVE-11095: SerDeUtils another bug ,when Text is reused
+    HIVE-11104: Select operator doesn't propagate constants appearing in expressions
+    HIVE-11112: ISO-8859-1 text output has fragments of previous longer rows appended
+    HIVE-11147: MetaTool doesn't update FS root location for partitions with space in name
+    HIVE-11172: Vectorization wrong results for aggregate query with where clause without group by
+    HIVE-11271: java.lang.IndexOutOfBoundsException when union all with if function
+    HIVE-11285: ObjectInspector for partition columns in FetchOperator in SMBJoin causes exception
+    HIVE-11303: Getting Tez LimitExceededException after dag execution on large query
+    HIVE-11356: SMB join on tez fails when one of the tables is empty
+    HIVE-11429: Increase default JDBC result set fetch size (# rows it fetches in one RPC call) to 1000 from 50
+    HIVE-11438: Join a ACID table with non-ACID table fail with MR on 1.0.0
+    HIVE-11442: Remove commons-configuration.jar from Hive distribution
+    HIVE-11493: Predicate with integer column equals double evaluates to false
