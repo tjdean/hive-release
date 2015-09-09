@@ -339,7 +339,7 @@ public class TxnHandler {
         if (abortTxns(dbConn, Collections.singletonList(txnid)) != 1) {
           LOG.debug("Going to rollback");
           dbConn.rollback();
-          throw new NoSuchTxnException("No such transaction: " + txnid);
+          throw new NoSuchTxnException("No such transaction " + JavaUtils.txnIdToString(txnid));
         }
 
         LOG.debug("Going to commit");
@@ -381,7 +381,7 @@ public class TxnHandler {
         LOG.debug("Going to execute insert <" + s + ">");
         if (stmt.executeUpdate(s) < 1) {
           LOG.warn("Expected to move at least one record from txn_components to " +
-            "completed_txn_components when committing txn!");
+             "completed_txn_components when committing txn! " + JavaUtils.txnIdToString(txnid));
         }
 
         // Always access TXN_COMPONENTS before HIVE_LOCKS;
@@ -507,8 +507,8 @@ public class TxnHandler {
           LOG.debug("Going to rollback");
           dbConn.rollback();
           String msg = "Unlocking locks associated with transaction" +
-            " not permitted.  Lockid " + extLockId + " is associated with " +
-            "transaction " + txnid;
+            " not permitted.  Lockid " + JavaUtils.lockIdToString(extLockId) + " is associated with " +
+            "transaction " + JavaUtils.txnIdToString(txnid);
           LOG.error(msg);
           throw new TxnOpenException(msg);
         }
@@ -519,7 +519,7 @@ public class TxnHandler {
         if (rc < 1) {
           LOG.debug("Going to rollback");
           dbConn.rollback();
-          throw new NoSuchLockException("No such lock: " + extLockId);
+          throw new NoSuchLockException("No such lock " + JavaUtils.lockIdToString(extLockId));
         }
         LOG.debug("Going to commit");
         dbConn.commit();
@@ -1182,8 +1182,8 @@ public class TxnHandler {
     @Override
     public String toString() {
       return JavaUtils.lockIdToString(extLockId) + " intLockId:" +
-        intLockId + " txnId:" + Long.toString
-        (txnId) + " db:" + db + " table:" + table + " partition:" +
+        intLockId + " " + JavaUtils.txnIdToString(txnId)
+        + " db:" + db + " table:" + table + " partition:" +
         partition + " state:" + (state == null ? "null" : state.toString())
         + " type:" + (type == null ? "null" : type.toString());
     }
@@ -1322,7 +1322,8 @@ public class TxnHandler {
       LOG.debug("Going to execute update <" + buf.toString() + ">");
       stmt.executeUpdate(buf.toString());
 
-      buf = new StringBuilder("update TXNS set txn_state = '" + TXN_ABORTED + "' where txn_id in (");
+      buf = new StringBuilder("update TXNS set txn_state = '" + TXN_ABORTED +
+        "' where txn_state = '" + TXN_OPEN + "' and txn_id in (");
       first = true;
       for (Long id : txnids) {
         if (first) first = false;
@@ -1351,7 +1352,7 @@ public class TxnHandler {
    *             of NOT_ACQUIRED.  The caller will need to call
    *             {@link #lockNoWait(org.apache.hadoop.hive.metastore.api.LockRequest)} again to
    *             attempt another lock.
-   * @return informatino on whether the lock was acquired.
+   * @return information on whether the lock was acquired.
    * @throws NoSuchTxnException
    * @throws TxnAbortedException
    */
@@ -1740,12 +1741,12 @@ public class TxnHandler {
       if (!rs.next()) {
         LOG.debug("Going to rollback");
         dbConn.rollback();
-        throw new NoSuchTxnException("No such transaction: " + txnid);
+        throw new NoSuchTxnException("No such transaction " + JavaUtils.txnIdToString(txnid));
       }
       if (rs.getString(1).charAt(0) == TXN_ABORTED) {
         LOG.debug("Going to rollback");
         dbConn.rollback();
-        throw new TxnAbortedException("Transaction " + txnid +
+        throw new TxnAbortedException("Transaction " + JavaUtils.txnIdToString(txnid) +
           " already aborted");
       }
       s = "update TXNS set txn_last_heartbeat = " + now +
@@ -1774,7 +1775,7 @@ public class TxnHandler {
           "checked the lock existed but now we can't find it!");
       }
       long txnid = rs.getLong(1);
-      LOG.debug("Return txnid " + (rs.wasNull() ? -1 : txnid));
+      LOG.debug("Return " + JavaUtils.txnIdToString(rs.wasNull() ? -1 : txnid));
       return (rs.wasNull() ? -1 : txnid);
     } finally {
       closeStmt(stmt);
