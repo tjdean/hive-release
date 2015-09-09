@@ -407,6 +407,22 @@ public class OrcRecordUpdater implements RecordUpdater {
     }
     return result;
   }
+  /**
+   * {@link KeyIndexBuilder} creates these
+   */
+  static AcidStats parseAcidStats(Reader reader) {
+    String statsSerialized;
+    try {
+      ByteBuffer val =
+        reader.getMetadataValue(OrcRecordUpdater.ACID_STATS)
+          .duplicate();
+      statsSerialized = utf8Decoder.decode(val).toString();
+    } catch (CharacterCodingException e) {
+      throw new IllegalArgumentException("Bad string encoding for " +
+        OrcRecordUpdater.ACID_STATS, e);
+    }
+    return new AcidStats(statsSerialized);
+  }
 
   static class KeyIndexBuilder implements OrcFile.WriterCallback {
     StringBuilder lastKey = new StringBuilder();
