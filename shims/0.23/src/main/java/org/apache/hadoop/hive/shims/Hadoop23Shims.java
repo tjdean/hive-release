@@ -61,6 +61,7 @@ import org.apache.hadoop.fs.permission.AclEntryType;
 import org.apache.hadoop.fs.permission.AclStatus;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.hdfs.DFSClient;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hdfs.protocol.BlockStoragePolicy;
@@ -526,11 +527,25 @@ public class Hadoop23Shims extends HadoopShimsSecure {
     // else the updates do not get flushed properly
     KeyProviderCryptoExtension keyProvider =  miniDFSCluster.getNameNode().getNamesystem().getProvider();
     if (keyProvider != null) {
-      miniDFSCluster.getFileSystem().getClient().setKeyProvider(keyProvider);
+      try {
+        setKeyProvider(miniDFSCluster.getFileSystem().getClient(), keyProvider);
+      } catch (Exception err) {
+        throw new IOException(err);
+      }
     }
 
     cluster = new MiniDFSShim(miniDFSCluster);
     return cluster;
+  }
+
+  private static void setKeyProvider(DFSClient dfsClient, KeyProviderCryptoExtension provider)
+      throws Exception {
+    if (setKeyProviderHadoop27Method != null) {
+      // Method signature changed in Hadoop 2.7. Cast provider to KeyProvider
+      setKeyProviderHadoop27Method.invoke(dfsClient, (KeyProvider) provider);
+    } else {
+      dfsClient.setKeyProvider(provider);
+    }
   }
 
   /**
@@ -952,6 +967,7 @@ public class Hadoop23Shims extends HadoopShimsSecure {
 
   protected static final Method accessMethod;
   protected static final Method getPasswordMethod;
+  protected static final Method setKeyProviderHadoop27Method;
 
   static {
     Method m = null;
@@ -969,6 +985,14 @@ public class Hadoop23Shims extends HadoopShimsSecure {
       m = null;
     }
     getPasswordMethod = m;
+
+    try {
+      m = DFSClient.class.getMethod("setKeyProvider", KeyProvider.class);
+    } catch (NoSuchMethodException err) {
+      // We can just use setKeyProvider() as it is
+      m = null;
+    }
+    setKeyProviderHadoop27Method = m;
   }
 
   @Override
