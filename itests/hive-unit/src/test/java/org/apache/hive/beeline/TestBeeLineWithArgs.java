@@ -577,6 +577,11 @@ public class TestBeeLineWithArgs {
     Assert.assertFalse( output.contains("java.lang.NullPointerException") );
     Assert.assertTrue( output.contains("No current connection") );
 
+    beeLine.runCommands( new String[] {"!set"} );
+    output = os.toString("UTF8");
+    Assert.assertFalse( output.contains("java.lang.NullPointerException") );
+    Assert.assertTrue( output.contains("No current connection") );
+
     System.out.println(">>> PASSED " + "testNPE" );
   }
 
