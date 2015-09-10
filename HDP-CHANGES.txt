@@ -102,6 +102,7 @@ BUG Fixes:
     HIVE-11442: Remove commons-configuration.jar from Hive distribution
     HIVE-11493: Predicate with integer column equals double evaluates to false
     HIVE-11613: schematool should return non zero exit status for info command, if state is inconsistent
+    HIVE-11727 : (BUG-43738). Hive on Tez through Oozie: Some queries fail with fnf exception
 
 Hortonworks bug fixes, without a corresponding Apache Jira:
     BUG-40858: (2.2-maint) vectorization with ACID table, count(1) fails with ArrayIndexOutOfBoundsException
