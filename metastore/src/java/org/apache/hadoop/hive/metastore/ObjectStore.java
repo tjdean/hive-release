@@ -5746,11 +5746,13 @@ public class ObjectStore implements RawStore, Configurable {
   public class UpdateMStorageDescriptorTblURIRetVal {
     private List<String> badRecords;
     private Map<String, String> updateLocations;
+    private int numNullRecords;
 
     UpdateMStorageDescriptorTblURIRetVal(List<String> badRecords,
-      Map<String, String> updateLocations) {
+      Map<String, String> updateLocations, int numNullRecords) {
       this.badRecords = badRecords;
       this.updateLocations = updateLocations;
+      this.numNullRecords = numNullRecords;
     }
 
     public List<String> getBadRecords() {
@@ -5768,6 +5770,14 @@ public class ObjectStore implements RawStore, Configurable {
     public void setUpdateLocations(Map<String, String> updateLocations) {
       this.updateLocations = updateLocations;
     }
+
+    public int getNumNullRecords() {
+      return numNullRecords;
+    }
+
+    public void setNumNullRecords(int numNullRecords) {
+      this.numNullRecords = numNullRecords;
+    }
   }
 
   /** The following APIs
@@ -5782,6 +5792,7 @@ public class ObjectStore implements RawStore, Configurable {
     boolean committed = false;
     Map<String, String> updateLocations = new HashMap<String, String>();
     List<String> badRecords = new ArrayList<String>();
+    int numNullRecords = 0;
     UpdateMStorageDescriptorTblURIRetVal retVal = null;
 
     try {
@@ -5793,6 +5804,10 @@ public class ObjectStore implements RawStore, Configurable {
       for(MStorageDescriptor mSDS:mSDSs) {
         URI locationURI = null;
         String location = mSDS.getLocation();
+        if (location == null) { // This can happen for View or Index
+          numNullRecords++;
+          continue;
+        }
         try {
           locationURI = new Path(location).toUri();
         } catch (IllegalArgumentException e) {
@@ -5812,7 +5827,7 @@ public class ObjectStore implements RawStore, Configurable {
       }
       committed = commitTransaction();
       if (committed) {
-        retVal = new UpdateMStorageDescriptorTblURIRetVal(badRecords, updateLocations);
+        retVal = new UpdateMStorageDescriptorTblURIRetVal(badRecords, updateLocations, numNullRecords);
       }
       return retVal;
     } finally {
