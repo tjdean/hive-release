@@ -297,7 +297,8 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
           db.loadTable(tbd.getSourcePath(), tbd.getTable()
               .getTableName(), tbd.getReplace(), tbd.getHoldDDLTime(), work.isSrcLocal(),
               isSkewedStoredAsDirs(tbd),
-              work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID);
+              work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID,
+              work.isInImportScope());
           if (work.getOutputs() != null) {
             work.getOutputs().add(new WriteEntity(table,
                 (tbd.getReplace() ? WriteEntity.WriteType.INSERT_OVERWRITE :

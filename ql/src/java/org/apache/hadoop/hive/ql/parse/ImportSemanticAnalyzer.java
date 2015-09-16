@@ -266,6 +266,9 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
 
   private AddPartitionDesc getBaseAddPartitionDescFromPartition(
       Path fromPath, String dbname, CreateTableDesc tblDesc, Partition partition) throws MetaException {
+    if (partition.getParameters() != null){
+      partition.putToParameters(StatsSetupConst.DO_NOT_UPDATE_STATS,"true");
+    }
     AddPartitionDesc partsDesc = new AddPartitionDesc(dbname, tblDesc.getTableName(),
         EximUtil.makePartSpec(tblDesc.getPartCols(), partition.getValues()),
         partition.getSd().getLocation(), partition.getParameters());
@@ -325,8 +328,9 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     LoadTableDesc loadTableWork = new LoadTableDesc(tmpPath,
         Utilities.getTableDesc(table), new TreeMap<String, String>(),
         replace);
-    Task<?> loadTableTask = TaskFactory.get(new MoveWork(getInputs(),
-        getOutputs(), loadTableWork, null, false), conf);
+    MoveWork moveWork = new MoveWork(getInputs(), getOutputs(), loadTableWork, null, false);
+    moveWork.setInImportScope(true);
+    Task<?> loadTableTask = TaskFactory.get( moveWork, conf);
     copyTask.addDependentTask(loadTableTask);
     rootTasks.add(copyTask);
     return loadTableTask;
@@ -363,6 +367,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
       ReplicationSpec replicationSpec, org.apache.hadoop.hive.ql.metadata.Partition ptn) {
     addPartitionDesc.setReplaceMode(true);
     addPartitionDesc.getPartition(0).setLocation(ptn.getLocation()); // use existing location
+    addPartitionDesc.getPartition(0).getPartParams().put(StatsSetupConst.DO_NOT_UPDATE_STATS,"true");
     return TaskFactory.get(new DDLWork(
         getInputs(),
         getOutputs(),
@@ -398,9 +403,9 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
           Utilities.getTableDesc(table),
           partSpec.getPartSpec(), true);
       loadTableWork.setInheritTableSpecs(false);
-      Task<?> loadPartTask = TaskFactory.get(new MoveWork(
-          getInputs(), getOutputs(), loadTableWork, null, false),
-          conf);
+      MoveWork moveWork = new MoveWork(getInputs(), getOutputs(), loadTableWork, null, false);
+      moveWork.setInImportScope(true);
+      Task<?> loadPartTask = TaskFactory.get(moveWork, conf);
       copyTask.addDependentTask(loadPartTask);
       addPartTask.addDependentTask(loadPartTask);
       rootTasks.add(copyTask);

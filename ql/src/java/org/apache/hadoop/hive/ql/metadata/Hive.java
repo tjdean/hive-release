@@ -1633,11 +1633,19 @@ private void constructOneLBLocationMap(FileStatus fSta,
    * @param isAcid true if this is an ACID based write
    */
   public void loadTable(Path loadPath, String tableName, boolean replace,
-      boolean holdDDLTime, boolean isSrcLocal, boolean isSkewedStoreAsSubdir, boolean isAcid)
+      boolean holdDDLTime, boolean isSrcLocal, boolean isSkewedStoreAsSubdir,
+      boolean isAcid, boolean isInImportScope)
       throws HiveException {
     List<Path> newFiles = new ArrayList<Path>();
     Table tbl = getTable(tableName);
     HiveConf sessionConf = SessionState.getSessionConf();
+
+    if (isInImportScope){
+      // If we're importing, then we want to retain the metadata that was recorded by the export
+      // rather than resetting it.
+      tbl.getParameters().put(StatsSetupConst.DO_NOT_UPDATE_STATS, "true");
+    }
+
     if (replace) {
       Path tableDest = tbl.getPath();
       replaceFiles(tableDest, loadPath, tableDest, tableDest, sessionConf, isSrcLocal);
@@ -1666,7 +1674,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
       throw new HiveException(e);
     }
 
-    if (!holdDDLTime) {
+    if (!holdDDLTime && !isInImportScope) {
       try {
         alterTable(tableName, tbl);
       } catch (InvalidOperationException e) {

@@ -41,6 +41,7 @@ public class MoveWork implements Serializable {
 
   private boolean checkFileFormat;
   private boolean srcLocal;
+  private boolean isInImportScope = false;
 
   /**
    * ReadEntitites that are passed to the hooks.
@@ -140,6 +141,14 @@ public class MoveWork implements Serializable {
 
   public void setSrcLocal(boolean srcLocal) {
     this.srcLocal = srcLocal;
+  }
+
+  public boolean isInImportScope() {
+    return isInImportScope;
+  }
+
+  public void setInImportScope(boolean isInImportScope) {
+    this.isInImportScope = isInImportScope;
   }
 
 }
