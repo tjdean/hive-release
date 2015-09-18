@@ -130,6 +130,7 @@ public class ConstantPropagate implements Transform {
       }
       opToDelete.getParentOperators().get(0).removeChildAndAdoptItsChildren(opToDelete);
     }
+    cppCtx.getOpToDelete().clear();
     return pGraphContext;
   }
 
