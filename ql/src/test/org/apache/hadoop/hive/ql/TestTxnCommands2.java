@@ -215,6 +215,7 @@ public class TestTxnCommands2 {
   public void testAlterTable() throws Exception {
     int[][] tableData = {{1,2}};
     runStatementOnDriver("insert into " + Table.ACIDTBL + "(a,b) " + makeValuesClause(tableData));
+    List<String> rs2 = runStatementOnDriver("select a,b from " + Table.ACIDTBL + " where a > 1 order by a,b");
     runStatementOnDriver("alter table "+ Table.ACIDTBL + " compact 'MAJOR'");
     Worker t = new Worker();
     t.setThreadId((int) t.getId());
