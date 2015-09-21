@@ -288,9 +288,4 @@ public class OperationManager extends AbstractService {
     }
     return removed;
   }
-
-  // Needed for testing
-  int getOperationCount() {
-    return handleToOperation.size();
-  }
 }

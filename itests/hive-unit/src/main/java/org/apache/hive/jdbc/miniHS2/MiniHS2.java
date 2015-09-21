@@ -378,10 +378,6 @@ public class MiniHS2 extends AbstractHiveService {
     return dfs;
   }
 
-  public HiveServer2 getHiveServer2() {
-    return hiveServer2;
-  }
-
   private void waitForStartup() throws Exception {
     int waitTime = 0;
     long startupTimeout = 1000L * 1000L;
