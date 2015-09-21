@@ -24,7 +24,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.lang.reflect.Method;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -52,6 +54,10 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.exec.FunctionRegistry;
 import org.apache.hive.jdbc.miniHS2.MiniHS2;
+import org.apache.hive.service.Service;
+import org.apache.hive.service.cli.CLIService;
+import org.apache.hive.service.cli.operation.OperationManager;
+import org.apache.hive.service.server.HiveServer2;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -666,6 +672,79 @@ public class TestJdbcWithMiniHS2 {
     if (fs.exists(scratchDirPath) && !isLocal) {
       assertEquals("DFS scratch dir permissions don't match", expectedFSPermission,
           fs.getFileStatus(scratchDirPath).getPermission());
+    }
+  }
+
+  private static CLIService getCliService(MiniHS2 miniHS2) {
+    for (Service service : miniHS2.getHiveServer2().getServices()) {
+      if (service instanceof CLIService) {
+        return (CLIService) service;
+      }
+    }
+
+    fail("Could not get CLIService from MiniHS2!");
+    return null;
+  }
+
+  private static int getOperationCount(MiniHS2 miniHS2) throws Exception {
+    // As this test is not in the same package as OperationManager, use reflection to be able to
+    // invoke the package-scoped getOperationCount()
+    Method getOperationCountMethod = OperationManager.class.getDeclaredMethod("getOperationCount");
+    getOperationCountMethod.setAccessible(true);
+    return (Integer) getOperationCountMethod.invoke(
+        getCliService(miniHS2).getSessionManager().getOperationManager());
+  }
+
+  @Test
+  public void testCloseResultSet() throws Exception {
+    // Create our own connection for this test, which we will close at the end of this test.
+    Connection connection = getConnection(miniHS2.getJdbcURL(), System.getProperty("user.name"), "bar");
+
+    try {
+      // Do a few operations (query, metatdata) returning result sets
+      int operationCountAfterQuery;
+      int operationCountAfterClose;
+
+      String tableName = "testCloseResultSet";
+      Statement stmt = connection.createStatement();
+      stmt.execute("DROP TABLE IF EXISTS " + tableName);
+      stmt.execute("CREATE TABLE " + tableName
+          + " (under_col INT COMMENT 'the under column', value STRING) COMMENT ' test table'");
+
+      // Normal query
+      ResultSet res = stmt.executeQuery("SELECT COUNT(*) FROM " + tableName);
+      assertTrue(res.next());
+      assertEquals(0, res.getInt(1));
+      operationCountAfterQuery = getOperationCount(miniHS2);
+      res.close();
+      operationCountAfterClose = getOperationCount(miniHS2);
+      assertTrue(operationCountAfterClose < operationCountAfterQuery);
+
+      DatabaseMetaData dbMetadata = connection.getMetaData();
+
+      // getSchemas()
+      ResultSet rs = dbMetadata.getSchemas();
+      operationCountAfterQuery = getOperationCount(miniHS2);
+      rs.close();
+      operationCountAfterClose = getOperationCount(miniHS2);
+      assertTrue(operationCountAfterClose < operationCountAfterQuery);
+
+      // getTables()
+      rs = dbMetadata.getTables(null, null, null, null);
+      operationCountAfterClose = getOperationCount(miniHS2);
+      while (rs.next()) {
+        ;
+      }
+      rs.close();
+      operationCountAfterClose = getOperationCount(miniHS2);
+      assertTrue(operationCountAfterClose < operationCountAfterQuery);
+
+      connection.close();
+      connection = null;
+    } finally {
+      if (connection != null) {
+        connection.close();
+      }
     }
   }
 }
