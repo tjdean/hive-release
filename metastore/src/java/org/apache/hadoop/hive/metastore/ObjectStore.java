@@ -42,6 +42,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 import javax.jdo.JDODataStoreException;
+import javax.jdo.JDOException;
 import javax.jdo.JDOHelper;
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
@@ -2429,7 +2430,20 @@ public class ObjectStore implements RawStore, Configurable {
         throw new MetaException(ex.getMessage());
       }
       if (!isInTxn) {
-        rollbackTransaction();
+        JDOException rollbackEx = null;
+        try {
+          rollbackTransaction();
+        } catch (JDOException jex) {
+          rollbackEx = jex;
+        }
+        if (rollbackEx != null) {
+          // Datanucleus propagates some pointless exceptions and rolls back in the finally.
+          if (currentTransaction != null && currentTransaction.isActive()) {
+            throw rollbackEx; // Throw if the tx wasn't rolled back.
+          }
+          LOG.info("Ignoring exception, rollback succeeded: " + rollbackEx.getMessage());
+        }
+
         start = doTrace ? System.nanoTime() : 0;
         openTransaction();
         if (table != null) {
