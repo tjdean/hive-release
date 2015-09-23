@@ -504,8 +504,37 @@ final class ReaderImpl implements Reader {
       footerBuffer.limit(position + metadataSize + footerBufferSize);
       instream = InStream.create("footer", new ByteBuffer[]{footerBuffer},
           new long[]{0L}, footerBufferSize, codec, bufferSize);
-      this.footer = OrcProto.Footer.parseFrom(instream);
+      in = CodedInputStream.newInstance(instream);
+      msgLimit = DEFAULT_PROTOBUF_MESSAGE_LIMIT;
+      OrcProto.Footer footerProto = null;
+      do {
+        try {
+          in.setSizeLimit(msgLimit);
+          footerProto = OrcProto.Footer.parseFrom(in);
+        } catch (InvalidProtocolBufferException e) {
+          if (e.getMessage().contains("Protocol message was too large")) {
+            LOG.warn("Footer section is larger than " + msgLimit + " bytes. Increasing the max" +
+                " size of the coded input stream.");
 
+            msgLimit = msgLimit << 1;
+            if (msgLimit > PROTOBUF_MESSAGE_MAX_LIMIT) {
+              LOG.error("Footer section exceeds max protobuf message size of " +
+                  PROTOBUF_MESSAGE_MAX_LIMIT + " bytes.");
+              throw e;
+            }
+
+            // we must have failed in the middle of reading instream and instream doesn't support
+            // resetting the stream
+            instream = InStream.create("footer", new ByteBuffer[]{footerBuffer},
+                new long[]{0L}, footerBufferSize, codec, bufferSize);
+            in = CodedInputStream.newInstance(instream);
+          } else {
+            throw e;
+          }
+        }
+      } while (footerProto == null);
+
+      this.footer = footerProto;
       footerBuffer.position(position);
       this.inspector = OrcStruct.createObjectInspector(0, footer.getTypesList());
     }
