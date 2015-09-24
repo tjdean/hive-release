@@ -68,3 +68,8 @@ explain select * from emp e join dept d  on (e.deptid = d.deptid) join loc l on 
 -- Expected output rows: (48*6*8)/top2largest(3,7,7)*top2largest(6,6,6) = 1
 explain select * from emp e join dept d on (e.deptid = d.deptid and e.lastname = d.deptname) join loc l on (e.deptid = l.locid and e.lastname = l.state);
 
+create table empc as select * from emp limit 2;
+analyze table empc compute statistics;
+analyze table empc compute statistics for columns lastname,deptid,locid;
+
+explain select * from (select e1.deptid from emp e1 join dept d on (e1.deptid = d.deptid))s join empc e2 on (s.deptid = e2.deptid);
