@@ -810,6 +810,15 @@ class MetaStoreDirectSql {
     return value.toString();
   }
 
+  static Double extractSqlDouble(Object obj) throws MetaException {
+    if (obj == null)
+      return null;
+    if (!(obj instanceof Number)) {
+      throw new MetaException("Expected numeric type but got " + obj.getClass().getName());
+    }
+    return ((Number) obj).doubleValue();
+  }
+
   private static String trimCommaList(StringBuilder sb) {
     if (sb.length() > 0) {
       sb.setLength(sb.length() - 1);
@@ -1087,7 +1096,7 @@ class MetaStoreDirectSql {
   }
 
   public AggrStats aggrColStatsForPartitions(String dbName, String tableName,
-      List<String> partNames, List<String> colNames) throws MetaException {
+                                             List<String> partNames, List<String> colNames) throws MetaException {
     long partsFound = partsFoundForPartitions(dbName, tableName, partNames, colNames);
     List<ColumnStatisticsObj> stats = columnStatisticsObjForPartitions(dbName,
         tableName, partNames, colNames, partsFound);
