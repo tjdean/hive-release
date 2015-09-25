@@ -1,0 +1,81 @@
+PREHOOK: query: CREATE DATABASE IF NOT EXISTS tmp
+PREHOOK: type: CREATEDATABASE
+PREHOOK: Output: database:tmp
+POSTHOOK: query: CREATE DATABASE IF NOT EXISTS tmp
+POSTHOOK: type: CREATEDATABASE
+POSTHOOK: Output: database:tmp
+PREHOOK: query: USE tmp
+PREHOOK: type: SWITCHDATABASE
+PREHOOK: Input: database:tmp
+POSTHOOK: query: USE tmp
+POSTHOOK: type: SWITCHDATABASE
+POSTHOOK: Input: database:tmp
+PREHOOK: query: CREATE  TABLE `test1` (
+  `foo` bigint )
+CLUSTERED BY (
+  foo)
+SORTED BY (
+  foo ASC)
+INTO 384 BUCKETS
+stored as orc
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:tmp
+PREHOOK: Output: tmp@test1
+POSTHOOK: query: CREATE  TABLE `test1` (
+  `foo` bigint )
+CLUSTERED BY (
+  foo)
+SORTED BY (
+  foo ASC)
+INTO 384 BUCKETS
+stored as orc
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:tmp
+POSTHOOK: Output: tmp@test1
+PREHOOK: query: CREATE  TABLE `test2`(
+  `foo` bigint )
+CLUSTERED BY (
+  foo)
+SORTED BY (
+  foo ASC)
+INTO 384 BUCKETS
+STORED AS ORC
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:tmp
+PREHOOK: Output: tmp@test2
+POSTHOOK: query: CREATE  TABLE `test2`(
+  `foo` bigint )
+CLUSTERED BY (
+  foo)
+SORTED BY (
+  foo ASC)
+INTO 384 BUCKETS
+STORED AS ORC
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:tmp
+POSTHOOK: Output: tmp@test2
+PREHOOK: query: -- Initialize ONE table of the two tables with any data.
+INSERT overwrite table test1 SELECT key FROM default.src LIMIT 100
+PREHOOK: type: QUERY
+PREHOOK: Input: default@src
+PREHOOK: Output: tmp@test1
+POSTHOOK: query: -- Initialize ONE table of the two tables with any data.
+INSERT overwrite table test1 SELECT key FROM default.src LIMIT 100
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@src
+POSTHOOK: Output: tmp@test1
+POSTHOOK: Lineage: test1.foo EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), ]
+PREHOOK: query: SELECT t1.foo, t2.foo
+FROM test1 t1 INNER JOIN test2 t2 
+ON (t1.foo = t2.foo)
+PREHOOK: type: QUERY
+PREHOOK: Input: tmp@test1
+PREHOOK: Input: tmp@test2
+#### A masked pattern was here ####
+POSTHOOK: query: SELECT t1.foo, t2.foo
+FROM test1 t1 INNER JOIN test2 t2 
+ON (t1.foo = t2.foo)
+POSTHOOK: type: QUERY
+POSTHOOK: Input: tmp@test1
+POSTHOOK: Input: tmp@test2
+#### A masked pattern was here ####
