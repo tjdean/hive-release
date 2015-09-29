@@ -88,6 +88,11 @@ public class AppConfig extends Configuration {
     "webhcat-site.xml"
   };
 
+  public enum JobsListOrder {
+    lexicographicalasc,
+    lexicographicaldesc,
+  }
+
   public static final String PORT                = "templeton.port";
   public static final String EXEC_ENCODING_NAME  = "templeton.exec.encoding";
   public static final String EXEC_ENVS_NAME      = "templeton.exec.envs";
@@ -104,6 +109,7 @@ public class AppConfig extends Configuration {
   public static final String HIVE_PATH_NAME      = "templeton.hive.path";
   public static final String MAPPER_MEMORY_MB    = "templeton.mapper.memory.mb";
   public static final String MR_AM_MEMORY_MB     = "templeton.mr.am.memory.mb";
+  public static final String TEMPLETON_JOBSLIST_ORDER = "templeton.jobs.listorder";
 
   /**
    * see webhcat-default.xml
@@ -265,6 +271,22 @@ public class AppConfig extends Configuration {
     }
     return sb.toString();
   }
+
+  public JobsListOrder getListJobsOrder() {
+    String requestedOrder = get(TEMPLETON_JOBSLIST_ORDER);
+    if (requestedOrder != null) {
+      try {
+        return JobsListOrder.valueOf(requestedOrder.toLowerCase());
+      }
+      catch(IllegalArgumentException ex) {
+        LOG.warn("Ignoring setting " + TEMPLETON_JOBSLIST_ORDER + " configured with in-correct value " + requestedOrder);
+      }
+    }
+
+    // Default to lexicographicalasc
+    return JobsListOrder.lexicographicalasc;
+  }
+
   public void startCleanup() {
     JobState.getStorageInstance(this).startCleanup(this);
   }
