@@ -22,6 +22,10 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.common.JavaUtils;
+import org.apache.hadoop.hive.common.metrics.common.Metrics;
+import org.apache.hadoop.hive.common.metrics.common.MetricsConstant;
+import org.apache.hadoop.hive.common.metrics.common.MetricsFactory;
+import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.*;
 import org.apache.hadoop.hive.ql.ErrorMsg;
@@ -154,6 +158,16 @@ public class DbLockManager implements HiveLockManager{
         throw new LockException(ErrorMsg.LOCK_CANNOT_BE_ACQUIRED.getMsg() + " " + res);
       }
       acquiredLocks.add(hl);
+
+      Metrics metrics = MetricsFactory.getInstance();
+      if (metrics != null) {
+        try {
+          metrics.incrementCounter(MetricsConstant.METASTORE_HIVE_LOCKS);
+        } catch (Exception e) {
+          LOG.warn("Error Reporting hive client metastore lock operation to Metrics system", e);
+        }
+      }
+
       return res.getState();
     } catch (NoSuchTxnException e) {
       LOG.error("Metastore could not find " + JavaUtils.txnIdToString(lock.getTxnid()));
@@ -203,8 +217,15 @@ public class DbLockManager implements HiveLockManager{
     try {
       LOG.debug("Unlocking " + hiveLock);
       client.unlock(lockId);
-      //important to remove after unlock() in case it fails
-      removed = locks.remove(hiveLock);
+      boolean removed = locks.remove(hiveLock);
+      Metrics metrics = MetricsFactory.getInstance();
+      if (metrics != null) {
+        try {
+          metrics.decrementCounter(MetricsConstant.METASTORE_HIVE_LOCKS);
+        } catch (Exception e) {
+          LOG.warn("Error Reporting hive client metastore unlock operation to Metrics system", e);
+        }
+      }
       LOG.debug("Removed a lock " + removed);
     } catch (NoSuchLockException e) {
       //if metastore has no record of this lock, it most likely timed out; either way
