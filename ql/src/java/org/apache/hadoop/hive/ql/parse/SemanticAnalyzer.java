@@ -8631,9 +8631,6 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
             // Preserve operator before the GBY - we'll use it to resolve '*'
             Operator<?> gbySource = curr;
 
-            // insert a select operator here used by the ColumnPruner to reduce
-            // the data to shuffle
-            curr = insertSelectAllPlanForGroupBy(curr);
             if (qbp.getAggregationExprsForClause(dest).size() != 0
                 || getGroupByForClause(qbp, dest).size() > 0) {
               // multiple distincts is not supported with skew in data
@@ -8642,6 +8639,9 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
                 throw new SemanticException(ErrorMsg.UNSUPPORTED_MULTIPLE_DISTINCTS.
                     getMsg());
               }
+              // insert a select operator here used by the ColumnPruner to reduce
+              // the data to shuffle
+              curr = insertSelectAllPlanForGroupBy(curr);
               if (conf.getBoolVar(HiveConf.ConfVars.HIVEMAPSIDEAGGREGATE)) {
                 if (!conf.getBoolVar(HiveConf.ConfVars.HIVEGROUPBYSKEW)) {
                   curr = genGroupByPlanMapAggrNoSkew(dest, qb, curr);
