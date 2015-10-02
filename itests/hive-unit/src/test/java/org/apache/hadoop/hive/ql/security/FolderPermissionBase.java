@@ -628,6 +628,13 @@ public abstract class FolderPermissionBase {
 
     assertExistence(partition);
     verifyPermission(partition);    
+
+    // Also test the partition folder if the partition is truncated
+    ret = driver.run("TRUNCATE TABLE " + tableName + " partition(part1='1')");
+    Assert.assertEquals(0, ret.getResponseCode());
+
+    assertExistence(partition);
+    verifyPermission(partition);
   }
   
   private void verifySinglePartition(String tableLoc, int index) throws Exception {
