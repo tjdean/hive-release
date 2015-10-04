@@ -21,6 +21,8 @@ package org.apache.hadoop.hive.ql.lockmgr;
 import java.util.Arrays;
 
 import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.ql.metadata.DummyPartition;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
@@ -184,12 +186,12 @@ public class HiveLockObject {
   }
 
   public HiveLockObject(Table tbl, HiveLockObjectData lockData) {
-    this(new String[] {tbl.getDbName(), tbl.getTableName()}, lockData);
+    this(new String[] {tbl.getDbName(), MetaStoreUtils.encodeTableName(tbl.getTableName())}, lockData);
   }
 
   public HiveLockObject(Partition par, HiveLockObjectData lockData) {
     this(new String[] {par.getTable().getDbName(),
-        par.getTable().getTableName(), par.getName()}, lockData);
+        MetaStoreUtils.encodeTableName(par.getTable().getTableName()), par.getName()}, lockData);
   }
 
   public HiveLockObject(DummyPartition par, HiveLockObjectData lockData) {
