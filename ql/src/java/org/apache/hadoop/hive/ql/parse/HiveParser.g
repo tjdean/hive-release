@@ -349,6 +349,8 @@ package org.apache.hadoop.hive.ql.parse;
 
 import java.util.Collection;
 import java.util.HashMap;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 }
 
 
@@ -591,19 +593,22 @@ import java.util.HashMap;
     return msg;
   }
   
+  public static final Log LOG = LogFactory.getLog("HiveParser");
   public void pushMsg(String msg, RecognizerSharedState state) {
     // ANTLR generated code does not wrap the @init code wit this backtracking check,
     //  even if the matching @after has it. If we have parser rules with that are doing
     // some lookahead with syntactic predicates this can cause the push() and pop() calls
     // to become unbalanced, so make sure both push/pop check the backtracking state.
     if (state.backtracking == 0) {
+      // LOG.debug("Push " + msg);
       msgs.push(msg);
     }
   }
 
   public void popMsg(RecognizerSharedState state) {
     if (state.backtracking == 0) {
-      msgs.pop();
+      Object o = msgs.pop();
+      // LOG.debug("Pop " + o);
     }
   }
 
