@@ -28,3 +28,16 @@ SELECT in_file(str_val, "../../data/files/test2.dat"),
        in_file("304", "../../data/files/test2.dat"),
        in_file(CAST(NULL AS STRING), "../../data/files/test2.dat")
 FROM value_src LIMIT 1;
+
+set hive.fetch.task.conversion=more;
+
+EXPLAIN
+SELECT in_file("303", "${system:hive.root}/data/files/test2.dat"),
+       in_file("304", "${system:hive.root}/data/files/test2.dat"),
+       in_file(CAST(NULL AS STRING), "${system:hive.root}/data/files/test2.dat")
+;
+
+SELECT in_file("303", "${system:hive.root}/data/files/test2.dat"),
+       in_file("304", "${system:hive.root}/data/files/test2.dat"),
+       in_file(CAST(NULL AS STRING), "${system:hive.root}/data/files/test2.dat")
+;
