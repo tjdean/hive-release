@@ -11,7 +11,6 @@ INSERT INTO TABLE skewtable VALUES ("0", "val_0");
 
 DROP TABLE IF EXISTS nonskewtable;
 CREATE TABLE nonskewtable (key STRING, value STRING) STORED AS TEXTFILE;
-INSERT INTO TABLE nonskewtable VALUES ("0", "val_0");
 INSERT INTO TABLE nonskewtable VALUES ("1", "val_1");
 INSERT INTO TABLE nonskewtable VALUES ("2", "val_2");
 
