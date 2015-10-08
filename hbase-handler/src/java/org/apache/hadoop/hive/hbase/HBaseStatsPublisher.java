@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hive.ql.stats.StatsPublisher;
+import org.apache.hadoop.hive.ql.stats.StatsCollectionContext;
 
 /**
  * A class that implements the StatsPublisher interface through HBase.
@@ -150,5 +151,20 @@ public class HBaseStatsPublisher implements StatsPublisher {
     }
 
     return true;
+  }
+
+  @Override
+  public boolean init(StatsCollectionContext context) {
+    return init(context.getHiveConf());
+  }
+
+  @Override
+  public boolean connect(StatsCollectionContext context) {
+    return connect(context.getHiveConf());
+  }
+
+  @Override
+  public boolean closeConnection(StatsCollectionContext context) {
+    return closeConnection();
   }
 }
