@@ -56,6 +56,8 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.ObjectStore;
 import org.apache.hadoop.hive.ql.exec.FunctionRegistry;
+import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hive.jdbc.miniHS2.MiniHS2;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.NucleusContext;
@@ -884,6 +886,63 @@ public class TestJdbcWithMiniHS2 {
       } catch (Exception e) {
         System.out.println(e);
       }
+    }
+    return -1;
+  }
+  
+  /**
+   * Tests that Hadoop's ReflectionUtils.CONSTRUCTOR_CACHE clears cached class objects (& hence
+   * doesn't leak classloaders) on closing any session
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testAddJarConstructorUnCaching() throws Exception {
+    Path jarFilePath = new Path(dataFileDir, "identity_udf.jar");
+    Connection conn = getConnection(miniHS2.getJdbcURL(), "foo", "bar");
+    String tableName = "testAddJar";
+    Statement stmt = conn.createStatement();
+    stmt.execute("SET hive.support.concurrency = false");
+    // Create table
+    stmt.execute("DROP TABLE IF EXISTS " + tableName);
+    stmt.execute("CREATE TABLE " + tableName + " (key INT, value STRING)");
+    // Load data
+    stmt.execute("LOAD DATA LOCAL INPATH '" + kvDataFilePath.toString() + "' INTO TABLE "
+        + tableName);
+    ResultSet res = stmt.executeQuery("SELECT * FROM " + tableName);
+    // Ensure table is populated
+    assertTrue(res.next());
+
+    int cacheBeforeClose;
+    int cacheAfterClose;
+    // Add the jar file
+    stmt.execute("ADD JAR " + jarFilePath.toString());
+    // Create a temporary function using the jar
+    stmt.execute("CREATE TEMPORARY FUNCTION func AS 'IdentityStringUDF'");
+    // Execute the UDF
+    stmt.execute("SELECT func(value) from " + tableName);
+    cacheBeforeClose = getReflectionUtilsCacheSize();
+    System.out.println("Cache before connection close: " + cacheBeforeClose);
+    // Cache size should be > 0 now
+    Assert.assertTrue(cacheBeforeClose > 0);
+    conn.close();
+    cacheAfterClose = getReflectionUtilsCacheSize();
+    System.out.println("Cache after connection close: " + cacheAfterClose);
+    // Cache size should be 0 now
+    Assert.assertTrue("Failed: " + cacheAfterClose, cacheAfterClose == 0);
+  }
+
+  // Call ReflectionUtils#getCacheSize (which is private)
+  private int getReflectionUtilsCacheSize() {
+    Method getCacheSizeMethod;
+    try {
+      getCacheSizeMethod = ReflectionUtils.class.getDeclaredMethod("getCacheSize");
+      if (getCacheSizeMethod != null) {
+        getCacheSizeMethod.setAccessible(true);
+        return (Integer) getCacheSizeMethod.invoke(null);
+      }
+    } catch (Exception e) {
+      System.out.println(e);
     }
     return -1;
   }

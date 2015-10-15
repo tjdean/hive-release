@@ -1266,6 +1266,10 @@ public class SessionState {
 
     dropSessionPaths(conf);
     unCacheDataNucleusClassLoaders();
+    // Hadoop's ReflectionUtils caches constructors for the classes it instantiated.
+    // In UDFs, this can result in classloaders not getting GCed for a temporary function,
+    // resulting in a PermGen leak when used extensively from HiveServer2
+    clearReflectionUtilsCache();
   }
 
   private void unCacheDataNucleusClassLoaders() {
@@ -1276,6 +1280,20 @@ public class SessionState {
         if (conf.getVar(ConfVars.METASTORE_RAW_STORE_IMPL).equals(ObjectStore.class.getName())) {
           ObjectStore.unCacheDataNucleusClassLoaders();
         }
+      }
+    } catch (Exception e) {
+      LOG.info(e);
+    }
+  }
+  
+  private void clearReflectionUtilsCache() {
+    Method clearCacheMethod;
+    try {
+      clearCacheMethod = ReflectionUtils.class.getDeclaredMethod("clearCache");
+      if (clearCacheMethod != null) {
+        clearCacheMethod.setAccessible(true);
+        clearCacheMethod.invoke(null);
+        LOG.debug("Cleared Hadoop ReflectionUtils CONSTRUCTOR_CACHE");
       }
     } catch (Exception e) {
       LOG.info(e);
