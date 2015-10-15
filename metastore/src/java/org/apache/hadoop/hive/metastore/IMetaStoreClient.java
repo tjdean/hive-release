@@ -86,6 +86,13 @@ public interface IMetaStoreClient {
   boolean isCompatibleWith(HiveConf conf);
 
   /**
+   * Returns true if the current client is using an in process metastore (local metastore).
+   *
+   * @return
+   */
+  boolean isLocalMetaStore();
+
+  /**
    *  Tries to reconnect this MetaStoreClient to the MetaStore.
    */
   void reconnect() throws MetaException;
