@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLClassLoader;
@@ -39,7 +40,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,6 +48,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
@@ -298,6 +299,10 @@ public class SessionState {
 
   public void setTmpOutputFile(File f) {
     tmpOutputFile = f;
+  }
+
+  public void deleteTmpOutputFile() {
+    FileUtils.deleteTmpFile(tmpOutputFile);
   }
 
   public boolean getIsSilent() {
@@ -699,9 +704,7 @@ public class SessionState {
     if (localSessionPath != null) {
       FileSystem.getLocal(conf).delete(localSessionPath, true);
     }
-    if (this.getTmpOutputFile().exists()) {
-      this.getTmpOutputFile().delete();
-    }
+    deleteTmpOutputFile();
   }
 
   /**
@@ -802,25 +805,10 @@ public class SessionState {
    * @throws IOException
    */
   private static File createTempFile(HiveConf conf) throws IOException {
-    String lScratchDir =
-        HiveConf.getVar(conf, HiveConf.ConfVars.LOCALSCRATCHDIR);
-
-    File tmpDir = new File(lScratchDir);
+    String lScratchDir = HiveConf.getVar(conf, HiveConf.ConfVars.LOCALSCRATCHDIR);
     String sessionID = conf.getVar(HiveConf.ConfVars.HIVESESSIONID);
-    if (!tmpDir.exists()) {
-      if (!tmpDir.mkdirs()) {
-        //Do another exists to check to handle possible race condition
-        // Another thread might have created the dir, if that is why
-        // mkdirs returned false, that is fine
-        if(!tmpDir.exists()){
-          throw new RuntimeException("Unable to create log directory "
-              + lScratchDir);
-        }
-      }
-    }
-    File tmpFile = File.createTempFile(sessionID, ".pipeout", tmpDir);
-    tmpFile.deleteOnExit();
-    return tmpFile;
+
+    return FileUtils.createTempFile(lScratchDir, sessionID, ".pipeout");
   }
 
   /**
