@@ -221,6 +221,7 @@ import org.apache.hadoop.hive.shims.HadoopShims;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.hive.shims.Utils;
 import org.apache.hadoop.io.IOUtils;
+import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.OutputFormat;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -801,6 +802,15 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
   }
 
   /**
+   * Convert a string to Text format and write its bytes in the same way TextOutputFormat would do.
+   * This is needed to properly encode non-ascii characters.
+   */
+  private static void writeAsText(String text, FSDataOutputStream out) throws IOException {
+    Text to = new Text(text);
+    out.write(to.getBytes(), 0, to.getLength());
+  }
+
+  /**
    * Generate a temp table out of a values clause
    * See also {@link #preProcessForInsert(ASTNode, QB)}
    */
@@ -879,10 +889,10 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
             fields.add(new FieldSchema("tmp_values_col" + nextColNum++, "string", ""));
           }
           if (isFirst) isFirst = false;
-          else out.writeBytes("\u0001");
-          out.writeBytes(unparseExprForValuesClause(value));
+          else writeAsText("\u0001", out);
+          writeAsText(unparseExprForValuesClause(value), out);
         }
-        out.writeBytes("\n");
+        writeAsText("\n", out);
         firstRow = false;
       }
 
