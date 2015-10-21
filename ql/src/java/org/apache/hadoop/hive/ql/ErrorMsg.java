@@ -192,8 +192,6 @@ public enum ErrorMsg {
   UNARCHIVE_ON_MULI_PARTS(10109, "ARCHIVE can only be run on a single partition"),
   ARCHIVE_ON_TABLE(10110, "ARCHIVE can only be run on partitions"),
   RESERVED_PART_VAL(10111, "Partition value contains a reserved substring"),
-  HOLD_DDLTIME_ON_NONEXIST_PARTITIONS(10112, "HOLD_DDLTIME hint cannot be applied to dynamic " +
-                                      "partitions or non-existent partitions"),
   OFFLINE_TABLE_OR_PARTITION(10113, "Query against an offline table or partition"),
   OUTERJOIN_USES_FILTERS(10114, "The query results could be wrong. " +
                          "Turn on hive.outerjoin.supports.filters"),
