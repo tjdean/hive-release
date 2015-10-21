@@ -123,6 +123,22 @@ import org.apache.hadoop.util.StringUtils;
 import org.apache.thrift.TException;
 
 import com.google.common.collect.Sets;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -1321,11 +1337,11 @@ public class Hive {
   }
 
   public void loadPartition(Path loadPath, String tableName,
-      Map<String, String> partSpec, boolean replace, boolean holdDDLTime,
+      Map<String, String> partSpec, boolean replace,
       boolean inheritTableSpecs, boolean isSkewedStoreAsSubdir,
       boolean isSrcLocal, boolean isAcid) throws HiveException {
     Table tbl = getTable(tableName);
-    loadPartition(loadPath, tbl, partSpec, replace, holdDDLTime, inheritTableSpecs,
+    loadPartition(loadPath, tbl, partSpec, replace, inheritTableSpecs,
         isSkewedStoreAsSubdir, isSrcLocal, isAcid);
   }
 
@@ -1344,7 +1360,6 @@ public class Hive {
    * @param replace
    *          if true - replace files in the partition, otherwise add files to
    *          the partition
-   * @param holdDDLTime if true, force [re]create the partition
    * @param inheritTableSpecs if true, on [re]creating the partition, take the
    *          location/inputformat/outputformat/serde details from table spec
    * @param isSrcLocal
@@ -1352,7 +1367,7 @@ public class Hive {
    * @param isAcid true if this is an ACID operation
    */
   public Partition loadPartition(Path loadPath, Table tbl,
-      Map<String, String> partSpec, boolean replace, boolean holdDDLTime,
+      Map<String, String> partSpec, boolean replace,
       boolean inheritTableSpecs, boolean isSkewedStoreAsSubdir,
       boolean isSrcLocal, boolean isAcid) throws HiveException {
     Path tblDataLocationPath =  tbl.getDataLocation();
@@ -1407,12 +1422,10 @@ public class Hive {
         Hive.copyFiles(conf, loadPath, newPartPath, fs, isSrcLocal, isAcid, newFiles);
       }
 
-      boolean forceCreate = (!holdDDLTime) ? true : false;
-      newTPart = getPartition(tbl, partSpec, forceCreate, newPartPath.toString(),
+      newTPart = getPartition(tbl, partSpec, true, newPartPath.toString(),
           inheritTableSpecs, newFiles);
 
       // recreate the partition if it existed before
-      if (!holdDDLTime) {
         if (isSkewedStoreAsSubdir) {
           org.apache.hadoop.hive.metastore.api.Partition newCreatedTpart = newTPart.getTPartition();
           SkewedInfo skewedInfo = newCreatedTpart.getSd().getSkewedInfo();
@@ -1430,7 +1443,6 @@ public class Hive {
               newFiles);
           return new Partition(tbl, newCreatedTpart);
         }
-      }
       if(!this.getConf().getBoolVar(HiveConf.ConfVars.HIVESTATSAUTOGATHER)) {
         newTPart.getParameters().put(StatsSetupConst.COLUMN_STATS_ACCURATE, "false");
         alterPartition(tbl.getDbName(), tbl.getTableName(), new Partition(tbl, newTPart.getTPartition()));
@@ -1540,7 +1552,6 @@ private void constructOneLBLocationMap(FileStatus fSta,
    * @param partSpec
    * @param replace
    * @param numDP number of dynamic partitions
-   * @param holdDDLTime
    * @param listBucketingEnabled
    * @param isAcid true if this is an ACID operation
    * @param txnId txnId, can be 0 unless isAcid == true
@@ -1549,7 +1560,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
    */
   public Map<Map<String, String>, Partition> loadDynamicPartitions(Path loadPath,
       String tableName, Map<String, String> partSpec, boolean replace,
-      int numDP, boolean holdDDLTime, boolean listBucketingEnabled, boolean isAcid, long txnId)
+      int numDP, boolean listBucketingEnabled, boolean isAcid, long txnId)
       throws HiveException {
 
     Set<Path> validPartitions = new HashSet<Path>();
@@ -1603,7 +1614,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
         LinkedHashMap<String, String> fullPartSpec = new LinkedHashMap<String, String>(partSpec);
         Warehouse.makeSpecFromName(fullPartSpec, partPath);
         Partition newPartition = loadPartition(partPath, tbl, fullPartSpec, replace,
-            holdDDLTime, true, listBucketingEnabled, false, isAcid);
+            true, listBucketingEnabled, false, isAcid);
         partitionsMap.put(fullPartSpec, newPartition);
         LOG.info("New loading path = " + partPath + " with partSpec " + fullPartSpec);
       }
@@ -1634,7 +1645,6 @@ private void constructOneLBLocationMap(FileStatus fSta,
    *          name of table to be loaded.
    * @param replace
    *          if true - replace files in the table, otherwise add files to table
-   * @param holdDDLTime
    * @param isSrcLocal
    *          If the source directory is LOCAL
    * @param isSkewedStoreAsSubdir
@@ -1642,7 +1652,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
    * @param isAcid true if this is an ACID based write
    */
   public void loadTable(Path loadPath, String tableName, boolean replace,
-      boolean holdDDLTime, boolean isSrcLocal, boolean isSkewedStoreAsSubdir,
+      boolean isSrcLocal, boolean isSkewedStoreAsSubdir,
       boolean isAcid, boolean isInImportScope)
       throws HiveException {
     List<Path> newFiles = new ArrayList<Path>();
@@ -1687,13 +1697,14 @@ private void constructOneLBLocationMap(FileStatus fSta,
       throw new HiveException(e);
     }
 
-    if (!holdDDLTime && !isInImportScope) {
+    if (!isInImportScope) {
       try {
         alterTable(tableName, tbl);
       } catch (InvalidOperationException e) {
         throw new HiveException(e);
       }
     }
+
     fireInsertEvent(tbl, null, newFiles);
   }
 
@@ -2887,8 +2898,6 @@ private void constructOneLBLocationMap(FileStatus fSta,
     try {
 
       FileSystem destFs = destf.getFileSystem(conf);
-      boolean inheritPerms = HiveConf.getBoolVar(conf,
-          HiveConf.ConfVars.HIVE_WAREHOUSE_SUBDIR_INHERIT_PERMS);
 
       // check if srcf contains nested sub-directories
       FileStatus[] srcs;
