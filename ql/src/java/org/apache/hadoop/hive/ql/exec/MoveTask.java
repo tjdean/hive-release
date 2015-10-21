@@ -296,7 +296,7 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
         if (tbd.getPartitionSpec().size() == 0) {
           dc = new DataContainer(table.getTTable());
           db.loadTable(tbd.getSourcePath(), tbd.getTable()
-              .getTableName(), tbd.getReplace(), tbd.getHoldDDLTime(), work.isSrcLocal(),
+              .getTableName(), tbd.getReplace(), work.isSrcLocal(),
               isSkewedStoredAsDirs(tbd),
               work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID,
               work.isInImportScope());
@@ -379,7 +379,6 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
                 tbd.getPartitionSpec(),
                 tbd.getReplace(),
                 dpCtx.getNumDPCols(),
-                tbd.getHoldDDLTime(),
                 isSkewedStoredAsDirs(tbd),
                 work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID,
                 SessionState.get().getTxnMgr().getCurrentTxnId(),
@@ -439,11 +438,10 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
                 tbd.getPartitionSpec());
             db.validatePartitionNameCharacters(partVals);
             db.loadPartition(tbd.getSourcePath(), tbd.getTable().getTableName(),
-                tbd.getPartitionSpec(), tbd.getReplace(), tbd.getHoldDDLTime(),
+                tbd.getPartitionSpec(), tbd.getReplace(),
                 tbd.getInheritTableSpecs(), isSkewedStoredAsDirs(tbd), work.isSrcLocal(),
                 work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID);
-            Partition partn = db.getPartition(table, tbd.getPartitionSpec(),
-                false);
+            Partition partn = db.getPartition(table, tbd.getPartitionSpec(), false);
 
             if (bucketCols != null || sortCols != null) {
               updatePartitionBucketSortColumns(table, partn, bucketCols,
