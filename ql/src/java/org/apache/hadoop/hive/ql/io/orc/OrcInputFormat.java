@@ -300,9 +300,17 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
   }
 
   static void setSearchArgument(Reader.Options options,
+                                  List<OrcProto.Type> types,
+                                  Configuration conf,
+                                  boolean isOriginal) {
+    setSearchArgument(options, types, conf, isOriginal, true);
+  }
+
+  static void setSearchArgument(Reader.Options options,
                                 List<OrcProto.Type> types,
                                 Configuration conf,
-                                boolean isOriginal) {
+                                boolean isOriginal,
+                                boolean doLogSarg) {
     String columnNamesString = conf.get(ColumnProjectionUtils.READ_COLUMN_NAMES_CONF_STR);
     if (columnNamesString == null) {
       LOG.debug("No ORC pushdown predicate - no column names");
@@ -316,7 +324,9 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
       return;
     }
 
-    LOG.info("ORC pushdown predicate: " + sarg);
+    if (doLogSarg && LOG.isInfoEnabled()) {
+      LOG.info("ORC pushdown predicate: " + sarg);
+    }
     options.searchArgument(sarg, getSargColumnNames(
         columnNamesString.split(","), types, options.getInclude(), isOriginal));
   }
@@ -847,7 +857,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
       if (deltas.isEmpty()) {
         Reader.Options options = new Reader.Options();
         options.include(genIncludedColumns(types, context.conf, isOriginal));
-        setSearchArgument(options, types, context.conf, isOriginal);
+        setSearchArgument(options, types, context.conf, isOriginal, false);
         // only do split pruning if HIVE-8732 has been fixed in the writer
         if (options.getSearchArgument() != null &&
             writerVersion != OrcFile.WriterVersion.ORIGINAL) {
@@ -985,6 +995,9 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
       throws IOException {
     // use threads to resolve directories into splits
     Context context = new Context(conf);
+    if (LOG.isInfoEnabled()) {
+      LOG.info("ORC pushdown predicate: " + SearchArgumentFactory.createFromConf(conf));
+    }
     List<OrcSplit> splits = Lists.newArrayList();
     List<Future<?>> pathFutures = Lists.newArrayList();
     List<Future<?>> splitFutures = Lists.newArrayList();
