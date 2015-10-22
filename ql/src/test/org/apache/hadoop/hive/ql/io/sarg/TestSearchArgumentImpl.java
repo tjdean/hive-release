@@ -2826,9 +2826,9 @@ public class TestSearchArgumentImpl {
               .equals("z", 1.0)
             .end()
             .build();
-    assertEquals("leaf-0 = (LESS_THAN x 10)\n" +
-        "leaf-1 = (LESS_THAN_EQUALS y hi)\n" +
-        "leaf-2 = (EQUALS z 1.0)\n" +
+    assertEquals("leaf-0 = (LESS_THAN x 10), " +
+        "leaf-1 = (LESS_THAN_EQUALS y hi), " +
+        "leaf-2 = (EQUALS z 1.0), " +
         "expr = (and leaf-0 leaf-1 leaf-2)", sarg.toString());
     sarg = SearchArgumentFactory.newBuilder()
         .startNot()
@@ -2840,10 +2840,10 @@ public class TestSearchArgumentImpl {
            .end()
         .end()
         .build();
-    assertEquals("leaf-0 = (IS_NULL x)\n" +
-        "leaf-1 = (BETWEEN y 10 20)\n" +
-        "leaf-2 = (IN z 1 2 3)\n" +
-        "leaf-3 = (NULL_SAFE_EQUALS a stinger)\n" +
+    assertEquals("leaf-0 = (IS_NULL x), " +
+        "leaf-1 = (BETWEEN y 10 20), " +
+        "leaf-2 = (IN z 1 2 3), " +
+        "leaf-3 = (NULL_SAFE_EQUALS a stinger), " +
         "expr = (and (not leaf-0) (not leaf-1) (not leaf-2) (not leaf-3))", sarg.toString());
   }
 
@@ -2857,9 +2857,9 @@ public class TestSearchArgumentImpl {
               .equals("z", HiveDecimal.create("1.0"))
             .end()
             .build();
-    assertEquals("leaf-0 = (LESS_THAN x 1970-01-11)\n" +
-        "leaf-1 = (LESS_THAN_EQUALS y hi)\n" +
-        "leaf-2 = (EQUALS z 1)\n" +
+    assertEquals("leaf-0 = (LESS_THAN x 1970-01-11), " +
+        "leaf-1 = (LESS_THAN_EQUALS y hi), " +
+        "leaf-2 = (EQUALS z 1), " +
         "expr = (and leaf-0 leaf-1 leaf-2)", sarg.toString());
 
     sarg = SearchArgumentFactory.newBuilder()
@@ -2872,10 +2872,10 @@ public class TestSearchArgumentImpl {
            .end()
         .end()
         .build();
-    assertEquals("leaf-0 = (IS_NULL x)\n" +
-        "leaf-1 = (BETWEEN y 10 20.0)\n" +
-        "leaf-2 = (IN z 1 2 3)\n" +
-        "leaf-3 = (NULL_SAFE_EQUALS a stinger)\n" +
+    assertEquals("leaf-0 = (IS_NULL x), " +
+        "leaf-1 = (BETWEEN y 10 20.0), " +
+        "leaf-2 = (IN z 1 2 3), " +
+        "leaf-3 = (NULL_SAFE_EQUALS a stinger), " +
         "expr = (and (not leaf-0) (not leaf-1) (not leaf-2) (not leaf-3))", sarg.toString());
   }
 
@@ -2889,9 +2889,9 @@ public class TestSearchArgumentImpl {
             .equals("z", new BigDecimal("1.0"))
             .end()
             .build();
-    assertEquals("leaf-0 = (LESS_THAN x 1970-01-11)\n" +
-        "leaf-1 = (LESS_THAN_EQUALS y hi)\n" +
-        "leaf-2 = (EQUALS z 1.0)\n" +
+    assertEquals("leaf-0 = (LESS_THAN x 1970-01-11), " +
+        "leaf-1 = (LESS_THAN_EQUALS y hi), " +
+        "leaf-2 = (EQUALS z 1.0), " +
         "expr = (and leaf-0 leaf-1 leaf-2)", sarg.toString());
 
     sarg = SearchArgumentFactory.newBuilder()
@@ -2904,10 +2904,10 @@ public class TestSearchArgumentImpl {
         .end()
         .end()
         .build();
-    assertEquals("leaf-0 = (IS_NULL x)\n" +
-        "leaf-1 = (BETWEEN y 10 20.0)\n" +
-        "leaf-2 = (IN z 1 2 3)\n" +
-        "leaf-3 = (NULL_SAFE_EQUALS a stinger)\n" +
+    assertEquals("leaf-0 = (IS_NULL x), " +
+        "leaf-1 = (BETWEEN y 10 20.0), " +
+        "leaf-2 = (IN z 1 2 3), " +
+        "leaf-3 = (NULL_SAFE_EQUALS a stinger), " +
         "expr = (and (not leaf-0) (not leaf-1) (not leaf-2) (not leaf-3))", sarg.toString());
   }
 
@@ -2923,11 +2923,11 @@ public class TestSearchArgumentImpl {
             .equals("z1", new Double(0.22))
             .end()
             .build();
-    assertEquals("leaf-0 = (LESS_THAN x 22)\n" +
-        "leaf-1 = (LESS_THAN x1 22)\n" +
-        "leaf-2 = (LESS_THAN_EQUALS y hi)\n" +
-        "leaf-3 = (EQUALS z 0.22)\n" +
-        "leaf-4 = (EQUALS z1 0.22)\n" +
+    assertEquals("leaf-0 = (LESS_THAN x 22), " +
+        "leaf-1 = (LESS_THAN x1 22), " +
+        "leaf-2 = (LESS_THAN_EQUALS y hi), " +
+        "leaf-3 = (EQUALS z 0.22), " +
+        "leaf-4 = (EQUALS z1 0.22), " +
         "expr = (and leaf-0 leaf-1 leaf-2 leaf-3 leaf-4)", sarg.toString());
   }
 }

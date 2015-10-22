@@ -275,9 +275,37 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
   }
 
   static void setSearchArgument(Reader.Options options,
+                                  List<OrcProto.Type> types,
+                                  Configuration conf,
+                                  boolean isOriginal) {
+    setSearchArgument(options, types, conf, isOriginal, true);
+  }
+
+  static SearchArgument createFromConf(Configuration conf) {
+    String serializedPushdown = conf.get(TableScanDesc.FILTER_EXPR_CONF_STR);
+    String sargPushdown = conf.get(SARG_PUSHDOWN);
+    String columnNamesString =
+        conf.get(ColumnProjectionUtils.READ_COLUMN_NAMES_CONF_STR);
+    if ((sargPushdown == null && serializedPushdown == null)
+        || columnNamesString == null) {
+      return null;
+    } else {
+      SearchArgument sarg;
+      if (serializedPushdown != null) {
+        sarg = SearchArgumentFactory.create
+            (Utilities.deserializeExpression(serializedPushdown));
+      } else {
+        sarg = SearchArgumentFactory.create(sargPushdown);
+      }
+      return sarg;
+    }
+  }
+
+  static void setSearchArgument(Reader.Options options,
                                 List<OrcProto.Type> types,
                                 Configuration conf,
-                                boolean isOriginal) {
+                                boolean isOriginal,
+                                boolean doLogSarg) {
     int rootColumn = getRootColumn(isOriginal);
     String serializedPushdown = conf.get(TableScanDesc.FILTER_EXPR_CONF_STR);
     String sargPushdown = conf.get(SARG_PUSHDOWN);
@@ -295,7 +323,9 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
       } else {
         sarg = SearchArgumentFactory.create(sargPushdown);
       }
-      LOG.info("ORC pushdown predicate: " + sarg);
+      if (doLogSarg && LOG.isInfoEnabled()) {
+        LOG.info("ORC pushdown predicate: " + sarg);
+      }
       String[] neededColumnNames = columnNamesString.split(",");
       String[] columnNames = new String[types.size() - rootColumn];
       boolean[] includedColumns = options.getInclude();
@@ -781,7 +811,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
         if (deltas.isEmpty()) {
           Reader.Options options = new Reader.Options();
           setIncludedColumns(options, types, context.conf, isOriginal);
-          setSearchArgument(options, types, context.conf, isOriginal);
+          setSearchArgument(options, types, context.conf, isOriginal, false);
           // only do split pruning if HIVE-8732 has been fixed in the writer
           if (options.getSearchArgument() != null &&
               writerVersion != OrcFile.WriterVersion.ORIGINAL) {
@@ -946,6 +976,9 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
       throws IOException {
     // use threads to resolve directories into splits
     Context context = new Context(conf);
+    if (LOG.isInfoEnabled()) {
+      LOG.info("ORC pushdown predicate: " + createFromConf(conf));
+    }
     for(Path dir: getInputPaths(conf)) {
       FileSystem fs = dir.getFileSystem(conf);
       context.schedule(new FileGenerator(context, fs, dir));

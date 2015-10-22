@@ -901,7 +901,7 @@ final class SearchArgumentImpl implements SearchArgument {
       buffer.append(i);
       buffer.append(" = ");
       buffer.append(leaves.get(i).toString());
-      buffer.append('\n');
+      buffer.append(", ");
     }
     buffer.append("expr = ");
     buffer.append(expression);
