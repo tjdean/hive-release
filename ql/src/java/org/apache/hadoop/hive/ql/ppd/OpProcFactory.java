@@ -949,7 +949,7 @@ public final class OpProcFactory {
         .getChildOperators();
     op.setChildOperators(null);
     Operator<FilterDesc> output = OperatorFactory.getAndMakeChild(
-        new FilterDesc(condn, false), new RowSchema(inputRR.getColumnInfos()),
+        new FilterDesc(condn, false), new RowSchema(op.getSchema()),
         op);
     output.setChildOperators(originalChilren);
     for (Operator<? extends OperatorDesc> ch : originalChilren) {
