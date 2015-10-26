@@ -26,11 +26,13 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -76,6 +78,7 @@ public class HiveConf extends Configuration {
   private static final Map<String, ConfVars> vars = new HashMap<String, ConfVars>();
   private static final Map<String, ConfVars> metaConfs = new HashMap<String, ConfVars>();
   private final List<String> restrictList = new ArrayList<String>();
+  private final Set<String> hiddenSet = new HashSet<String>();
 
   private Pattern modWhiteListPattern = null;
 
@@ -1767,6 +1770,9 @@ public class HiveConf extends Configuration {
     HIVE_CONF_RESTRICTED_LIST("hive.conf.restricted.list",
         "hive.security.authenticator.manager,hive.security.authorization.manager,hive.users.in.admin.role",
         "Comma separated list of configuration options which are immutable at runtime"),
+    HIVE_CONF_HIDDEN_LIST("hive.conf.hidden.list",
+        METASTOREPWD.varname + "," + HIVE_SERVER2_SSL_KEYSTORE_PASSWORD.varname,
+        "Comma separated list of configuration options which should not be read by normal user like passwords"),
 
     // If this is set all move tasks at the end of a multi-insert query will only begin once all
     // outputs are ready
@@ -2184,6 +2190,10 @@ public class HiveConf extends Configuration {
     set(name, value);
   }
 
+  public boolean isHiddenConfig(String name) {
+    return hiddenSet.contains(name);
+  }
+
   public static int getIntVar(Configuration conf, ConfVars var) {
     assert (var.valClass == Integer.class) : var.varname;
     return conf.getInt(var.varname, var.defaultIntVal);
@@ -2515,6 +2525,7 @@ public class HiveConf extends Configuration {
 
     // setup list of conf vars that are not allowed to change runtime
     setupRestrictList();
+    setupHiddenSet();
 
   }
 
@@ -2826,6 +2837,28 @@ public class HiveConf extends Configuration {
     }
     restrictList.add(ConfVars.HIVE_IN_TEST.varname);
     restrictList.add(ConfVars.HIVE_CONF_RESTRICTED_LIST.varname);
+    restrictList.add(ConfVars.HIVE_CONF_HIDDEN_LIST.varname);
+  }
+
+  private void setupHiddenSet() {
+    String hiddenListStr = this.getVar(ConfVars.HIVE_CONF_HIDDEN_LIST);
+    hiddenSet.clear();
+    if (hiddenListStr != null) {
+      for (String entry : hiddenListStr.split(",")) {
+        hiddenSet.add(entry.trim());
+      }
+    }
+  }
+
+  /**
+   * Strips hidden config entries from configuration
+   */
+  public void stripHiddenConfigurations(Configuration conf) {
+    for (String name : hiddenSet) {
+      if (conf.get(name) != null) {
+        conf.set(name, "");
+      }
+    }
   }
 
   public static boolean isLoadMetastoreConfig() {
