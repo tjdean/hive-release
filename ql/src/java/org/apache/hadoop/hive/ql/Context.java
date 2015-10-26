@@ -95,7 +95,7 @@ public class Context {
   protected int tryCount = 0;
   private TokenRewriteStream tokenRewriteStream;
 
-  private String executionId;
+  private final String executionId;
 
   // List of Locks for this query
   protected List<HiveLock> hiveLocks;
@@ -115,7 +115,7 @@ public class Context {
   private final String stagingDir;
 
   private Heartbeater heartbeater;
-  
+
   private boolean skipTableMasking;
   /**
    * This determines the prefix of the
@@ -397,7 +397,10 @@ public class Context {
     for (Map.Entry<String, Path> entry : fsScratchDirs.entrySet()) {
       try {
         Path p = entry.getValue();
-        p.getFileSystem(conf).delete(p, true);
+        FileSystem fs = p.getFileSystem(conf);
+        LOG.debug("Deleting scratch dir: " + p);
+        fs.delete(p, true);
+        fs.cancelDeleteOnExit(p);
       } catch (Exception e) {
         LOG.warn("Error Removing Scratch: "
             + StringUtils.stringifyException(e));
@@ -516,6 +519,7 @@ public class Context {
     if (resDir != null) {
       try {
         FileSystem fs = resDir.getFileSystem(conf);
+        LOG.debug("Deleting result dir: " + resDir);
         fs.delete(resDir, true);
       } catch (IOException e) {
         LOG.info("Context clear error: " + StringUtils.stringifyException(e));
@@ -525,6 +529,7 @@ public class Context {
     if (resFile != null) {
       try {
         FileSystem fs = resFile.getFileSystem(conf);
+        LOG.debug("Deleting result file: " + resFile);
         fs.delete(resFile, false);
       } catch (IOException e) {
         LOG.info("Context clear error: " + StringUtils.stringifyException(e));

@@ -440,8 +440,10 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
                   work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID,
                   SessionState.get().getTxnMgr().getCurrentTxnId(), hasFollowingStatsTask(),
                   work.getLoadTableWork().getWriteType());
-            console.printInfo("\t Time taken for load dynamic partitions : "  +
-                (System.currentTimeMillis() - startTime));
+            String loadTime = "\t Time taken to load dynamic partitions: "  +
+                    (System.currentTimeMillis() - startTime)/1000.0 + " seconds";
+            console.printInfo(loadTime);
+            LOG.info(loadTime);
 
             if (dp.size() == 0 && conf.getBoolVar(HiveConf.ConfVars.HIVE_ERROR_ON_EMPTY_PARTITION)) {
               throw new HiveException("This query creates no partitions." +

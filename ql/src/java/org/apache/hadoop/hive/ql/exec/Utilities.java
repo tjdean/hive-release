@@ -2007,17 +2007,24 @@ public final class Utilities {
     Path taskTmpPath = Utilities.toTaskTempPath(specPath);
     if (success) {
       if (fs.exists(tmpPath)) {
+        PerfLogger perfLogger = SessionState.getPerfLogger();
+        perfLogger.PerfLogBegin("FileSinkOperator", "RemoveTempOrDuplicateFiles");
         // remove any tmp file or double-committed output files
         List<Path> emptyBuckets =
             Utilities.removeTempOrDuplicateFiles(fs, tmpPath, dpCtx, conf, hconf);
+        perfLogger.PerfLogEnd("FileSinkOperator", "RemoveTempOrDuplicateFiles");
         // create empty buckets if necessary
         if (emptyBuckets.size() > 0) {
+          perfLogger.PerfLogBegin("FileSinkOperator", "CreateEmptyBuckets");
           createEmptyBuckets(hconf, emptyBuckets, conf, reporter);
+          perfLogger.PerfLogEnd("FileSinkOperator", "CreateEmptyBuckets");
         }
 
         // move to the file destination
+        perfLogger.PerfLogBegin("FileSinkOperator", "RenameOrMoveFiles");
         log.info("Moving tmp dir: " + tmpPath + " to: " + specPath);
         Utilities.renameOrMoveFiles(fs, tmpPath, specPath);
+        perfLogger.PerfLogEnd("FileSinkOperator", "RenameOrMoveFiles");
       }
     } else {
       fs.delete(tmpPath, true);
