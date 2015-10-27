@@ -22,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.*;
+import org.apache.hadoop.hive.ql.io.AcidUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,6 +30,7 @@ import org.junit.Test;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -499,7 +501,108 @@ public class TestWorker extends CompactorTest {
     }
     Assert.assertTrue(sawNewBase);
   }
+  @Test
+  public void minorNoBaseLotsOfDeltas() throws Exception {
+    compactNoBaseLotsOfDeltas(CompactionType.MINOR);
+  }
+  @Test
+  public void majorNoBaseLotsOfDeltas() throws Exception {
+    compactNoBaseLotsOfDeltas(CompactionType.MAJOR);
+  }
+  private void compactNoBaseLotsOfDeltas(CompactionType type) throws Exception {
+    conf.setIntVar(HiveConf.ConfVars.COMPACTOR_MAX_NUM_DELTA, 2);
+    Table t = newTable("default", "mapwb", true);
+    Partition p = newPartition(t, "today");
 
+//    addBaseFile(t, p, 20L, 20);
+    addDeltaFile(t, p, 21L, 21L, 2);
+    addDeltaFile(t, p, 23L, 23L, 2);
+    //make it look like streaming API use case
+    addDeltaFile(t, p, 25L, 29L, 2);
+    addDeltaFile(t, p, 31L, 32L, 3);
+    //make it looks like 31-32 has been compacted, but not cleaned
+    addDeltaFile(t, p, 31L, 33L, 5);
+    addDeltaFile(t, p, 35L, 35L, 1);
+
+    /*since COMPACTOR_MAX_NUM_DELTA=2,
+    we expect files 1,2 to be minor compacted by 1 job to produce delta_21_23
+    * 3,5 to be minor compacted by 2nd job (file 4 is obsolete) to make delta_25_33 (4th is skipped)
+    *
+    * and then the 'requested'
+    * minor compaction to combine delta_21_23, delta_25_33 and delta_35_35 to make delta_21_35
+    * or major compaction to create base_35*/
+    burnThroughTransactions(35);
+    CompactionRequest rqst = new CompactionRequest("default", "mapwb", type);
+    rqst.setPartitionname("ds=today");
+    txnHandler.compact(rqst);
+
+    startWorker();
+
+    ShowCompactResponse rsp = txnHandler.showCompact(new ShowCompactRequest());
+    List<ShowCompactResponseElement> compacts = rsp.getCompacts();
+    Assert.assertEquals(1, compacts.size());
+    Assert.assertEquals("ready for cleaning", compacts.get(0).getState());
+
+    FileSystem fs = FileSystem.get(conf);
+    FileStatus[] stat = fs.listStatus(new Path(p.getSd().getLocation()));
+    Assert.assertEquals(9, stat.length);
+
+    // Find the new delta file and make sure it has the right contents
+    BitSet matchesFound = new BitSet(9);
+    for (int i = 0; i < stat.length; i++) {
+      if(stat[i].getPath().getName().equals("delta_21_21")) {
+        matchesFound.set(0);
+      }
+      else if(stat[i].getPath().getName().equals("delta_23_23")) {
+        matchesFound.set(1);
+      }
+      else if(stat[i].getPath().getName().equals("delta_25_29")) {
+        matchesFound.set(2);
+      }
+      else if(stat[i].getPath().getName().equals("delta_31_32")) {
+        matchesFound.set(3);
+      }
+      else if(stat[i].getPath().getName().equals("delta_31_33")) {
+        matchesFound.set(4);
+      }
+      else if(stat[i].getPath().getName().equals("delta_35_35")) {
+        matchesFound.set(5);
+      }
+      else if(stat[i].getPath().getName().equals(makeDeltaDirName(21, 23))) {
+        matchesFound.set(6);
+      }
+      else if(stat[i].getPath().getName().equals(makeDeltaDirName(25, 33))) {
+        matchesFound.set(7);
+      }
+      switch (type) {
+        //yes, both do set(8)
+        case MINOR:
+          if(stat[i].getPath().getName().equals(makeDeltaDirName(21,35))) {
+            matchesFound.set(8);
+          }
+          break;
+        case MAJOR:
+          if(stat[i].getPath().getName().equals(AcidUtils.baseDir(35))) {
+            matchesFound.set(8);
+          }
+          break;
+        default:
+          throw new IllegalStateException();
+      }
+    }
+    StringBuilder sb = null;
+    for(int i = 0; i < stat.length; i++) {
+      if(!matchesFound.get(i)) {
+        if(sb == null) {
+          sb = new StringBuilder("Some files are missing at index: ");
+        }
+        sb.append(i).append(",");
+      }
+    }
+    if (sb != null) {
+      Assert.assertTrue(sb.toString(), false);
+    }
+  }
   @Test
   public void majorPartitionWithBase() throws Exception {
     LOG.debug("Starting majorPartitionWithBase");

@@ -507,6 +507,7 @@ public abstract class CompactorTest {
       os.close();
     }
   }
-
-
+  String makeDeltaDirName(long minTxnId, long maxTxnId) {
+    return AcidUtils.deltaSubdir(minTxnId, maxTxnId);
+  }
 }

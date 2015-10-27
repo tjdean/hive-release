@@ -104,11 +104,14 @@ public class AcidUtils {
         BUCKET_PREFIX + String.format(BUCKET_DIGITS, bucket));
   }
 
-  private static String deltaSubdir(long min, long max) {
+  public static String deltaSubdir(long min, long max) {
     return DELTA_PREFIX + String.format(DELTA_DIGITS, min) + "_" +
         String.format(DELTA_DIGITS, max);
   }
 
+  public static String baseDir(long txnId) {
+    return BASE_PREFIX + String.format(DELTA_DIGITS, txnId);
+  }
   /**
    * Create a filename for a bucket file.
    * @param directory the partition directory
@@ -192,14 +195,16 @@ public class AcidUtils {
     Path getBaseDirectory();
 
     /**
-     * Get the list of original files.
+     * Get the list of original files.  Not {@code null}.
      * @return the list of original files (eg. 000000_0)
      */
     List<FileStatus> getOriginalFiles();
 
     /**
      * Get the list of base and delta directories that are valid and not
-     * obsolete.
+     * obsolete.  Not {@code null}.  List must be sorted in a specific way.
+     * See {@link org.apache.hadoop.hive.ql.io.AcidUtils.ParsedDelta#compareTo(org.apache.hadoop.hive.ql.io.AcidUtils.ParsedDelta)}
+     * for details.
      * @return the minimal list of current directories
      */
     List<ParsedDelta> getCurrentDirectories();
@@ -208,7 +213,7 @@ public class AcidUtils {
      * Get the list of obsolete directories. After filtering out bases and
      * deltas that are not selected by the valid transaction list, return the
      * list of original files, bases, and deltas that have been replaced by
-     * more up to date ones.
+     * more up to date ones.  Not {@code null}.
      */
     List<FileStatus> getObsolete();
   }
@@ -406,6 +411,9 @@ public class AcidUtils {
     }
 
     Collections.sort(working);
+    //so now, 'working' should be sorted like delta_5_20 delta_5_10 delta_11_20 delta_51_60 for example
+    //and we want to end up with the best set containing all relevant data: delta_5_20 delta_51_60,
+    //subject to list of 'exceptions' in 'txnList' (not show in above example).
     long current = bestBaseTxn;
     for(ParsedDelta next: working) {
       if (next.maxTransaction > current) {
