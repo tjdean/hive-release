@@ -291,13 +291,12 @@ public class HiveEndPoint {
           }
         }
         LOG.error("'transactional' property is not set on Table " + endPoint);
-        throw new InvalidTable(endPoint.database, endPoint.table);
+        throw new InvalidTable(endPoint.database, endPoint.table, "\'transactional\' property is not set on Table");
       } catch (Exception e) {
         LOG.warn("Unable to check if Table is transactional. " + endPoint, e);
-        throw new InvalidTable(endPoint.database, endPoint.table);
+        throw new InvalidTable(endPoint.database, endPoint.table, e);
       }
     }
-
     /**
      * Close connection
      */
