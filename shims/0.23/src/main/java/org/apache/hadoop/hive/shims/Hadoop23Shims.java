@@ -67,6 +67,7 @@ import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.hdfs.client.HdfsAdmin;
 import org.apache.hadoop.hdfs.protocol.EncryptionZone;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.ipc.CallerContext;
 import org.apache.hadoop.mapred.ClusterStatus;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
@@ -1119,7 +1120,6 @@ public class Hadoop23Shims extends HadoopShimsSecure {
     }
   }
 
-
   public static class StoragePolicyShim implements HadoopShims.StoragePolicyShim {
 
     private final DistributedFileSystem dfs;
@@ -1374,5 +1374,10 @@ public class Hadoop23Shims extends HadoopShimsSecure {
   public void addDelegationTokens(FileSystem fs, Credentials cred, String uname) throws IOException {
     // Use method addDelegationTokens instead of getDelegationToken to get all the tokens including KMS.
     fs.addDelegationTokens(uname, cred);
+  }
+
+  @Override
+  public void setHadoopCallerContext(String callerContext) {
+    CallerContext.setCurrent(new CallerContext.Builder(callerContext).build());
   }
 }

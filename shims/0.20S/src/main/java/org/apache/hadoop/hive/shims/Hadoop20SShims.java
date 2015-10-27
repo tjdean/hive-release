@@ -727,4 +727,10 @@ public class Hadoop20SShims extends HadoopShimsSecure {
     Token<?> fsToken = fs.getDelegationToken(uname);
     cred.addToken(fsToken.getService(), fsToken);
   }
+
+  public void setHadoopCallerContext(String callerContext) {
+    /*
+     * do nothing. This is not supported in hadoop-1
+     */
+  }
 }

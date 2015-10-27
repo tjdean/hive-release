@@ -733,4 +733,9 @@ public interface HadoopShims {
    * @throws IOException If an error occurred on adding the token.
    */
   public void addDelegationTokens(FileSystem fs, Credentials cred, String uname) throws IOException;
+
+  /*
+   * Set up the caller context for HDFS and Yarn.
+   */
+  public void setHadoopCallerContext(String callerContext);
 }
