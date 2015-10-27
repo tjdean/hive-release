@@ -28,7 +28,6 @@ insert overwrite table tab partition (ds='2008-04-08')
 select key,value from srcbucket_mapjoin;
 
 set hive.auto.convert.sortmerge.join = true;
-set hive.auto.convert.join = true;
 
 set hive.auto.convert.join.noconditionaltask.size=500;
 CREATE TABLE empty(key int, value string) PARTITIONED BY(ds STRING) CLUSTERED BY (key) SORTED BY (key) INTO 2 BUCKETS STORED AS TEXTFILE;
