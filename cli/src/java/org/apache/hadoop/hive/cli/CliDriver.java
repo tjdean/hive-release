@@ -91,17 +91,22 @@ public class CliDriver {
 
   private final LogHelper console;
   private Configuration conf;
+  private final String originalThreadName;
 
   public CliDriver() {
     SessionState ss = SessionState.get();
     conf = (ss != null) ? ss.getConf() : new Configuration();
     Log LOG = LogFactory.getLog("CliDriver");
     console = new LogHelper(LOG);
+    originalThreadName = Thread.currentThread().getName();
   }
 
   public int processCmd(String cmd) {
     CliSessionState ss = (CliSessionState) SessionState.get();
     ss.setLastCommand(cmd);
+
+    String callerInfo = ss.getConf().getLogIdVar(ss.getSessionId());
+    Thread.currentThread().setName(callerInfo + " " + originalThreadName);
     // Flush the print stream, so it doesn't include output from the last command
     ss.err.flush();
     String cmd_trimmed = cmd.trim();
@@ -204,6 +209,7 @@ public class CliDriver {
       }
     }
 
+    Thread.currentThread().setName(originalThreadName);
     return ret;
   }
 
@@ -671,6 +677,7 @@ public class CliDriver {
 
     SessionState.start(ss);
 
+    Thread.currentThread().setName(conf.getLogIdVar(ss.getSessionId()) + " " + originalThreadName);
     // execute cli driver work
     int ret = 0;
     try {

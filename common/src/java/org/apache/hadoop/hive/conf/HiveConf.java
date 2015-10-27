@@ -81,6 +81,7 @@ public class HiveConf extends Configuration {
   private final Set<String> hiddenSet = new HashSet<String>();
 
   private Pattern modWhiteListPattern = null;
+  private static final int LOG_PREFIX_LENGTH = 64;
 
   static {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -1950,7 +1951,10 @@ public class HiveConf extends Configuration {
         new StringSet("throw", "skip", "ignore"), "The approach msck should take with HDFS " +
        "directories that are partition-like but contain unsupported characters. 'throw' (an " +
        "exception) is the default; 'skip' will skip the invalid directories and still repair the" +
-       " others; 'ignore' will skip the validation (legacy behavior, causes bugs in many cases)");
+       " others; 'ignore' will skip the validation (legacy behavior, causes bugs in many cases)"),
+    HIVE_LOG_TRACE_ID("hive.log.trace.id", "",
+        "Log tracing id that can be used by upstream clients for tracking respective logs. " +
+        "Truncated to " + LOG_PREFIX_LENGTH + " characters. Defaults to use auto-generated session id.");
 
 
     public final String varname;
@@ -2361,6 +2365,20 @@ public class HiveConf extends Configuration {
 
   public static String getVar(Configuration conf, ConfVars var, String defaultVal) {
     return conf.get(var.varname, defaultVal);
+  }
+
+  public String getLogIdVar(String defaultValue) {
+    String retval = getVar(ConfVars.HIVE_LOG_TRACE_ID);
+    if (retval.equals("")) {
+      l4j.info("Using the default value passed in for log id: " + defaultValue);
+      retval = defaultValue;
+    }
+    if (retval.length() > LOG_PREFIX_LENGTH) {
+      l4j.warn("The original log id prefix is " + retval + " has been truncated to "
+          + retval.substring(0, LOG_PREFIX_LENGTH - 1));
+      retval = retval.substring(0, LOG_PREFIX_LENGTH - 1);
+    }
+    return retval;
   }
 
   public static void setVar(Configuration conf, ConfVars var, String val) {
