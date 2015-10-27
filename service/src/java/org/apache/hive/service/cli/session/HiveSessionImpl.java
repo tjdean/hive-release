@@ -44,6 +44,7 @@ import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.processors.SetProcessor;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hive.common.util.HiveVersionInfo;
 import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.hive.service.cli.*;
@@ -288,6 +289,7 @@ public class HiveSessionImpl implements HiveSession {
     LOG.info(
         "Prefixing the thread name (" + Thread.currentThread().getName() + ") with " + logPrefix);
     Thread.currentThread().setName(logPrefix + Thread.currentThread().getName());
+    ShimLoader.getHadoopShims().setHadoopCallerContext(logPrefix);
 
   }
 
@@ -299,8 +301,9 @@ public class HiveSessionImpl implements HiveSession {
    * @see org.apache.hive.service.server.ThreadWithGarbageCleanup#finalize()
    */
   protected synchronized void release(boolean userAccess) {
-    // reset thread name at release time.
-    String[] names = Thread.currentThread().getName()
+    if (sessionState != null) {
+      // reset thread name at release time.
+      String[] names = Thread.currentThread().getName()
         .split(getHiveConf().getLogIdVar(sessionState.getSessionId()));
       String threadName = null;
       if (names.length > 1) {
@@ -312,6 +315,9 @@ public class HiveSessionImpl implements HiveSession {
       }
       Thread.currentThread().setName(threadName);
     }
+    // reset the HDFS caller context.
+    ShimLoader.getHadoopShims().setHadoopCallerContext("");
+
     SessionState.detachSession();
     if (ThreadWithGarbageCleanup.currentThread() instanceof ThreadWithGarbageCleanup) {
       ThreadWithGarbageCleanup currentThread =

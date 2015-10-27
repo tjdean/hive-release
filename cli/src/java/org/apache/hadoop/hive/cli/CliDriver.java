@@ -70,6 +70,7 @@ import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.ql.session.SessionState.LogHelper;
 import org.apache.hadoop.hive.service.HiveClient;
 import org.apache.hadoop.hive.service.HiveServerException;
+import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.thrift.TException;
 
@@ -107,6 +108,7 @@ public class CliDriver {
 
     String callerInfo = ss.getConf().getLogIdVar(ss.getSessionId());
     Thread.currentThread().setName(callerInfo + " " + originalThreadName);
+    ShimLoader.getHadoopShims().setHadoopCallerContext(callerInfo);
     // Flush the print stream, so it doesn't include output from the last command
     ss.err.flush();
     String cmd_trimmed = cmd.trim();
@@ -210,6 +212,7 @@ public class CliDriver {
     }
 
     Thread.currentThread().setName(originalThreadName);
+    ShimLoader.getHadoopShims().setHadoopCallerContext("");
     return ret;
   }
 

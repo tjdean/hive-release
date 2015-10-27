@@ -592,4 +592,11 @@ public class Hadoop20SShims extends HadoopShimsSecure {
       return kerberosName.getShortName();
     }
   }
+
+  @Override
+  public void setHadoopCallerContext(String callerContext) {
+    /*
+     * do nothing. This is not supported in hadoop-1
+     */
+  }
 }

@@ -773,4 +773,9 @@ public interface HadoopShims {
     public String getShortName() throws IOException;
   }
 
+  /**
+   * Set up the caller context for HDFS and Yarn.
+   */
+  public void setHadoopCallerContext(String callerContext);
+
 }

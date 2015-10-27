@@ -951,4 +951,12 @@ public class Hadoop20Shims implements HadoopShims {
   public void setZookeeperClientKerberosJaasConfig(String principal, String keyTabFile) {
     // Not supported
   }
+
+  @Override
+  public void setHadoopCallerContext(String callerContext) {
+    /*
+     * do nothing. This is not supported in hadoop-0.20
+     */
+  }
+
 }

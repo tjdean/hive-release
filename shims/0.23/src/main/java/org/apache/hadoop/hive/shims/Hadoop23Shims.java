@@ -59,6 +59,7 @@ import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.ipc.CallerContext;
 import org.apache.hadoop.mapred.ClusterStatus;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.MiniMRCluster;
@@ -920,4 +921,10 @@ public class Hadoop23Shims extends HadoopShimsSecure {
       return kerberosName.getShortName();
     }
   }
+
+  @Override
+  public void setHadoopCallerContext(String callerContext) {
+    CallerContext.setCurrent(new CallerContext.Builder(callerContext).build());
+  }
+
 }
