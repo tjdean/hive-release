@@ -36,10 +36,10 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.FileUtils;
-import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.Warehouse;
+import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Order;
@@ -253,9 +253,14 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
         Task<?> t = TaskFactory.get(new DDLWork(getInputs(), getOutputs(),
             tblDesc), conf);
         Table table = new Table(dbname, tblDesc.getTableName());
-        String currentDb = SessionState.get().getCurrentDatabase();
+
+        // Since we are going to be creating a new table in a db, we should mark that db as a write entity
+        // so that the auth framework can go to work there.
+        Database currentDb = db.getDatabaseCurrent();
+        outputs.add(new WriteEntity(currentDb, WriteEntity.WriteType.DDL_SHARED));
+
         conf.set("import.destination.dir",
-            wh.getTablePath(db.getDatabaseCurrent(),
+            wh.getTablePath(currentDb,
                 tblDesc.getTableName()).toString());
         if ((tblDesc.getPartCols() != null) && (tblDesc.getPartCols().size() != 0)) {
           for (AddPartitionDesc addPartitionDesc : partitionDescs) {
@@ -273,7 +278,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
             if (tblDesc.getLocation() != null) {
               tablePath = new Path(tblDesc.getLocation());
             } else {
-              tablePath = wh.getTablePath(db.getDatabaseCurrent(), tblDesc.getTableName());
+              tablePath = wh.getTablePath(currentDb, tblDesc.getTableName());
             }
             checkTargetLocationEmpty(fs, tablePath);
             t.addDependentTask(loadTable(fromURI, table));
