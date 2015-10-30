@@ -428,7 +428,7 @@ public class ZooKeeperTokenStore implements DelegationTokenStore {
   }
 
   @Override
-  public void init(Object objectStore, ServerMode smode) {
+  public void init(Object hmsHandler, ServerMode smode) {
     this.serverMode = smode;
     zkConnectString =
         conf.get(HadoopThriftAuthBridge20S.Server.DELEGATION_TOKEN_STORE_ZK_CONNECT_STR, null);

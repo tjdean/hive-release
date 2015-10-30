@@ -5726,7 +5726,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
             conf.getVar(HiveConf.ConfVars.METASTORE_KERBEROS_KEYTAB_FILE),
             conf.getVar(HiveConf.ConfVars.METASTORE_KERBEROS_PRINCIPAL));
         // start delegation token manager
-        saslServer.startDelegationTokenSecretManager(conf, baseHandler.getMS(), ServerMode.METASTORE);
+        saslServer.startDelegationTokenSecretManager(conf, baseHandler, ServerMode.METASTORE);
         int saslMessageLimit = conf.getIntVar(ConfVars.HIVE_THRIFT_SASL_MESSAGE_LIMIT);
         transFactory =
             saslServer.createTransportFactory(MetaStoreUtils.getMetaStoreSaslProperties(conf),

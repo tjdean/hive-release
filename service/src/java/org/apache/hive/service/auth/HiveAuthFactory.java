@@ -107,7 +107,7 @@ public class HiveAuthFactory {
       try {
           HMSHandler baseHandler = new HiveMetaStore.HMSHandler(
               "new db based metaserver", conf, true);
-          saslServer.startDelegationTokenSecretManager(conf, baseHandler.getMS(), ServerMode.HIVESERVER2);
+          saslServer.startDelegationTokenSecretManager(conf, baseHandler, ServerMode.HIVESERVER2);
       }
       catch (MetaException e) {
         throw new TTransportException("Failed to start token manager", e);
