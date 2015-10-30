@@ -211,8 +211,6 @@ public class SessionState {
    */
   LineageState ls;
 
-  private PerfLogger perfLogger;
-
   private final String userName;
 
   /**
@@ -1536,16 +1534,7 @@ public class SessionState {
 
    */
   public PerfLogger getPerfLogger(boolean resetPerfLogger) {
-    if ((perfLogger == null) || resetPerfLogger) {
-      try {
-        perfLogger = (PerfLogger) ReflectionUtils.newInstance(conf.getClassByName(
-            conf.getVar(ConfVars.HIVE_PERF_LOGGER)), conf);
-      } catch (ClassNotFoundException e) {
-        LOG.error("Performance Logger Class not found:" + e.getMessage());
-        perfLogger = new PerfLogger();
-      }
-    }
-    return perfLogger;
+    return PerfLogger.getPerfLogger(conf, resetPerfLogger);
   }
 
   public TezSessionState getTezSession() {
