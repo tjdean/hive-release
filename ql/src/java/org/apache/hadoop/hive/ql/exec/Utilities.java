@@ -1008,6 +1008,7 @@ public final class Utilities {
    */
   private static void serializeObjectByKryo(Kryo kryo, Object plan, OutputStream out) {
     Output output = new Output(out);
+    kryo.setClassLoader(getSessionSpecifiedClassLoader());
     kryo.writeObject(output, plan);
     output.close();
   }
@@ -1031,6 +1032,7 @@ public final class Utilities {
 
   private static <T> T deserializeObjectByKryo(Kryo kryo, InputStream in, Class<T> clazz ) {
     Input inp = new Input(in);
+    kryo.setClassLoader(getSessionSpecifiedClassLoader());
     T t = kryo.readObject(inp,clazz);
     inp.close();
     return t;
