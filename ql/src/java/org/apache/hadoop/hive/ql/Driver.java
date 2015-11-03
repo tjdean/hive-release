@@ -121,12 +121,14 @@ import org.apache.hadoop.hive.shims.Utils;
 import org.apache.hadoop.mapred.ClusterStatus;
 import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.hive.common.util.ShutdownHookManager;
 
 public class Driver implements CommandProcessor {
 
   static final private String CLASS_NAME = Driver.class.getName();
   static final private Log LOG = LogFactory.getLog(CLASS_NAME);
   static final private LogHelper console = new LogHelper(LOG);
+  static final int SHUTDOWN_HOOK_PRIORITY = 0;
 
   private static final Object compileMonitor = new Object();
 
@@ -390,6 +392,22 @@ public class Driver implements CommandProcessor {
     String originalCallerContext = "";
     HadoopShims shim = ShimLoader.getHadoopShims();
     try {
+      // Initialize the transaction manager.  This must be done before analyze is called.
+      final HiveTxnManager txnManager = SessionState.get().initTxnMgr(conf);
+      // In case when user Ctrl-C twice to kill Hive CLI JVM, we want to release locks
+      ShutdownHookManager.addShutdownHook(
+          new Runnable() {
+            @Override
+            public void run() {
+              try {
+                releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), false, txnManager);
+              } catch (LockException e) {
+                LOG.warn("Exception when releasing locks in ShutdownHook for Driver: " +
+                    e.getMessage());
+              }
+            }
+          }, SHUTDOWN_HOOK_PRIORITY);
+
       // we set the hadoop caller context to the query id as soon as we have one.
       // initially, the caller context is the session id (when creating temp directories)
       originalCallerContext = shim.getHadoopCallerContext();
@@ -1031,15 +1049,22 @@ public class Driver implements CommandProcessor {
    *          locks have already been released, ignore them
    * @param commit if there is an open transaction and if true, commit,
    *               if false rollback.  If there is no open transaction this parameter is ignored.
+   * @param txnManager an optional existing transaction manager retrieved earlier from the session
    *
    **/
-  private void releaseLocksAndCommitOrRollback(List<HiveLock> hiveLocks, boolean commit)
-      throws LockException {
+  private void releaseLocksAndCommitOrRollback(List<HiveLock> hiveLocks, boolean commit,
+                                               HiveTxnManager txnManager) throws LockException {
     PerfLogger perfLogger = PerfLogger.getPerfLogger();
     perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.RELEASE_LOCKS);
 
+    HiveTxnManager txnMgr;
     SessionState ss = SessionState.get();
-    HiveTxnManager txnMgr = ss.getTxnMgr();
+    if (txnManager == null) {
+      txnMgr = ss.getTxnMgr();
+    } else {
+      txnMgr = txnManager;
+    }
+
     // If we've opened a transaction we need to commit or rollback rather than explicitly
     // releasing the locks.
     if (ss.getCurrentTxn() != SessionState.NO_CURRENT_TXN && ss.isAutoCommit()) {
@@ -1142,7 +1167,7 @@ public class Driver implements CommandProcessor {
     }
     if (ret != 0) {
       try {
-        releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), false);
+        releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), false, null);
       } catch (LockException e) {
         LOG.warn("Exception in releasing locks. "
             + org.apache.hadoop.util.StringUtils.stringifyException(e));
@@ -1204,7 +1229,7 @@ public class Driver implements CommandProcessor {
       ret = acquireLocksAndOpenTxn();
       if (ret != 0) {
         try {
-          releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), false);
+          releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), false, null);
         } catch (LockException e) {
           // Not much to do here
         }
@@ -1215,7 +1240,7 @@ public class Driver implements CommandProcessor {
     if (ret != 0) {
       //if needRequireLock is false, the release here will do nothing because there is no lock
       try {
-        releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), false);
+        releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), false, null);
       } catch (LockException e) {
         // Nothing to do here
       }
@@ -1224,7 +1249,7 @@ public class Driver implements CommandProcessor {
 
     //if needRequireLock is false, the release here will do nothing because there is no lock
     try {
-      releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), true);
+      releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), true, null);
     } catch (LockException e) {
       errorMessage = "FAILED: Hive Internal Error: " + Utilities.getNameMessage(e);
       SQLState = ErrorMsg.findSQLState(e.getMessage());
@@ -1808,7 +1833,7 @@ public class Driver implements CommandProcessor {
     destroyed = true;
     if (ctx != null) {
       try {
-        releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), false);
+        releaseLocksAndCommitOrRollback(ctx.getHiveLocks(), false, null);
       } catch (LockException e) {
         LOG.warn("Exception when releasing locking in destroy: " +
             e.getMessage());
