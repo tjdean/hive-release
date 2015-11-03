@@ -208,6 +208,48 @@ function Main( $scriptDir )
         "templeton.storage.class" = "org.apache.hive.hcatalog.templeton.tool.ZooKeeperStorage";
         "templeton.zookeeper.hosts" = "$zookeeperNodes"}
     Write-Log "Finished installing Apache Templeton"
+    
+    ###
+    ### Configure Hive Configurations
+    ###
+    Write-Log "Configuring the Hive configurations"
+    $dburl = ""
+    $dbdriver = ""
+    if ( $ENV:DB_FLAVOR -eq "mssql" )
+    {
+        $dburl = "jdbc:sqlserver://${ENV:DB_HOSTNAME}:${ENV:DB_PORT};database=${ENV:HIVE_DB_NAME};encrypt=true;trustServerCertificate=true;create=false"
+        $dbdriver = "com.microsoft.sqlserver.jdbc.SQLServerDriver"
+    }
+    else
+    {
+        $dburl = "jdbc:derby://${ENV:HIVE_SERVER_HOST}:${ENV:DB_PORT}/metastore_db;create=true"
+        $dbdriver = "org.apache.derby.jdbc.ClientDriver"
+    }
+    $xmlFile = Join-Path $ENV:HIVE_HOME "conf/hive-site.xml"
+    UpdateXmlConfig $xmlFile @{
+        "hive.metastore.uris" = "thrift://${ENV:HIVE_SERVER_HOST}:9083";
+        "javax.jdo.option.ConnectionURL" = "$dburl";
+        "javax.jdo.option.ConnectionDriverName" = "$dbdriver";
+        "hive.querylog.location" = "$ENV:HDP_LOG_DIR\hive";
+        "hive.log.dir" = "$ENV:HDP_LOG_DIR\hive";
+        "hive.stats.autogather" = "true"}
+	if ((Test-Path ENV:IS_TEZ) -and ($ENV:IS_TEZ -ieq "yes"))
+	{
+            UpdateXmlConfig $xmlFile @{
+        "hive.execution.engine" = "tez"}
+	}
+	else
+	{
+	    UpdateXmlConfig $xmlFile @{
+        "hive.execution.engine" = "mr"}
+	}
+    if ( $ENV:DB_FLAVOR -eq "mssql" )
+    {
+        UpdateXmlConfig $xmlFile @{
+            "javax.jdo.option.ConnectionUserName" = "$ENV:HIVE_DB_USERNAME";
+            "javax.jdo.option.ConnectionPassword" = "$ENV:HIVE_DB_PASSWORD" }
+    }
+
 }
 
 try
