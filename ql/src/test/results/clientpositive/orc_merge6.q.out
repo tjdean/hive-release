@@ -151,12 +151,12 @@ POSTHOOK: Input: default@orc_merge5a
 POSTHOOK: Input: default@orc_merge5a@year=2000/hour=24
 POSTHOOK: Input: default@orc_merge5a@year=2001/hour=24
 #### A masked pattern was here ####
-13	bar	80.0	2.2	1969-12-31 16:00:05	2000	24
-13	bar	80.0	2.2	1969-12-31 16:00:05	2001	24
-2	foo	0.8	1.2	1969-12-31 16:00:00	2000	24
-2	foo	0.8	1.2	1969-12-31 16:00:00	2001	24
-5	eat	0.8	5.5	1969-12-31 16:00:20	2000	24
-5	eat	0.8	5.5	1969-12-31 16:00:20	2001	24
+13	bar	80.0	2.2000000000	1969-12-31 16:00:05	2000	24
+13	bar	80.0	2.2000000000	1969-12-31 16:00:05	2001	24
+2	foo	0.8	1.2000000000	1969-12-31 16:00:00	2000	24
+2	foo	0.8	1.2000000000	1969-12-31 16:00:00	2001	24
+5	eat	0.8	5.5000000000	1969-12-31 16:00:20	2000	24
+5	eat	0.8	5.5000000000	1969-12-31 16:00:20	2001	24
 PREHOOK: query: -- 3 mappers
 explain insert overwrite table orc_merge5a partition (year="2000",hour=24) select userid,string1,subtype,decimal1,ts from orc_merge5 where userid<=13
 PREHOOK: type: QUERY
@@ -314,12 +314,12 @@ POSTHOOK: Input: default@orc_merge5a
 POSTHOOK: Input: default@orc_merge5a@year=2000/hour=24
 POSTHOOK: Input: default@orc_merge5a@year=2001/hour=24
 #### A masked pattern was here ####
-13	bar	80.0	2.2	1969-12-31 16:00:05	2000	24
-13	bar	80.0	2.2	1969-12-31 16:00:05	2001	24
-2	foo	0.8	1.2	1969-12-31 16:00:00	2000	24
-2	foo	0.8	1.2	1969-12-31 16:00:00	2001	24
-5	eat	0.8	5.5	1969-12-31 16:00:20	2000	24
-5	eat	0.8	5.5	1969-12-31 16:00:20	2001	24
+13	bar	80.0	2.2000000000	1969-12-31 16:00:05	2000	24
+13	bar	80.0	2.2000000000	1969-12-31 16:00:05	2001	24
+2	foo	0.8	1.2000000000	1969-12-31 16:00:00	2000	24
+2	foo	0.8	1.2000000000	1969-12-31 16:00:00	2001	24
+5	eat	0.8	5.5000000000	1969-12-31 16:00:20	2000	24
+5	eat	0.8	5.5000000000	1969-12-31 16:00:20	2001	24
 PREHOOK: query: insert overwrite table orc_merge5a partition (year="2000",hour=24) select userid,string1,subtype,decimal1,ts from orc_merge5 where userid<=13
 PREHOOK: type: QUERY
 PREHOOK: Input: default@orc_merge5
@@ -390,12 +390,12 @@ POSTHOOK: Input: default@orc_merge5a
 POSTHOOK: Input: default@orc_merge5a@year=2000/hour=24
 POSTHOOK: Input: default@orc_merge5a@year=2001/hour=24
 #### A masked pattern was here ####
-13	bar	80.0	2.2	1969-12-31 16:00:05	2000	24
-13	bar	80.0	2.2	1969-12-31 16:00:05	2001	24
-2	foo	0.8	1.2	1969-12-31 16:00:00	2000	24
-2	foo	0.8	1.2	1969-12-31 16:00:00	2001	24
-5	eat	0.8	5.5	1969-12-31 16:00:20	2000	24
-5	eat	0.8	5.5	1969-12-31 16:00:20	2001	24
+13	bar	80.0	2.2000000000	1969-12-31 16:00:05	2000	24
+13	bar	80.0	2.2000000000	1969-12-31 16:00:05	2001	24
+2	foo	0.8	1.2000000000	1969-12-31 16:00:00	2000	24
+2	foo	0.8	1.2000000000	1969-12-31 16:00:00	2001	24
+5	eat	0.8	5.5000000000	1969-12-31 16:00:20	2000	24
+5	eat	0.8	5.5000000000	1969-12-31 16:00:20	2001	24
 PREHOOK: query: explain alter table orc_merge5a partition(year="2000",hour=24) concatenate
 PREHOOK: type: ALTER_PARTITION_MERGE
 POSTHOOK: query: explain alter table orc_merge5a partition(year="2000",hour=24) concatenate
@@ -486,9 +486,9 @@ POSTHOOK: Input: default@orc_merge5a
 POSTHOOK: Input: default@orc_merge5a@year=2000/hour=24
 POSTHOOK: Input: default@orc_merge5a@year=2001/hour=24
 #### A masked pattern was here ####
-13	bar	80.0	2.2	1969-12-31 16:00:05	2000	24
-13	bar	80.0	2.2	1969-12-31 16:00:05	2001	24
-2	foo	0.8	1.2	1969-12-31 16:00:00	2000	24
-2	foo	0.8	1.2	1969-12-31 16:00:00	2001	24
-5	eat	0.8	5.5	1969-12-31 16:00:20	2000	24
-5	eat	0.8	5.5	1969-12-31 16:00:20	2001	24
+13	bar	80.0	2.2000000000	1969-12-31 16:00:05	2000	24
+13	bar	80.0	2.2000000000	1969-12-31 16:00:05	2001	24
+2	foo	0.8	1.2000000000	1969-12-31 16:00:00	2000	24
+2	foo	0.8	1.2000000000	1969-12-31 16:00:00	2001	24
+5	eat	0.8	5.5000000000	1969-12-31 16:00:20	2000	24
+5	eat	0.8	5.5000000000	1969-12-31 16:00:20	2001	24

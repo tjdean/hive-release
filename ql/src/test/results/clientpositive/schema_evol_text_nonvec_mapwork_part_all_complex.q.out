@@ -166,24 +166,24 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: part_change_various_various_struct1
-            Statistics: Num rows: 6 Data size: 851 Basic stats: COMPLETE Column stats: NONE
+            Statistics: Num rows: 6 Data size: 907 Basic stats: COMPLETE Column stats: NONE
             Select Operator
               expressions: insert_num (type: int), part (type: int), s1 (type: struct<c1:string,c2:string,c3:string,c4:string,c5:string,c6:string,c7:string,c8:string,c9:string,c10:string,c11:string,c12:string,c13:string>), b (type: string)
               outputColumnNames: _col0, _col1, _col2, _col3
-              Statistics: Num rows: 6 Data size: 851 Basic stats: COMPLETE Column stats: NONE
+              Statistics: Num rows: 6 Data size: 907 Basic stats: COMPLETE Column stats: NONE
               Reduce Output Operator
                 key expressions: _col0 (type: int)
                 sort order: +
-                Statistics: Num rows: 6 Data size: 851 Basic stats: COMPLETE Column stats: NONE
+                Statistics: Num rows: 6 Data size: 907 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: struct<c1:string,c2:string,c3:string,c4:string,c5:string,c6:string,c7:string,c8:string,c9:string,c10:string,c11:string,c12:string,c13:string>), _col3 (type: string)
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: struct<c1:string,c2:string,c3:string,c4:string,c5:string,c6:string,c7:string,c8:string,c9:string,c10:string,c11:string,c12:string,c13:string>), VALUE._col2 (type: string)
           outputColumnNames: _col0, _col1, _col2, _col3
-          Statistics: Num rows: 6 Data size: 851 Basic stats: COMPLETE Column stats: NONE
+          Statistics: Num rows: 6 Data size: 907 Basic stats: COMPLETE Column stats: NONE
           File Output Operator
             compressed: false
-            Statistics: Num rows: 6 Data size: 851 Basic stats: COMPLETE Column stats: NONE
+            Statistics: Num rows: 6 Data size: 907 Basic stats: COMPLETE Column stats: NONE
             table:
                 input format: org.apache.hadoop.mapred.TextInputFormat
                 output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
@@ -456,24 +456,24 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: part_add_various_various_struct2
-            Statistics: Num rows: 8 Data size: 851 Basic stats: COMPLETE Column stats: NONE
+            Statistics: Num rows: 8 Data size: 907 Basic stats: COMPLETE Column stats: NONE
             Select Operator
               expressions: insert_num (type: int), part (type: int), b (type: string), s2 (type: struct<c1:string,c2:string,c3:string,c4:string,c5:string,c6:string,c7:string,c8:string,c9:string,c10:string,c11:string,c12:string,c13:string>)
               outputColumnNames: _col0, _col1, _col2, _col3
-              Statistics: Num rows: 8 Data size: 851 Basic stats: COMPLETE Column stats: NONE
+              Statistics: Num rows: 8 Data size: 907 Basic stats: COMPLETE Column stats: NONE
               Reduce Output Operator
                 key expressions: _col0 (type: int)
                 sort order: +
-                Statistics: Num rows: 8 Data size: 851 Basic stats: COMPLETE Column stats: NONE
+                Statistics: Num rows: 8 Data size: 907 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: string), _col3 (type: struct<c1:string,c2:string,c3:string,c4:string,c5:string,c6:string,c7:string,c8:string,c9:string,c10:string,c11:string,c12:string,c13:string>)
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: string), VALUE._col2 (type: struct<c1:string,c2:string,c3:string,c4:string,c5:string,c6:string,c7:string,c8:string,c9:string,c10:string,c11:string,c12:string,c13:string>)
           outputColumnNames: _col0, _col1, _col2, _col3
-          Statistics: Num rows: 8 Data size: 851 Basic stats: COMPLETE Column stats: NONE
+          Statistics: Num rows: 8 Data size: 907 Basic stats: COMPLETE Column stats: NONE
           File Output Operator
             compressed: false
-            Statistics: Num rows: 8 Data size: 851 Basic stats: COMPLETE Column stats: NONE
+            Statistics: Num rows: 8 Data size: 907 Basic stats: COMPLETE Column stats: NONE
             table:
                 input format: org.apache.hadoop.mapred.TextInputFormat
                 output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
@@ -670,24 +670,24 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: part_add_to_various_various_struct4
-            Statistics: Num rows: 4 Data size: 299 Basic stats: COMPLETE Column stats: NONE
+            Statistics: Num rows: 4 Data size: 337 Basic stats: COMPLETE Column stats: NONE
             Select Operator
               expressions: insert_num (type: int), part (type: int), b (type: string), s3 (type: struct<c1:boolean,c2:tinyint,c3:smallint,c4:int,c5:bigint,c6:float,c7:double,c8:decimal(38,18),c9:char(25),c10:varchar(25),c11:timestamp,c12:date,c13:binary>)
               outputColumnNames: _col0, _col1, _col2, _col3
-              Statistics: Num rows: 4 Data size: 299 Basic stats: COMPLETE Column stats: NONE
+              Statistics: Num rows: 4 Data size: 337 Basic stats: COMPLETE Column stats: NONE
               Reduce Output Operator
                 key expressions: _col0 (type: int)
                 sort order: +
-                Statistics: Num rows: 4 Data size: 299 Basic stats: COMPLETE Column stats: NONE
+                Statistics: Num rows: 4 Data size: 337 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: string), _col3 (type: struct<c1:boolean,c2:tinyint,c3:smallint,c4:int,c5:bigint,c6:float,c7:double,c8:decimal(38,18),c9:char(25),c10:varchar(25),c11:timestamp,c12:date,c13:binary>)
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: string), VALUE._col2 (type: struct<c1:boolean,c2:tinyint,c3:smallint,c4:int,c5:bigint,c6:float,c7:double,c8:decimal(38,18),c9:char(25),c10:varchar(25),c11:timestamp,c12:date,c13:binary>)
           outputColumnNames: _col0, _col1, _col2, _col3
-          Statistics: Num rows: 4 Data size: 299 Basic stats: COMPLETE Column stats: NONE
+          Statistics: Num rows: 4 Data size: 337 Basic stats: COMPLETE Column stats: NONE
           File Output Operator
             compressed: false
-            Statistics: Num rows: 4 Data size: 299 Basic stats: COMPLETE Column stats: NONE
+            Statistics: Num rows: 4 Data size: 337 Basic stats: COMPLETE Column stats: NONE
             table:
                 input format: org.apache.hadoop.mapred.TextInputFormat
                 output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
