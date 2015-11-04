@@ -148,5 +148,5 @@ public interface SerializeWrite {
   /*
    * DECIMAL.
    */
-  void writeHiveDecimal(HiveDecimal dec) throws IOException;
+  void writeHiveDecimal(HiveDecimal dec, int scale) throws IOException;
 }

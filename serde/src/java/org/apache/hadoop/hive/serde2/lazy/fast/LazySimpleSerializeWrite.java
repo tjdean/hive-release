@@ -477,13 +477,12 @@ public class LazySimpleSerializeWrite implements SerializeWrite {
    * DECIMAL.
    */
   @Override
-  public void writeHiveDecimal(HiveDecimal v) throws IOException {
-
+  public void writeHiveDecimal(HiveDecimal v, int scale) throws IOException {
     if (index > 0) {
       output.write(separator);
     }
 
-    LazyHiveDecimal.writeUTF8(output, v);
+    LazyHiveDecimal.writeUTF8(output, v, scale);
 
     index++;
   }
