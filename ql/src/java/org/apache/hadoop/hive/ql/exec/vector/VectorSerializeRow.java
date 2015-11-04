@@ -497,7 +497,7 @@ public class VectorSerializeRow {
 
       if (colVector.isRepeating) {
         if (colVector.noNulls || !colVector.isNull[0]) {
-          serializeWrite.writeHiveDecimal(colVector.vector[0].getHiveDecimal());
+          serializeWrite.writeHiveDecimal(colVector.vector[0].getHiveDecimal(), colVector.scale);
           return true;
         } else {
           serializeWrite.writeNull();
@@ -505,7 +505,7 @@ public class VectorSerializeRow {
         }
       } else {
         if (colVector.noNulls || !colVector.isNull[batchIndex]) {
-          serializeWrite.writeHiveDecimal(colVector.vector[batchIndex].getHiveDecimal());
+          serializeWrite.writeHiveDecimal(colVector.vector[batchIndex].getHiveDecimal(), colVector.scale);
           return true;
         } else {
           serializeWrite.writeNull();

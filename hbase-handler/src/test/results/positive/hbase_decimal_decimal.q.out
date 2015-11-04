@@ -37,8 +37,8 @@ POSTHOOK: query: select * from testhbase_decimal
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@testhbase_decimal
 #### A masked pattern was here ####
-1	1
-2	2.2
+1	1.00
+2	2.20
 3	33.33
 PREHOOK: query: drop table testhbase_decimal
 PREHOOK: type: DROPTABLE

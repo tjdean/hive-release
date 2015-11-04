@@ -283,7 +283,7 @@ public class VectorSerializeRowNoNulls {
     @Override
     void apply(VectorizedRowBatch batch, int batchIndex) throws IOException {
       DecimalColumnVector colVector = (DecimalColumnVector) batch.cols[columnIndex];
-      serializeWrite.writeHiveDecimal(colVector.vector[colVector.isRepeating ? 0 : batchIndex].getHiveDecimal());
+      serializeWrite.writeHiveDecimal(colVector.vector[colVector.isRepeating ? 0 : batchIndex].getHiveDecimal(), colVector.scale);
     }
   }
 
