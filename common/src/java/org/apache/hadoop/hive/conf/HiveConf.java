@@ -2717,6 +2717,7 @@ public class HiveConf extends Configuration {
     auxJars = other.auxJars;
     origProp = (Properties)other.origProp.clone();
     restrictList.addAll(other.restrictList);
+    hiddenSet.addAll(other.hiddenSet);
     modWhiteListPattern = other.modWhiteListPattern;
   }
 
