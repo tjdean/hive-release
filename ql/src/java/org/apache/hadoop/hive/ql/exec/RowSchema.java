@@ -21,6 +21,7 @@ package org.apache.hadoop.hive.ql.exec;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * RowSchema Implementation.
@@ -47,6 +48,14 @@ public class RowSchema implements Serializable {
 
   public ArrayList<ColumnInfo> getSignature() {
     return signature;
+  }
+
+  public List<String> getColumnNames() {
+    List<String> columnNames = new ArrayList<String>();
+    for (ColumnInfo var : this.signature) {
+      columnNames.add(var.getInternalName());
+    }
+    return columnNames;
   }
 
   @Override
