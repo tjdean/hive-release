@@ -1383,4 +1383,12 @@ public class Hadoop23Shims extends HadoopShimsSecure {
   public void setHadoopCallerContext(String callerContext) {
     CallerContext.setCurrent(new CallerContext.Builder(callerContext).build());
   }
+
+  @Override
+  public String getHadoopCallerContext() {
+    if (CallerContext.getCurrent() == null) {
+      return "";
+    }
+    return CallerContext.getCurrent().getContext();
+  }
 }

@@ -284,19 +284,17 @@ public class HiveSessionImpl implements HiveSession {
   }
 
   protected synchronized void acquire(boolean userAccess) {
-    // Need to make sure that the this HiveServer2's session's SessionState is
+    // Need to make sure that this HiveServer2's session's session state is
     // stored in the thread local for the handler thread.
     SessionState.setCurrentSessionState(sessionState);
     if (userAccess) {
       lastAccessTime = System.currentTimeMillis();
     }
-    // set the thread name with the logging prefix.
-    String logPrefix = getHiveConf().getLogIdVar(sessionState.getSessionId());
-    LOG.info(
-        "Prefixing the thread name (" + Thread.currentThread().getName() + ") with " + logPrefix);
-    Thread.currentThread().setName(logPrefix + Thread.currentThread().getName());
-    ShimLoader.getHadoopShims().setHadoopCallerContext(logPrefix);
 
+    // set the log context for debugging
+    LOG.info("We are setting the hadoop caller context to " + sessionState.getSessionId()
+        + " for thread " + Thread.currentThread().getName());
+    ShimLoader.getHadoopShims().setHadoopCallerContext(sessionState.getSessionId());
   }
 
   /**
@@ -307,21 +305,9 @@ public class HiveSessionImpl implements HiveSession {
    * @see org.apache.hive.service.server.ThreadWithGarbageCleanup#finalize()
    */
   protected synchronized void release(boolean userAccess) {
-    if (sessionState != null) {
-      // reset thread name at release time.
-      String[] names = Thread.currentThread().getName()
-        .split(getHiveConf().getLogIdVar(sessionState.getSessionId()));
-      String threadName = null;
-      if (names.length > 1) {
-        threadName = names[names.length - 1];
-      } else if (names.length == 1) {
-        threadName = names[0];
-      } else {
-        threadName = "";
-      }
-      Thread.currentThread().setName(threadName);
-    }
     // reset the HDFS caller context.
+    LOG.info("We are resetting the hadoop caller context for thread "
+        + Thread.currentThread().getName());
     ShimLoader.getHadoopShims().setHadoopCallerContext("");
 
     SessionState.detachSession();

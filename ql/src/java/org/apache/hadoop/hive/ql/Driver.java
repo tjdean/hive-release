@@ -115,6 +115,8 @@ import org.apache.hadoop.hive.ql.session.OperationLog;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.ql.session.SessionState.LogHelper;
 import org.apache.hadoop.hive.serde2.ByteStream;
+import org.apache.hadoop.hive.shims.HadoopShims;
+import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.hive.shims.Utils;
 import org.apache.hadoop.mapred.ClusterStatus;
 import org.apache.hadoop.mapred.JobClient;
@@ -385,7 +387,15 @@ public class Driver implements CommandProcessor {
 
     SessionState.get().setupQueryCurrentTimestamp();
 
+    String originalCallerContext = "";
+    HadoopShims shim = ShimLoader.getHadoopShims();
     try {
+      // we set the hadoop caller context to the query id as soon as we have one.
+      // initially, the caller context is the session id (when creating temp directories)
+      originalCallerContext = shim.getHadoopCallerContext();
+      LOG.info("We are setting the hadoop caller context from " + originalCallerContext + " to "
+          + queryId);
+      shim.setHadoopCallerContext(queryId);
       command = new VariableSubstitution().substitute(conf,command);
       ctx = new Context(conf);
       ctx.setTryCount(getTryCount());
@@ -445,7 +455,8 @@ public class Driver implements CommandProcessor {
       String queryStr = HookUtils.redactLogString(conf, command);
 
       plan = new QueryPlan(queryStr, sem, perfLogger.getStartTime(PerfLogger.DRIVER_RUN), queryId,
-          SessionState.get().getCommandType());
+          SessionState.get().getCommandType(), SessionState.get().getSessionId(), Thread.currentThread().getName(),
+          HiveConf.getVar(conf, HiveConf.ConfVars.HIVE_LOG_TRACE_ID));
 
       conf.setVar(HiveConf.ConfVars.HIVEQUERYSTRING, queryStr);
 
@@ -509,6 +520,9 @@ public class Driver implements CommandProcessor {
       perfLogger.PerfLogEnd(CLASS_NAME, PerfLogger.COMPILE);
       dumpMetaCallTimingWithoutEx("compilation");
       restoreSession(queryState);
+      // reset the caller id.
+      LOG.info("We are resetting the hadoop caller context to " + originalCallerContext);
+      shim.setHadoopCallerContext(originalCallerContext);
     }
   }
 
@@ -1331,7 +1345,11 @@ public class Driver implements CommandProcessor {
 
     maxthreads = HiveConf.getIntVar(conf, HiveConf.ConfVars.EXECPARALLETHREADNUMBER);
 
+    String originalCallerContext = "";
     try {
+      LOG.info("Setting caller context to query id " + queryId);
+      originalCallerContext = ShimLoader.getHadoopShims().getHadoopCallerContext();
+      ShimLoader.getHadoopShims().setHadoopCallerContext(queryId);
       LOG.info("Starting command(queryId=" + queryId + "): " + queryStr);
       // compile and execute can get called from different threads in case of HS2
       // so clear timing in this thread's Hive object before proceeding.
@@ -1560,6 +1578,8 @@ public class Driver implements CommandProcessor {
           + org.apache.hadoop.util.StringUtils.stringifyException(e));
       return (12);
     } finally {
+      LOG.info("Resetting the caller context to " + originalCallerContext);
+      ShimLoader.getHadoopShims().setHadoopCallerContext(originalCallerContext);
       if (SessionState.get() != null) {
         SessionState.get().getHiveHistory().endQuery(queryId);
       }

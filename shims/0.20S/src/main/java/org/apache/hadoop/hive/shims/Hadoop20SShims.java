@@ -733,4 +733,12 @@ public class Hadoop20SShims extends HadoopShimsSecure {
      * do nothing. This is not supported in hadoop-1
      */
   }
+
+  @Override
+  public String getHadoopCallerContext() {
+    /*
+     * do nothing. This is not supported in hadoop-1
+     */
+    return null;
+  }
 }

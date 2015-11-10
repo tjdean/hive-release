@@ -105,13 +105,16 @@ public class QueryPlan implements Serializable {
 
   private transient Long queryStartTime;
   private String operationName;
+  private String sessionId;
+  private String threadName;
+  private String userProvidedContext;
 
   public QueryPlan() {
     this.reducerTimeStatsPerJobList = new ArrayList<ReducerTimeStatsPerJob>();
   }
 
   public QueryPlan(String queryString, BaseSemanticAnalyzer sem, Long startTime, String queryId,
-      String operationName) {
+      String operationName, String sessionId, String threadName, String userProvidedContext) {
     this.queryString = queryString;
 
     rootTasks = new ArrayList<Task<? extends Serializable>>();
@@ -133,6 +136,9 @@ public class QueryPlan implements Serializable {
     queryProperties = sem.getQueryProperties();
     queryStartTime = startTime;
     this.operationName = operationName;
+    this.setSessionId(sessionId);
+    this.setThreadName(threadName);
+    this.setUserProvidedContext(userProvidedContext);
   }
 
   public String getQueryStr() {
@@ -606,7 +612,6 @@ public class QueryPlan implements Serializable {
     try {
       q.write(oprot);
     } catch (TException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
       return q.toString();
     }
@@ -620,7 +625,6 @@ public class QueryPlan implements Serializable {
     try {
       q.write(oprot);
     } catch (TException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
       return q.toString();
     }
@@ -788,5 +792,29 @@ public class QueryPlan implements Serializable {
 
   public String getOperationName() {
     return operationName;
+  }
+
+  public String getSessionId() {
+    return sessionId;
+  }
+
+  public void setSessionId(String sessionId) {
+    this.sessionId = sessionId;
+  }
+
+  public String getThreadName() {
+    return threadName;
+  }
+
+  public void setThreadName(String threadName) {
+    this.threadName = threadName;
+  }
+
+  public String getUserProvidedContext() {
+    return userProvidedContext;
+  }
+
+  public void setUserProvidedContext(String userProvidedContext) {
+    this.userProvidedContext = userProvidedContext;
   }
 }
