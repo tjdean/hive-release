@@ -54,6 +54,7 @@ import org.apache.hadoop.hive.metastore.api.PrivilegeBag;
 import org.apache.hadoop.hive.metastore.api.Role;
 import org.apache.hadoop.hive.metastore.api.SetPartitionsStatsRequest;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.api.TableMeta;
 import org.apache.hadoop.hive.metastore.api.Type;
 import org.apache.hadoop.hive.metastore.api.UnknownDBException;
 import org.apache.hadoop.hive.metastore.api.UnknownPartitionException;
@@ -160,6 +161,9 @@ public interface RawStore extends Configurable {
 
   public List<String> getTables(String dbName, String pattern)
       throws MetaException;
+
+  public List<TableMeta> getTableMeta(
+      String dbNames, String tableNames, List<String> tableTypes) throws MetaException;
 
   /**
    * @param dbname
