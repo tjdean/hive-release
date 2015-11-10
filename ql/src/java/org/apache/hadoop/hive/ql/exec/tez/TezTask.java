@@ -160,9 +160,7 @@ public class TezTask extends Task<TezWork> {
       // next we translate the TezWork to a Tez DAG
       DAG dag = build(jobConf, work, scratchDir, appJarLr, additionalLr, ctx);
       CallerContext callerContext = CallerContext.create("HIVE",
-          conf.getLogIdVar(SessionState.get().getSessionId()) + " "
-              + conf.getVar(HiveConf.ConfVars.HIVEQUERYID),
-          "HIVE_QUERY_ID", queryPlan.getQueryStr());
+          queryPlan.getQueryId(), "HIVE_QUERY_ID", queryPlan.getQueryStr());
       dag.setCallerContext(callerContext);
 
       // Add the extra resources to the dag

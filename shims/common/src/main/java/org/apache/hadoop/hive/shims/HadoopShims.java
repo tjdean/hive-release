@@ -778,4 +778,8 @@ public interface HadoopShims {
    */
   public void setHadoopCallerContext(String callerContext);
 
+  /*
+   * get current caller context of HDFS and Yarn.
+   */
+  public String getHadoopCallerContext();
 }

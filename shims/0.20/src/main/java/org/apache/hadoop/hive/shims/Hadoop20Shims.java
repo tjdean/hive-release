@@ -959,4 +959,11 @@ public class Hadoop20Shims implements HadoopShims {
      */
   }
 
+  public String getHadoopCallerContext() {
+    /*
+     * do nothing. This is not supported in hadoop-0.20
+     */
+    return null;
+  }
+
 }

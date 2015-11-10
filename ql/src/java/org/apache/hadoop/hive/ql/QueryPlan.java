@@ -104,16 +104,20 @@ public class QueryPlan implements Serializable {
   private QueryProperties queryProperties;
 
   private transient Long queryStartTime;
+  private String sessionId;
+  private String threadName;
+  private String userProvidedContext;
 
   public QueryPlan() {
     this.reducerTimeStatsPerJobList = new ArrayList<ReducerTimeStatsPerJob>();
   }
 
   public QueryPlan(String queryString, BaseSemanticAnalyzer sem, Long startTime) {
-    this(queryString, sem, startTime, null);
+    this(queryString, sem, startTime, null, "", "", "");
   }
 
-  public QueryPlan(String queryString, BaseSemanticAnalyzer sem, Long startTime, String queryId) {
+  public QueryPlan(String queryString, BaseSemanticAnalyzer sem, Long startTime, String queryId,
+      String sessionId, String threadName, String userProvidedContext) {
     this.queryString = queryString;
 
     rootTasks = new ArrayList<Task<? extends Serializable>>();
@@ -134,6 +138,9 @@ public class QueryPlan implements Serializable {
     query.putToQueryAttributes("queryString", this.queryString);
     queryProperties = sem.getQueryProperties();
     queryStartTime = startTime;
+    this.setSessionId(sessionId);
+    this.setThreadName(threadName);
+    this.setUserProvidedContext(userProvidedContext);
   }
 
   public String getQueryStr() {
@@ -607,7 +614,6 @@ public class QueryPlan implements Serializable {
     try {
       q.write(oprot);
     } catch (TException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
       return q.toString();
     }
@@ -621,7 +627,6 @@ public class QueryPlan implements Serializable {
     try {
       q.write(oprot);
     } catch (TException e) {
-      // TODO Auto-generated catch block
       e.printStackTrace();
       return q.toString();
     }
@@ -785,5 +790,29 @@ public class QueryPlan implements Serializable {
 
   public void setQueryStartTime(Long queryStartTime) {
     this.queryStartTime = queryStartTime;
+  }
+
+  public String getSessionId() {
+    return sessionId;
+  }
+
+  public void setSessionId(String sessionId) {
+    this.sessionId = sessionId;
+  }
+
+  public String getThreadName() {
+    return threadName;
+  }
+
+  public void setThreadName(String threadName) {
+    this.threadName = threadName;
+  }
+
+  public String getUserProvidedContext() {
+    return userProvidedContext;
+  }
+
+  public void setUserProvidedContext(String userProvidedContext) {
+    this.userProvidedContext = userProvidedContext;
   }
 }
