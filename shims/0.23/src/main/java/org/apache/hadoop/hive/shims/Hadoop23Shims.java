@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.shims;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
@@ -93,6 +94,7 @@ import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.hadoop.tools.DistCp;
 import org.apache.hadoop.tools.DistCpOptions;
 import org.apache.hadoop.util.Progressable;
@@ -1152,11 +1154,14 @@ public class Hadoop23Shims extends HadoopShimsSecure {
     options.setSkipCRC(true);
     options.setSyncFolder(true);
     try {
+      conf.setBoolean("mapred.mapper.new-api", true);
       DistCp distcp = new DistCp(conf, options);
       distcp.execute();
       return true;
     } catch (Exception e) {
       throw new IOException("Cannot execute DistCp process: " + e, e);
+    } finally {
+      conf.setBoolean("mapred.mapper.new-api", false);
     }
   }
 
