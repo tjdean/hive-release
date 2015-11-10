@@ -214,6 +214,8 @@ BUG Fixes:
     HIVE-12344: Wrong types inferred for SemiJoin generation in CBO
     HIVE-12354: MapJoin with double keys is slow on MR
     HIVE-11950: WebHCat status file doesn't show UTF8 character
+    HIVE-11724: WebHcat get jobs to order jobs on time order with latest at top
+    HIVE-12076: WebHCat listing jobs after the given JobId even when templeton.jobs.listorder is set to lexicographicaldesc
 
 Hortonworks bug fixes, without a corresponding Apache Jira:
     BUG-40858: (2.2-maint) vectorization with ACID table, count(1) fails with ArrayIndexOutOfBoundsException
