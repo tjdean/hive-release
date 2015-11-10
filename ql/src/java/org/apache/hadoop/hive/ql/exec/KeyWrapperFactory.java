@@ -103,7 +103,7 @@ public class KeyWrapperFactory {
 
     @Override
     public void setHashKey() {
-      hashcode = Arrays.hashCode(keys);
+      hashcode = ObjectInspectorUtils.writableArrayHashCode(keys);
     }
 
     @Override
