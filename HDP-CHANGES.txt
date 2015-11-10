@@ -103,6 +103,117 @@ BUG Fixes:
     HIVE-11493: Predicate with integer column equals double evaluates to false
     HIVE-11613: schematool should return non zero exit status for info command, if state is inconsistent
     HIVE-11727 : (BUG-43738). Hive on Tez through Oozie: Some queries fail with fnf exception
+    HIVE-5277: HBase handler skips rows with null valued first cells when only row key is selected
+    HIVE-5545: HCatRecord getInteger method returns String when used on Partition columns of type INT
+    HIVE-5631: Index creation on a skew table fails
+    HIVE-6099: Multi insert does not work properly with distinct count
+    HIVE-6308: COLUMNS_V2 Metastore table not populated for tables created without an explicit column list.
+    HIVE-7049: Unable to deserialize AVRO data when file schema and record schema are different and nullable
+    HIVE-8330: HiveResultSet.findColumn() parameters are case sensitive
+    HIVE-8512: queries with star and gby produce incorrect results
+    HIVE-8610: Compile time skew join optimization doesn't work with auto map join
+    HIVE-8666: hive.metastore.server.max.threads default is too high
+    HIVE-8848: data loading from text files or text file processing doesn't handle nulls correctly
+    HIVE-8875: hive.optimize.sort.dynamic.partition should be turned off for ACID
+    HIVE-8895: bugs in mergejoin
+    HIVE-8914: HDFSCleanup thread holds reference to FileSystem
+    HIVE-8917: HIVE-5679 adds two thread safety problems
+    HIVE-9013: Hive set command exposes metastore db password
+    HIVE-9073: NPE when using custom windowing UDAFs
+    HIVE-9151: Checking s against null in TezJobMonitor#getNameWithProgress() should be done earlier
+    HIVE-9390: Enhance retry logic wrt DB access in TxnHandler
+    HIVE-9404: NPE in org.apache.hadoop.hive.metastore.txn.TxnHandler.determineDatabaseProduct()
+    HIVE-9474: truncate table changes permissions on the target
+    HIVE-9484: ThriftCLIService#getDelegationToken does case sensitive comparison
+    HIVE-9496: Slf4j warning in hive command
+    HIVE-9566: HiveServer2 fails to start with NullPointerException
+    HIVE-9580: Server returns incorrect result from JOIN ON VARCHAR columns
+    HIVE-9617: UDF from_utc_timestamp throws NPE if the second argument is null
+    HIVE-9686: HiveMetastore.logAuditEvent can be used before sasl server is started
+    HIVE-9695: Redundant filter operator in reducer Vertex when CBO is disabled
+    HIVE-9711: ORC Vectorization DoubleColumnVector.isRepeating=false if all entries are NaN
+    HIVE-9720: Metastore does not properly migrate column stats when renaming a table across databases.
+    HIVE-9721: Hadoop23Shims.setFullFileStatus should check for null
+    HIVE-9811: Hive on Tez leaks WorkMap objects
+    HIVE-9839: HiveServer2 leaks OperationHandle on async queries which fail at compile phase
+    HIVE-9855: Runtime skew join doesn't work when skewed data only exists in big table
+    HIVE-9920: DROP DATABASE IF EXISTS throws exception if database does not exist
+    HIVE-10083: SMBJoin fails in case one table is uninitialized
+    HIVE-10178: DateWritable incorrectly calculates daysSinceEpoch for negative Unix time
+    HIVE-10209: FetchTask with VC may fail because ExecMapper.done is true
+    HIVE-10213: MapReduce jobs using dynamic-partitioning fail on commit.
+    HIVE-10244: Vectorization : TPC-DS Q80 fails with java.lang.ClassCastException when hive.vectorized.execution.reduce.enabled is enabled
+    HIVE-10303: HIVE-9471 broke forward compatibility of ORC files
+    HIVE-10451: PTF deserializer fails if values are not used in reducer
+    HIVE-10528: Hiveserver2 in HTTP mode is not applying auth_to_local rules
+    HIVE-10569: Hive CLI gets stuck when hive.exec.parallel=true; and some exception happens during SessionState.start
+    HIVE-10571: HiveMetaStoreClient should close existing thrift connection before its reconnect
+    HIVE-10646: ColumnValue does not handle NULL_TYPE
+    HIVE-10651: ORC file footer cache should be bounded
+    HIVE-10732: Hive JDBC driver does not close operation for metadata queries
+    HIVE-10746: Hive 1.2.0+Tez produces 1-byte FileSplits from mapred.TextInputFormat
+    HIVE-10790: orc write on viewFS throws exception
+    HIVE-10835: Concurrency issues in JDBC driver
+    HIVE-10907: Hive on Tez: Classcast exception in some cases with SMB joins
+    HIVE-10925: Non-static threadlocals in metastore code can potentially cause memory leak
+    HIVE-10965: direct SQL for stats fails in 0-column case
+    HIVE-10966: direct SQL for stats has a cast exception on some databases
+    HIVE-10968: Windows: analyze json table via beeline failed throwing Class org.apache.hive.hcatalog.data.JsonSerDe not found
+    HIVE-10971: count(*) with count(distinct) gives wrong results when hive.groupby.skewindata=true
+    HIVE-11013: MiniTez tez_join_hash test on the branch fails with NPE (initializeOp not called?)
+    HIVE-11024: Error inserting a date value via parameter marker (PreparedStatement.setDate)
+    HIVE-11031: ORC concatenation of old files can fail while merging column statistics
+    HIVE-11054: Read error : Partition Varchar column cannot be cast to string
+    HIVE-11123: Fix how to confirm the RDBMS product name at Metastore.
+    HIVE-11132: Queries using join and group by produce incorrect output when hive.auto.convert.join=false and hive.optimize.reducededuplication=true
+    HIVE-11149: Fix issue with sometimes HashMap in PerfLogger.java hangs
+    HIVE-11172: Vectorization wrong results for aggregate query with where clause without group by
+    HIVE-11176: Caused by: java.lang.ClassCastException: org.apache.hadoop.hive.serde2.lazybinary.LazyBinaryStruct cannot be cast to [Ljava.lang.Object;
+    HIVE-11193: ConstantPropagateProcCtx should use a Set instead of a List to hold operators to be deleted
+    HIVE-11301: thrift metastore issue when getting stats results in disconnect
+    HIVE-11407: JDBC DatabaseMetaData.getTables with large no of tables call leads to HS2 OOM
+    HIVE-11408: HiveServer2 is leaking ClassLoaders when add jar / temporary functions are used due to constructor caching in Hadoop ReflectionUtils
+    HIVE-11432: Hive macro give same result for different arguments
+    HIVE-11499: Datanucleus leaks classloaders when used using embedded metastore with HiveServer2 with UDFs
+    HIVE-11502: Map side aggregation is extremely slow
+    HIVE-11510: Metatool updateLocation warning on views
+    HIVE-11517: Vectorized auto_smb_mapjoin_14.q produces different results
+    HIVE-11583: When PTF is used over a large partitions result could be corrupted
+    HIVE-11603: IndexOutOfBoundsException thrown when accessing a union all subquery and filtering on a column which does not exist in all underlying tables
+    HIVE-11605: Incorrect results with bucket map join in tez.
+    HIVE-11606: Bucket map joins fail at hash table construction time
+    HIVE-11628: DB type detection code is failing on Oracle 12
+    HIVE-11670: Strip out password information from TezSessionState configuration
+    HIVE-11712: Duplicate groupby keys cause ClassCastException
+    HIVE-11720: Allow HiveServer2 to set custom http request/response header size
+    HIVE-11727: Hive on Tez through Oozie: Some queries fail with fnf exception
+    HIVE-11737: IndexOutOfBounds compiling query with duplicated groupby keys
+    HIVE-11807: Set ORC buffer size in relation to set stripe size
+    HIVE-11835: Type decimal(1,1) reads 0.0, 0.00, etc from text file as NULL
+    HIVE-11839: Vectorization wrong results with filter of (CAST AS CHAR)
+    HIVE-11849: NPE in HiveHBaseTableShapshotInputFormat in query with just count(*)
+    HIVE-11901: StorageBasedAuthorizationProvider requires write permission on table for SELECT statements
+    HIVE-11960: braces in join conditions are not supported
+    HIVE-11964: RelOptHiveTable.hiveColStatsMap might contain mismatched column stats
+    HIVE-11977: Hive should handle an external avro table with zero length files present
+    HIVE-11988: [hive] security issue with hive & ranger for import table command
+    HIVE-12012: select query on json table with map containing numeric values fails
+    HIVE-12057: ORC sarg is logged too much
+    HIVE-12083: HIVE-10965 introduces thrift error if partNames or colNames are empty
+    HIVE-12084: Hive queries with ORDER BY and large LIMIT fails with OutOfMemoryError Java heap space
+    HIVE-12201: Tez settings need to be shown in set -v output when execution engine is tez.
+    HIVE-12204: Tez queries stopped running with ApplicationNotRunningException
+    HIVE-12206: ClassNotFound Exception during query compilation with Tez and Union query and GenericUDFs
+    HIVE-12223: Filter on Grouping__ID does not work properly
+    HIVE-12249: Improve logging with tez
+    HIVE-12254: Improve logging with yarn/hdfs
+    HIVE-12261: schematool version info exit status should depend on compatibility, not equality
+    HIVE-12262: Session log dir cannot be created in some cases
+    HIVE-12277: Hive macro results on macro_duplicate.q different after adding ORDER BY
+    HIVE-12340: ExecDriver.execute() unnecessarily sets METASTOREPWD to HIVE
+    HIVE-12344: Wrong types inferred for SemiJoin generation in CBO
+    HIVE-12354: MapJoin with double keys is slow on MR
+    HIVE-11950: WebHCat status file doesn't show UTF8 character
 
 Hortonworks bug fixes, without a corresponding Apache Jira:
     BUG-40858: (2.2-maint) vectorization with ACID table, count(1) fails with ArrayIndexOutOfBoundsException
