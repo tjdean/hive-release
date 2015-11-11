@@ -108,7 +108,7 @@ STAGE PLANS:
                         predicate: (_col0 <> '14') (type: boolean)
                         Statistics: Num rows: 83 Data size: 881 Basic stats: COMPLETE Column stats: NONE
                         Filter Operator
-                          predicate: ((_col0 <> '302') and ((_col0 <> '311') and (_col0 < '400'))) (type: boolean)
+                          predicate: ((_col0 <> '302') and (_col0 <> '311') and (_col0 < '400')) (type: boolean)
                           Statistics: Num rows: 27 Data size: 286 Basic stats: COMPLETE Column stats: NONE
                           Filter Operator
                             predicate: _col0 is not null (type: boolean)
