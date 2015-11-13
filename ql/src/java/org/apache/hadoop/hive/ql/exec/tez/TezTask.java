@@ -301,7 +301,10 @@ public class TezTask extends Task<TezWork> {
     FileSystem fs = scratchDir.getFileSystem(conf);
 
     // the name of the dag is what is displayed in the AM/Job UI
-    DAG dag = DAG.create(work.getName());
+    String dagName = utils.createDagName(conf, queryPlan);
+
+    LOG.info("Dag name: " + dagName);
+    DAG dag = DAG.create(dagName);
 
     // set some info for the query
     JSONObject json = new JSONObject().put("context", "Hive").put("description", ctx.getCmd());
