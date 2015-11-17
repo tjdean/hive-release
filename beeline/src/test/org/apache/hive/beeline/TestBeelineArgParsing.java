@@ -21,11 +21,8 @@ package org.apache.hive.beeline;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.PrintStream;
 
 import junit.framework.Assert;
 
@@ -170,25 +167,6 @@ public class TestBeelineArgParsing {
     TestBeeline bl = new TestBeeline();
     String args[] = new String[] {"-u", "url", "-n"};
     Assert.assertEquals(-1, bl.initArgs(args));
-  }
-
-  @Test
-  public void testBeelinePasswordMask() throws Exception {
-    TestBeeline bl = new TestBeeline();
-    File errFile = File.createTempFile("test", "tmp");
-    bl.setErrorStream(new PrintStream(new FileOutputStream(errFile)));
-    String args[] =
-        new String[] { "-u", "url", "-n", "name", "-p", "password", "-d", "driver",
-            "--autoCommit=true", "--verbose", "--truncateTable" };
-    bl.initArgs(args);
-    bl.close();
-    String errContents = "";
-    BufferedReader reader = new BufferedReader(new FileReader(errFile));
-    String line;
-    while ((line = reader.readLine())!=null) {
-        errContents += line;
-    }
-    Assert.assertTrue(errContents.contains(BeeLine.PASSWD_MASK));
   }
 
 }
