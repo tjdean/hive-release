@@ -23,6 +23,9 @@ import java.util.List;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import junit.framework.Assert;
 
@@ -167,6 +170,20 @@ public class TestBeelineArgParsing {
     TestBeeline bl = new TestBeeline();
     String args[] = new String[] {"-u", "url", "-n"};
     Assert.assertEquals(-1, bl.initArgs(args));
+  }
+
+  @Test
+  public void testBeelinePasswordMask() throws Exception {
+    TestBeeline bl = new TestBeeline();
+    File errFile = File.createTempFile("test", "tmp");
+    bl.setErrorStream(new PrintStream(new FileOutputStream(errFile)));
+    String args[] =
+        new String[] { "-u", "url", "-n", "name", "-p", "password", "-d", "driver",
+            "--autoCommit=true", "--verbose", "--truncateTable" };
+    bl.initArgs(args);
+    bl.close();
+    String errContents = new String(Files.readAllBytes(Paths.get(errFile.toString())));
+    Assert.assertTrue(errContents.contains(BeeLine.PASSWD_MASK));
   }
 
 }
