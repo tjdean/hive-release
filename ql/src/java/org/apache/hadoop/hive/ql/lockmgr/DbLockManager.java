@@ -217,7 +217,7 @@ public class DbLockManager implements HiveLockManager{
     try {
       LOG.debug("Unlocking " + hiveLock);
       client.unlock(lockId);
-      boolean removed = locks.remove(hiveLock);
+      removed = locks.remove(hiveLock);
       Metrics metrics = MetricsFactory.getInstance();
       if (metrics != null) {
         try {

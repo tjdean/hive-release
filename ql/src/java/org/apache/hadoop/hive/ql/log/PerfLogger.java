@@ -20,11 +20,14 @@ package org.apache.hadoop.hive.ql.log;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.common.metrics.common.Metrics;
+import org.apache.hadoop.hive.common.metrics.common.MetricsFactory;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.QueryPlan;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.util.ReflectionUtils;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -134,6 +137,7 @@ public class PerfLogger {
     long startTime = System.currentTimeMillis();
     LOG.info("<PERFLOG method=" + method + " from=" + callerName + ">");
     startTimes.put(method, new Long(startTime));
+    beginMetrics(method);
   }
 
   /**
@@ -160,6 +164,8 @@ public class PerfLogger {
     }
     sb.append(" from=").append(callerName).append(">");
     LOG.info(sb);
+
+    endMetrics(method);
 
     return duration;
   }
@@ -207,4 +213,25 @@ public class PerfLogger {
     return duration;
   }
 
+  private void beginMetrics(String method) {
+    Metrics metrics = MetricsFactory.getInstance();
+    try {
+      if (metrics != null) {
+        metrics.startStoredScope(method);
+      }
+    } catch (IOException e) {
+      LOG.warn("Error recording metrics", e);
+    }
+  }
+
+  private void endMetrics(String method) {
+    Metrics metrics = MetricsFactory.getInstance();
+    try {
+      if (metrics != null) {
+        metrics.endStoredScope(method);
+      }
+    } catch (IOException e) {
+      LOG.warn("Error recording metrics", e);
+    }
+  }
 }
