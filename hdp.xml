@@ -23,57 +23,46 @@
   <artifactId>hive</artifactId>
   <version>1.2.1</version>
   <packaging>pom</packaging>
+  <properties>
+    <property>DoNOTDeactivateMe</property>
+  </properties>
 
   <name>Hive</name>
   <url>http://hive.apache.org</url>
   <prerequisites>
     <maven>2.2.1</maven>
   </prerequisites>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <configuration>
+              <executable>python</executable>
+              <workingDirectory>.</workingDirectory>
+              <arguments>
+                <argument>getAndApplyHDPPatch.py</argument>
+                <argument>${env.MAVEN_CMD_LINE_ARGS}</argument>
+              </arguments>
+            </configuration>
+            <id>python-build</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
   <profiles>
     <profile>
-      <id>hdp</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <configuration>
-                  <executable>python</executable>
-                  <workingDirectory>.</workingDirectory>
-                  <arguments>
-                    <argument>getAndApplyHDPPatch.py</argument>
-                    <argument>${env.MAVEN_CMD_LINE_ARGS}</argument>
-                  </arguments>
-                </configuration>
-                <id>python-build</id>
-                <phase>prepare-package</phase>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-              </execution>
-              <execution>
-                <id>default-compile</id>
-                <phase>none</phase>
-              </execution>
-            </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-compiler-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>default-compile</id>
-                <phase>none</phase>
-              </execution>
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
+      <id>hadoop-2</id>
+    </profile>
+    <profile>
+      <id>dist</id>
     </profile>
   </profiles>
 

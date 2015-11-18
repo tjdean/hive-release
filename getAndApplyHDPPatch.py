@@ -38,7 +38,7 @@ patchApplyResponse = subprocess.check_output(["git", "apply", patchFile])
 #### done applying the patch file
 
 #### Maven command line
-commandLine = ["mvn"]
+commandLine = ["mvn3"]
 first = True;
 
 for arg in sys.argv:
