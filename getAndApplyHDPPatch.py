@@ -52,7 +52,7 @@ for arg in sys.argv:
     commandLine.append(arg)
 
 command = ""
-leavePatch = False
+leavePatch = True
 ignoreNext = False
 for arg in commandLine:
   if (ignoreNext == True):
@@ -65,7 +65,7 @@ for arg in commandLine:
   if (arg == "-Phdp"):
     continue
   if (arg == "-DcleanUp"):
-    leavePatch = True
+    leavePatch = False
     continue
 
   command += " " + arg
