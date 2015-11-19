@@ -84,6 +84,8 @@ exitCode = process.returncode
 
 if (exitCode != 0):
   print output
+  print "Reverting patch because of failure to build"
+  patchApplyResponse = subprocess.check_output(["git", "apply", "-R", patchFile])
   sys.exit(exitCode)
 #### done triggering the build
 
