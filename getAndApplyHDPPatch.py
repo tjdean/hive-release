@@ -7,6 +7,16 @@ import os
 
 patchFile = "hive-source-2.3.patch"
 
+#### try to revert patch if it exists
+statusOut = subprocess.check_output(["git", "status"])
+if (("modified" in statusOut) and ("pom.xml" in statusOut)):
+  if os.path.exists(patchFile):
+    try:
+      patchApplyResponse = subprocess.check_output(["git", "apply", "-R", patchFile])
+    except:
+      pass
+#### done reverting patch
+
 #### remove the old patch file if it exists
 try:
   os.remove(patchFile)
