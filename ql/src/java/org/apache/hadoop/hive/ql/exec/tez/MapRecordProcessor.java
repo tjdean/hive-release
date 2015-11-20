@@ -367,7 +367,7 @@ public class MapRecordProcessor extends RecordProcessor {
         throw new RuntimeException("Hive Runtime Error while closing operators", e);
       }
     } finally {
-      Utilities.clearWorkMap();
+      Utilities.clearWorkMap(jconf);
       MapredContext.close();
     }
   }

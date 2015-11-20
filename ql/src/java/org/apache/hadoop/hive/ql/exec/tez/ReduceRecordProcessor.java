@@ -311,7 +311,7 @@ public class ReduceRecordProcessor  extends RecordProcessor{
             "Hive Runtime Error while closing operators: " + e.getMessage(), e);
       }
     } finally {
-      Utilities.clearWorkMap();
+      Utilities.clearWorkMap(jconf);
       MapredContext.close();
     }
   }

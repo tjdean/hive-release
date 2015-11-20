@@ -73,6 +73,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.Deflater;
@@ -244,13 +245,7 @@ public final class Utilities {
     // prevent instantiation
   }
 
-  private static ThreadLocal<Map<Path, BaseWork>> gWorkMap =
-      new ThreadLocal<Map<Path, BaseWork>>() {
-    @Override
-    protected Map<Path, BaseWork> initialValue() {
-      return new HashMap<Path, BaseWork>();
-    }
-  };
+  private static GlobalWorkMapFactory gWorkMap = new GlobalWorkMapFactory();
 
   private static final String CLASS_NAME = Utilities.class.getName();
   private static final Log LOG = LogFactory.getLog(CLASS_NAME);
@@ -359,7 +354,7 @@ public final class Utilities {
    */
   public static void setBaseWork(Configuration conf, String name, BaseWork work) {
     Path path = getPlanPath(conf, name);
-    gWorkMap.get().put(path, work);
+    gWorkMap.get(conf).put(path, work);
   }
 
   /**
@@ -389,7 +384,7 @@ public final class Utilities {
       path = getPlanPath(conf, name);
       LOG.info("PLAN PATH = " + path);
       assert path != null;
-      BaseWork gWork = gWorkMap.get().get(path);
+      BaseWork gWork = gWorkMap.get(conf).get(path);
       if (gWork == null) {
         Path localPath;
         if (conf.getBoolean("mapreduce.task.uberized", false) && name.equals(REDUCE_PLAN_NAME)) {
@@ -446,7 +441,7 @@ public final class Utilities {
             throw new RuntimeException("Unknown work type: " + name);
           }
         }
-        gWorkMap.get().put(path, gWork);
+        gWorkMap.get(conf).put(path, gWork);
       } else if (LOG.isDebugEnabled()) {
         LOG.debug("Found plan in cache for name: " + name);
       }
@@ -740,7 +735,7 @@ public final class Utilities {
       }
 
       // Cache the plan in this process
-      gWorkMap.get().put(planPath, w);
+      gWorkMap.get(conf).put(planPath, w);
       return planPath;
     } catch (Exception e) {
       String msg = "Error caching " + name + ": " + e;
@@ -3728,15 +3723,16 @@ public final class Utilities {
     Path mapPath = getPlanPath(conf, MAP_PLAN_NAME);
     Path reducePath = getPlanPath(conf, REDUCE_PLAN_NAME);
     if (mapPath != null) {
-      gWorkMap.get().remove(mapPath);
+      gWorkMap.get(conf).remove(mapPath);
     }
     if (reducePath != null) {
-      gWorkMap.get().remove(reducePath);
+      gWorkMap.get(conf).remove(reducePath);
     }
+    // TODO: should this also clean merge work?
   }
 
-  public static void clearWorkMap() {
-    gWorkMap.get().clear();
+  public static void clearWorkMap(Configuration conf) {
+    gWorkMap.get(conf).clear();
   }
 
   /**

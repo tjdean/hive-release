@@ -441,7 +441,7 @@ public class SparkReduceRecordHandler extends SparkRecordHandler {
       }
     } finally {
       MapredContext.close();
-      Utilities.clearWorkMap();
+      Utilities.clearWorkMap(jc);
     }
   }
 
