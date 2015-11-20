@@ -198,6 +198,8 @@ public class MapRecordProcessor extends RecordProcessor {
               mergeMapOp.setChildren(jconf);
             }
 
+            l4j.info("BUG-48404: Class cast for operator tree of Map Work: " +
+                mergeMapWork.getName() + " operator pipeline: ");
             DummyStoreOperator dummyOp = getJoinParentOp(mergeMapOp);
             if (dummyOp instanceof TezDummyStoreOperator) {
               // we ensure that we don't try to read any data for this table.
@@ -307,6 +309,8 @@ public class MapRecordProcessor extends RecordProcessor {
   }
 
   private DummyStoreOperator getJoinParentOp(Operator<? extends OperatorDesc> mergeMapOp) {
+    l4j.info("BUG-48404: Operator is " + mergeMapOp + " is of type " +
+        mergeMapOp.getClass().getCanonicalName());
     for (Operator<? extends OperatorDesc> childOp : mergeMapOp.getChildOperators()) {
       if ((childOp.getChildOperators() == null) || (childOp.getChildOperators().isEmpty())) {
         return (DummyStoreOperator) childOp;
