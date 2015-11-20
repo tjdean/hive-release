@@ -127,6 +127,17 @@ public class TezSessionState {
    */
   public void open(HiveConf conf, String[] additionalFiles)
     throws IOException, LoginException, IllegalArgumentException, URISyntaxException, TezException {
+    LOG.info("Opening the session with id " + sessionId + " for thread "
+        + Thread.currentThread().getName() + " log trace id - " + conf.getLogIdVar()
+        + " query id - " + conf.getVar(HiveConf.ConfVars.HIVEQUERYID));
+    String callerContext = conf.getVar(HiveConf.ConfVars.HIVEQUERYID);
+    String prefix = "HIVE_QUERY_ID:";
+    if ((callerContext == null) || (callerContext == "")) {
+      prefix = "HIVE_SSN_ID:";
+      callerContext = sessionId;
+    }
+    ShimLoader.getHadoopShims().setHadoopCallerContext(prefix, callerContext);
+
     this.conf = conf;
     this.queueName = conf.get("tez.queue.name");
     this.doAsEnabled = conf.getBoolVar(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS);
@@ -208,6 +219,8 @@ public class TezSessionState {
     } catch(InterruptedException ie) {
       //ignore
     }
+    // reset caller context
+    ShimLoader.getHadoopShims().setHadoopCallerContext("");
   }
 
   public void refreshLocalResourcesFromConf(HiveConf conf)

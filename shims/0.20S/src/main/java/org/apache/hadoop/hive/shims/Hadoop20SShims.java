@@ -728,6 +728,7 @@ public class Hadoop20SShims extends HadoopShimsSecure {
     cred.addToken(fsToken.getService(), fsToken);
   }
 
+  @Override
   public void setHadoopCallerContext(String callerContext) {
     /*
      * do nothing. This is not supported in hadoop-1
@@ -740,5 +741,12 @@ public class Hadoop20SShims extends HadoopShimsSecure {
      * do nothing. This is not supported in hadoop-1
      */
     return null;
+  }
+
+  @Override
+  public void setHadoopCallerContext(String prefix, String callerContext) {
+    /*
+     * do nothing. This is not supported in hadoop-1
+     */
   }
 }
