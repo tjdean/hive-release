@@ -127,4 +127,16 @@ public interface HiveTxnManager {
    * @return true if this transaction manager does ACID
    */
   boolean supportsAcid();
+
+  /**
+   * This behaves exactly as
+   * https://docs.oracle.com/javase/6/docs/api/java/sql/Connection.html#getAutoCommit()
+   */
+  boolean getAutoCommit();
+
+  boolean isTxnOpen();
+  /**
+   * if {@code isTxnOpen()}, returns the currently active transaction ID
+   */
+  long getCurrentTxnId();
 }

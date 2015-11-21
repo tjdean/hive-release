@@ -1009,21 +1009,19 @@ public class Driver implements CommandProcessor {
             "\n" + org.apache.hadoop.util.StringUtils.stringifyException(e));
         return 10;
       }
-      if (acidSinks != null && acidSinks.size() > 0) {
-        // We are writing to tables in an ACID compliant way, so we need to open a transaction
-        long txnId = ss.getCurrentTxn();
-        if (txnId == SessionState.NO_CURRENT_TXN) {
-          txnId = txnMgr.openTxn(userFromUGI);
-          ss.setCurrentTxn(txnId);
-          LOG.debug("Setting current transaction to " + txnId);
-        }
-        // Set the transaction id in all of the acid file sinks
-        if (acidSinks != null) {
-          for (FileSinkDesc desc : acidSinks) {
-            desc.setTransactionId(txnId);
-          }
-        }
 
+      if (txnMgr.getAutoCommit() && haveAcidWrite()) {
+        // We are writing to tables in an ACID compliant way, so we need to open a transaction
+        if(txnMgr.isTxnOpen()) {
+          throw new RuntimeException("Already have an open transaction txnid:" + txnMgr.getCurrentTxnId());
+        }
+        txnMgr.openTxn(userFromUGI);
+        LOG.debug("Setting current transaction to " + txnMgr.getCurrentTxnId());
+
+        // Set the transaction id in all of the acid file sinks
+          for (FileSinkDesc desc : acidSinks) {
+            desc.setTransactionId(txnMgr.getCurrentTxnId());
+          }
         // TODO Once we move to cross query transactions we need to add the open transaction to
         // our list of valid transactions.  We don't have a way to do that right now.
       }
@@ -1043,6 +1041,9 @@ public class Driver implements CommandProcessor {
     }
   }
 
+  private boolean haveAcidWrite() {
+    return acidSinks != null && !acidSinks.isEmpty();
+  }
   /**
    * @param hiveLocks
    *          list of hive locks to be released Release all the locks specified. If some of the
@@ -1058,8 +1059,8 @@ public class Driver implements CommandProcessor {
     perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.RELEASE_LOCKS);
 
     HiveTxnManager txnMgr;
-    SessionState ss = SessionState.get();
     if (txnManager == null) {
+      SessionState ss = SessionState.get();
       txnMgr = ss.getTxnMgr();
     } else {
       txnMgr = txnManager;
@@ -1067,15 +1068,11 @@ public class Driver implements CommandProcessor {
 
     // If we've opened a transaction we need to commit or rollback rather than explicitly
     // releasing the locks.
-    if (ss.getCurrentTxn() != SessionState.NO_CURRENT_TXN && ss.isAutoCommit()) {
-      try {
-        if (commit) {
-          txnMgr.commitTxn();
-        } else {
-          txnMgr.rollbackTxn();
-        }
-      } finally {
-        ss.setCurrentTxn(SessionState.NO_CURRENT_TXN);
+    if (txnMgr.isTxnOpen()) {
+      if (commit) {
+        txnMgr.commitTxn();//both commit & rollback clear ALL locks for this tx
+      } else {
+        txnMgr.rollbackTxn();
       }
     } else {
       if (hiveLocks != null) {

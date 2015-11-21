@@ -374,7 +374,13 @@ public class DbTxnManager extends HiveTxnManagerImpl {
       }
     }
   }
+
   public boolean isTxnOpen() {
     return txnId > 0;
+  }
+
+  @Override
+  public long getCurrentTxnId() {
+    return txnId;
   }
 }
