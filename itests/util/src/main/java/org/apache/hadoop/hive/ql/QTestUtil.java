@@ -855,14 +855,6 @@ public class QTestUtil {
     HiveConf.setVar(conf, HiveConf.ConfVars.HIVE_AUTHENTICATOR_MANAGER,
     "org.apache.hadoop.hive.ql.security.DummyAuthenticator");
     Utilities.clearWorkMap(conf);
-    if (QTestUtil.clusterType == MiniClusterType.tezlocal) {
-      conf.setBoolean("tez.local.mode", true);
-      conf.set("fs.defaultFS", "file:///");
-      conf.setBoolean("tez.runtime.optimize.local.fetch", true);
-      conf.set("tez.staging-dir", tezDir + "/staging");
-      conf.setInt("tez.am.inline.task.execution.max-tasks", 2);
-      conf.setBoolean("tez.ignore.lib.uris", true);
-    }
     CliSessionState ss = createSessionState();
     assert ss != null;
     ss.in = System.in;
