@@ -167,6 +167,7 @@ STAGE PLANS:
                           sort order: 
                           Statistics: Num rows: 1 Data size: 20 Basic stats: COMPLETE Column stats: NONE
                           value expressions: _col0 (type: struct<count:bigint,sum:double,input:int>), _col1 (type: double), _col2 (type: struct<count:bigint,sum:double,variance:double>), _col3 (type: struct<count:bigint,sum:double,variance:double>), _col4 (type: struct<count:bigint,sum:double,variance:double>), _col5 (type: struct<count:bigint,sum:double,input:float>), _col6 (type: struct<count:bigint,sum:double,variance:double>), _col7 (type: tinyint), _col8 (type: bigint)
+            Execution mode: vectorized
         Reducer 2 
             Reduce Operator Tree:
               Group By Operator
@@ -378,6 +379,7 @@ STAGE PLANS:
                           sort order: 
                           Statistics: Num rows: 1 Data size: 24 Basic stats: COMPLETE Column stats: NONE
                           value expressions: _col0 (type: int), _col1 (type: struct<count:bigint,sum:double,variance:double>), _col2 (type: struct<count:bigint,sum:double,variance:double>), _col3 (type: double), _col4 (type: struct<count:bigint,sum:double,input:tinyint>), _col5 (type: int), _col6 (type: double), _col7 (type: struct<count:bigint,sum:double,variance:double>), _col8 (type: struct<count:bigint,sum:double,variance:double>)
+            Execution mode: vectorized
         Reducer 2 
             Reduce Operator Tree:
               Group By Operator
@@ -580,6 +582,7 @@ STAGE PLANS:
                           sort order: 
                           Statistics: Num rows: 1 Data size: 24 Basic stats: COMPLETE Column stats: NONE
                           value expressions: _col0 (type: struct<count:bigint,sum:double,variance:double>), _col1 (type: bigint), _col2 (type: tinyint), _col3 (type: struct<count:bigint,sum:double,variance:double>), _col4 (type: int), _col5 (type: struct<count:bigint,sum:double,variance:double>), _col6 (type: bigint), _col7 (type: struct<count:bigint,sum:double,input:tinyint>)
+            Execution mode: vectorized
         Reducer 2 
             Reduce Operator Tree:
               Group By Operator
@@ -761,6 +764,7 @@ STAGE PLANS:
                           sort order: 
                           Statistics: Num rows: 1 Data size: 12 Basic stats: COMPLETE Column stats: NONE
                           value expressions: _col0 (type: struct<count:bigint,sum:double,input:tinyint>), _col1 (type: bigint), _col2 (type: struct<count:bigint,sum:double,variance:double>), _col3 (type: struct<count:bigint,sum:double,variance:double>), _col4 (type: struct<count:bigint,sum:double,variance:double>), _col5 (type: float)
+            Execution mode: vectorized
         Reducer 2 
             Reduce Operator Tree:
               Group By Operator
@@ -945,6 +949,7 @@ STAGE PLANS:
                         key expressions: _col0 (type: int), _col1 (type: double), _col2 (type: timestamp), _col3 (type: string), _col4 (type: boolean), _col5 (type: tinyint), _col6 (type: float), _col7 (type: timestamp), _col8 (type: smallint), _col9 (type: bigint), _col10 (type: bigint), _col11 (type: int), _col12 (type: double), _col13 (type: smallint), _col14 (type: smallint), _col15 (type: smallint), _col16 (type: double), _col17 (type: double), _col18 (type: float), _col19 (type: double), _col20 (type: double), _col21 (type: tinyint), _col22 (type: double)
                         sort order: +++++++++++++++++++++++
                         Statistics: Num rows: 9898 Data size: 2128105 Basic stats: COMPLETE Column stats: NONE
+            Execution mode: vectorized
         Reducer 2 
             Reduce Operator Tree:
               Select Operator
@@ -1202,6 +1207,7 @@ STAGE PLANS:
                         key expressions: _col0 (type: int), _col1 (type: bigint), _col2 (type: string), _col3 (type: boolean), _col4 (type: float), _col5 (type: double), _col6 (type: timestamp), _col7 (type: smallint), _col8 (type: string), _col9 (type: boolean), _col10 (type: double), _col11 (type: double), _col12 (type: double), _col13 (type: double), _col14 (type: float), _col15 (type: float), _col16 (type: float), _col17 (type: double), _col18 (type: double), _col19 (type: bigint), _col20 (type: double), _col21 (type: smallint), _col22 (type: bigint), _col23 (type: double), _col24 (type: smallint)
                         sort order: +++++++++++++++++++++++++
                         Statistics: Num rows: 12288 Data size: 2641964 Basic stats: COMPLETE Column stats: NONE
+            Execution mode: vectorized
         Reducer 2 
             Reduce Operator Tree:
               Select Operator
@@ -1409,6 +1415,7 @@ STAGE PLANS:
                         sort order: +++++++++++++++++++++++
                         Statistics: Num rows: 10922 Data size: 2348269 Basic stats: COMPLETE Column stats: NONE
                         value expressions: _col2 (type: boolean)
+            Execution mode: vectorized
         Reducer 2 
             Reduce Operator Tree:
               Select Operator
@@ -1674,6 +1681,7 @@ STAGE PLANS:
                         sort order: +++++++++++++++
                         Statistics: Num rows: 3868 Data size: 831633 Basic stats: COMPLETE Column stats: NONE
                         value expressions: _col0 (type: timestamp)
+            Execution mode: vectorized
         Reducer 2 
             Reduce Operator Tree:
               Select Operator
@@ -1786,7 +1794,7 @@ POSTHOOK: Input: default@alltypesorc
 1969-12-31 15:59:58.704	041Ph15F	15601.0	-55.0	-1338667765	15601	-375082.02998038667	-15858	353760.0	-15601.0	158740.17500000002	-6432.0	55.0	NULL	-15601.0	-2.43391201E8
 1969-12-31 16:00:02.401	0q4ykcW1A0SyL68L2FH45a	15601.0	30.0	2033485401	15601	569763.3513589241	-15858	-192960.0	-15601.0	158740.17500000002	-6432.0	-30.0	NULL	-15601.0	-2.43391201E8
 1969-12-31 16:00:03.888	0KoLN8L6Iih8ej2sW7JF	15601.0	-23.0	-2104361963	15601	-589622.2927991034	-15858	147936.0	-15601.0	158740.17500000002	-6432.0	23.0	NULL	-15601.0	-2.43391201E8
-1969-12-31 16:00:04.063	04XP4DrTCblC7885	15601.0	79.553	-1452617198	15601	-407009.58195572987	-15858	-511684.9	-15601.0	158740.17500000002	-6432.000015344526	-79.553	NULL	-15601.0	-2.43391201E8
+1969-12-31 16:00:04.063	04XP4DrTCblC7885	15601.0	79.553	-1452617198	15601	-407009.58195572987	-15858	-511684.9	-15601.0	158740.17500000002	-6432.0	-79.553	NULL	-15601.0	-2.43391201E8
 1969-12-31 16:00:05.007	0nur4r8MV673GcJp3h765I	15601.0	35.0	2123136080	15601	594882.6225833567	-15858	-225120.0	-15601.0	158740.17500000002	-6432.0	-35.0	NULL	-15601.0	-2.43391201E8
 1969-12-31 16:00:05.334	0u7Jba8i21vWm	15601.0	22.0	-1875861804	15601	-525598.7122443261	-15858	-141504.0	-15601.0	158740.17500000002	-6432.0	-22.0	NULL	-15601.0	-2.43391201E8
 1969-12-31 16:00:05.83	06Tj8f5xNhpaiE71AWqJ7b5	15601.0	-49.0	226841234	15601	63558.76548052676	-15858	315168.0	-15601.0	158740.17500000002	-6432.0	49.0	NULL	-15601.0	-2.43391201E8
@@ -2095,6 +2103,7 @@ STAGE PLANS:
                           Map-reduce partition columns: _col0 (type: double)
                           Statistics: Num rows: 2654 Data size: 570619 Basic stats: COMPLETE Column stats: NONE
                           value expressions: _col1 (type: struct<count:bigint,sum:double,variance:double>), _col2 (type: bigint), _col3 (type: double), _col4 (type: struct<count:bigint,sum:double,variance:double>), _col5 (type: struct<count:bigint,sum:double,variance:double>), _col6 (type: double)
+            Execution mode: vectorized
         Reducer 2 
             Reduce Operator Tree:
               Group By Operator
@@ -2349,6 +2358,7 @@ STAGE PLANS:
                           Map-reduce partition columns: _col0 (type: timestamp), _col1 (type: string)
                           Statistics: Num rows: 12288 Data size: 2641964 Basic stats: COMPLETE Column stats: NONE
                           value expressions: _col2 (type: struct<count:bigint,sum:double,variance:double>), _col3 (type: struct<count:bigint,sum:double,input:smallint>), _col4 (type: bigint), _col5 (type: tinyint), _col6 (type: struct<count:bigint,sum:double,variance:double>), _col7 (type: struct<count:bigint,sum:double,variance:double>), _col8 (type: struct<count:bigint,sum:double,input:int>), _col9 (type: struct<count:bigint,sum:double,variance:double>), _col10 (type: struct<count:bigint,sum:double,input:float>), _col11 (type: double), _col12 (type: struct<count:bigint,sum:double,variance:double>), _col13 (type: struct<count:bigint,sum:double,variance:double>), _col14 (type: bigint)
+            Execution mode: vectorized
         Reducer 2 
             Reduce Operator Tree:
               Group By Operator
@@ -2680,6 +2690,7 @@ STAGE PLANS:
                           Map-reduce partition columns: _col0 (type: boolean)
                           Statistics: Num rows: 4778 Data size: 1027287 Basic stats: COMPLETE Column stats: NONE
                           value expressions: _col1 (type: float), _col2 (type: bigint), _col3 (type: struct<count:bigint,sum:double,variance:double>), _col4 (type: struct<count:bigint,sum:double,input:double>), _col5 (type: bigint), _col6 (type: struct<count:bigint,sum:double,variance:double>), _col7 (type: bigint), _col8 (type: struct<count:bigint,sum:double,variance:double>), _col9 (type: struct<count:bigint,sum:double,variance:double>), _col10 (type: struct<count:bigint,sum:double,input:int>)
+            Execution mode: vectorized
         Reducer 2 
             Reduce Operator Tree:
               Group By Operator
