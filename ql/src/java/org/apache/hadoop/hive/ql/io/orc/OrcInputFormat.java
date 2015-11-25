@@ -724,6 +724,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     private ReaderImpl.FileMetaInfo fileMetaInfo;
     private Metadata metadata;
     private List<OrcProto.Type> types;
+    private boolean[] includedCols;
     private final boolean isOriginal;
     private final List<Long> deltas;
     private final boolean hasBase;
@@ -837,8 +838,14 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
         hosts = new String[hostList.size()];
         hostList.toArray(hosts);
       }
+
+      // scale the raw data size to split level based on ratio of split wrt to file length
+      final long fileLen = file.getLen();
+      final double splitRatio = (double) length / (double) fileLen;
+      final long scaledProjSize = projColsUncompressedSize > 0 ?
+          (long) (splitRatio * projColsUncompressedSize) : fileLen;
       return new OrcSplit(file.getPath(), offset, length, hosts, fileMetaInfo,
-          isOriginal, hasBase, deltas, projColsUncompressedSize);
+          isOriginal, hasBase, deltas, scaledProjSize);
     }
 
     /**
@@ -856,7 +863,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
       // deltas may change the rows making them match the predicate.
       if (deltas.isEmpty()) {
         Reader.Options options = new Reader.Options();
-        options.include(genIncludedColumns(types, context.conf, isOriginal));
+        options.include(includedCols);
         setSearchArgument(options, types, context.conf, isOriginal, false);
         // only do split pruning if HIVE-8732 has been fixed in the writer
         if (options.getSearchArgument() != null &&
@@ -937,8 +944,6 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     private void populateAndCacheStripeDetails() throws IOException {
       Reader orcReader = OrcFile.createReader(file.getPath(),
           OrcFile.readerOptions(context.conf).filesystem(fs));
-      List<String> projCols = ColumnProjectionUtils.getReadColumnNames(context.conf);
-      projColsUncompressedSize = orcReader.getRawDataSizeOfColumns(projCols);
       if (fileInfo != null) {
         stripes = fileInfo.stripeInfos;
         fileMetaInfo = fileInfo.fileMetaInfo;
@@ -966,6 +971,22 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
                   metadata, types, fileMetaInfo, writerVersion));
         }
       }
+      includedCols = genIncludedColumns(types, context.conf, isOriginal);
+      projColsUncompressedSize = computeProjectionSize(orcReader, includedCols, isOriginal);
+    }
+
+    private long computeProjectionSize(final Reader orcReader, final boolean[] includedCols,
+        final boolean isOriginal) {
+      final int rootIdx = getRootColumn(isOriginal);
+      List<Integer> internalColIds = Lists.newArrayList();
+      if (includedCols != null) {
+        for (int i = 0; i < includedCols.length; i++) {
+          if (includedCols[i]) {
+            internalColIds.add(rootIdx + i);
+          }
+        }
+      }
+      return orcReader.getRawDataSizeFromColIndices(internalColIds);
     }
 
     private boolean isStripeSatisfyPredicate(StripeStatistics stripeStatistics,
