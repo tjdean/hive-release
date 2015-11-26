@@ -191,6 +191,9 @@ public class OrcRecordUpdater implements RecordUpdater {
     }
   }
 
+  public String toString() {
+    return getClass().getName() + "[" + path +"]";
+  }
   /**
    * Create an object inspector for the ACID event based on the object inspector
    * for the underlying row.
