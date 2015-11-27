@@ -17,19 +17,25 @@
  */
 package org.apache.hadoop.hive.ql.lockmgr;
 
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.ql.exec.Utilities;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.common.JavaUtils;
-import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.*;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.thrift.TException;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * An implementation of HiveLockManager for use with {@link org.apache.hadoop.hive.ql.lockmgr.DbTxnManager}.
@@ -41,20 +47,20 @@ public class DbLockManager implements HiveLockManager{
   static final private String CLASS_NAME = DbLockManager.class.getName();
   static final private Log LOG = LogFactory.getLog(CLASS_NAME);
 
-  private static final long MAX_SLEEP = 15000;
-  private HiveLockManagerCtx context;
+  private long MAX_SLEEP;
   private Set<DbHiveLock> locks;
   private IMetaStoreClient client;
   private long nextSleep = 50;
+  private final HiveConf conf;
 
-  DbLockManager(IMetaStoreClient client) {
+  DbLockManager(IMetaStoreClient client, HiveConf conf) {
     locks = new HashSet<>();
     this.client = client;
+    this.conf = conf;
   }
 
   @Override
   public void setContext(HiveLockManagerCtx ctx) throws LockException {
-    context = ctx;
   }
 
   @Override
@@ -78,6 +84,10 @@ public class DbLockManager implements HiveLockManager{
    * @return the result of the lock attempt
    */
   LockState lock(LockRequest lock, String queryId, boolean isBlocking, List<HiveLock> acquiredLocks) throws LockException {
+    nextSleep = 50;
+    //get from conf to pick up changes; make not to set too low and kill the metastore
+    MAX_SLEEP = Math.max(15000, conf.getTimeVar(HiveConf.ConfVars.HIVE_LOCK_SLEEP_BETWEEN_RETRIES, TimeUnit.MILLISECONDS));
+    int maxNumWaits = Math.max(0, conf.getIntVar(HiveConf.ConfVars.HIVE_LOCK_NUMRETRIES));
     try {
       LOG.info("Requesting: queryId=" + queryId + " " + lock);
       LockResponse res = client.lock(lock);
@@ -88,15 +98,27 @@ public class DbLockManager implements HiveLockManager{
           return LockState.WAITING;
         }
       }
-      while (res.getState() == LockState.WAITING) {
+      int numRetries = 0;
+      long startRetry = System.currentTimeMillis();
+      while (res.getState() == LockState.WAITING && numRetries++ < maxNumWaits) {
         backoff();
         res = client.checkLock(res.getLockid());
 
       }
+      long retryDuration = System.currentTimeMillis() - startRetry;
       DbHiveLock hl = new DbHiveLock(res.getLockid());
       locks.add(hl);
       if (res.getState() != LockState.ACQUIRED) {
-        throw new LockException(ErrorMsg.LOCK_CANNOT_BE_ACQUIRED.getMsg());
+        if(res.getState() == LockState.WAITING) {
+          unlock(hl);//remove the locks in Waiting state
+          LockException le = new LockException(null, ErrorMsg.LOCK_ACQUIRE_TIMEDOUT,
+            lock.toString(), Long.toString(retryDuration), res.toString());
+          if(conf.getBoolVar(HiveConf.ConfVars.TXN_MGR_DUMP_LOCK_STATE_ON_ACQUIRE_TIMEOUT)) {
+            showLocksNewFormat(le.getMessage());
+          }
+          throw le;
+        }
+        throw new LockException(ErrorMsg.LOCK_CANNOT_BE_ACQUIRED.getMsg() + " " + res);
       }
       acquiredLocks.add(hl);
       return res.getState();
@@ -109,6 +131,76 @@ public class DbLockManager implements HiveLockManager{
     } catch (TException e) {
       throw new LockException(ErrorMsg.METASTORE_COMMUNICATION_FAILED.getMsg(),
           e);
+    }
+  }
+  private static final int separator = Utilities.tabCode;
+  private static final int terminator = Utilities.newLineCode;
+  private void showLocksNewFormat(String preamble) throws LockException {
+    ShowLocksResponse rsp = getLocks();
+
+    // write the results in the file
+    ByteArrayOutputStream baos = new ByteArrayOutputStream(1024*2);
+    DataOutputStream os = new DataOutputStream(baos);
+    try {
+      os.writeBytes(preamble);
+      os.write(terminator);
+      // Write a header
+      os.writeBytes("Lock ID");
+      os.write(separator);
+      os.writeBytes("Database");
+      os.write(separator);
+      os.writeBytes("Table");
+      os.write(separator);
+      os.writeBytes("Partition");
+      os.write(separator);
+      os.writeBytes("State");
+      os.write(separator);
+      os.writeBytes("Type");
+      os.write(separator);
+      os.writeBytes("Transaction ID");
+      os.write(separator);
+      os.writeBytes("Last Hearbeat");
+      os.write(separator);
+      os.writeBytes("Acquired At");
+      os.write(separator);
+      os.writeBytes("User");
+      os.write(separator);
+      os.writeBytes("Hostname");
+      os.write(terminator);
+
+      List<ShowLocksResponseElement> locks = rsp.getLocks();
+      if (locks != null) {
+        for (ShowLocksResponseElement lock : locks) {
+          os.writeBytes(Long.toString(lock.getLockid()));
+          os.write(separator);
+          os.writeBytes(lock.getDbname());
+          os.write(separator);
+          os.writeBytes((lock.getTablename() == null) ? "NULL" : lock.getTablename());
+          os.write(separator);
+          os.writeBytes((lock.getPartname() == null) ? "NULL" : lock.getPartname());
+          os.write(separator);
+          os.writeBytes(lock.getState().toString());
+          os.write(separator);
+          os.writeBytes(lock.getType().toString());
+          os.write(separator);
+          os.writeBytes((lock.getTxnid() == 0) ? "NULL" : Long.toString(lock.getTxnid()));
+          os.write(separator);
+          os.writeBytes(Long.toString(lock.getLastheartbeat()));
+          os.write(separator);
+          os.writeBytes((lock.getAcquiredat() == 0) ? "NULL" : Long.toString(lock.getAcquiredat()));
+          os.write(separator);
+          os.writeBytes(lock.getUser());
+          os.write(separator);
+          os.writeBytes(lock.getHostname());
+          os.write(separator);
+          os.write(terminator);
+        }
+      }
+      os.flush();
+      LOG.info(baos.toString());
+    }
+    catch(IOException ex) {
+      LOG.error("Dumping lock info for " + preamble + " failed: " + ex.getMessage(), ex);
     }
   }
   /**
@@ -238,8 +330,8 @@ public class DbLockManager implements HiveLockManager{
   /**
    * Clear the memory of the locks in this object.  This won't clear the locks from the database.
    * It is for use with
-   * {@link #DbLockManager(org.apache.hadoop.hive.metastore.IMetaStoreClient).commitTxn} and
-   * {@link #DbLockManager(org.apache.hadoop.hive.metastore.IMetaStoreClient).rollbackTxn}.
+   * {@link #DbLockManager(org.apache.hadoop.hive.metastore.IMetaStoreClient, org.apache.hadoop.hive.conf.HiveConf)} .commitTxn} and
+   * {@link #DbLockManager(org.apache.hadoop.hive.metastore.IMetaStoreClient, org.apache.hadoop.hive.conf.HiveConf)} .rollbackTxn}.
    */
   void clearLocalLockRecords() {
     locks.clear();
