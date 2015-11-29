@@ -1,6 +1,10 @@
-PREHOOK: query: drop table if exists union_all_bug_test_1
+PREHOOK: query: -- SORT_QUERY_RESULTS
+
+drop table if exists union_all_bug_test_1
 PREHOOK: type: DROPTABLE
-POSTHOOK: query: drop table if exists union_all_bug_test_1
+POSTHOOK: query: -- SORT_QUERY_RESULTS
+
+drop table if exists union_all_bug_test_1
 POSTHOOK: type: DROPTABLE
 PREHOOK: query: drop table if exists union_all_bug_test_2
 PREHOOK: type: DROPTABLE
@@ -138,7 +142,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 1) order by f1
+WHERE (filter = 1)
 PREHOOK: type: QUERY
 PREHOOK: Input: default@union_all_bug_test_1
 PREHOOK: Input: default@union_all_bug_test_2
@@ -158,7 +162,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 1) order by f1
+WHERE (filter = 1)
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@union_all_bug_test_1
 POSTHOOK: Input: default@union_all_bug_test_2
@@ -216,7 +220,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 1) order by f1
+WHERE (filter = 1)
 PREHOOK: type: QUERY
 PREHOOK: Input: default@union_all_bug_test_1
 PREHOOK: Input: default@union_all_bug_test_2
@@ -236,7 +240,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 1) order by f1
+WHERE (filter = 1)
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@union_all_bug_test_1
 POSTHOOK: Input: default@union_all_bug_test_2
@@ -257,7 +261,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 0) order by f1
+WHERE (filter = 0)
 PREHOOK: type: QUERY
 PREHOOK: Input: default@union_all_bug_test_1
 PREHOOK: Input: default@union_all_bug_test_2
@@ -277,7 +281,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 0) order by f1
+WHERE (filter = 0)
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@union_all_bug_test_1
 POSTHOOK: Input: default@union_all_bug_test_2
@@ -300,7 +304,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 1 or filter = 0) order by f1
+WHERE (filter = 1 or filter = 0)
 PREHOOK: type: QUERY
 PREHOOK: Input: default@union_all_bug_test_1
 PREHOOK: Input: default@union_all_bug_test_2
@@ -320,7 +324,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (filter = 1 or filter = 0) order by f1
+WHERE (filter = 1 or filter = 0)
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@union_all_bug_test_1
 POSTHOOK: Input: default@union_all_bug_test_2
@@ -329,6 +333,101 @@ POSTHOOK: Input: default@union_all_bug_test_2
 0
 1
 1
+PREHOOK: query: explain
+
+SELECT f1
+FROM (
+
+SELECT
+f1
+, if('helloworld' like '%hello%' ,f1,f2) as filter
+FROM union_all_bug_test_1
+
+union all
+
+select
+f1
+, 0 as filter
+from union_all_bug_test_2
+) A
+WHERE (f1 = 1)
+PREHOOK: type: QUERY
+POSTHOOK: query: explain
+
+SELECT f1
+FROM (
+
+SELECT
+f1
+, if('helloworld' like '%hello%' ,f1,f2) as filter
+FROM union_all_bug_test_1
+
+union all
+
+select
+f1
+, 0 as filter
+from union_all_bug_test_2
+) A
+WHERE (f1 = 1)
+POSTHOOK: type: QUERY
+STAGE DEPENDENCIES:
+  Stage-1 is a root stage
+  Stage-0 depends on stages: Stage-1
+
+STAGE PLANS:
+  Stage: Stage-1
+    Map Reduce
+      Map Operator Tree:
+          TableScan
+            alias: union_all_bug_test_1
+            Statistics: Num rows: 2 Data size: 6 Basic stats: COMPLETE Column stats: NONE
+            Filter Operator
+              predicate: (f1 = 1) (type: boolean)
+              Statistics: Num rows: 1 Data size: 3 Basic stats: COMPLETE Column stats: NONE
+              Select Operator
+                Statistics: Num rows: 1 Data size: 3 Basic stats: COMPLETE Column stats: NONE
+                Union
+                  Statistics: Num rows: 2 Data size: 4 Basic stats: COMPLETE Column stats: NONE
+                  Select Operator
+                    expressions: 1 (type: int)
+                    outputColumnNames: _col0
+                    Statistics: Num rows: 2 Data size: 4 Basic stats: COMPLETE Column stats: NONE
+                    File Output Operator
+                      compressed: false
+                      Statistics: Num rows: 2 Data size: 4 Basic stats: COMPLETE Column stats: NONE
+                      table:
+                          input format: org.apache.hadoop.mapred.TextInputFormat
+                          output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+                          serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+          TableScan
+            alias: union_all_bug_test_2
+            Statistics: Num rows: 2 Data size: 2 Basic stats: COMPLETE Column stats: NONE
+            Filter Operator
+              predicate: (f1 = 1) (type: boolean)
+              Statistics: Num rows: 1 Data size: 1 Basic stats: COMPLETE Column stats: NONE
+              Select Operator
+                Statistics: Num rows: 1 Data size: 1 Basic stats: COMPLETE Column stats: NONE
+                Union
+                  Statistics: Num rows: 2 Data size: 4 Basic stats: COMPLETE Column stats: NONE
+                  Select Operator
+                    expressions: 1 (type: int)
+                    outputColumnNames: _col0
+                    Statistics: Num rows: 2 Data size: 4 Basic stats: COMPLETE Column stats: NONE
+                    File Output Operator
+                      compressed: false
+                      Statistics: Num rows: 2 Data size: 4 Basic stats: COMPLETE Column stats: NONE
+                      table:
+                          input format: org.apache.hadoop.mapred.TextInputFormat
+                          output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+                          serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+
+  Stage: Stage-0
+    Fetch Operator
+      limit: -1
+      Processor Tree:
+        ListSink
+
 PREHOOK: query: SELECT f1
 FROM (
 
@@ -344,7 +443,7 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (f1 = 1) order by f1
+WHERE (f1 = 1)
 PREHOOK: type: QUERY
 PREHOOK: Input: default@union_all_bug_test_1
 PREHOOK: Input: default@union_all_bug_test_2
@@ -364,10 +463,172 @@ f1
 , 0 as filter
 from union_all_bug_test_2
 ) A
-WHERE (f1 = 1) order by f1
+WHERE (f1 = 1)
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@union_all_bug_test_1
 POSTHOOK: Input: default@union_all_bug_test_2
 #### A masked pattern was here ####
 1
+1
+PREHOOK: query: drop table if exists map_json
+PREHOOK: type: DROPTABLE
+POSTHOOK: query: drop table if exists map_json
+POSTHOOK: type: DROPTABLE
+PREHOOK: query: drop table if exists map_json1
+PREHOOK: type: DROPTABLE
+POSTHOOK: query: drop table if exists map_json1
+POSTHOOK: type: DROPTABLE
+PREHOOK: query: drop table if exists map_json2
+PREHOOK: type: DROPTABLE
+POSTHOOK: query: drop table if exists map_json2
+POSTHOOK: type: DROPTABLE
+PREHOOK: query: create table map_json1(
+  id int,
+  val array<string>)
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@map_json1
+POSTHOOK: query: create table map_json1(
+  id int,
+  val array<string>)
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@map_json1
+PREHOOK: query: create table map_json2(
+  id int,
+  val array<string>)
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@map_json2
+POSTHOOK: query: create table map_json2(
+  id int,
+  val array<string>)
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@map_json2
+PREHOOK: query: create table map_json(
+  id int,
+  val array<string>)
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@map_json
+POSTHOOK: query: create table map_json(
+  id int,
+  val array<string>)
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@map_json
+PREHOOK: query: create view explode as
+select id, l from map_json1 LATERAL VIEW explode(val) tup as l
+UNION ALL
+select id, get_json_object(l, '$.daysLeft') as l
+from map_json2 LATERAL VIEW explode(val) tup as l
+UNION ALL
+select id, l from map_json LATERAL VIEW explode(val) elems as l
+PREHOOK: type: CREATEVIEW
+PREHOOK: Input: default@map_json
+PREHOOK: Input: default@map_json1
+PREHOOK: Input: default@map_json2
+PREHOOK: Output: database:default
+PREHOOK: Output: default@explode
+POSTHOOK: query: create view explode as
+select id, l from map_json1 LATERAL VIEW explode(val) tup as l
+UNION ALL
+select id, get_json_object(l, '$.daysLeft') as l
+from map_json2 LATERAL VIEW explode(val) tup as l
+UNION ALL
+select id, l from map_json LATERAL VIEW explode(val) elems as l
+POSTHOOK: type: CREATEVIEW
+POSTHOOK: Input: default@map_json
+POSTHOOK: Input: default@map_json1
+POSTHOOK: Input: default@map_json2
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@explode
+PREHOOK: query: select count(*) from explode where get_json_object(l, '$') is NOT NULL
+PREHOOK: type: QUERY
+PREHOOK: Input: default@explode
+PREHOOK: Input: default@map_json
+PREHOOK: Input: default@map_json1
+PREHOOK: Input: default@map_json2
+#### A masked pattern was here ####
+POSTHOOK: query: select count(*) from explode where get_json_object(l, '$') is NOT NULL
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@explode
+POSTHOOK: Input: default@map_json
+POSTHOOK: Input: default@map_json1
+POSTHOOK: Input: default@map_json2
+#### A masked pattern was here ####
+0
+PREHOOK: query: drop view explode
+PREHOOK: type: DROPVIEW
+PREHOOK: Input: default@explode
+PREHOOK: Output: default@explode
+POSTHOOK: query: drop view explode
+POSTHOOK: type: DROPVIEW
+POSTHOOK: Input: default@explode
+POSTHOOK: Output: default@explode
+PREHOOK: query: drop table map_json
+PREHOOK: type: DROPTABLE
+PREHOOK: Input: default@map_json
+PREHOOK: Output: default@map_json
+POSTHOOK: query: drop table map_json
+POSTHOOK: type: DROPTABLE
+POSTHOOK: Input: default@map_json
+POSTHOOK: Output: default@map_json
+PREHOOK: query: drop table map_json1
+PREHOOK: type: DROPTABLE
+PREHOOK: Input: default@map_json1
+PREHOOK: Output: default@map_json1
+POSTHOOK: query: drop table map_json1
+POSTHOOK: type: DROPTABLE
+POSTHOOK: Input: default@map_json1
+POSTHOOK: Output: default@map_json1
+PREHOOK: query: drop table map_json2
+PREHOOK: type: DROPTABLE
+PREHOOK: Input: default@map_json2
+PREHOOK: Output: default@map_json2
+POSTHOOK: query: drop table map_json2
+POSTHOOK: type: DROPTABLE
+POSTHOOK: Input: default@map_json2
+POSTHOOK: Output: default@map_json2
+PREHOOK: query: SELECT f1
+FROM (
+
+SELECT
+f1
+, if('helloworld' like '%hello%' ,f1,f2) as filter
+FROM union_all_bug_test_1
+
+union all
+
+select
+f1
+, 0 as filter
+from union_all_bug_test_2
+) A
+WHERE (filter = 1 and f1 = 1)
+PREHOOK: type: QUERY
+PREHOOK: Input: default@union_all_bug_test_1
+PREHOOK: Input: default@union_all_bug_test_2
+#### A masked pattern was here ####
+POSTHOOK: query: SELECT f1
+FROM (
+
+SELECT
+f1
+, if('helloworld' like '%hello%' ,f1,f2) as filter
+FROM union_all_bug_test_1
+
+union all
+
+select
+f1
+, 0 as filter
+from union_all_bug_test_2
+) A
+WHERE (filter = 1 and f1 = 1)
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@union_all_bug_test_1
+POSTHOOK: Input: default@union_all_bug_test_2
+#### A masked pattern was here ####
 1
