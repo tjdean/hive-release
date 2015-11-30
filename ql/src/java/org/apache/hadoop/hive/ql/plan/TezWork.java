@@ -82,7 +82,7 @@ public class TezWork extends AbstractOperatorDesc {
 
   public TezWork(String queryId, Configuration conf) {
     this.dagId = queryId + ":" + (++counter);
-    this.queryName = (conf != null) ? DagUtils.getDagName(conf) : null;
+    this.queryName = (conf != null) ? DagUtils.getUserSpecifiedDagName(conf) : null;
   }
 
   @Explain(displayName = "DagName")
