@@ -22,10 +22,6 @@ set tez.am.grouping.split-count=1;
 set tez.grouping.split-count=1;
 set hive.exec.orc.default.buffer.size=120;
 
-SET hive.exec.post.hooks=org.apache.hadoop.hive.ql.hooks.PostExecOrcFileDump;
-select * from orcfile_merge1 limit 1;
-SET hive.exec.post.hooks=;
-
 -- concatenate
 ALTER TABLE  orcfile_merge1 CONCATENATE;
 
@@ -34,10 +30,6 @@ dfs -ls ${hiveconf:hive.metastore.warehouse.dir}/orcfile_merge1/;
 select count(*) from orc_split_elim;
 -- will have double the number of rows
 select count(*) from orcfile_merge1;
-
-SET hive.exec.post.hooks=org.apache.hadoop.hive.ql.hooks.PostExecOrcFileDump;
-select * from orcfile_merge1 limit 1;
-SET hive.exec.post.hooks=;
 
 DROP TABLE orc_split_elim;
 DROP TABLE orcfile_merge1;

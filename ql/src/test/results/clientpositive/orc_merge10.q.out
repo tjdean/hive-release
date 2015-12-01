@@ -510,135 +510,27 @@ POSTHOOK: Input: default@orcfile_merge1c@ds=1/part=0
 POSTHOOK: Input: default@orcfile_merge1c@ds=1/part=1
 #### A masked pattern was here ####
 500
-PREHOOK: query: select * from orcfile_merge1 where ds='1' and part='0' limit 1
-PREHOOK: type: QUERY
-PREHOOK: Input: default@orcfile_merge1
-PREHOOK: Input: default@orcfile_merge1@ds=1/part=0
-#### A masked pattern was here ####
--- BEGIN ORC FILE DUMP --
-#### A masked pattern was here ####
-File Version: 0.12 with HIVE_4243
-Rows: 242
-Compression: SNAPPY
-Compression size: 4096
-Type: struct<key:int,value:string>
-
-Stripe Statistics:
-  Stripe 1:
-    Column 0: count: 152 hasNull: false
-    Column 1: count: 152 hasNull: false min: 0 max: 497 sum: 38034
-    Column 2: count: 152 hasNull: false min: val_0 max: val_97 sum: 1034
-  Stripe 2:
-    Column 0: count: 90 hasNull: false
-    Column 1: count: 90 hasNull: false min: 0 max: 495 sum: 22736
-    Column 2: count: 90 hasNull: false min: val_0 max: val_86 sum: 612
-
-File Statistics:
-  Column 0: count: 242 hasNull: false
-  Column 1: count: 242 hasNull: false min: 0 max: 497 sum: 60770
-  Column 2: count: 242 hasNull: false min: val_0 max: val_97 sum: 1646
-
-Stripes:
-  Stripe: offset: 3 data: 988 rows: 152 tail: 72 index: 77
-    Stream: column 0 section ROW_INDEX start: 3 length 12
-    Stream: column 1 section ROW_INDEX start: 15 length 28
-    Stream: column 2 section ROW_INDEX start: 43 length 37
-    Stream: column 1 section DATA start: 80 length 309
-    Stream: column 2 section DATA start: 389 length 157
-    Stream: column 2 section LENGTH start: 546 length 60
-    Stream: column 2 section DICTIONARY_DATA start: 606 length 462
-    Encoding column 0: DIRECT
-    Encoding column 1: DIRECT_V2
-    Encoding column 2: DICTIONARY_V2[114]
-    Row group indices for column 1:
-      Entry 0: count: 152 hasNull: false min: 0 max: 497 sum: 38034 positions: 0,0,0
-  Stripe: offset: 1140 data: 616 rows: 90 tail: 61 index: 76
-    Stream: column 0 section ROW_INDEX start: 1140 length 11
-    Stream: column 1 section ROW_INDEX start: 1151 length 27
-    Stream: column 2 section ROW_INDEX start: 1178 length 38
-    Stream: column 1 section DATA start: 1216 length 185
-    Stream: column 2 section DATA start: 1401 length 377
-    Stream: column 2 section LENGTH start: 1778 length 54
-    Encoding column 0: DIRECT
-    Encoding column 1: DIRECT_V2
-    Encoding column 2: DIRECT_V2
-    Row group indices for column 1:
-      Entry 0: count: 90 hasNull: false min: 0 max: 495 sum: 22736 positions: 0,0,0
-
-File length: 2137 bytes
-Padding length: 0 bytes
-Padding ratio: 0%
--- END ORC FILE DUMP --
-172	val_172	1	0
-PREHOOK: query: select * from orcfile_merge1c where ds='1' and part='0' limit 1
-PREHOOK: type: QUERY
-PREHOOK: Input: default@orcfile_merge1c
-PREHOOK: Input: default@orcfile_merge1c@ds=1/part=0
-#### A masked pattern was here ####
--- BEGIN ORC FILE DUMP --
-#### A masked pattern was here ####
-File Version: 0.12 with HIVE_4243
-Rows: 242
-Compression: SNAPPY
-Compression size: 4096
-Type: struct<key:int,value:string>
-
-Stripe Statistics:
-  Stripe 1:
-    Column 0: count: 152 hasNull: false
-    Column 1: count: 152 hasNull: false min: 0 max: 497 sum: 38034
-    Column 2: count: 152 hasNull: false min: val_0 max: val_97 sum: 1034
-  Stripe 2:
-    Column 0: count: 90 hasNull: false
-    Column 1: count: 90 hasNull: false min: 0 max: 495 sum: 22736
-    Column 2: count: 90 hasNull: false min: val_0 max: val_86 sum: 612
-
-File Statistics:
-  Column 0: count: 242 hasNull: false
-  Column 1: count: 242 hasNull: false min: 0 max: 497 sum: 60770
-  Column 2: count: 242 hasNull: false min: val_0 max: val_97 sum: 1646
-
-Stripes:
-  Stripe: offset: 3 data: 988 rows: 152 tail: 72 index: 77
-    Stream: column 0 section ROW_INDEX start: 3 length 12
-    Stream: column 1 section ROW_INDEX start: 15 length 28
-    Stream: column 2 section ROW_INDEX start: 43 length 37
-    Stream: column 1 section DATA start: 80 length 309
-    Stream: column 2 section DATA start: 389 length 157
-    Stream: column 2 section LENGTH start: 546 length 60
-    Stream: column 2 section DICTIONARY_DATA start: 606 length 462
-    Encoding column 0: DIRECT
-    Encoding column 1: DIRECT_V2
-    Encoding column 2: DICTIONARY_V2[114]
-    Row group indices for column 1:
-      Entry 0: count: 152 hasNull: false min: 0 max: 497 sum: 38034 positions: 0,0,0
-  Stripe: offset: 1140 data: 616 rows: 90 tail: 61 index: 76
-    Stream: column 0 section ROW_INDEX start: 1140 length 11
-    Stream: column 1 section ROW_INDEX start: 1151 length 27
-    Stream: column 2 section ROW_INDEX start: 1178 length 38
-    Stream: column 1 section DATA start: 1216 length 185
-    Stream: column 2 section DATA start: 1401 length 377
-    Stream: column 2 section LENGTH start: 1778 length 54
-    Encoding column 0: DIRECT
-    Encoding column 1: DIRECT_V2
-    Encoding column 2: DIRECT_V2
-    Row group indices for column 1:
-      Entry 0: count: 90 hasNull: false min: 0 max: 495 sum: 22736 positions: 0,0,0
-
-File length: 2137 bytes
-Padding length: 0 bytes
-Padding ratio: 0%
--- END ORC FILE DUMP --
-172	val_172	1	0
 PREHOOK: query: DROP TABLE orcfile_merge1
 PREHOOK: type: DROPTABLE
 PREHOOK: Input: default@orcfile_merge1
 PREHOOK: Output: default@orcfile_merge1
+POSTHOOK: query: DROP TABLE orcfile_merge1
+POSTHOOK: type: DROPTABLE
+POSTHOOK: Input: default@orcfile_merge1
+POSTHOOK: Output: default@orcfile_merge1
 PREHOOK: query: DROP TABLE orcfile_merge1b
 PREHOOK: type: DROPTABLE
 PREHOOK: Input: default@orcfile_merge1b
 PREHOOK: Output: default@orcfile_merge1b
+POSTHOOK: query: DROP TABLE orcfile_merge1b
+POSTHOOK: type: DROPTABLE
+POSTHOOK: Input: default@orcfile_merge1b
+POSTHOOK: Output: default@orcfile_merge1b
 PREHOOK: query: DROP TABLE orcfile_merge1c
 PREHOOK: type: DROPTABLE
 PREHOOK: Input: default@orcfile_merge1c
 PREHOOK: Output: default@orcfile_merge1c
+POSTHOOK: query: DROP TABLE orcfile_merge1c
+POSTHOOK: type: DROPTABLE
+POSTHOOK: Input: default@orcfile_merge1c
+POSTHOOK: Output: default@orcfile_merge1c

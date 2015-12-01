@@ -101,10 +101,6 @@ SELECT SUM(HASH(c)) FROM (
 select count(*) from orcfile_merge1;
 select count(*) from orcfile_merge1c;
 
-SET hive.exec.post.hooks=org.apache.hadoop.hive.ql.hooks.PostExecOrcFileDump;
-select * from orcfile_merge1 where ds='1' and part='0' limit 1;
-select * from orcfile_merge1c where ds='1' and part='0' limit 1;
-
 DROP TABLE orcfile_merge1;
 DROP TABLE orcfile_merge1b;
 DROP TABLE orcfile_merge1c;
