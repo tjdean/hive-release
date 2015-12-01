@@ -37,6 +37,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -73,7 +75,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.Deflater;
@@ -168,6 +169,9 @@ import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeUtils;
 import org.apache.hadoop.hive.serde2.Serializer;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
+import org.apache.hadoop.hive.serde2.objectinspector.StandardConstantListObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StandardConstantMapObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StandardConstantStructObjectInspector;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.SequenceFile;
@@ -903,6 +907,91 @@ public final class Utilities {
     }
   }
 
+  /**
+   * A kryo {@link Serializer} for lists created via {@link Arrays#asList(Object...)}.
+   * <p>
+   * Note: This serializer does not support cyclic references, so if one of the objects
+   * gets set the list as attribute this might cause an error during deserialization.
+   * </p>
+   *
+   * This is from kryo-serializers package. Added explicitly to avoid classpath issues.
+   */
+  private static class ArraysAsListSerializer extends com.esotericsoftware.kryo.Serializer<List<?>> {
+
+    private Field _arrayField;
+
+    public ArraysAsListSerializer() {
+      try {
+        _arrayField = Class.forName( "java.util.Arrays$ArrayList" ).getDeclaredField( "a" );
+        _arrayField.setAccessible( true );
+      } catch ( final Exception e ) {
+        throw new RuntimeException( e );
+      }
+      // Immutable causes #copy(obj) to return the original object
+      setImmutable(true);
+    }
+
+    @Override
+    public List<?> read(final Kryo kryo, final Input input, final Class<List<?>> type) {
+      final int length = input.readInt(true);
+      Class<?> componentType = kryo.readClass( input ).getType();
+      if (componentType.isPrimitive()) {
+        componentType = getPrimitiveWrapperClass(componentType);
+      }
+      try {
+        final Object items = Array.newInstance( componentType, length );
+        for( int i = 0; i < length; i++ ) {
+          Array.set(items, i, kryo.readClassAndObject( input ));
+        }
+        return Arrays.asList( (Object[])items );
+      } catch ( final Exception e ) {
+        throw new RuntimeException( e );
+      }
+    }
+
+    @Override
+    public void write(final Kryo kryo, final Output output, final List<?> obj) {
+      try {
+        final Object[] array = (Object[]) _arrayField.get( obj );
+        output.writeInt(array.length, true);
+        final Class<?> componentType = array.getClass().getComponentType();
+        kryo.writeClass( output, componentType );
+        for( final Object item : array ) {
+          kryo.writeClassAndObject( output, item );
+        }
+      } catch ( final RuntimeException e ) {
+        // Don't eat and wrap RuntimeExceptions because the ObjectBuffer.write...
+        // handles SerializationException specifically (resizing the buffer)...
+        throw e;
+      } catch ( final Exception e ) {
+        throw new RuntimeException( e );
+      }
+    }
+
+    private Class<?> getPrimitiveWrapperClass(final Class<?> c) {
+      if (c.isPrimitive()) {
+        if (c.equals(Long.TYPE)) {
+          return Long.class;
+        } else if (c.equals(Integer.TYPE)) {
+          return Integer.class;
+        } else if (c.equals(Double.TYPE)) {
+          return Double.class;
+        } else if (c.equals(Float.TYPE)) {
+          return Float.class;
+        } else if (c.equals(Boolean.TYPE)) {
+          return Boolean.class;
+        } else if (c.equals(Character.TYPE)) {
+          return Character.class;
+        } else if (c.equals(Short.TYPE)) {
+          return Short.class;
+        } else if (c.equals(Byte.TYPE)) {
+          return Byte.class;
+        }
+      }
+      return c;
+    }
+  }
+
   private static class PathSerializer extends com.esotericsoftware.kryo.Serializer<Path> {
 
     @Override
@@ -1090,10 +1179,22 @@ public final class Utilities {
       kryo.register(java.sql.Date.class, new SqlDateSerializer());
       kryo.register(java.sql.Timestamp.class, new TimestampSerializer());
       kryo.register(Path.class, new PathSerializer());
+      kryo.register( Arrays.asList( "" ).getClass(), new ArraysAsListSerializer() );
       kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
       removeField(kryo, Operator.class, "colExprMap");
-      removeField(kryo, ColumnInfo.class, "objectInspector");
       removeField(kryo, AbstractOperatorDesc.class, "statistics");
+      kryo.register(MapWork.class);
+      kryo.register(ReduceWork.class);
+      kryo.register(TableDesc.class);
+      kryo.register(TableScanOperator.class);
+      kryo.register(UnionOperator.class);
+      kryo.register(FileSinkOperator.class);
+      kryo.register(HiveIgnoreKeyTextOutputFormat.class);
+      kryo.register(StandardConstantListObjectInspector.class);
+      kryo.register(StandardConstantMapObjectInspector.class);
+      kryo.register(StandardConstantStructObjectInspector.class);
+      kryo.register(SequenceFileInputFormat.class);
+      kryo.register(HiveSequenceFileOutputFormat.class);
       return kryo;
     };
   };
@@ -1112,6 +1213,7 @@ public final class Utilities {
       kryo.register(java.sql.Date.class, new SqlDateSerializer());
       kryo.register(java.sql.Timestamp.class, new TimestampSerializer());
       kryo.register(Path.class, new PathSerializer());
+      kryo.register( Arrays.asList( "" ).getClass(), new ArraysAsListSerializer() );
       kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
       removeField(kryo, Operator.class, "colExprMap");
       removeField(kryo, ColumnInfo.class, "objectInspector");
@@ -1121,6 +1223,15 @@ public final class Utilities {
       kryo.register(SparkWork.class);
       kryo.register(TableDesc.class);
       kryo.register(Pair.class);
+      kryo.register(TableScanOperator.class);
+      kryo.register(UnionOperator.class);
+      kryo.register(FileSinkOperator.class);
+      kryo.register(HiveIgnoreKeyTextOutputFormat.class);
+      kryo.register(StandardConstantListObjectInspector.class);
+      kryo.register(StandardConstantMapObjectInspector.class);
+      kryo.register(StandardConstantStructObjectInspector.class);
+      kryo.register(SequenceFileInputFormat.class);
+      kryo.register(HiveSequenceFileOutputFormat.class);
       return kryo;
     };
   };
@@ -1134,7 +1245,22 @@ public final class Utilities {
       kryo.register(java.sql.Date.class, new SqlDateSerializer());
       kryo.register(java.sql.Timestamp.class, new TimestampSerializer());
       kryo.register(Path.class, new PathSerializer());
+      kryo.register( Arrays.asList( "" ).getClass(), new ArraysAsListSerializer() );
       kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
+      removeField(kryo, Operator.class, "colExprMap");
+      removeField(kryo, AbstractOperatorDesc.class, "statistics");
+      kryo.register(MapWork.class);
+      kryo.register(ReduceWork.class);
+      kryo.register(TableDesc.class);
+      kryo.register(TableScanOperator.class);
+      kryo.register(UnionOperator.class);
+      kryo.register(FileSinkOperator.class);
+      kryo.register(HiveIgnoreKeyTextOutputFormat.class);
+      kryo.register(StandardConstantListObjectInspector.class);
+      kryo.register(StandardConstantMapObjectInspector.class);
+      kryo.register(StandardConstantStructObjectInspector.class);
+      kryo.register(SequenceFileInputFormat.class);
+      kryo.register(HiveSequenceFileOutputFormat.class);
       return kryo;
     };
   };
