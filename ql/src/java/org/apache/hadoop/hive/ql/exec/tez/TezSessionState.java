@@ -130,13 +130,12 @@ public class TezSessionState {
     LOG.info("Opening the session with id " + sessionId + " for thread "
         + Thread.currentThread().getName() + " log trace id - " + conf.getLogIdVar()
         + " query id - " + conf.getVar(HiveConf.ConfVars.HIVEQUERYID));
-    String callerContext = conf.getVar(HiveConf.ConfVars.HIVEQUERYID);
-    String prefix = "HIVE_QUERY_ID:";
-    if ((callerContext == null) || (callerContext == "")) {
-      prefix = "HIVE_SSN_ID:";
-      callerContext = sessionId;
+    String queryId = conf.getVar(HiveConf.ConfVars.HIVEQUERYID);
+    if ((queryId == null) || (queryId.isEmpty())) {
+      ShimLoader.getHadoopShims().setHadoopSessionContext(sessionId);
+    } else {
+      ShimLoader.getHadoopShims().setHadoopQueryContext(queryId);
     }
-    ShimLoader.getHadoopShims().setHadoopCallerContext(prefix, callerContext);
 
     this.conf = conf;
     this.queueName = conf.get("tez.queue.name");
