@@ -388,7 +388,7 @@ public class Driver implements CommandProcessor {
       originalCallerContext = shim.getHadoopCallerContext();
       LOG.info("We are setting the hadoop caller context from " + originalCallerContext + " to "
           + queryId);
-      shim.setHadoopCallerContext(queryId);
+      shim.setHadoopQueryContext(queryId);
       command = new VariableSubstitution().substitute(conf,command);
       ctx = new Context(conf);
       ctx.setTryCount(getTryCount());
@@ -1303,10 +1303,11 @@ public class Driver implements CommandProcessor {
 
     String originalCallerContext = "";
     try {
-      LOG.info("Starting command: " + queryStr);
       LOG.info("Setting caller context to query id " + queryId);
       originalCallerContext = ShimLoader.getHadoopShims().getHadoopCallerContext();
-      ShimLoader.getHadoopShims().setHadoopCallerContext(queryId);
+      ShimLoader.getHadoopShims().setHadoopQueryContext(queryId);
+      LOG.info("Starting command(queryId=" + queryId + "): " + queryStr);
+      // compile and execute can get called from different threads in case of HS2
 
       plan.setStarted();
 

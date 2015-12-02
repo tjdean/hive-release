@@ -609,7 +609,14 @@ public class Hadoop20SShims extends HadoopShimsSecure {
   }
 
   @Override
-  public void setHadoopCallerContext(String prefix, String callerContext) {
+  public void setHadoopQueryContext(String callerContext) {
+    /*
+     * do nothing. This is not supported in hadoop-1
+     */
+  }
+
+  @Override
+  public void setHadoopSessionContext(String sessionId) {
     /*
      * do nothing. This is not supported in hadoop-1
      */
