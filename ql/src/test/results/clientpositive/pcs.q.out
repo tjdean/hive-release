@@ -278,7 +278,6 @@ STAGE PLANS:
                   columns.types int:string:string
                   escape.delim \
                   hive.serialization.extend.additional.nesting.levels true
-                  serialization.escape.crlf true
                   serialization.format 1
                   serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -378,7 +377,6 @@ STAGE PLANS:
                         columns.types string
                         escape.delim \
                         hive.serialization.extend.additional.nesting.levels true
-                        serialization.escape.crlf true
                         serialization.format 1
                         serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                       serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -576,7 +574,6 @@ STAGE PLANS:
                         columns.types string
                         escape.delim \
                         hive.serialization.extend.additional.nesting.levels true
-                        serialization.escape.crlf true
                         serialization.format 1
                         serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                       serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -935,7 +932,6 @@ STAGE PLANS:
                       columns.types string:int
                       escape.delim \
                       hive.serialization.extend.additional.nesting.levels true
-                      serialization.escape.crlf true
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                     serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1037,7 +1033,6 @@ STAGE PLANS:
                         columns.types string
                         escape.delim \
                         hive.serialization.extend.additional.nesting.levels true
-                        serialization.escape.crlf true
                         serialization.format 1
                         serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                       serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1449,7 +1444,6 @@ STAGE PLANS:
                   columns.types int:string:string
                   escape.delim \
                   hive.serialization.extend.additional.nesting.levels true
-                  serialization.escape.crlf true
                   serialization.format 1
                   serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1581,7 +1575,7 @@ STAGE PLANS:
           GatherStats: false
           Filter Operator
             isSamplingPred: false
-            predicate: (const struct(10)) IN (const struct(10), const struct(11)) (type: boolean)
+            predicate: (struct(CASE WHEN (true) THEN (10) ELSE (20) END)) IN (const struct(10), const struct(11)) (type: boolean)
             Statistics: Num rows: 10 Data size: 80 Basic stats: COMPLETE Column stats: NONE
             Select Operator
               expressions: ds (type: string)
@@ -1697,7 +1691,6 @@ STAGE PLANS:
                         columns.types string
                         escape.delim \
                         hive.serialization.extend.additional.nesting.levels true
-                        serialization.escape.crlf true
                         serialization.format 1
                         serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                       serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
