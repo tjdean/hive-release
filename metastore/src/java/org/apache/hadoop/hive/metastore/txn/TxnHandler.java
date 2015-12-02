@@ -2271,7 +2271,10 @@ public class TxnHandler {
           return true;
         }
       }
-      //see https://issues.apache.org/jira/browse/HIVE-9938
+      if("ORA-08176".equalsIgnoreCase(sqlException.getSQLState())) {
+        return true;
+      }
+      //see also https://issues.apache.org/jira/browse/HIVE-9938
     }
     return false;
   }
