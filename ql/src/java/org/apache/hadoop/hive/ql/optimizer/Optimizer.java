@@ -68,6 +68,18 @@ public class Optimizer {
 
     // Add the transformation that computes the lineage information.
     transformations.add(new Generator());
+
+    // Try to transform OR predicates in Filter into simpler IN clauses first
+    if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVEPOINTLOOKUPOPTIMIZER)) {
+      final int min = HiveConf.getIntVar(hiveConf,
+          HiveConf.ConfVars.HIVEPOINTLOOKUPOPTIMIZERMIN);
+      transformations.add(new PointLookupOptimizer(min));
+    }
+
+    if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVEPARTITIONCOLUMNSEPARATOR)) {
+        transformations.add(new PartitionColumnsSeparator());
+    }
+
     if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVEOPTPPD)) {
       transformations.add(new PredicateTransitivePropagate());
       if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVEOPTCONSTANTPROPAGATION)) {
@@ -81,6 +93,7 @@ public class Optimizer {
       // are combined and may become eligible for reduction (like is not null filter).
         transformations.add(new ConstantPropagate());
     }
+
     if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVEOPTPPD)) {
       transformations.add(new PartitionPruner());
       transformations.add(new PartitionConditionRemover());

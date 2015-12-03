@@ -34,6 +34,7 @@ import java.util.Stack;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveIntervalDayTime;
 import org.apache.hadoop.hive.common.type.HiveIntervalYearMonth;
@@ -62,7 +63,9 @@ import org.apache.hadoop.hive.ql.plan.ExprNodeGenericFuncDesc;
 import org.apache.hadoop.hive.ql.udf.SettableUDF;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDF;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFBaseCompare;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPAnd;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPEqual;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPOr;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.objectinspector.ConstantObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -76,6 +79,7 @@ import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.VarcharTypeInfo;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hive.common.util.DateUtils;
@@ -810,10 +814,12 @@ public class TypeCheckProcFactory {
           ((SettableUDF)genericUDF).setTypeInfo(typeInfo);
         }
       }
-
+      
       List<ExprNodeDesc> childrenList = new ArrayList<ExprNodeDesc>(children.length);
+
       childrenList.addAll(Arrays.asList(children));
-      return ExprNodeGenericFuncDesc.newInstance(genericUDF, childrenList);
+      return ExprNodeGenericFuncDesc.newInstance(genericUDF,
+          childrenList);
     }
 
     public static ExprNodeDesc getFuncExprNodeDesc(String udfName,
@@ -1043,9 +1049,50 @@ public class TypeCheckProcFactory {
               children.set(constIdx, new ExprNodeConstantDesc(value));
             }
           }
-        }
 
-        desc = ExprNodeGenericFuncDesc.newInstance(genericUDF, funcText, children);
+          // if column type is char and constant type is string, then convert the constant to char
+          // type with padded spaces.
+          final PrimitiveTypeInfo colTypeInfo = TypeInfoFactory
+              .getPrimitiveTypeInfo(columnType);
+          if (constType.equalsIgnoreCase(serdeConstants.STRING_TYPE_NAME) &&
+              colTypeInfo instanceof CharTypeInfo) {
+            final Object originalValue = ((ExprNodeConstantDesc) children.get(constIdx)).getValue();
+            final String constValue = originalValue.toString();
+            final int length = TypeInfoUtils.getCharacterLengthForType(colTypeInfo);
+            final HiveChar newValue = new HiveChar(constValue, length);
+            children.set(constIdx, new ExprNodeConstantDesc(colTypeInfo, newValue));
+          }
+        }
+        if (genericUDF instanceof GenericUDFOPOr) {
+          // flatten OR
+          List<ExprNodeDesc> childrenList = new ArrayList<ExprNodeDesc>(
+              children.size());
+          for (ExprNodeDesc child : children) {
+            if (FunctionRegistry.isOpOr(child)) {
+              childrenList.addAll(child.getChildren());
+            } else {
+              childrenList.add(child);
+            }
+          }
+          desc = ExprNodeGenericFuncDesc.newInstance(genericUDF, funcText,
+              childrenList);
+        } else if (genericUDF instanceof GenericUDFOPAnd) {
+          // flatten AND
+          List<ExprNodeDesc> childrenList = new ArrayList<ExprNodeDesc>(
+              children.size());
+          for (ExprNodeDesc child : children) {
+            if (FunctionRegistry.isOpAnd(child)) {
+              childrenList.addAll(child.getChildren());
+            } else {
+              childrenList.add(child);
+            }
+          }
+          desc = ExprNodeGenericFuncDesc.newInstance(genericUDF, funcText,
+              childrenList);
+        } else {
+          desc = ExprNodeGenericFuncDesc.newInstance(genericUDF, funcText,
+              children);
+        }
       }
       // UDFOPPositive is a no-op.
       // However, we still create it, and then remove it here, to make sure we

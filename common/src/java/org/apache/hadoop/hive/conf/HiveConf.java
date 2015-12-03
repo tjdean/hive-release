@@ -26,11 +26,13 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,9 +79,11 @@ public class HiveConf extends Configuration {
   private static final Map<String, ConfVars> vars = new HashMap<String, ConfVars>();
   private static final Map<String, ConfVars> metaConfs = new HashMap<String, ConfVars>();
   private final List<String> restrictList = new ArrayList<String>();
+  private final Set<String> hiddenSet = new HashSet<String>();
 
   private Pattern modWhiteListPattern = null;
   private boolean isSparkConfigUpdated = false;
+  private static final int LOG_PREFIX_LENGTH = 64;
 
   public boolean getSparkConfigUpdated() {
     return isSparkConfigUpdated;
@@ -1124,6 +1128,9 @@ public class HiveConf extends Configuration {
     HIVETEZLOGLEVEL("hive.tez.log.level", "INFO",
         "The log level to use for tasks executing as part of the DAG.\n" +
         "Used only if hive.tez.java.opts is used to configure Java options."),
+    HIVEQUERYNAME ("hive.query.name", null,
+	"This named is used by Tez to set the dag name. This name in turn will appear on \n" +
+	"the Tez UI representing the work that was done."),
 
     HIVEENFORCEBUCKETING("hive.enforce.bucketing", false,
         "Whether bucketing is enforced. If true, while inserting into the table, bucketing is enforced."),
@@ -1185,6 +1192,12 @@ public class HiveConf extends Configuration {
         "Whether to transitively replicate predicate filters over equijoin conditions."),
     HIVEPPDREMOVEDUPLICATEFILTERS("hive.ppd.remove.duplicatefilters", true,
         "Whether to push predicates down into storage handlers.  Ignored when hive.optimize.ppd is false."),
+    HIVEPOINTLOOKUPOPTIMIZER("hive.optimize.point.lookup", true,
+         "Whether to transform OR clauses in Filter operators into IN clauses"),
+    HIVEPOINTLOOKUPOPTIMIZERMIN("hive.optimize.point.lookup.min", 31,
+             "Minimum number of OR clauses needed to transform into IN clauses"),
+   HIVEPARTITIONCOLUMNSEPARATOR("hive.optimize.partition.columns.separate", true,
+            "Extract partition columns from IN clauses"),
     // Constant propagation optimizer
     HIVEOPTCONSTANTPROPAGATION("hive.optimize.constant.propagation", true, "Whether to enable constant propagation optimizer"),
     HIVEIDENTITYPROJECTREMOVER("hive.optimize.remove.identity.project", true, "Removes identity project from operator tree"),
@@ -1402,8 +1415,8 @@ public class HiveConf extends Configuration {
     HIVE_UNLOCK_NUMRETRIES("hive.unlock.numretries", 10,
         "The number of times you want to retry to do one unlock"),
     HIVE_LOCK_SLEEP_BETWEEN_RETRIES("hive.lock.sleep.between.retries", "60s",
-        new TimeValidator(TimeUnit.SECONDS),
-        "The sleep time between various retries"),
+        new TimeValidator(TimeUnit.SECONDS, 50L, true, Long.MAX_VALUE, false),
+        "The maximum sleep time between various retries"),
     HIVE_LOCK_MAPRED_ONLY("hive.lock.mapred.only.operation", false,
         "This param is to control whether or not only do lock on queries\n" +
         "that need to execute at least one mapred job."),
@@ -1447,6 +1460,10 @@ public class HiveConf extends Configuration {
         "no transactions."),
     HIVE_TXN_TIMEOUT("hive.txn.timeout", "300s", new TimeValidator(TimeUnit.SECONDS),
         "time after which transactions are declared aborted if the client has not sent a heartbeat."),
+    TXN_MGR_DUMP_LOCK_STATE_ON_ACQUIRE_TIMEOUT("hive.txn.manager.dump.lock.state.on.acquire.timeout", false,
+      "Set this to true so that when attempt to acquire a lock on resource times out, the current state" +
+        " of the lock manager is dumped to log file.  This is for debugging.  See also " +
+        "hive.lock.numretries and hive.lock.sleep.between.retries."),
 
     HIVE_TXN_MAX_OPEN_BATCH("hive.txn.max.open.batch", 1000,
         "Maximum number of transactions that can be fetched in one call to open_txns().\n" +
@@ -1497,6 +1514,8 @@ public class HiveConf extends Configuration {
     HIVE_COMPACTOR_DELTA_PCT_THRESHOLD("hive.compactor.delta.pct.threshold", 0.1f,
         "Percentage (fractional) size of the delta files relative to the base that will trigger\n" +
         "a major compaction. (1.0 = 100%, so the default 0.1 = 10%.)"),
+    COMPACTOR_MAX_NUM_DELTA("hive.compactor.max.num.delta", 500, "Maximum number of delta files that " +
+      "the compactor will attempt to handle in a single job."),
 
     HIVE_COMPACTOR_ABORTEDTXN_THRESHOLD("hive.compactor.abortedtxn.threshold", 1000,
         "Number of aborted transactions involving a given table or partition that will trigger\n" +
@@ -1504,6 +1523,8 @@ public class HiveConf extends Configuration {
 
     HIVE_COMPACTOR_CLEANER_RUN_INTERVAL("hive.compactor.cleaner.run.interval", "5000ms",
         new TimeValidator(TimeUnit.MILLISECONDS), "Time between runs of the cleaner thread"),
+    COMPACTOR_JOB_QUEUE("hive.compactor.job.queue", "", "Used to specify name of Hadoop queue to which\n" +
+      "Compaction jobs will be submitted.  Set to empty string to let Hadoop choose the queue."),
     HIVE_TIMEDOUT_TXN_REAPER_START("hive.timedout.txn.reaper.start", "100s",
       new TimeValidator(TimeUnit.MILLISECONDS), "Time delay of 1st reaper run after metastore start"),
     HIVE_TIMEDOUT_TXN_REAPER_INTERVAL("hive.timedout.txn.reaper.interval", "180s",
@@ -1811,6 +1832,10 @@ public class HiveConf extends Configuration {
         new TimeValidator(TimeUnit.SECONDS),
         "Keepalive time for an idle http worker thread. When the number of workers exceeds min workers, " +
         "excessive threads are killed after this time interval."),
+    HIVE_SERVER2_THRIFT_HTTP_REQUEST_HEADER_SIZE("hive.server2.thrift.http.request.header.size", 6*1024,
+        "Request header size in bytes, when using HTTP transport mode. Jetty defaults used."),
+    HIVE_SERVER2_THRIFT_HTTP_RESPONSE_HEADER_SIZE("hive.server2.thrift.http.response.header.size", 6*1024,
+        "Response header size in bytes, when using HTTP transport mode. Jetty defaults used."),
 
     // Cookie based authentication when using HTTP Transport
     HIVE_SERVER2_THRIFT_HTTP_COOKIE_AUTH_ENABLED("hive.server2.thrift.http.cookie.auth.enabled", true,
@@ -1978,6 +2003,9 @@ public class HiveConf extends Configuration {
     HIVE_CONF_RESTRICTED_LIST("hive.conf.restricted.list",
         "hive.security.authenticator.manager,hive.security.authorization.manager,hive.users.in.admin.role",
         "Comma separated list of configuration options which are immutable at runtime"),
+    HIVE_CONF_HIDDEN_LIST("hive.conf.hidden.list",
+        METASTOREPWD.varname + "," + HIVE_SERVER2_SSL_KEYSTORE_PASSWORD.varname,
+        "Comma separated list of configuration options which should not be read by normal user like passwords"),
 
     // If this is set all move tasks at the end of a multi-insert query will only begin once all
     // outputs are ready
@@ -2199,7 +2227,10 @@ public class HiveConf extends Configuration {
     HIVE_TEZ_ENABLE_MEMORY_MANAGER("hive.tez.enable.memory.manager", true,
         "Enable memory manager for tez"),
     HIVE_HASH_TABLE_INFLATION_FACTOR("hive.hash.table.inflation.factor", (float) 2.0,
-	"Expected inflation factor between disk/in memory representation of hash tables");
+	"Expected inflation factor between disk/in memory representation of hash tables"),
+    HIVE_LOG_TRACE_ID("hive.log.trace.id", "",
+        "Log tracing id that can be used by upstream clients for tracking respective logs. " +
+        "Truncated to " + LOG_PREFIX_LENGTH + " characters. Defaults to use auto-generated session id.");
 
     public final String varname;
     private final String defaultExpr;
@@ -2443,6 +2474,10 @@ public class HiveConf extends Configuration {
     set(name, value);
   }
 
+  public boolean isHiddenConfig(String name) {
+    return hiddenSet.contains(name);
+  }
+
   /**
    * check whether spark related property is updated, which includes spark configurations,
    * RSC configurations and yarn configuration in Spark on YARN mode.
@@ -2635,6 +2670,17 @@ public class HiveConf extends Configuration {
     return conf.get(var.varname, defaultVal);
   }
 
+  public String getLogIdVar() {
+    String retval = getVar(ConfVars.HIVE_LOG_TRACE_ID);
+
+    if (retval.length() > LOG_PREFIX_LENGTH) {
+      l4j.warn("The original log id prefix is " + retval + " has been truncated to "
+          + retval.substring(0, LOG_PREFIX_LENGTH - 1));
+      retval = retval.substring(0, LOG_PREFIX_LENGTH - 1);
+    }
+    return retval;
+  }
+
   public static void setVar(Configuration conf, ConfVars var, String val) {
     assert (var.valClass == String.class) : var.varname;
     conf.set(var.varname, val);
@@ -2686,6 +2732,7 @@ public class HiveConf extends Configuration {
     auxJars = other.auxJars;
     origProp = (Properties)other.origProp.clone();
     restrictList.addAll(other.restrictList);
+    hiddenSet.addAll(other.hiddenSet);
     modWhiteListPattern = other.modWhiteListPattern;
   }
 
@@ -2693,7 +2740,7 @@ public class HiveConf extends Configuration {
     return getProperties(this);
   }
 
-  private static Properties getProperties(Configuration conf) {
+  public static Properties getProperties(Configuration conf) {
     Iterator<Map.Entry<String, String>> iter = conf.iterator();
     Properties p = new Properties();
     while (iter.hasNext()) {
@@ -2791,6 +2838,7 @@ public class HiveConf extends Configuration {
 
     // setup list of conf vars that are not allowed to change runtime
     setupRestrictList();
+    setupHiddenSet();
 
   }
 
@@ -3110,6 +3158,28 @@ public class HiveConf extends Configuration {
     }
     restrictList.add(ConfVars.HIVE_IN_TEST.varname);
     restrictList.add(ConfVars.HIVE_CONF_RESTRICTED_LIST.varname);
+    restrictList.add(ConfVars.HIVE_CONF_HIDDEN_LIST.varname);
+  }
+
+  private void setupHiddenSet() {
+    String hiddenListStr = this.getVar(ConfVars.HIVE_CONF_HIDDEN_LIST);
+    hiddenSet.clear();
+    if (hiddenListStr != null) {
+      for (String entry : hiddenListStr.split(",")) {
+        hiddenSet.add(entry.trim());
+      }
+    }
+  }
+
+  /**
+   * Strips hidden config entries from configuration
+   */
+  public void stripHiddenConfigurations(Configuration conf) {
+    for (String name : hiddenSet) {
+      if (conf.get(name) != null) {
+        conf.set(name, "");
+      }
+    }
   }
 
   public static boolean isLoadMetastoreConfig() {

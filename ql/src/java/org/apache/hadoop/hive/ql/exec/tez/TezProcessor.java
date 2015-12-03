@@ -122,11 +122,13 @@ public class TezProcessor extends AbstractLogicalIOProcessor {
   public void run(Map<String, LogicalInput> inputs, Map<String, LogicalOutput> outputs)
       throws Exception {
 
-      perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.TEZ_RUN_PROCESSOR);
-      // in case of broadcast-join read the broadcast edge inputs
-      // (possibly asynchronously)
+    perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.TEZ_RUN_PROCESSOR);
+    // in case of broadcast-join read the broadcast edge inputs
+    // (possibly asynchronously)
 
-      LOG.info("Running task: " + getContext().getUniqueIdentifier());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Running task: " + getContext().getUniqueIdentifier());
+    }
 
       if (isMap) {
         rproc = new MapRecordProcessor(jobConf, getContext());

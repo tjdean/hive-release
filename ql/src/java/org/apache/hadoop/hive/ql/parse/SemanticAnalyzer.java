@@ -25,6 +25,8 @@ import java.io.Serializable;
 import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -111,6 +113,7 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.HiveUtils;
 import org.apache.hadoop.hive.ql.metadata.InvalidTableException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
+import org.apache.hadoop.hive.ql.metadata.SessionHiveMetaStoreClient;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.metadata.VirtualColumn;
 import org.apache.hadoop.hive.ql.optimizer.Optimizer;
@@ -150,6 +153,7 @@ import org.apache.hadoop.hive.ql.plan.ExprNodeColumnListDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeConstantDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeDescUtils;
+import org.apache.hadoop.hive.ql.plan.ExprNodeFieldDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeGenericFuncDesc;
 import org.apache.hadoop.hive.ql.plan.FileSinkDesc;
 import org.apache.hadoop.hive.ql.plan.FilterDesc;
@@ -859,7 +863,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         return expr.getText();
 
       case HiveParser.StringLiteral:
-        return PlanUtils.stripQuotes(expr.getText());
+        return BaseSemanticAnalyzer.unescapeSQLString(expr.getText());
 
       case HiveParser.KW_FALSE:
         // UDFToBoolean casts any non-empty string to true, so set this to false
@@ -1743,8 +1747,6 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
             qb.getMetaData().setDestForAlias(name, ts.partHandle);
           }
           if (HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVESTATSAUTOGATHER)) {
-            // Set that variable to automatically collect stats during the MapReduce job
-            qb.getParseInfo().setIsInsertToTable(true);
             // Add the table spec for the destination table.
             qb.getParseInfo().addTableSpec(ts.tableName.toLowerCase(), ts);
           }
@@ -1781,8 +1783,6 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
               }
               if (HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVESTATSAUTOGATHER)) {
                 TableSpec ts = new TableSpec(db, conf, this.ast);
-                // Set that variable to automatically collect stats during the MapReduce job
-                qb.getParseInfo().setIsInsertToTable(true);
                 // Add the table spec for the destination table.
                 qb.getParseInfo().addTableSpec(ts.tableName.toLowerCase(), ts);
               }
@@ -4628,6 +4628,11 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       ExprNodeDesc grpByExprNode = genExprNodeDesc(grpbyExpr,
           groupByInputRowResolver);
 
+      if (ExprNodeDescUtils.indexOf(grpByExprNode, groupByKeys) >= 0) {
+        // Skip duplicated grouping keys
+        grpByExprs.remove(i--);
+        continue;
+      }
       groupByKeys.add(grpByExprNode);
       String field = getColumnInternalName(i);
       outputColumnNames.add(field);
@@ -6361,7 +6366,6 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       // verify that our destination is empty before proceeding
       if (dest_tab.isImmutable() &&
           qb.getParseInfo().isInsertIntoTable(dest_tab.getDbName(),dest_tab.getTableName())){
-        qb.getParseInfo().isInsertToTable();
         try {
           FileSystem fs = partPath.getFileSystem(conf);
           if (! MetaStoreUtils.isDirEmpty(fs,partPath)){
@@ -9043,26 +9047,25 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
                 + " on second table"));
       }
       ColumnInfo unionColInfo = new ColumnInfo(lInfo);
-      unionColInfo.setType(FunctionRegistry.getCommonClassForUnionAll(lInfo.getType(),
-          rInfo.getType()));
+      unionColInfo.setType(commonTypeInfo);
       unionoutRR.put(unionalias, field, unionColInfo);
     }
 
-    // For Spark, we rely on the generated SelectOperator to do the type casting.
+    // For Spark,TEZ we rely on the generated SelectOperator to do the type casting.
     // Consider:
     //    SEL_1 (int)   SEL_2 (int)    SEL_3 (double)
     // If we first merge SEL_1 and SEL_2 into a UNION_1, and then merge UNION_1
     // with SEL_3 to get UNION_2, then no SelectOperator will be inserted. Hence error
     // will happen afterwards. The solution here is to insert one after UNION_1, which
     // cast int to double.
-    boolean isSpark = HiveConf.getVar(conf,
-        HiveConf.ConfVars.HIVE_EXECUTION_ENGINE).equals("spark");
+    boolean isMR = HiveConf.getVar(conf,
+        HiveConf.ConfVars.HIVE_EXECUTION_ENGINE).equals("mr");
 
-    if (isSpark || !(leftOp instanceof UnionOperator)) {
+    if (!isMR || !(leftOp instanceof UnionOperator)) {
       leftOp = genInputSelectForUnion(leftOp, leftmap, leftalias, unionoutRR, unionalias);
     }
 
-    if (isSpark || !(rightOp instanceof UnionOperator)) {
+    if (!isMR || !(rightOp instanceof UnionOperator)) {
       rightOp = genInputSelectForUnion(rightOp, rightmap, rightalias, unionoutRR, unionalias);
     }
 
@@ -9601,6 +9604,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         if (partitions != null) {
           for (Partition partn : partitions) {
             // inputs.add(new ReadEntity(partn)); // is this needed at all?
+	      LOG.info("XXX: adding part: "+partn);
             outputs.add(new WriteEntity(partn, WriteEntity.WriteType.DDL_NO_LOCK));
           }
         }
@@ -10506,8 +10510,16 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       return nodeOutputs;
     }
 
+    Map<ExprNodeDesc,String> nodeToText = new HashMap<>();
+    List<Entry<ASTNode, ExprNodeDesc>> fieldDescList = new ArrayList<>();
+
     for (Map.Entry<ASTNode, ExprNodeDesc> entry : nodeOutputs.entrySet()) {
       if (!(entry.getValue() instanceof ExprNodeColumnDesc)) {
+        // we need to translate the ExprNodeFieldDesc too, e.g., identifiers in
+        // struct<>.
+        if (entry.getValue() instanceof ExprNodeFieldDesc) {
+          fieldDescList.add(entry);
+        }
         continue;
       }
       ASTNode node = entry.getKey();
@@ -10523,7 +10535,33 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       replacementText.append(HiveUtils.unparseIdentifier(tmp[0], conf));
       replacementText.append(".");
       replacementText.append(HiveUtils.unparseIdentifier(tmp[1], conf));
+      nodeToText.put(columnDesc, replacementText.toString());
       unparseTranslator.addTranslation(node, replacementText.toString());
+    }
+
+    if (fieldDescList.size() != 0) {
+      // Sorting the list based on the length of fieldName
+      // For example, in Column[a].b.c and Column[a].b, Column[a].b should be
+      // unparsed before Column[a].b.c
+      Collections.sort(fieldDescList, new Comparator<Map.Entry<ASTNode, ExprNodeDesc>>() {
+        public int compare(Entry<ASTNode, ExprNodeDesc> o1, Entry<ASTNode, ExprNodeDesc> o2) {
+          ExprNodeFieldDesc fieldDescO1 = (ExprNodeFieldDesc) o1.getValue();
+          ExprNodeFieldDesc fieldDescO2 = (ExprNodeFieldDesc) o2.getValue();
+          return fieldDescO1.toString().length() < fieldDescO2.toString().length() ? -1 : 1;
+        }
+      });
+      for (Map.Entry<ASTNode, ExprNodeDesc> entry : fieldDescList) {
+        ASTNode node = entry.getKey();
+        ExprNodeFieldDesc fieldDesc = (ExprNodeFieldDesc) entry.getValue();
+        ExprNodeDesc exprNodeDesc = fieldDesc.getDesc();
+        String fieldName = fieldDesc.getFieldName();
+        StringBuilder replacementText = new StringBuilder();
+        replacementText.append(nodeToText.get(exprNodeDesc));
+        replacementText.append(".");
+        replacementText.append(HiveUtils.unparseIdentifier(fieldName, conf));
+        nodeToText.put(fieldDesc, replacementText.toString());
+        unparseTranslator.addTranslation(node, replacementText.toString());
+      }
     }
 
     return nodeOutputs;
@@ -10943,14 +10981,30 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
 
     case CTAS: // create table as select
 
-      // Verify that the table does not already exist
-      try {
-        Table dumpTable = db.newTable(dbDotTab);
-        if (null != db.getTable(dumpTable.getDbName(), dumpTable.getTableName(), false)) {
-          throw new SemanticException(ErrorMsg.TABLE_ALREADY_EXISTS.getMsg(dbDotTab));
+      if (isTemporary) {
+        String dbName = qualifiedTabName[0];
+        String tblName = qualifiedTabName[1];
+        SessionState ss = SessionState.get();
+        if (ss == null) {
+          throw new SemanticException("No current SessionState, cannot create temporary table "
+              + dbName + "." + tblName);
         }
-      } catch (HiveException e) {
-        throw new SemanticException(e);
+        Map<String, Table> tables = SessionHiveMetaStoreClient.getTempTablesForDatabase(dbName);
+        if (tables != null && tables.containsKey(tblName)) {
+          throw new SemanticException("Temporary table " + dbName + "." + tblName
+              + " already exists");
+        }
+      } else {
+        // Verify that the table does not already exist
+        // dumpTable is only used to check the conflict for non-temporary tables
+        try {
+          Table dumpTable = db.newTable(dbDotTab);
+          if (null != db.getTable(dumpTable.getDbName(), dumpTable.getTableName(), false)) {
+            throw new SemanticException(ErrorMsg.TABLE_ALREADY_EXISTS.getMsg(dbDotTab));
+          }
+        } catch (HiveException e) {
+          throw new SemanticException(e);
+        }
       }
 
       tblProps = addDefaultProperties(tblProps);
@@ -12202,7 +12256,6 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       queryProperties.setNoScanAnalyzeCommand(qb.getParseInfo().isNoScanAnalyzeCommand());
       queryProperties.setAnalyzeRewrite(qb.isAnalyzeRewrite());
       queryProperties.setCTAS(qb.getTableDesc() != null);
-      queryProperties.setInsertToTable(qb.getParseInfo().isInsertToTable());
       queryProperties.setHasOuterOrderBy(!qb.getParseInfo().getIsSubQ() &&
               !qb.getParseInfo().getDestToOrderBy().isEmpty());
       queryProperties.setOuterQueryLimit(qb.getParseInfo().getOuterQueryLimit());

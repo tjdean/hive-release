@@ -125,4 +125,6 @@ BUG FIXES
     HIVE-5277 : HBase handler skips rows with null valued first cells when only row key is selected
     HIVE-11152 : Swapping join inputs in ASTConverter
     HIVE-11928 : ORC footer section can also exceed protobuf message limit
+    HIVE-11983 : Hive streaming API : uses incorrect logic to assign buckets to incoming records
+    HIVE-12003 : Hive Streaming API : Add check to ensure table is transactional
 

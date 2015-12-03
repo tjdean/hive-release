@@ -23,6 +23,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLClassLoader;
@@ -51,6 +53,7 @@ import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
+import org.apache.hadoop.hive.metastore.ObjectStore;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsObj;
 import org.apache.hadoop.hive.ql.MapRedStats;
 import org.apache.hadoop.hive.ql.exec.Registry;
@@ -208,8 +211,6 @@ public class SessionState {
    */
   LineageState ls;
 
-  private PerfLogger perfLogger;
-
   private final String userName;
 
   /**
@@ -242,23 +243,6 @@ public class SessionState {
    * {@link #initTxnMgr(org.apache.hadoop.hive.conf.HiveConf)}
    */
   private HiveTxnManager txnMgr = null;
-
-  /**
-   * When {@link #setCurrentTxn(long)} is set to this or {@link #getCurrentTxn()}} returns this it
-   * indicates that there is not a current transaction in this session.
-  */
-  public static final long NO_CURRENT_TXN = -1L;
-
-  /**
-   * Transaction currently open
-   */
-  private long currentTxn = NO_CURRENT_TXN;
-
-  /**
-   * Whether we are in auto-commit state or not.  Currently we are always in auto-commit,
-   * so there are not setters for this yet.
-   */
-  private final boolean txnAutoCommit = true;
 
   /**
    * store the jars loaded last time
@@ -390,7 +374,7 @@ public class SessionState {
    * @return transaction manager
    * @throws LockException
    */
-  public HiveTxnManager initTxnMgr(HiveConf conf) throws LockException {
+  public synchronized HiveTxnManager initTxnMgr(HiveConf conf) throws LockException {
     if (txnMgr == null) {
       txnMgr = TxnManagerFactory.getTxnManagerFactory().getTxnManager(conf);
     }
@@ -399,18 +383,6 @@ public class SessionState {
 
   public HiveTxnManager getTxnMgr() {
     return txnMgr;
-  }
-
-  public long getCurrentTxn() {
-    return currentTxn;
-  }
-
-  public void setCurrentTxn(long currTxn) {
-    currentTxn = currTxn;
-  }
-
-  public boolean isAutoCommit() {
-    return txnAutoCommit;
   }
 
   public HadoopShims.HdfsEncryptionShim getHdfsEncryptionShim() throws HiveException {
@@ -1224,11 +1196,8 @@ public class SessionState {
     String scheme = uri.getScheme() == null ? null : uri.getScheme().toLowerCase();
     if (scheme == null || scheme.equals("file")) {
       return "file";
-    } else if (scheme.equals("hdfs") || scheme.equals("ivy")) {
-      return scheme;
-    } else {
-      throw new RuntimeException("invalid url: " + uri + ", expecting ( file | hdfs | ivy)  as url scheme. ");
     }
+    return scheme;
   }
 
   List<URI> resolveAndDownload(ResourceType t, String value, boolean convertToUnix) throws URISyntaxException,
@@ -1238,10 +1207,8 @@ public class SessionState {
       return Arrays.asList(uri);
     } else if (getURLType(value).equals("ivy")) {
       return dependencyResolver.downloadDependencies(uri);
-    } else if (getURLType(value).equals("hdfs")) {
-      return Arrays.asList(createURI(downloadResource(value, convertToUnix)));
     } else {
-      throw new RuntimeException("Invalid url " + uri);
+      return Arrays.asList(createURI(downloadResource(value, convertToUnix)));
     }
   }
 
@@ -1498,6 +1465,21 @@ public class SessionState {
     }
 
     dropSessionPaths(conf);
+    unCacheDataNucleusClassLoaders();
+  }
+
+  private void unCacheDataNucleusClassLoaders() {
+    try {
+      Hive threadLocalHive = Hive.get(conf);
+      if ((threadLocalHive != null) && (threadLocalHive.getMSC() != null)
+          && (threadLocalHive.getMSC().isLocalMetaStore())) {
+        if (conf.getVar(ConfVars.METASTORE_RAW_STORE_IMPL).equals(ObjectStore.class.getName())) {
+          ObjectStore.unCacheDataNucleusClassLoaders();
+        }
+      }
+    } catch (Exception e) {
+      LOG.info(e);
+    }
   }
 
   public AuthorizationMode getAuthorizationMode(){
@@ -1523,16 +1505,7 @@ public class SessionState {
 
    */
   public PerfLogger getPerfLogger(boolean resetPerfLogger) {
-    if ((perfLogger == null) || resetPerfLogger) {
-      try {
-        perfLogger = (PerfLogger) ReflectionUtils.newInstance(conf.getClassByName(
-            conf.getVar(ConfVars.HIVE_PERF_LOGGER)), conf);
-      } catch (ClassNotFoundException e) {
-        LOG.error("Performance Logger Class not found:" + e.getMessage());
-        perfLogger = new PerfLogger();
-      }
-    }
-    return perfLogger;
+    return PerfLogger.getPerfLogger(conf, resetPerfLogger);
   }
 
   public TezSessionState getTezSession() {

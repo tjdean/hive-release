@@ -203,6 +203,21 @@ class DummyTxnManager extends HiveTxnManagerImpl {
     return false;
   }
 
+  @Override
+  public boolean getAutoCommit() {
+    return false;
+  }
+
+  @Override
+  public boolean isTxnOpen() {
+    return false;
+  }
+
+  @Override
+  public long getCurrentTxnId() {
+    return 0L;
+  }
+
 
   protected void destruct() {
     if (lockMgr != null) {

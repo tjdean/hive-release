@@ -313,7 +313,7 @@ public class MapWork extends BaseWork {
     }
   }
 
-  @Explain(displayName = "Execution mode")
+  @Explain(displayName = "Execution mode", explainLevels = { Level.USER, Level.DEFAULT, Level.EXTENDED })
   public String getVectorModeOn() {
     return vectorMode ? "vectorized" : null;
   }

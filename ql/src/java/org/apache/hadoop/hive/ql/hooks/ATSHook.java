@@ -26,10 +26,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.QueryPlan;
 import org.apache.hadoop.hive.ql.exec.ExplainTask;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.exec.Utilities;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.yarn.api.records.timeline.TimelineEntity;
 import org.apache.hadoop.yarn.api.records.timeline.TimelineEvent;
@@ -47,11 +49,15 @@ public class ATSHook implements ExecuteWithHookContext {
 
   private static final Log LOG = LogFactory.getLog(ATSHook.class.getName());
   private static final Object LOCK = new Object();
+  private static final int VERSION = 2;
   private static ExecutorService executor;
   private static TimelineClient timelineClient;
   private enum EntityTypes { HIVE_QUERY_ID };
   private enum EventTypes { QUERY_SUBMITTED, QUERY_COMPLETED };
-  private enum OtherInfoTypes { QUERY, STATUS, TEZ, MAPRED };
+
+  private enum OtherInfoTypes {
+    QUERY, STATUS, TEZ, MAPRED, SESSION_ID, THREAD_NAME, LOG_TRACE_ID, VERSION
+  };
   private enum PrimaryFilterTypes { user, requestuser, operationid };
   private static final int WAIT_TIME = 3;
 
@@ -103,7 +109,7 @@ public class ATSHook implements ExecuteWithHookContext {
             String user = hookContext.getUgi().getUserName();
             String requestuser = hookContext.getUserName();
             if (hookContext.getUserName() == null ){
-            	requestuser = hookContext.getUgi().getUserName() ; 
+              requestuser = hookContext.getUgi().getUserName() ;
             }
             int numMrJobs = Utilities.getMRTasks(plan.getRootTasks()).size();
             int numTezJobs = Utilities.getTezTasks(plan.getRootTasks()).size();
@@ -119,8 +125,10 @@ public class ATSHook implements ExecuteWithHookContext {
               List<Task<?>> rootTasks = plan.getRootTasks();
               JSONObject explainPlan = explain.getJSONPlan(null, null, rootTasks,
                    plan.getFetchTask(), true, false, false);
-              fireAndForget(conf, createPreHookEvent(queryId, query,
-                   explainPlan, queryStartTime, user, requestuser, numMrJobs, numTezJobs, opId));
+            fireAndForget(conf,
+                createPreHookEvent(queryId, query, explainPlan, queryStartTime, user, requestuser,
+                    numMrJobs, numTezJobs, opId, plan.getSessionId(), plan.getThreadName(),
+                    plan.getUserProvidedContext()));
               break;
             case POST_EXEC_HOOK:
               fireAndForget(conf, createPostHookEvent(queryId, currentTime, user, requestuser, true, opId));
@@ -140,7 +148,8 @@ public class ATSHook implements ExecuteWithHookContext {
   }
 
   TimelineEntity createPreHookEvent(String queryId, String query, JSONObject explainPlan,
-      long startTime, String user, String requestuser, int numMrJobs, int numTezJobs, String opId) throws Exception {
+      long startTime, String user, String requestuser, int numMrJobs, int numTezJobs, String opId,
+      String sessionId, String threadName, String logTraceId) throws Exception {
 
     JSONObject queryObj = new JSONObject();
     queryObj.put("queryText", query);
@@ -157,7 +166,7 @@ public class ATSHook implements ExecuteWithHookContext {
     atsEntity.setEntityType(EntityTypes.HIVE_QUERY_ID.name());
     atsEntity.addPrimaryFilter(PrimaryFilterTypes.user.name(), user);
     atsEntity.addPrimaryFilter(PrimaryFilterTypes.requestuser.name(), requestuser);
-    
+
     if (opId != null) {
       atsEntity.addPrimaryFilter(PrimaryFilterTypes.operationid.name(), opId);
     }
@@ -170,6 +179,12 @@ public class ATSHook implements ExecuteWithHookContext {
     atsEntity.addOtherInfo(OtherInfoTypes.QUERY.name(), queryObj.toString());
     atsEntity.addOtherInfo(OtherInfoTypes.TEZ.name(), numTezJobs > 0);
     atsEntity.addOtherInfo(OtherInfoTypes.MAPRED.name(), numMrJobs > 0);
+    atsEntity.addOtherInfo(OtherInfoTypes.SESSION_ID.name(), sessionId);
+    atsEntity.addOtherInfo(OtherInfoTypes.THREAD_NAME.name(), threadName);
+    atsEntity.addOtherInfo(OtherInfoTypes.VERSION.name(), VERSION);
+    if ((logTraceId != null) && (logTraceId.equals("") == false)) {
+      atsEntity.addOtherInfo(OtherInfoTypes.LOG_TRACE_ID.name(), logTraceId);
+    }
     return atsEntity;
   }
 

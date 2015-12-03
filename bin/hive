@@ -110,8 +110,14 @@ for f in ${HIVE_LIB}/*.jar; do
   CLASSPATH=${CLASSPATH}:$f;
 done
 
+# Skip adding spark-assembly.jar by default
+if [[ -z "$HIVE_SKIP_SPARK_ASSEMBLY" ]]
+then
+  export HIVE_SKIP_SPARK_ASSEMBLY='true';
+fi
+
 # add Spark assembly jar to the classpath
-if [[ -n "$SPARK_HOME" ]]
+if [[ -n "$SPARK_HOME" && !("$HIVE_SKIP_SPARK_ASSEMBLY" = "true") ]]
 then
   sparkAssemblyPath=`ls ${SPARK_HOME}/lib/spark-assembly-*.jar`
   CLASSPATH="${CLASSPATH}:${sparkAssemblyPath}"

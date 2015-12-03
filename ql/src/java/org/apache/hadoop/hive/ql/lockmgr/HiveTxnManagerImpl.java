@@ -27,6 +27,7 @@ import org.apache.hadoop.hive.conf.HiveConf;
 abstract class HiveTxnManagerImpl implements HiveTxnManager {
 
   protected HiveConf conf;
+  private boolean isAutoCommit = true;//true by default; matches JDBC spec
 
   void setHiveConf(HiveConf c) {
     conf = c;
@@ -44,4 +45,8 @@ abstract class HiveTxnManagerImpl implements HiveTxnManager {
     destruct();
   }
 
+  @Override
+  public boolean getAutoCommit() {
+    return isAutoCommit;
+  }
 }

@@ -29,7 +29,6 @@ insert overwrite table tab partition (ds='2008-04-08')
 select key,value from srcbucket_mapjoin;
 
 set hive.auto.convert.sortmerge.join = true;
-set hive.auto.convert.join = true;
 
 set hive.auto.convert.join.noconditionaltask.size=500;
 CREATE TABLE empty(key int, value string) PARTITIONED BY(ds STRING) CLUSTERED BY (key) SORTED BY (key) INTO 2 BUCKETS STORED AS TEXTFILE;
@@ -53,3 +52,16 @@ explain
 select count(*) from tab s1 left outer join empty s2 on s1.key=s2.key join tab s3 on s1.key = s3.key;
 
 select count(*) from tab s1 left outer join empty s2 on s1.key=s2.key join tab s3 on s1.key = s3.key;
+
+explain
+select count(*) from empty s1 join empty s3 on s1.key=s3.key;
+
+select count(*) from empty s1 join empty s3 on s1.key=s3.key;
+
+set hive.auto.convert.sortmerge.join.bigtable.selection.policy = org.apache.hadoop.hive.ql.optimizer.LeftmostBigTableSelectorForAutoSMJ;
+
+explain
+select count(*) from empty s1 join tab s3 on s1.key=s3.key;
+
+select count(*) from empty s1 join tab s3 on s1.key=s3.key;
+

@@ -409,11 +409,11 @@ public interface HadoopShims {
   public FileSystem createProxyFileSystem(FileSystem fs, URI uri);
 
   public Map<String, String> getHadoopConfNames();
-  
+
   /**
    * Create a shim for DFS storage policy.
    */
-  
+
   public enum StoragePolicyValue {
     MEMORY, /* 1-replica memory */
     SSD, /* 3-replica ssd */
@@ -426,11 +426,11 @@ public interface HadoopShims {
       return StoragePolicyValue.valueOf(name.toUpperCase().trim());
     }
   };
-  
+
   public interface StoragePolicyShim {
     void setStoragePolicy(Path path, StoragePolicyValue policy) throws IOException;
   }
-  
+
   /**
    *  obtain a storage policy shim associated with the filesystem.
    *  Returns null when the filesystem has no storage policies.
@@ -733,4 +733,24 @@ public interface HadoopShims {
    * @throws IOException If an error occurred on adding the token.
    */
   public void addDelegationTokens(FileSystem fs, Credentials cred, String uname) throws IOException;
+
+  /*
+   * Set up the caller context for HDFS and Yarn.
+   */
+  public void setHadoopCallerContext(String callerContext);
+
+  /*
+   * get current caller context of HDFS and Yarn.
+   */
+  public String getHadoopCallerContext();
+
+  /*
+   * Set up context specific caller context with query prefix.
+   */
+  void setHadoopQueryContext(String queryId);
+
+  /*
+   * Set up context specific caller context with session prefix.
+   */
+  void setHadoopSessionContext(String sessionId);
 }

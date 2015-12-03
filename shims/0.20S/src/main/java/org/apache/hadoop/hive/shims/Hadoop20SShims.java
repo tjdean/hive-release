@@ -727,4 +727,33 @@ public class Hadoop20SShims extends HadoopShimsSecure {
     Token<?> fsToken = fs.getDelegationToken(uname);
     cred.addToken(fsToken.getService(), fsToken);
   }
+
+  @Override
+  public void setHadoopCallerContext(String callerContext) {
+    /*
+     * do nothing. This is not supported in hadoop-1
+     */
+  }
+
+  @Override
+  public String getHadoopCallerContext() {
+    /*
+     * do nothing. This is not supported in hadoop-1
+     */
+    return null;
+  }
+
+  @Override
+  public void setHadoopQueryContext(String callerContext) {
+    /*
+     * do nothing. This is not supported in hadoop-1
+     */
+  }
+
+  @Override
+  public void setHadoopSessionContext(String sessionId) {
+    /*
+     * do nothing. This is not supported in hadoop-1
+     */
+  }
 }

@@ -130,12 +130,11 @@ public class HiveConnection implements java.sql.Connection {
   public HiveConnection(String uri, Properties info) throws SQLException {
     setupLoginTimeout();
     try {
-      connParams = Utils.parseURL(uri);
+      connParams = Utils.parseURL(uri, info);
     } catch (ZooKeeperHiveClientException e) {
       throw new SQLException(e);
     }
     jdbcUriString = connParams.getJdbcUriString();
-    // extract parsed connection parameters:
     // JDBC URL: jdbc:hive2://<host>:<port>/dbName;sess_var_list?hive_conf_list#hive_var_list
     // each list: <key1>=<val1>;<key2>=<val2> and so on
     // sess_var_list -> sessConfMap
@@ -145,19 +144,7 @@ public class HiveConnection implements java.sql.Connection {
     port = connParams.getPort();
     sessConfMap = connParams.getSessionVars();
     hiveConfMap = connParams.getHiveConfs();
-
     hiveVarMap = connParams.getHiveVars();
-    for (Map.Entry<Object, Object> kv : info.entrySet()) {
-      if ((kv.getKey() instanceof String)) {
-        String key = (String) kv.getKey();
-        if (key.startsWith(HIVE_VAR_PREFIX)) {
-          hiveVarMap.put(key.substring(HIVE_VAR_PREFIX.length()), info.getProperty(key));
-        } else if (key.startsWith(HIVE_CONF_PREFIX)) {
-          hiveConfMap.put(key.substring(HIVE_CONF_PREFIX.length()), info.getProperty(key));
-        }
-      }
-    }
-
     isEmbeddedMode = connParams.isEmbeddedMode();
 
     if (isEmbeddedMode) {
@@ -165,17 +152,6 @@ public class HiveConnection implements java.sql.Connection {
       embeddedClient.init(new HiveConf());
       client = embeddedClient;
     } else {
-      // extract user/password from JDBC connection properties if its not supplied in the
-      // connection URL
-      if (info.containsKey(JdbcConnectionParams.AUTH_USER)) {
-        sessConfMap.put(JdbcConnectionParams.AUTH_USER, info.getProperty(JdbcConnectionParams.AUTH_USER));
-        if (info.containsKey(JdbcConnectionParams.AUTH_PASSWD)) {
-          sessConfMap.put(JdbcConnectionParams.AUTH_PASSWD, info.getProperty(JdbcConnectionParams.AUTH_PASSWD));
-        }
-      }
-      if (info.containsKey(JdbcConnectionParams.AUTH_TYPE)) {
-        sessConfMap.put(JdbcConnectionParams.AUTH_TYPE, info.getProperty(JdbcConnectionParams.AUTH_TYPE));
-      }
       // open the client transport
       openTransport();
       // set up the client
@@ -206,16 +182,14 @@ public class HiveConnection implements java.sql.Connection {
                 .get(JdbcConnectionParams.AUTH_KERBEROS_AUTH_TYPE));
         transport = isHttpTransportMode() ? createHttpTransport() : createBinaryTransport();
         if (!transport.isOpen()) {
-          LOG.info("Will try to open client transport with JDBC Uri: " + jdbcUriString);
           transport.open();
+          logZkDiscoveryMessage("Connected to " + connParams.getHost() + ":" + connParams.getPort());
         }
         break;
       } catch (TTransportException e) {
-        LOG.info("Could not open client transport with JDBC Uri: " + jdbcUriString);
         // We'll retry till we exhaust all HiveServer2 nodes from ZooKeeper
-        if ((sessConfMap.get(JdbcConnectionParams.SERVICE_DISCOVERY_MODE) != null)
-            && (JdbcConnectionParams.SERVICE_DISCOVERY_MODE_ZOOKEEPER.equalsIgnoreCase(sessConfMap
-                .get(JdbcConnectionParams.SERVICE_DISCOVERY_MODE)))) {
+        if (isZkDynamicDiscoveryMode()) {
+          LOG.info("Failed to connect to " + connParams.getHost() + ":" + connParams.getPort());
           try {
             // Update jdbcUriString, host & port variables in connParams
             // Throw an exception if all HiveServer2 nodes have been exhausted,
@@ -230,7 +204,6 @@ public class HiveConnection implements java.sql.Connection {
           jdbcUriString = connParams.getJdbcUriString();
           host = connParams.getHost();
           port = connParams.getPort();
-          LOG.info("Will retry opening client transport");
         } else {
           LOG.info("Transport Used for JDBC connection: " +
             sessConfMap.get(JdbcConnectionParams.TRANSPORT_MODE));
@@ -632,6 +605,18 @@ public class HiveConnection implements java.sql.Connection {
       return true;
     }
     return false;
+  }
+
+  private boolean isZkDynamicDiscoveryMode() {
+    return (sessConfMap.get(JdbcConnectionParams.SERVICE_DISCOVERY_MODE) != null)
+      && (JdbcConnectionParams.SERVICE_DISCOVERY_MODE_ZOOKEEPER.equalsIgnoreCase(sessConfMap
+      .get(JdbcConnectionParams.SERVICE_DISCOVERY_MODE)));
+  }
+
+  private void logZkDiscoveryMessage(String message) {
+    if (isZkDynamicDiscoveryMode()) {
+      LOG.info(message);
+    }
   }
 
   /**

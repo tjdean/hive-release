@@ -216,7 +216,7 @@ function Install(
             Write-Log "Creating Templeton logs folder"
             New-Item -Path "$ttlogsdir" -type directory | Out-Null
         }
-        GiveFullPermissions "$ttlogsdir" "Users"
+        GiveFullPermissions "$ttlogsdir" "*S-1-5-32-545"
         Write-Log "Finished installing Apache Hcatalog"
 
         if ($roles){
@@ -688,7 +688,7 @@ function InstallBinaries(
         New-Item -Path "$hiveLogsDir" -type directory | Out-Null
     }
 
-    GiveFullPermissions "$hiveLogsDir" "Users"
+    GiveFullPermissions "$hiveLogsDir" "*S-1-5-32-545"
 
     $hadooplogdir = "$ENV:HADOOP_HOME\logs"
     if (Test-Path ENV:HADOOP_LOG_DIR)

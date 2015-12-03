@@ -223,6 +223,18 @@ public class HiveSessionImpl implements HiveSession {
 
   @Override
   public void setOperationLogSessionDir(File operationLogRootDir) {
+    if (!operationLogRootDir.exists()) {
+      LOG.warn("The operation log root directory is removed, recreating:" +
+          operationLogRootDir.getAbsolutePath());
+      if (!operationLogRootDir.mkdirs()) {
+        LOG.warn("Unable to create operation log root directory: " +
+            operationLogRootDir.getAbsolutePath());
+      }
+    }
+    if (!operationLogRootDir.canWrite()) {
+      LOG.warn("The operation log root directory is not writable: " +
+          operationLogRootDir.getAbsolutePath());
+    }
     sessionLogDir = new File(operationLogRootDir, sessionHandle.getHandleIdentifier().toString());
     isOperationLogEnabled = true;
     if (!sessionLogDir.exists()) {
@@ -272,12 +284,17 @@ public class HiveSessionImpl implements HiveSession {
   }
 
   protected synchronized void acquire(boolean userAccess) {
-    // Need to make sure that the this HiveServer2's session's SessionState is
+    // Need to make sure that this HiveServer2's session's session state is
     // stored in the thread local for the handler thread.
     SessionState.setCurrentSessionState(sessionState);
     if (userAccess) {
       lastAccessTime = System.currentTimeMillis();
     }
+
+    // set the log context for debugging
+    LOG.info("We are setting the hadoop caller context to " + sessionState.getSessionId()
+        + " for thread " + Thread.currentThread().getName());
+    ShimLoader.getHadoopShims().setHadoopSessionContext(sessionState.getSessionId());
   }
 
   /**
@@ -288,6 +305,11 @@ public class HiveSessionImpl implements HiveSession {
    * @see org.apache.hive.service.server.ThreadWithGarbageCleanup#finalize()
    */
   protected synchronized void release(boolean userAccess) {
+    // reset the HDFS caller context.
+    LOG.info("We are resetting the hadoop caller context for thread "
+        + Thread.currentThread().getName());
+    ShimLoader.getHadoopShims().setHadoopCallerContext("");
+
     SessionState.detachSession();
     if (ThreadWithGarbageCleanup.currentThread() instanceof ThreadWithGarbageCleanup) {
       ThreadWithGarbageCleanup currentThread =

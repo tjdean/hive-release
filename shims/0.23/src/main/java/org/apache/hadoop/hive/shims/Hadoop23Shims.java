@@ -60,12 +60,14 @@ import org.apache.hadoop.fs.permission.AclEntryType;
 import org.apache.hadoop.fs.permission.AclStatus;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.hdfs.DFSClient;
 import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.hdfs.client.HdfsAdmin;
 import org.apache.hadoop.hdfs.protocol.EncryptionZone;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.ipc.CallerContext;
 import org.apache.hadoop.mapred.ClusterStatus;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
@@ -526,11 +528,32 @@ public class Hadoop23Shims extends HadoopShimsSecure {
     // else the updates do not get flushed properly
     KeyProviderCryptoExtension keyProvider =  miniDFSCluster.getNameNode().getNamesystem().getProvider();
     if (keyProvider != null) {
-      miniDFSCluster.getFileSystem().getClient().setKeyProvider(keyProvider);
+      try {
+        setKeyProvider(miniDFSCluster.getFileSystem().getClient(), keyProvider);
+      } catch (Exception err) {
+        throw new IOException(err);
+      }
     }
 
     cluster = new MiniDFSShim(miniDFSCluster);
     return cluster;
+  }
+
+  private static void setKeyProvider(DFSClient dfsClient, KeyProviderCryptoExtension provider)
+      throws Exception {
+    Method setKeyProviderHadoop27Method = null;
+    try {
+      setKeyProviderHadoop27Method = DFSClient.class.getMethod("setKeyProvider", KeyProvider.class);
+    } catch (NoSuchMethodException err) {
+      // We can just use setKeyProvider() as it is
+    }
+
+    if (setKeyProviderHadoop27Method != null) {
+      // Method signature changed in Hadoop 2.7. Cast provider to KeyProvider
+      setKeyProviderHadoop27Method.invoke(dfsClient, (KeyProvider) provider);
+    } else {
+      dfsClient.setKeyProvider(provider);
+    }
   }
 
   /**
@@ -1097,7 +1120,6 @@ public class Hadoop23Shims extends HadoopShimsSecure {
     }
   }
 
-
   public static class StoragePolicyShim implements HadoopShims.StoragePolicyShim {
 
     private final DistributedFileSystem dfs;
@@ -1149,11 +1171,14 @@ public class Hadoop23Shims extends HadoopShimsSecure {
     options.setSkipCRC(true);
     options.preserve(FileAttribute.BLOCKSIZE);
     try {
+      conf.setBoolean("mapred.mapper.new-api", true);
       DistCp distcp = new DistCp(conf, options);
       distcp.execute();
       return true;
     } catch (Exception e) {
       throw new IOException("Cannot execute DistCp process: " + e, e);
+    } finally {
+      conf.setBoolean("mapred.mapper.new-api", false);
     }
   }
 
@@ -1352,5 +1377,28 @@ public class Hadoop23Shims extends HadoopShimsSecure {
   public void addDelegationTokens(FileSystem fs, Credentials cred, String uname) throws IOException {
     // Use method addDelegationTokens instead of getDelegationToken to get all the tokens including KMS.
     fs.addDelegationTokens(uname, cred);
+  }
+
+  @Override
+  public void setHadoopCallerContext(String callerContext) {
+    CallerContext.setCurrent(new CallerContext.Builder(callerContext).build());
+  }
+
+  @Override
+  public void setHadoopQueryContext(String callerContext) {
+    setHadoopCallerContext("HIVE_QUERY_ID:" + callerContext);
+  }
+
+  @Override
+  public void setHadoopSessionContext(String sessionId) {
+    setHadoopCallerContext("HIVE_SSN_ID:" + sessionId);
+  }
+
+  @Override
+  public String getHadoopCallerContext() {
+    if (CallerContext.getCurrent() == null) {
+      return "";
+    }
+    return CallerContext.getCurrent().getContext();
   }
 }

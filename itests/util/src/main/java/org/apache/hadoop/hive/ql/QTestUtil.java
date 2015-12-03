@@ -854,7 +854,7 @@ public class QTestUtil {
 
     HiveConf.setVar(conf, HiveConf.ConfVars.HIVE_AUTHENTICATOR_MANAGER,
     "org.apache.hadoop.hive.ql.security.DummyAuthenticator");
-    Utilities.clearWorkMap();
+    Utilities.clearWorkMap(conf);
     CliSessionState ss = createSessionState();
     assert ss != null;
     ss.in = System.in;
@@ -909,6 +909,7 @@ public class QTestUtil {
 
   private CliSessionState createSessionState() {
    return new CliSessionState(conf) {
+      @Override
       public void setSparkSession(SparkSession sparkSession) {
         super.setSparkSession(sparkSession);
         if (sparkSession != null) {
@@ -1497,6 +1498,7 @@ public class QTestUtil {
       ".*USING 'java -cp.*",
       "^Deleted.*",
       ".*DagName:.*",
+      ".*DagId:.*",
       ".*Input:.*/data/files/.*",
       ".*Output:.*/data/files/.*",
       ".*total number of created files now is.*",

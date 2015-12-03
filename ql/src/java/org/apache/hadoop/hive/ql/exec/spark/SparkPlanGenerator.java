@@ -112,7 +112,7 @@ public class SparkPlanGenerator {
     } finally {
       // clear all ThreadLocal cached MapWork/ReduceWork after plan generation
       // as this may executed in a pool thread.
-      Utilities.clearWorkMap();
+      Utilities.clearWorkMap(jobConf);
     }
 
     perfLogger.PerfLogEnd(CLASS_NAME, PerfLogger.SPARK_BUILD_PLAN);

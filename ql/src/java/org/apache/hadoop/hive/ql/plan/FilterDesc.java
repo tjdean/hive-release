@@ -70,9 +70,10 @@ public class FilterDesc extends AbstractOperatorDesc {
       SampleDesc desc = new SampleDesc(numerator, denominator, null, inputPruning);
       return desc;
     }
-    
+
+    @Override
     public String toString() {
-      return inputPruning ? "BUCKET " + numerator + " OUT OF " + denominator: null;  
+      return inputPruning ? "BUCKET " + numerator + " OUT OF " + denominator: null;
     }
   }
 

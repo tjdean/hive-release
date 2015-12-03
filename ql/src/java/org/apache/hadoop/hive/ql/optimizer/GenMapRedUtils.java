@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.ql.optimizer;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -111,6 +112,7 @@ import org.apache.hadoop.hive.ql.stats.StatsFactory;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.mapred.InputFormat;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Interner;
 
 /**
@@ -484,6 +486,7 @@ public final class GenMapRedUtils {
       HiveConf conf, boolean local) throws SemanticException {
     ArrayList<Path> partDir = new ArrayList<Path>();
     ArrayList<PartitionDesc> partDesc = new ArrayList<PartitionDesc>();
+    boolean isAcidTable = false;
 
     Path tblDir = null;
     TableDesc tblDesc = null;
@@ -494,6 +497,7 @@ public final class GenMapRedUtils {
       try {
         TableScanOperator tsOp = (TableScanOperator) topOp;
         partsList = PartitionPruner.prune(tsOp, parseCtx, alias_id);
+        isAcidTable = ((TableScanOperator) topOp).getConf().isAcidTable();
       } catch (SemanticException e) {
         throw e;
       } catch (HiveException e) {
@@ -536,26 +540,31 @@ public final class GenMapRedUtils {
     long sizeNeeded = Integer.MAX_VALUE;
     int fileLimit = -1;
     if (parseCtx.getGlobalLimitCtx().isEnable()) {
-      long sizePerRow = HiveConf.getLongVar(parseCtx.getConf(),
-          HiveConf.ConfVars.HIVELIMITMAXROWSIZE);
-      sizeNeeded = parseCtx.getGlobalLimitCtx().getGlobalLimit() * sizePerRow;
-      // for the optimization that reduce number of input file, we limit number
-      // of files allowed. If more than specific number of files have to be
-      // selected, we skip this optimization. Since having too many files as
-      // inputs can cause unpredictable latency. It's not necessarily to be
-      // cheaper.
-      fileLimit =
-          HiveConf.getIntVar(parseCtx.getConf(), HiveConf.ConfVars.HIVELIMITOPTLIMITFILE);
-
-      if (sizePerRow <= 0 || fileLimit <= 0) {
-        LOG.info("Skip optimization to reduce input size of 'limit'");
+      if (isAcidTable) {
+        LOG.info("Skip Global Limit optimization for ACID table");
         parseCtx.getGlobalLimitCtx().disableOpt();
-      } else if (parts.isEmpty()) {
-        LOG.info("Empty input: skip limit optimiztion");
       } else {
-        LOG.info("Try to reduce input size for 'limit' " +
-            "sizeNeeded: " + sizeNeeded +
-            "  file limit : " + fileLimit);
+        long sizePerRow = HiveConf.getLongVar(parseCtx.getConf(),
+            HiveConf.ConfVars.HIVELIMITMAXROWSIZE);
+        sizeNeeded = parseCtx.getGlobalLimitCtx().getGlobalLimit() * sizePerRow;
+        // for the optimization that reduce number of input file, we limit number
+        // of files allowed. If more than specific number of files have to be
+        // selected, we skip this optimization. Since having too many files as
+        // inputs can cause unpredictable latency. It's not necessarily to be
+        // cheaper.
+        fileLimit =
+            HiveConf.getIntVar(parseCtx.getConf(), HiveConf.ConfVars.HIVELIMITOPTLIMITFILE);
+
+        if (sizePerRow <= 0 || fileLimit <= 0) {
+          LOG.info("Skip optimization to reduce input size of 'limit'");
+          parseCtx.getGlobalLimitCtx().disableOpt();
+        } else if (parts.isEmpty()) {
+          LOG.info("Empty input: skip limit optimiztion");
+        } else {
+          LOG.info("Try to reduce input size for 'limit' " +
+              "sizeNeeded: " + sizeNeeded +
+              "  file limit : " + fileLimit);
+        }
       }
     }
     boolean isFirstPart = true;
@@ -575,13 +584,9 @@ public final class GenMapRedUtils {
     // this is being read because it is a dependency of a view).
     boolean isDirectRead = (parentViewInfo == null);
 
-    for (Partition part : parts) {
-      if (part.getTable().isPartitioned()) {
-        PlanUtils.addInput(inputs, new ReadEntity(part, parentViewInfo, isDirectRead));
-      } else {
-        PlanUtils.addInput(inputs, new ReadEntity(part.getTable(), parentViewInfo, isDirectRead));
-      }
+    PlanUtils.addPartitionInputs(parts, inputs, parentViewInfo, isDirectRead);
 
+    for (Partition part: parts) {
       // Later the properties have to come from the partition as opposed
       // to from the table in order to support versioning.
       Path[] paths = null;
@@ -685,6 +690,7 @@ public final class GenMapRedUtils {
         }
       }
     }
+
     if (emptyInput) {
       parseCtx.getGlobalLimitCtx().disableOpt();
     }
@@ -1229,16 +1235,13 @@ public final class GenMapRedUtils {
       ArrayList<ColumnInfo> signature = inputRS.getSignature();
       String tblAlias = fsInputDesc.getTableInfo().getTableName();
       LinkedHashMap<String, String> colMap = new LinkedHashMap<String, String>();
-      StringBuilder partCols = new StringBuilder();
       for (String dpCol : dpCtx.getDPColNames()) {
         ColumnInfo colInfo = new ColumnInfo(dpCol,
             TypeInfoFactory.stringTypeInfo, // all partition column type should be string
             tblAlias, true); // partition column is virtual column
         signature.add(colInfo);
         colMap.put(dpCol, dpCol); // input and output have the same column name
-        partCols.append(dpCol).append('/');
       }
-      partCols.setLength(partCols.length() - 1); // remove the last '/'
       inputRS.setSignature(signature);
 
       // create another DynamicPartitionCtx, which has a different input-to-DP column mapping
@@ -1247,9 +1250,7 @@ public final class GenMapRedUtils {
       fsOutputDesc.setDynPartCtx(dpCtx2);
 
       // update the FileSinkOperator to include partition columns
-      fsInputDesc.getTableInfo().getProperties().setProperty(
-        org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_PARTITION_COLUMNS,
-        partCols.toString()); // list of dynamic partition column names
+      usePartitionColumns(fsInputDesc.getTableInfo().getProperties(), dpCtx.getDPColNames());
     } else {
       // non-partitioned table
       fsInputDesc.getTableInfo().getProperties().remove(
@@ -1272,7 +1273,7 @@ public final class GenMapRedUtils {
       cplan = GenMapRedUtils.createMergeTask(fsInputDesc, finalName,
           dpCtx != null && dpCtx.getNumDPCols() > 0);
       if (conf.getVar(ConfVars.HIVE_EXECUTION_ENGINE).equals("tez")) {
-        work = new TezWork(conf.getVar(HiveConf.ConfVars.HIVEQUERYID));
+        work = new TezWork(conf.getVar(HiveConf.ConfVars.HIVEQUERYID), conf);
         cplan.setName("File Merge");
         ((TezWork) work).add(cplan);
       } else if (conf.getVar(ConfVars.HIVE_EXECUTION_ENGINE).equals("spark")) {
@@ -1285,7 +1286,7 @@ public final class GenMapRedUtils {
     } else {
       cplan = createMRWorkForMergingFiles(conf, tsMerge, fsInputDesc);
       if (conf.getVar(ConfVars.HIVE_EXECUTION_ENGINE).equals("tez")) {
-        work = new TezWork(conf.getVar(HiveConf.ConfVars.HIVEQUERYID));
+        work = new TezWork(conf.getVar(HiveConf.ConfVars.HIVEQUERYID), conf);
         cplan.setName("File Merge");
         ((TezWork)work).add(cplan);
       } else if (conf.getVar(ConfVars.HIVE_EXECUTION_ENGINE).equals("spark")) {
@@ -1464,8 +1465,7 @@ public final class GenMapRedUtils {
    * @return
    */
   public static boolean isInsertInto(ParseContext parseCtx, FileSinkOperator fsOp) {
-    return fsOp.getConf().getTableInfo().getTableName() != null &&
-        parseCtx.getQueryProperties().isInsertToTable();
+    return fsOp.getConf().getTableInfo().getTableName() != null;
   }
 
   /**
@@ -1870,7 +1870,55 @@ public final class GenMapRedUtils {
     }
     return null;
   }
+  /**
+   * Uses only specified partition columns.
+   * Provided properties should be pre-populated with partition column names and types.
+   * This function retains only information related to the columns from the list.
+   * @param properties properties to update
+   * @param partColNames list of columns to use
+   */
+  static void usePartitionColumns(Properties properties, List<String> partColNames) {
+    Preconditions.checkArgument(!partColNames.isEmpty(), "No partition columns provided to use");
+    Preconditions.checkArgument(new HashSet<String>(partColNames).size() == partColNames.size(),
+        "Partition columns should be unique: " + partColNames);
 
+    String[] partNames = properties.getProperty(
+        org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_PARTITION_COLUMNS)
+        .split("/");
+    String[] partTypes = properties.getProperty(
+        org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_PARTITION_COLUMN_TYPES)
+        .split(":");
+    Preconditions.checkArgument(partNames.length == partTypes.length,
+        "Partition Names, " + Arrays.toString(partNames) + " don't match partition Types, "
+        + Arrays.toString(partTypes));
+
+    Map<String, String> typeMap = new HashMap();
+    for (int i = 0; i < partNames.length; i++) {
+      String previousValue = typeMap.put(partNames[i], partTypes[i]);
+      Preconditions.checkArgument(previousValue == null, "Partition columns configuration is inconsistent. "
+          + "There are duplicates in partition column names: " + partNames);
+    }
+
+    StringBuilder partNamesBuf = new StringBuilder();
+    StringBuilder partTypesBuf = new StringBuilder();
+    for (String partName : partColNames) {
+      partNamesBuf.append(partName).append('/');
+      String partType = typeMap.get(partName);
+      if (partType == null) {
+        throw new RuntimeException("Type information for partition column " + partName + " is missing.");
+      }
+      partTypesBuf.append(partType).append(':');
+    }
+    partNamesBuf.setLength(partNamesBuf.length() - 1);
+    partTypesBuf.setLength(partTypesBuf.length() - 1);
+
+    properties.setProperty(
+        org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_PARTITION_COLUMNS,
+        partNamesBuf.toString());
+    properties.setProperty(
+        org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_PARTITION_COLUMN_TYPES,
+        partTypesBuf.toString());
+  }
   private GenMapRedUtils() {
     // prevent instantiation
   }

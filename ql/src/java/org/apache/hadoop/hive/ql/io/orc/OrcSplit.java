@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.ql.io.ColumnarSplit;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableUtils;
 import org.apache.hadoop.mapred.FileSplit;
@@ -36,7 +37,7 @@ import org.apache.hadoop.mapred.FileSplit;
  * OrcFileSplit. Holds file meta info
  *
  */
-public class OrcSplit extends FileSplit {
+public class OrcSplit extends FileSplit implements ColumnarSplit {
   private ReaderImpl.FileMetaInfo fileMetaInfo;
   private boolean hasFooter;
   private boolean isOriginal;
@@ -65,7 +66,7 @@ public class OrcSplit extends FileSplit {
     this.isOriginal = isOriginal;
     this.hasBase = hasBase;
     this.deltas.addAll(deltas);
-    this.projColsUncompressedSize = projectedDataSize;
+    this.projColsUncompressedSize = projectedDataSize <= 0 ? length : projectedDataSize;
   }
 
   @Override
@@ -152,7 +153,8 @@ public class OrcSplit extends FileSplit {
     return deltas;
   }
 
-  public long getProjectedColumnsUncompressedSize() {
+  @Override
+  public long getColumnarProjectionSize() {
     return projColsUncompressedSize;
   }
 }

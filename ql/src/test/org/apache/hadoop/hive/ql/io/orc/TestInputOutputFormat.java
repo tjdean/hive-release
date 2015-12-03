@@ -33,10 +33,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TimeZone;
@@ -61,6 +59,7 @@ import org.apache.hadoop.hive.ql.exec.vector.DecimalColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DoubleColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
+import org.apache.hadoop.hive.ql.io.AcidInputFormat;
 import org.apache.hadoop.hive.ql.io.AcidOutputFormat;
 import org.apache.hadoop.hive.ql.io.CombineHiveInputFormat;
 import org.apache.hadoop.hive.ql.io.HiveInputFormat;
@@ -808,6 +807,17 @@ public class TestInputOutputFormat {
     footer.setNumberOfRows(1000 * stripeLengths.length)
           .setHeaderLength(headerLen)
           .setContentLength(offset - headerLen);
+    footer.addStatistics(OrcProto.ColumnStatistics.newBuilder()
+        .setNumberOfValues(1000 * stripeLengths.length).build());
+    footer.addStatistics(OrcProto.ColumnStatistics.newBuilder()
+        .setNumberOfValues(1000 * stripeLengths.length)
+        .setStringStatistics(
+            OrcProto.StringStatistics.newBuilder()
+                .setMaximum("zzz")
+                .setMinimum("aaa")
+                .setSum(1000 * 3 * stripeLengths.length)
+                .build()
+        ).build());
     footer.build().writeTo(buffer);
     int footerEnd = buffer.getLength();
     OrcProto.PostScript ps =
@@ -908,6 +918,78 @@ public class TestInputOutputFormat {
       assertEquals("checking stripe " + i + " size",
           stripeSizes[i], results.get(i).getLength());
     }
+  }
+
+  @Test
+  public void testProjectedColumnSize() throws Exception {
+    long[] stripeSizes =
+        new long[]{200, 200, 200, 200, 100};
+    MockFileSystem fs = new MockFileSystem(conf,
+        new MockFile("mock:/a/file", 500,
+            createMockOrcFile(stripeSizes),
+            new MockBlock("host1-1", "host1-2", "host1-3"),
+            new MockBlock("host2-1", "host0", "host2-3"),
+            new MockBlock("host0", "host3-2", "host3-3"),
+            new MockBlock("host4-1", "host4-2", "host4-3"),
+            new MockBlock("host5-1", "host5-2", "host5-3")));
+    conf.setInt(OrcInputFormat.MAX_SPLIT_SIZE, 300);
+    conf.setInt(OrcInputFormat.MIN_SPLIT_SIZE, 200);
+    conf.setBoolean(ColumnProjectionUtils.READ_ALL_COLUMNS, false);
+    conf.set(ColumnProjectionUtils.READ_COLUMN_IDS_CONF_STR, "0");
+    OrcInputFormat.Context context = new OrcInputFormat.Context(conf);
+    OrcInputFormat.SplitGenerator splitter =
+        new OrcInputFormat.SplitGenerator(new OrcInputFormat.SplitInfo(context, fs,
+            fs.getFileStatus(new Path("/a/file")), null, true,
+            new ArrayList<Long>(), true, null, null));
+    List<OrcSplit> results = splitter.call();
+    OrcSplit result = results.get(0);
+    assertEquals(3, results.size());
+    assertEquals(3, result.getStart());
+    assertEquals(400, result.getLength());
+    assertEquals(167468, result.getColumnarProjectionSize());
+    result = results.get(1);
+    assertEquals(403, result.getStart());
+    assertEquals(400, result.getLength());
+    assertEquals(167468, result.getColumnarProjectionSize());
+    result = results.get(2);
+    assertEquals(803, result.getStart());
+    assertEquals(100, result.getLength());
+    assertEquals(41867, result.getColumnarProjectionSize());
+
+    // test min = 0, max = 0 generates each stripe
+    conf.setInt(OrcInputFormat.MIN_SPLIT_SIZE, 0);
+    conf.setInt(OrcInputFormat.MAX_SPLIT_SIZE, 0);
+    context = new OrcInputFormat.Context(conf);
+    splitter = new OrcInputFormat.SplitGenerator(new OrcInputFormat.SplitInfo(context, fs,
+        fs.getFileStatus(new Path("/a/file")), null, true,
+        new ArrayList<Long>(),
+        true, null, null));
+    results = splitter.call();
+    assertEquals(5, results.size());
+    for (int i = 0; i < stripeSizes.length; ++i) {
+      assertEquals("checking stripe " + i + " size",
+          stripeSizes[i], results.get(i).getLength());
+      if (i == stripeSizes.length - 1) {
+        assertEquals(41867, results.get(i).getColumnarProjectionSize());
+      } else {
+        assertEquals(83734, results.get(i).getColumnarProjectionSize());
+      }
+    }
+
+    // single split
+    conf.setInt(OrcInputFormat.MIN_SPLIT_SIZE, 100000);
+    conf.setInt(OrcInputFormat.MAX_SPLIT_SIZE, 1000);
+    context = new OrcInputFormat.Context(conf);
+    splitter = new OrcInputFormat.SplitGenerator(new OrcInputFormat.SplitInfo(context, fs,
+        fs.getFileStatus(new Path("/a/file")), null, true,
+        new ArrayList<Long>(),
+        true, null, null));
+    results = splitter.call();
+    assertEquals(1, results.size());
+    result = results.get(0);
+    assertEquals(3, result.getStart());
+    assertEquals(900, result.getLength());
+    assertEquals(376804, result.getColumnarProjectionSize());
   }
 
   @Test
@@ -1218,8 +1300,8 @@ public class TestInputOutputFormat {
                                          boolean isVectorized,
                                          int partitions
                                          ) throws IOException {
-    Utilities.clearWorkMap();
     JobConf conf = new JobConf();
+    Utilities.clearWorkMap(conf);
     conf.set("hive.exec.plan", workDir.toString());
     conf.set("mapred.job.tracker", "local");
     conf.set("hive.vectorized.execution.enabled", Boolean.toString(isVectorized));

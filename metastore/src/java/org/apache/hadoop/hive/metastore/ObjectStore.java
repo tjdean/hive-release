@@ -21,6 +21,7 @@ package org.apache.hadoop.hive.metastore;
 import static org.apache.commons.lang.StringUtils.join;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.URI;
 import java.util.ArrayList;
@@ -147,6 +148,9 @@ import org.apache.hadoop.hive.metastore.partition.spec.PartitionSpecProxy;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hive.common.util.HiveStringUtils;
 import org.apache.thrift.TException;
+import org.datanucleus.ClassLoaderResolver;
+import org.datanucleus.NucleusContext;
+import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
 import org.datanucleus.store.rdbms.exceptions.MissingTableException;
 
 import com.google.common.collect.Lists;
@@ -5742,11 +5746,13 @@ public class ObjectStore implements RawStore, Configurable {
   public class UpdateMStorageDescriptorTblURIRetVal {
     private List<String> badRecords;
     private Map<String, String> updateLocations;
+    private int numNullRecords;
 
     UpdateMStorageDescriptorTblURIRetVal(List<String> badRecords,
-      Map<String, String> updateLocations) {
+      Map<String, String> updateLocations, int numNullRecords) {
       this.badRecords = badRecords;
       this.updateLocations = updateLocations;
+      this.numNullRecords = numNullRecords;
     }
 
     public List<String> getBadRecords() {
@@ -5764,6 +5770,14 @@ public class ObjectStore implements RawStore, Configurable {
     public void setUpdateLocations(Map<String, String> updateLocations) {
       this.updateLocations = updateLocations;
     }
+
+    public int getNumNullRecords() {
+      return numNullRecords;
+    }
+
+    public void setNumNullRecords(int numNullRecords) {
+      this.numNullRecords = numNullRecords;
+    }
   }
 
   /** The following APIs
@@ -5778,6 +5792,7 @@ public class ObjectStore implements RawStore, Configurable {
     boolean committed = false;
     Map<String, String> updateLocations = new HashMap<String, String>();
     List<String> badRecords = new ArrayList<String>();
+    int numNullRecords = 0;
     UpdateMStorageDescriptorTblURIRetVal retVal = null;
 
     try {
@@ -5789,6 +5804,10 @@ public class ObjectStore implements RawStore, Configurable {
       for(MStorageDescriptor mSDS:mSDSs) {
         URI locationURI = null;
         String location = mSDS.getLocation();
+        if (location == null) { // This can happen for View or Index
+          numNullRecords++;
+          continue;
+        }
         try {
           locationURI = new Path(location).toUri();
         } catch (IllegalArgumentException e) {
@@ -5808,7 +5827,7 @@ public class ObjectStore implements RawStore, Configurable {
       }
       committed = commitTransaction();
       if (committed) {
-        retVal = new UpdateMStorageDescriptorTblURIRetVal(badRecords, updateLocations);
+        retVal = new UpdateMStorageDescriptorTblURIRetVal(badRecords, updateLocations, numNullRecords);
       }
       return retVal;
     } finally {
@@ -7179,6 +7198,33 @@ public class ObjectStore implements RawStore, Configurable {
     return event;
   }
 
-
+  /**
+   * Removed cached classloaders from DataNucleus DataNucleus caches
+   * classloaders in NucleusContext. In UDFs, this can result in classloaders
+   * not getting GCed resulting in PermGen leaks. This is particularly an issue
+   * when using embedded metastore with HiveServer2, since the current
+   * classloader gets modified with each new add jar, becoming the classloader
+   * for downstream classes, which DataNucleus ends up using. The NucleusContext
+   * cache gets freed up only on calling a close on it. We're not closing
+   * NucleusContext since it does a bunch of other things which we don't want.
+   * We're not clearing the cache HashMap by calling HashMap#clear to avoid
+   * concurrency issues.
+   */
+  public static void unCacheDataNucleusClassLoaders() {
+    PersistenceManagerFactory pmf = ObjectStore.getPMF();
+    if ((pmf != null) && (pmf instanceof JDOPersistenceManagerFactory)) {
+      JDOPersistenceManagerFactory jdoPmf = (JDOPersistenceManagerFactory) pmf;
+      NucleusContext nc = jdoPmf.getNucleusContext();
+      try {
+        Field classLoaderResolverMap = NucleusContext.class
+            .getDeclaredField("classLoaderResolverMap");
+        classLoaderResolverMap.setAccessible(true);
+        classLoaderResolverMap.set(nc, new HashMap<String, ClassLoaderResolver>());
+        LOG.debug("Removed cached classloaders from DataNucleus NucleusContext");
+      } catch (Exception e) {
+        LOG.warn(e);
+      }
+    }
+  }
 
 }

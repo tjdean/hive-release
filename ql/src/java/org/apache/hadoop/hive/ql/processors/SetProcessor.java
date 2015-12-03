@@ -29,6 +29,7 @@ import java.util.Properties;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Schema;
@@ -62,6 +63,9 @@ public class SetProcessor implements CommandProcessor {
     for (Object one : p.keySet()) {
       String oneProp = (String) one;
       String oneValue = p.getProperty(oneProp);
+      if (ss.getConf().isHiddenConfig(oneProp)) {
+        continue;
+      }
       sortedMap.put(oneProp, oneValue);
     }
 
@@ -88,7 +92,9 @@ public class SetProcessor implements CommandProcessor {
   private void dumpOption(String s) {
     SessionState ss = SessionState.get();
 
-    if (ss.getConf().get(s) != null) {
+    if (ss.getConf().isHiddenConfig(s)) {
+      ss.out.println(s + " is a hidden config");
+    } else if (ss.getConf().get(s) != null) {
       ss.out.println(s + "=" + ss.getConf().get(s));
     } else if (ss.getHiveVariables().containsKey(s)) {
       ss.out.println(s + "=" + ss.getHiveVariables().get(s));
@@ -211,7 +217,10 @@ public class SetProcessor implements CommandProcessor {
       }
     } else if (varname.indexOf(HIVECONF_PREFIX) == 0) {
       String var = varname.substring(HIVECONF_PREFIX.length());
-      if (ss.getConf().get(var) != null) {
+      if (ss.getConf().isHiddenConfig(var)) {
+        ss.out.println(HIVECONF_PREFIX + var + " is a hidden config");
+        return createProcessorSuccessResponse();
+      } if (ss.getConf().get(var) != null) {
         ss.out.println(HIVECONF_PREFIX + var + "=" + ss.getConf().get(var));
         return createProcessorSuccessResponse();
       } else {
@@ -259,7 +268,22 @@ public class SetProcessor implements CommandProcessor {
     }
 
     if (nwcmd.equals("-v")) {
-      dumpOptions(ss.getConf().getAllProperties());
+      Properties properties = null;
+      if (ss.getConf().getVar(HiveConf.ConfVars.HIVE_EXECUTION_ENGINE).equals("tez")) {
+        Class<?> clazz;
+        try {
+          clazz = Class.forName("org.apache.tez.dag.api.TezConfiguration");
+
+          Configuration tezConf =
+              (Configuration) clazz.getConstructor(Configuration.class).newInstance(ss.getConf());
+          properties = HiveConf.getProperties(tezConf);
+        } catch (Exception e) {
+          return new CommandProcessorResponse(1, e.getMessage(), "42000", e);
+        }
+      } else {
+        properties = ss.getConf().getAllProperties();
+      }
+      dumpOptions(properties);
       return createProcessorSuccessResponse();
     }
 

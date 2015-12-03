@@ -119,7 +119,7 @@ STAGE PLANS:
             alias: emps
             Statistics: Num rows: 6 Data size: 36 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: (struct((empno + 1),deptno)) IN (struct(1,2), struct(3,2)) (type: boolean)
+              predicate: (struct((empno + 1),deptno)) IN (const struct(1,2), const struct(3,2)) (type: boolean)
               Statistics: Num rows: 3 Data size: 18 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: empno (type: int), deptno (type: int), empname (type: string)
@@ -157,7 +157,7 @@ STAGE PLANS:
             alias: emps
             Statistics: Num rows: 6 Data size: 36 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: (not (struct((empno + 1),deptno)) IN (struct(1,2), struct(3,2))) (type: boolean)
+              predicate: (not (struct((empno + 1),deptno)) IN (const struct(1,2), const struct(3,2))) (type: boolean)
               Statistics: Num rows: 3 Data size: 18 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: empno (type: int), deptno (type: int), empname (type: string)

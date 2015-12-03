@@ -168,7 +168,7 @@ public class HCatLoader extends HCatBaseLoader {
         for (RequiredField rf : requiredFieldsInfo.getFields()) {
           list.add(rf.getIndex());
         }
-        ColumnProjectionUtils.appendReadColumns(job.getConfiguration(), list);
+        ColumnProjectionUtils.setReadColumns(job.getConfiguration(), list);
         outputSchema = phutil.getHCatSchema(requiredFieldsInfo.getFields(), signature, this.getClass());
         HCatInputFormat.setOutputSchema(job, outputSchema);
       } catch (Exception e) {
@@ -178,6 +178,7 @@ public class HCatLoader extends HCatBaseLoader {
       // else - this means pig's optimizer never invoked the pushProjection
       // method - so we need all fields and hence we should not call the
       // setOutputSchema on HCatInputFormat
+      ColumnProjectionUtils.setReadAllColumns(job.getConfiguration());
       if (HCatUtil.checkJobContextIfRunningFromBackend(job)) {
         try {
           HCatSchema hcatTableSchema = (HCatSchema) udfProps.get(HCatConstants.HCAT_TABLE_SCHEMA);

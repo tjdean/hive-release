@@ -18,6 +18,7 @@ package org.apache.hadoop.hive.ql.optimizer;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -79,10 +80,14 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPNotEqual;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPNotNull;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPNull;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPOr;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDFStruct;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFWhen;
 import org.apache.hadoop.hive.serde.serdeConstants;
+import org.apache.hadoop.hive.serde2.objectinspector.ConstantObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters;
+import org.apache.hadoop.hive.serde2.objectinspector.StandardConstantStructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorConverters.Converter;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
@@ -91,6 +96,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectIn
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 
 import com.google.common.collect.ImmutableMap;
@@ -567,55 +573,91 @@ public final class ConstantPropagateProcFactory {
     }
 
     if (udf instanceof GenericUDFOPAnd) {
-      for (int i = 0; i < 2; i++) {
+      final BitSet positionsToRemove = new BitSet();
+      final List<ExprNodeDesc> notNullExprs = new ArrayList<ExprNodeDesc>();
+      final List<Integer> notNullExprsPositions = new ArrayList<Integer>();
+      final List<ExprNodeDesc> compareExprs = new ArrayList<ExprNodeDesc>();
+      for (int i = 0; i < newExprs.size(); i++) {
         ExprNodeDesc childExpr = newExprs.get(i);
-        ExprNodeDesc other = newExprs.get(Math.abs(i - 1));
         if (childExpr instanceof ExprNodeConstantDesc) {
           ExprNodeConstantDesc c = (ExprNodeConstantDesc) childExpr;
           if (Boolean.TRUE.equals(c.getValue())) {
-
             // if true, prune it
-            return other;
+            positionsToRemove.set(i);
           } else {
-
-            // if false return false
+            // if false, return false
             return childExpr;
           }
         } else if (childExpr instanceof ExprNodeGenericFuncDesc &&
-            ((ExprNodeGenericFuncDesc)childExpr).getGenericUDF() instanceof GenericUDFOPNotNull &&
-            childExpr.getChildren().get(0) instanceof ExprNodeColumnDesc && other instanceof ExprNodeGenericFuncDesc &&
-            ((ExprNodeGenericFuncDesc)other).getGenericUDF() instanceof GenericUDFBaseCompare &&
-            !(((ExprNodeGenericFuncDesc)other).getGenericUDF() instanceof GenericUDFOPNotEqual) &&
-            other.getChildren().size() == 2) {
-          // Try to fold (key <op> 86) and (key is not null) to (key <op> 86)
-          // where <op> can be "=", ">=", "<=", ">", "<".
-          // Note: (key <> 86) and (key is not null) cannot be folded
-          ExprNodeColumnDesc colDesc = getColumnExpr(other.getChildren().get(0));
+                ((ExprNodeGenericFuncDesc)childExpr).getGenericUDF() instanceof GenericUDFOPNotNull &&
+                childExpr.getChildren().get(0) instanceof ExprNodeColumnDesc) {
+          notNullExprs.add(childExpr.getChildren().get(0));
+          notNullExprsPositions.add(i);
+        } else if (childExpr instanceof ExprNodeGenericFuncDesc
+                && ((ExprNodeGenericFuncDesc)childExpr).getGenericUDF() instanceof GenericUDFBaseCompare
+                && childExpr.getChildren().size() == 2) {
+          ExprNodeColumnDesc colDesc = getColumnExpr(childExpr.getChildren().get(0));
           if (null == colDesc) {
-            colDesc = getColumnExpr(other.getChildren().get(1));
+            colDesc = getColumnExpr(childExpr.getChildren().get(1));
           }
-          if (null != colDesc && colDesc.isSame(childExpr.getChildren().get(0))) {
-            return other;
+          if (colDesc != null) {
+            compareExprs.add(colDesc);
           }
         }
+      }
+      // Try to fold (key = 86) and (key is not null) to (key = 86)
+      for (int i = 0; i < notNullExprs.size(); i++) {
+        for (ExprNodeDesc other : compareExprs) {
+          if (notNullExprs.get(i).isSame(other)) {
+            positionsToRemove.set(notNullExprsPositions.get(i));
+            break;
+          }
+        }
+      }
+      // Remove unnecessary expressions
+      int pos = 0;
+      int removed = 0;
+      while ((pos = positionsToRemove.nextSetBit(pos)) != -1) {
+        newExprs.remove(pos - removed);
+        pos++;
+        removed++;
+      }
+      if (newExprs.size() == 0) {
+        return new ExprNodeConstantDesc(TypeInfoFactory.booleanTypeInfo, Boolean.TRUE);
+      }
+      if (newExprs.size() == 1) {
+        return newExprs.get(0);
       }
     }
 
     if (udf instanceof GenericUDFOPOr) {
-      for (int i = 0; i < 2; i++) {
+      final BitSet positionsToRemove = new BitSet();
+      for (int i = 0; i < newExprs.size(); i++) {
         ExprNodeDesc childExpr = newExprs.get(i);
         if (childExpr instanceof ExprNodeConstantDesc) {
           ExprNodeConstantDesc c = (ExprNodeConstantDesc) childExpr;
           if (Boolean.FALSE.equals(c.getValue())) {
-
             // if false, prune it
-            return newExprs.get(Math.abs(i - 1));
-          } else {
-
+            positionsToRemove.set(i);
+          } else
+          if (Boolean.TRUE.equals(c.getValue())) {
             // if true return true
             return childExpr;
           }
         }
+      }
+      int pos = 0;
+      int removed = 0;
+      while ((pos = positionsToRemove.nextSetBit(pos)) != -1) {
+        newExprs.remove(pos - removed);
+        pos++;
+        removed++;
+      }
+      if (newExprs.size() == 0) {
+        return new ExprNodeConstantDesc(TypeInfoFactory.booleanTypeInfo, Boolean.FALSE);
+      }
+      if (newExprs.size() == 1) {
+        return newExprs.get(0);
       }
     }
 
@@ -778,6 +820,10 @@ public final class ConstantPropagateProcFactory {
             return null;
           }
         }
+        if (constant.getTypeInfo().getCategory() != Category.PRIMITIVE) {
+          // nested complex types cannot be folded cleanly 
+          return null;
+        }
         Object value = constant.getValue();
         PrimitiveTypeInfo pti = (PrimitiveTypeInfo) constant.getTypeInfo();
         Object writableValue = null == value ? value :
@@ -794,6 +840,10 @@ public final class ConstantPropagateProcFactory {
           return null;
         }
         ExprNodeConstantDesc constant = (ExprNodeConstantDesc) evaluatedFn;
+        if (constant.getTypeInfo().getCategory() != Category.PRIMITIVE) {
+          // nested complex types cannot be folded cleanly
+          return null;
+        }
         Object writableValue = PrimitiveObjectInspectorFactory.getPrimitiveJavaObjectInspector(
           (PrimitiveTypeInfo) constant.getTypeInfo()).getPrimitiveWritableObject(constant.getValue());
         arguments[i] = new DeferredJavaObject(writableValue);
@@ -808,26 +858,38 @@ public final class ConstantPropagateProcFactory {
       Object o = udf.evaluate(arguments);
       LOG.debug(udf.getClass().getName() + "(" + exprs + ")=" + o);
       if (o == null) {
-        return new ExprNodeConstantDesc(TypeInfoUtils.getTypeInfoFromObjectInspector(oi), o);
+        return new ExprNodeConstantDesc(
+            TypeInfoUtils.getTypeInfoFromObjectInspector(oi), o);
       }
       Class<?> clz = o.getClass();
       if (PrimitiveObjectInspectorUtils.isPrimitiveWritableClass(clz)) {
         PrimitiveObjectInspector poi = (PrimitiveObjectInspector) oi;
         TypeInfo typeInfo = poi.getTypeInfo();
         o = poi.getPrimitiveJavaObject(o);
-        if (typeInfo.getTypeName().contains(serdeConstants.DECIMAL_TYPE_NAME) ||
-            typeInfo.getTypeName().contains(serdeConstants.VARCHAR_TYPE_NAME) ||
-            typeInfo.getTypeName().contains(serdeConstants.CHAR_TYPE_NAME)) {
+        if (typeInfo.getTypeName().contains(serdeConstants.DECIMAL_TYPE_NAME)
+            || typeInfo.getTypeName()
+                .contains(serdeConstants.VARCHAR_TYPE_NAME)
+            || typeInfo.getTypeName().contains(serdeConstants.CHAR_TYPE_NAME)) {
           return new ExprNodeConstantDesc(typeInfo, o);
         }
-      } else if (PrimitiveObjectInspectorUtils.isPrimitiveJavaClass(clz)) {
-
-      } else {
-        LOG.error("Unable to evaluate " + udf + ". Return value unrecoginizable.");
+      } else if (udf instanceof GenericUDFStruct
+          && oi instanceof StandardConstantStructObjectInspector) {
+        // do not fold named_struct, only struct()
+        ConstantObjectInspector coi = (ConstantObjectInspector) oi;
+        TypeInfo structType = TypeInfoUtils.getTypeInfoFromObjectInspector(coi);
+        return new ExprNodeConstantDesc(structType,
+            ObjectInspectorUtils.copyToStandardJavaObject(o, coi));
+      } else if (!PrimitiveObjectInspectorUtils.isPrimitiveJavaClass(clz)) {
+        if (LOG.isErrorEnabled()) {
+          LOG.error("Unable to evaluate " + udf
+              + ". Return value unrecoginizable.");
+        }
         return null;
+      } else {
+        // fall through
       }
       String constStr = null;
-      if(arguments.length == 1 && FunctionRegistry.isOpCast(udf)) {
+      if (arguments.length == 1 && FunctionRegistry.isOpCast(udf)) {
         // remember original string representation of constant.
         constStr = arguments[0].get().toString();
       }

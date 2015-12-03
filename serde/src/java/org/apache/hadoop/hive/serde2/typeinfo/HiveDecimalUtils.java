@@ -40,13 +40,7 @@ public class HiveDecimalUtils {
       return dec;
     }
 
-    BigDecimal bd = HiveDecimal.enforcePrecisionScale(dec.bigDecimalValue(),
-        maxPrecision, maxScale);
-    if (bd == null) {
-      return null;
-    }
-
-    return HiveDecimal.create(bd);
+    return HiveDecimal.enforcePrecisionScale(dec, maxPrecision, maxScale);
   }
 
   public static HiveDecimalWritable enforcePrecisionScale(HiveDecimalWritable writable,

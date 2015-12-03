@@ -159,8 +159,8 @@ public class MapJoinOperator extends AbstractMapJoinOperator<MapJoinDesc> implem
        * requires changes in the Tez API with regard to finding bucket id and
        * also ability to schedule tasks to re-use containers that have cached the specific bucket.
        */
-      if (isLogInfoEnabled) {
-        LOG.info("This is not bucket map join, so cache");
+      if (isLogDebugEnabled) {
+        LOG.debug("This is not bucket map join, so cache");
       }
 
       Future<Pair<MapJoinTableContainer[], MapJoinTableContainerSerDe[]>> future =
@@ -200,6 +200,13 @@ public class MapJoinOperator extends AbstractMapJoinOperator<MapJoinDesc> implem
         // we can't use the cached table because it has spilled.
         loadHashTable(getExecContext(), MapredContext.get());
       } else {
+        if (LOG.isDebugEnabled()) {
+          String s = "Using tables from cache: [";
+          for (MapJoinTableContainer c : pair.getLeft()) {
+            s += ((c == null) ? "null" : c.getClass().getSimpleName()) + ", ";
+          }
+          LOG.debug(s + "]");
+        }
         // let's use the table from the cache.
         mapJoinTables = pair.getLeft();
         mapJoinTableSerdes = pair.getRight();

@@ -142,6 +142,7 @@ public class BeeLine implements Closeable {
 
   private static final String HIVE_VAR_PREFIX = "--hivevar";
   private static final String HIVE_CONF_PREFIX = "--hiveconf";
+  static final String PASSWD_MASK = "[passwd stripped]";
 
   private final Map<Object, Object> formats = map(new Object[] {
       "vertical", new VerticalOutputFormat(this),
@@ -698,12 +699,9 @@ public class BeeLine implements Closeable {
     */
 
     if (url != null) {
-      String com = "!connect "
-          + url + " "
-          + (user == null || user.length() == 0 ? "''" : user) + " "
-          + (pass == null || pass.length() == 0 ? "''" : pass) + " "
-          + (driver == null ? "" : driver);
-      debug("issuing: " + com);
+      String com = constructCmd(url, user, pass, driver, false);
+      String comForDebug = constructCmd(url, user, pass, driver, true);
+      debug("issuing: " + comForDebug);
       dispatch(com);
     }
 
@@ -726,6 +724,18 @@ public class BeeLine implements Closeable {
     return code;
   }
 
+  private String constructCmd(String url, String user, String pass, String driver, boolean stripPasswd) {
+    String com = "!connect "
+        + url + " "
+        + (user == null || user.length() == 0 ? "''" : user) + " ";
+    if (stripPasswd) {
+      com += PASSWD_MASK + " ";
+    } else {
+      com += (pass == null || pass.length() == 0 ? "''" : pass) + " ";
+    }
+    com += (driver == null ? "" : driver);
+    return com;
+  }
   /**
    * Obtains a password from the passed file path.
    */

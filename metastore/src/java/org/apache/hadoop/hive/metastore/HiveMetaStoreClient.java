@@ -277,6 +277,11 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   }
 
   @Override
+  public boolean isLocalMetaStore() {
+    return localMetaStore;
+  }
+
+  @Override
   public boolean isCompatibleWith(HiveConf conf) {
     if (currentMetaVars == null) {
       return false; // recreate
@@ -2060,7 +2065,10 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   @Override
   public AggrStats getAggrColStatsFor(String dbName, String tblName,
     List<String> colNames, List<String> partNames) throws NoSuchObjectException, MetaException, TException {
-    if (colNames.isEmpty()) return null; // Nothing to aggregate.
+    if (colNames.isEmpty() || partNames.isEmpty()) {
+      LOG.debug("Columns is empty or partNames is empty : Short-circuiting stats eval on client side.");
+      return new AggrStats(new ArrayList<ColumnStatisticsObj>(),0); // Nothing to aggregate
+    }
     PartitionsStatsRequest req = new PartitionsStatsRequest(dbName, tblName, colNames, partNames);
     return client.get_aggr_stats_for(req);
   }

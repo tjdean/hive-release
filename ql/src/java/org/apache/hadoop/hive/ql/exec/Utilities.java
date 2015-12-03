@@ -37,6 +37,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -167,6 +169,9 @@ import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.SerDeUtils;
 import org.apache.hadoop.hive.serde2.Serializer;
 import org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe;
+import org.apache.hadoop.hive.serde2.objectinspector.StandardConstantListObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StandardConstantMapObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.StandardConstantStructObjectInspector;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.SequenceFile;
@@ -244,13 +249,7 @@ public final class Utilities {
     // prevent instantiation
   }
 
-  private static ThreadLocal<Map<Path, BaseWork>> gWorkMap =
-      new ThreadLocal<Map<Path, BaseWork>>() {
-    @Override
-    protected Map<Path, BaseWork> initialValue() {
-      return new HashMap<Path, BaseWork>();
-    }
-  };
+  private static GlobalWorkMapFactory gWorkMap = new GlobalWorkMapFactory();
 
   private static final String CLASS_NAME = Utilities.class.getName();
   private static final Log LOG = LogFactory.getLog(CLASS_NAME);
@@ -359,7 +358,7 @@ public final class Utilities {
    */
   public static void setBaseWork(Configuration conf, String name, BaseWork work) {
     Path path = getPlanPath(conf, name);
-    gWorkMap.get().put(path, work);
+    gWorkMap.get(conf).put(path, work);
   }
 
   /**
@@ -389,7 +388,7 @@ public final class Utilities {
       path = getPlanPath(conf, name);
       LOG.info("PLAN PATH = " + path);
       assert path != null;
-      BaseWork gWork = gWorkMap.get().get(path);
+      BaseWork gWork = gWorkMap.get(conf).get(path);
       if (gWork == null) {
         Path localPath;
         if (conf.getBoolean("mapreduce.task.uberized", false) && name.equals(REDUCE_PLAN_NAME)) {
@@ -397,11 +396,11 @@ public final class Utilities {
         } else if (ShimLoader.getHadoopShims().isLocalMode(conf)) {
           localPath = path;
         } else {
-          LOG.info("***************non-local mode***************");
+          LOG.debug("***************non-local mode***************");
           localPath = new Path(name);
         }
         localPath = path;
-        LOG.info("local path = " + localPath);
+        LOG.debug("local path = " + localPath);
         if (HiveConf.getBoolVar(conf, ConfVars.HIVE_RPC_QUERY_PLAN)) {
           LOG.debug("Loading plan from string: "+path.toUri().getPath());
           String planString = conf.get(path.toUri().getPath());
@@ -413,7 +412,7 @@ public final class Utilities {
           in = new ByteArrayInputStream(planBytes);
           in = new InflaterInputStream(in);
         } else {
-          LOG.info("Open file to read in plan: " + localPath);
+          LOG.debug("Open file to read in plan: " + localPath);
           in = localPath.getFileSystem(conf).open(localPath);
         }
 
@@ -446,7 +445,7 @@ public final class Utilities {
             throw new RuntimeException("Unknown work type: " + name);
           }
         }
-        gWorkMap.get().put(path, gWork);
+        gWorkMap.get(conf).put(path, gWork);
       } else if (LOG.isDebugEnabled()) {
         LOG.debug("Found plan in cache for name: " + name);
       }
@@ -740,7 +739,7 @@ public final class Utilities {
       }
 
       // Cache the plan in this process
-      gWorkMap.get().put(planPath, w);
+      gWorkMap.get(conf).put(planPath, w);
       return planPath;
     } catch (Exception e) {
       String msg = "Error caching " + name + ": " + e;
@@ -908,6 +907,91 @@ public final class Utilities {
     }
   }
 
+  /**
+   * A kryo {@link Serializer} for lists created via {@link Arrays#asList(Object...)}.
+   * <p>
+   * Note: This serializer does not support cyclic references, so if one of the objects
+   * gets set the list as attribute this might cause an error during deserialization.
+   * </p>
+   *
+   * This is from kryo-serializers package. Added explicitly to avoid classpath issues.
+   */
+  private static class ArraysAsListSerializer extends com.esotericsoftware.kryo.Serializer<List<?>> {
+
+    private Field _arrayField;
+
+    public ArraysAsListSerializer() {
+      try {
+        _arrayField = Class.forName( "java.util.Arrays$ArrayList" ).getDeclaredField( "a" );
+        _arrayField.setAccessible( true );
+      } catch ( final Exception e ) {
+        throw new RuntimeException( e );
+      }
+      // Immutable causes #copy(obj) to return the original object
+      setImmutable(true);
+    }
+
+    @Override
+    public List<?> read(final Kryo kryo, final Input input, final Class<List<?>> type) {
+      final int length = input.readInt(true);
+      Class<?> componentType = kryo.readClass( input ).getType();
+      if (componentType.isPrimitive()) {
+        componentType = getPrimitiveWrapperClass(componentType);
+      }
+      try {
+        final Object items = Array.newInstance( componentType, length );
+        for( int i = 0; i < length; i++ ) {
+          Array.set(items, i, kryo.readClassAndObject( input ));
+        }
+        return Arrays.asList( (Object[])items );
+      } catch ( final Exception e ) {
+        throw new RuntimeException( e );
+      }
+    }
+
+    @Override
+    public void write(final Kryo kryo, final Output output, final List<?> obj) {
+      try {
+        final Object[] array = (Object[]) _arrayField.get( obj );
+        output.writeInt(array.length, true);
+        final Class<?> componentType = array.getClass().getComponentType();
+        kryo.writeClass( output, componentType );
+        for( final Object item : array ) {
+          kryo.writeClassAndObject( output, item );
+        }
+      } catch ( final RuntimeException e ) {
+        // Don't eat and wrap RuntimeExceptions because the ObjectBuffer.write...
+        // handles SerializationException specifically (resizing the buffer)...
+        throw e;
+      } catch ( final Exception e ) {
+        throw new RuntimeException( e );
+      }
+    }
+
+    private Class<?> getPrimitiveWrapperClass(final Class<?> c) {
+      if (c.isPrimitive()) {
+        if (c.equals(Long.TYPE)) {
+          return Long.class;
+        } else if (c.equals(Integer.TYPE)) {
+          return Integer.class;
+        } else if (c.equals(Double.TYPE)) {
+          return Double.class;
+        } else if (c.equals(Float.TYPE)) {
+          return Float.class;
+        } else if (c.equals(Boolean.TYPE)) {
+          return Boolean.class;
+        } else if (c.equals(Character.TYPE)) {
+          return Character.class;
+        } else if (c.equals(Short.TYPE)) {
+          return Short.class;
+        } else if (c.equals(Byte.TYPE)) {
+          return Byte.class;
+        }
+      }
+      return c;
+    }
+  }
+
   private static class PathSerializer extends com.esotericsoftware.kryo.Serializer<Path> {
 
     @Override
@@ -1055,6 +1139,7 @@ public final class Utilities {
    */
   private static void serializeObjectByKryo(Kryo kryo, Object plan, OutputStream out) {
     Output output = new Output(out);
+    kryo.setClassLoader(getSessionSpecifiedClassLoader());
     kryo.writeObject(output, plan);
     output.close();
   }
@@ -1078,6 +1163,7 @@ public final class Utilities {
 
   private static <T> T deserializeObjectByKryo(Kryo kryo, InputStream in, Class<T> clazz ) {
     Input inp = new Input(in);
+    kryo.setClassLoader(getSessionSpecifiedClassLoader());
     T t = kryo.readObject(inp,clazz);
     inp.close();
     return t;
@@ -1093,10 +1179,22 @@ public final class Utilities {
       kryo.register(java.sql.Date.class, new SqlDateSerializer());
       kryo.register(java.sql.Timestamp.class, new TimestampSerializer());
       kryo.register(Path.class, new PathSerializer());
+      kryo.register( Arrays.asList( "" ).getClass(), new ArraysAsListSerializer() );
       kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
       removeField(kryo, Operator.class, "colExprMap");
-      removeField(kryo, ColumnInfo.class, "objectInspector");
       removeField(kryo, AbstractOperatorDesc.class, "statistics");
+      kryo.register(MapWork.class);
+      kryo.register(ReduceWork.class);
+      kryo.register(TableDesc.class);
+      kryo.register(TableScanOperator.class);
+      kryo.register(UnionOperator.class);
+      kryo.register(FileSinkOperator.class);
+      kryo.register(HiveIgnoreKeyTextOutputFormat.class);
+      kryo.register(StandardConstantListObjectInspector.class);
+      kryo.register(StandardConstantMapObjectInspector.class);
+      kryo.register(StandardConstantStructObjectInspector.class);
+      kryo.register(SequenceFileInputFormat.class);
+      kryo.register(HiveSequenceFileOutputFormat.class);
       return kryo;
     };
   };
@@ -1115,6 +1213,7 @@ public final class Utilities {
       kryo.register(java.sql.Date.class, new SqlDateSerializer());
       kryo.register(java.sql.Timestamp.class, new TimestampSerializer());
       kryo.register(Path.class, new PathSerializer());
+      kryo.register( Arrays.asList( "" ).getClass(), new ArraysAsListSerializer() );
       kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
       removeField(kryo, Operator.class, "colExprMap");
       removeField(kryo, ColumnInfo.class, "objectInspector");
@@ -1124,6 +1223,15 @@ public final class Utilities {
       kryo.register(SparkWork.class);
       kryo.register(TableDesc.class);
       kryo.register(Pair.class);
+      kryo.register(TableScanOperator.class);
+      kryo.register(UnionOperator.class);
+      kryo.register(FileSinkOperator.class);
+      kryo.register(HiveIgnoreKeyTextOutputFormat.class);
+      kryo.register(StandardConstantListObjectInspector.class);
+      kryo.register(StandardConstantMapObjectInspector.class);
+      kryo.register(StandardConstantStructObjectInspector.class);
+      kryo.register(SequenceFileInputFormat.class);
+      kryo.register(HiveSequenceFileOutputFormat.class);
       return kryo;
     };
   };
@@ -1137,7 +1245,22 @@ public final class Utilities {
       kryo.register(java.sql.Date.class, new SqlDateSerializer());
       kryo.register(java.sql.Timestamp.class, new TimestampSerializer());
       kryo.register(Path.class, new PathSerializer());
+      kryo.register( Arrays.asList( "" ).getClass(), new ArraysAsListSerializer() );
       kryo.setInstantiatorStrategy(new StdInstantiatorStrategy());
+      removeField(kryo, Operator.class, "colExprMap");
+      removeField(kryo, AbstractOperatorDesc.class, "statistics");
+      kryo.register(MapWork.class);
+      kryo.register(ReduceWork.class);
+      kryo.register(TableDesc.class);
+      kryo.register(TableScanOperator.class);
+      kryo.register(UnionOperator.class);
+      kryo.register(FileSinkOperator.class);
+      kryo.register(HiveIgnoreKeyTextOutputFormat.class);
+      kryo.register(StandardConstantListObjectInspector.class);
+      kryo.register(StandardConstantMapObjectInspector.class);
+      kryo.register(StandardConstantStructObjectInspector.class);
+      kryo.register(SequenceFileInputFormat.class);
+      kryo.register(HiveSequenceFileOutputFormat.class);
       return kryo;
     };
   };
@@ -3726,15 +3849,16 @@ public final class Utilities {
     Path mapPath = getPlanPath(conf, MAP_PLAN_NAME);
     Path reducePath = getPlanPath(conf, REDUCE_PLAN_NAME);
     if (mapPath != null) {
-      gWorkMap.get().remove(mapPath);
+      gWorkMap.get(conf).remove(mapPath);
     }
     if (reducePath != null) {
-      gWorkMap.get().remove(reducePath);
+      gWorkMap.get(conf).remove(reducePath);
     }
+    // TODO: should this also clean merge work?
   }
 
-  public static void clearWorkMap() {
-    gWorkMap.get().clear();
+  public static void clearWorkMap(Configuration conf) {
+    gWorkMap.get(conf).clear();
   }
 
   /**
@@ -3877,16 +4001,4 @@ public final class Utilities {
       (loggingLevel.equalsIgnoreCase("PERFORMANCE") || loggingLevel.equalsIgnoreCase("VERBOSE"));
   }
 
-  /**
-   * Strips Hive password details from configuration
-   */
-  public static void stripHivePasswordDetails(Configuration conf) {
-    // Strip out all Hive related password information from the JobConf
-    if (HiveConf.getVar(conf, HiveConf.ConfVars.METASTOREPWD) != null) {
-      HiveConf.setVar(conf, HiveConf.ConfVars.METASTOREPWD, "");
-    }
-    if (HiveConf.getVar(conf, HiveConf.ConfVars.HIVE_SERVER2_SSL_KEYSTORE_PASSWORD) != null) {
-      HiveConf.setVar(conf, HiveConf.ConfVars.HIVE_SERVER2_SSL_KEYSTORE_PASSWORD, "");
-    }
-  }
 }

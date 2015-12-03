@@ -20,8 +20,8 @@ package org.apache.hive.hcatalog.pig;
 
 import java.io.File;
 import java.io.FileWriter;
-import java.io.PrintWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.RandomAccessFile;
 import java.sql.Date;
 import java.sql.Timestamp;
@@ -36,7 +36,6 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
-
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.fs.Path;
@@ -51,33 +50,28 @@ import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.mapreduce.Job;
-
 import org.apache.hadoop.util.Shell;
 import org.apache.hive.hcatalog.HcatTestUtils;
 import org.apache.hive.hcatalog.common.HCatUtil;
 import org.apache.hive.hcatalog.common.HCatConstants;
 import org.apache.hive.hcatalog.data.Pair;
 import org.apache.hive.hcatalog.data.schema.HCatFieldSchema;
-
 import org.apache.pig.ExecType;
+import org.apache.pig.PigRunner;
 import org.apache.pig.PigServer;
 import org.apache.pig.ResourceStatistics;
+import org.apache.pig.tools.pigstats.OutputStats;
+import org.apache.pig.tools.pigstats.PigStats;
 import org.apache.pig.data.DataType;
 import org.apache.pig.data.Tuple;
 import org.apache.pig.impl.logicalLayer.schema.Schema;
 import org.apache.pig.impl.logicalLayer.schema.Schema.FieldSchema;
-import org.apache.pig.PigRunner;
-import org.apache.pig.tools.pigstats.OutputStats;
-import org.apache.pig.tools.pigstats.PigStats;
-
 import org.joda.time.DateTime;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,6 +101,7 @@ public class TestHCatLoader {
           add("testReadDataBasic");
           add("testReadPartitionedBasic");
           add("testProjectionsBasic");
+          add("testColumnarStorePushdown2");
         }});
       }};
 
@@ -217,8 +212,8 @@ public class TestHCatLoader {
     HcatTestUtils.createTestDataFile(BASIC_FILE_NAME, input);
     HcatTestUtils.createTestDataFile(COMPLEX_FILE_NAME,
       new String[]{
-        //"Henry Jekyll\t42\t(415-253-6367,hjekyll@contemporary.edu.uk)\t{(PHARMACOLOGY),(PSYCHIATRY)},[PHARMACOLOGY#A-,PSYCHIATRY#B+],{(415-253-6367,cell),(408-253-6367,landline)}",
-        //"Edward Hyde\t1337\t(415-253-6367,anonymous@b44chan.org)\t{(CREATIVE_WRITING),(COPYRIGHT_LAW)},[CREATIVE_WRITING#A+,COPYRIGHT_LAW#D],{(415-253-6367,cell),(408-253-6367,landline)}",
+        "Henry Jekyll\t42\t(415-253-6367,hjekyll@contemporary.edu.uk)\t{(PHARMACOLOGY),(PSYCHIATRY)}\t[PHARMACOLOGY#A-,PSYCHIATRY#B+]\t{(415-253-6367,cell),(408-253-6367,landline)}",
+        "Edward Hyde\t1337\t(415-253-6367,anonymous@b44chan.org)\t{(CREATIVE_WRITING),(COPYRIGHT_LAW)}\t[CREATIVE_WRITING#A+,COPYRIGHT_LAW#D]\t{(415-253-6367,cell),(408-253-6367,landline)}",
       }
     );
     PigServer server = new PigServer(ExecType.LOCAL);
@@ -493,7 +488,6 @@ public class TestHCatLoader {
 
   @Test
   public void testColumnarStorePushdown() throws Exception {
-    assumeTrue(!TestUtil.shouldSkip(storageFormat, DISABLED_STORAGE_FORMATS));
     String PIGOUTPUT_DIR = TEST_DATA_DIR+ "/colpushdownop";
     String PIG_FILE = "test.pig";
     String expectedCols = "0,1";
@@ -516,13 +510,35 @@ public class TestHCatLoader {
         .get(ColumnProjectionUtils.READ_COLUMN_IDS_CONF_STR));
       //delete output file on exit
       FileSystem fs = FileSystem.get(outstats.getConf());
-      if (fs.exists(new Path(PIGOUTPUT_DIR)))
-      {
+      if (fs.exists(new Path(PIGOUTPUT_DIR))) {
         fs.delete(new Path(PIGOUTPUT_DIR), true);
       }
-    } finally {
+    }finally {
       new File(PIG_FILE).delete();
     }
+  }
+
+  /**
+   * Tests the failure case caused by HIVE-10752
+   * @throws Exception
+   */
+  @Test
+  public void testColumnarStorePushdown2() throws Exception {
+    assumeTrue(!TestUtil.shouldSkip(storageFormat, DISABLED_STORAGE_FORMATS));
+
+    PigServer server = new PigServer(ExecType.LOCAL);
+    server.registerQuery("A = load '" + COMPLEX_TABLE + "' using org.apache.hive.hcatalog.pig.HCatLoader();");
+    server.registerQuery("B = load '" + COMPLEX_TABLE + "' using org.apache.hive.hcatalog.pig.HCatLoader();");
+    server.registerQuery("C = join A by name, B by name;");
+    server.registerQuery("D = foreach C generate B::studentid;");
+    server.registerQuery("E = ORDER D by studentid asc;");
+
+    Iterator<Tuple> iter = server.openIterator("E");
+    Tuple t = iter.next();
+    assertEquals(42, t.get(0));
+
+    t = iter.next();
+    assertEquals(1337, t.get(0));
   }
 
   @Test

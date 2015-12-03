@@ -50,6 +50,7 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.Context;
 import org.apache.hadoop.hive.ql.ErrorMsg;
+import org.apache.hadoop.hive.ql.QueryPlan;
 import org.apache.hadoop.hive.ql.exec.Operator;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.exec.mr.ExecMapper;
@@ -1018,7 +1019,7 @@ public class DagUtils {
     // Removing job credential entry/ cannot be set on the tasks
     conf.unset("mapreduce.job.credentials.binary");
 
-    Utilities.stripHivePasswordDetails(conf);
+    hiveConf.stripHiddenConfigurations(conf);
     return conf;
   }
 
@@ -1191,7 +1192,23 @@ public class DagUtils {
     }
   }
 
+  public String createDagName(Configuration conf, QueryPlan plan) {
+    String name = getUserSpecifiedDagName(conf);
+    if (name == null) {
+      name = plan.getQueryId();
+    }
+
+    assert name != null;
+    return name;
+  }
+
+  public static String getUserSpecifiedDagName(Configuration conf) {
+    String name = HiveConf.getVar(conf, HiveConf.ConfVars.HIVEQUERYNAME);
+    return (name != null) ? name : conf.get("mapred.job.name");
+  }
+
   private DagUtils() {
     // don't instantiate
   }
+
 }
