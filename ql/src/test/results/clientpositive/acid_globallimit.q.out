@@ -40,17 +40,17 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: acidtest1
-            Statistics: Num rows: 9173 Data size: 101822 Basic stats: COMPLETE Column stats: NONE
+            Statistics: Num rows: 9173 Data size: 96887 Basic stats: COMPLETE Column stats: NONE
             Select Operator
               expressions: UDFToString(c1) (type: string)
               outputColumnNames: _col0
-              Statistics: Num rows: 9173 Data size: 101822 Basic stats: COMPLETE Column stats: NONE
+              Statistics: Num rows: 9173 Data size: 96887 Basic stats: COMPLETE Column stats: NONE
               Limit
                 Number of rows: 10
-                Statistics: Num rows: 10 Data size: 110 Basic stats: COMPLETE Column stats: NONE
+                Statistics: Num rows: 10 Data size: 100 Basic stats: COMPLETE Column stats: NONE
                 File Output Operator
                   compressed: false
-                  Statistics: Num rows: 10 Data size: 110 Basic stats: COMPLETE Column stats: NONE
+                  Statistics: Num rows: 10 Data size: 100 Basic stats: COMPLETE Column stats: NONE
                   table:
                       input format: org.apache.hadoop.mapred.TextInputFormat
                       output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
@@ -70,16 +70,16 @@ POSTHOOK: query: select cast (c1 as string) from acidtest1 limit 10
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@acidtest1
 #### A masked pattern was here ####
-185520768
-186950964
-186967185
-187206627
-187503456
-188474907
-190070046
-190435023
-190587882
-191372331
+-1073279343
+-1073051226
+-1072910839
+-1072081801
+-1072076362
+-1071480828
+-1071363017
+-1070883071
+-1070551679
+-1069736047
 PREHOOK: query: drop table acidtest1
 PREHOOK: type: DROPTABLE
 PREHOOK: Input: default@acidtest1
