@@ -453,7 +453,13 @@ final class SearchArgumentImpl implements SearchArgument {
         case LONG:
           return ((Number) lit.getValue()).longValue();
         case STRING:
-          return StringUtils.stripEnd(lit.getValue().toString(), null);
+          if (val instanceof HiveChar) {
+            return ((HiveChar) val).getPaddedValue();
+          } else if (val instanceof String) {
+            return lit;
+          } else {
+            return lit.toString();
+          }
         case FLOAT:
           return Double.parseDouble(lit.getValue().toString());
         case DATE:
