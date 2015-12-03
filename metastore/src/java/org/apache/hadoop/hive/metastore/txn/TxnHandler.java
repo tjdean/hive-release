@@ -580,12 +580,13 @@ public class TxnHandler {
           dbConn.rollback();
           LockInfo info = getTxnIdFromLockId(dbConn, extLockId);
           if(info == null) {
+            //didn't find any lock with extLockId but at ReadCommitted there is a possibility that
+            //it existed when above delete ran but it didn't have the expected state.
             LOG.error("No lock in " + LOCK_WAITING + " mode found for unlock(" + rqst + ")");
             throw new NoSuchLockException("No such lock " + JavaUtils.lockIdToString(extLockId));
           }
           if(info.txnId != 0) {
-            String msg = "Unlocking locks associated with transaction" +
-              " not permitted.  " + info;
+            String msg = "Unlocking locks associated with transaction not permitted.  " + info;
             LOG.error(msg);
             throw new TxnOpenException(msg);
           }
