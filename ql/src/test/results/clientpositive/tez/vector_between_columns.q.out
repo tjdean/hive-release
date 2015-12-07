@@ -79,6 +79,7 @@ STAGE DEPENDENCIES:
 STAGE PLANS:
   Stage: Stage-1
     Tez
+#### A masked pattern was here ####
       Edges:
         Map 1 <- Map 2 (BROADCAST_EDGE)
 #### A masked pattern was here ####
@@ -102,6 +103,7 @@ STAGE PLANS:
                       input vertices:
                         1 Map 2
                       Statistics: Num rows: 5 Data size: 39 Basic stats: COMPLETE Column stats: NONE
+                      HybridGraceHashJoin: true
                       Filter Operator
                         predicate: _col1 BETWEEN _col3 AND _col3 (type: boolean)
                         Statistics: Num rows: 2 Data size: 15 Basic stats: COMPLETE Column stats: NONE
