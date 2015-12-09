@@ -1963,7 +1963,7 @@ public class TxnHandler {
       }
       if (!sawAtLeastOne) {
         throw new MetaException("This should never happen!  We already " +
-          "checked the lock existed but now we can't find it!");
+          "checked the lock(" + JavaUtils.lockIdToString(extLockId) + ") existed but now we can't find it!");
       }
       return ourLockInfo;
     } finally {
