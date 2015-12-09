@@ -195,7 +195,7 @@ BUG FIXES
     HIVE-12076 : WebHCat listing jobs after the given JobId even when templeton.jobs.listorder is set to lexicographicaldesc
     HIVE-11724 : WebHcat get jobs to order jobs on time order with latest at top
     HIVE-12364-insert into directory query fail, using distcp when data size>hive.exec.copyfile.maxsize (default 32MB)
-    HIVE-11461 Transform flat AND/OR into IN struct clause to 2.3-maint
+    HIVE-11461 Transform flat AND/OR into IN struct clause
     HIVE-12230 custom UDF configure() not called in Vectorization mode
     HIVE-12232 : BucketingSortingReduceSinkOptimizer throws IOB exception for duplicate columns
     HIVE-11510 : Metatool updateLocation warning on views
@@ -224,7 +224,7 @@ BUG FIXES
     HIVE-11540 Too many delta files during Compaction - OOM
     HIVE-11997 Add ability to send Compaction Jobs to specific queue
     HIVE-11998 Improve Compaction process logging
-    HIVE-12003,HIVE-12276 Fix messages in InvalidTable
+    HIVE-12276 Fix messages in InvalidTable
     HIVE-10807 : Invalidate basic stats for insert queries if autogather=false
     HIVE-9013 - beeline (hiveserver2 client) exposes sensitive metastore DB connection info (connection, password)
     HIVE-12261 : schematool version info exit status should depend on compatibility, not equality
@@ -257,8 +257,6 @@ BUG FIXES
     HIVE-11723 : Incorrect string literal escaping
     HIVE-5623: ORC accessing array column that's empty will fail with java out of bound exception
     HIVE-12011: unable to create temporary table using CTAS if regular table with that name already exists
-    HIVE-12003 : Hive Streaming API : Add check to ensure table is transactional
-    HIVE-11983: Hive streaming API uses incorrect logic to assign buckets to incoming records
     HIVE-11977 : Hive should handle an external avro table with zero length files present
     HIVE-12021 - wrong results: HivePreFilteringRule may introduce wrong common operands
     HIVE-12012: select query on json table with map containing numeric values fails
@@ -266,7 +264,7 @@ BUG FIXES
     HIVE-11920: ADD JAR failing with URL schemes other than file/ivy/hdfs
     HIVE-11902 Abort txn cleanup thread throws SyntaxErrorException
     HIVE-11613 : schematool should return non zero exit status for info command, if state is inconsistent
-    HIVE-11990: Humboldt: loading data inpath from a temporary table dir fails.
+    HIVE-11990: loading data inpath from a temporary table dir fails.
     HIVE-11960: braces in join conditions are not supported
     HIVE-11517: Vectorized auto_smb_mapjoin_14.q produces different results
 
