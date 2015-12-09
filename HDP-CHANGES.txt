@@ -127,4 +127,153 @@ BUG FIXES
     HIVE-11928 : ORC footer section can also exceed protobuf message limit
     HIVE-11983 : Hive streaming API : uses incorrect logic to assign buckets to incoming records
     HIVE-12003 : Hive Streaming API : Add check to ensure table is transactional
+    HIVE-12469: Bump Commons-Collections dependency from 3.2.1 to 3.2.2. to address vulnerability
+    HIVE-12583: HS2 ShutdownHookManager holds extra of Driver instance
+    HIVE-12563: NullPointerException with 3-way Tez merge join
+    HIVE-12584 - join on char cols with different length returns empty result with vectorization and tez on
+    HIVE-11372 join with between predicate comparing integer types returns no rows when ORC format used
+    HIVE-12565 VectorUDAFCount.aggregateInputSelection does not handle isRepeated case
+    HIVE-12578: Hive query failing with error ClassCastException org.apache.hadoop.hive.ql.plan.ExprNodeConstantDesc cannot be cast to org.apache.hadoop.hive.ql.plan.ExprNodeColumnDesc
+    HIVE-12257 - Enhance ORC FileDump utility to handle flush_length files
+    HIVE-12529 HiveTxnManager.acquireLocks() should not block forever
+    HIVE-12585 fix TxnHandler connection leak
+    HIVE-12236 : Enable SimpleFetchOptimizer for more query types
+    HIVE-12465: Hive might produce wrong results when (outer) joins are merged
+    HIVE-11312: ORC format: where clause with CHAR data type not returning any rows
+    HIVE-11016: MiniTez mergejoin test fails with Tez input error (issue in merge join under certain conditions
+    HIVE-11371: Null pointer exception for nested table query when using ORC versus text
+    HIVE-12500 : JDBC driver not overlaying params supplied via properties object when reading params from ZK
+    HIVE-12556 : Have an option to kill DAG when user cancels query in HiveServer2
+    HIVE-12444 - Global Limit optimization on ACID table without base directory may throw exception
+    HIVE-12567 Enhance TxnHandler retry logic to handle ORA-08176
+    HIVE-11975: mssql scripts contains invalid 'GO' statement
+    HIVE-12399:  Filter out NULLs in the Native Vector MapJoin operators.
+    HIVE-12196 NPE when converting bad timestamp value
+    HIVE-11939 TxnDbUtil should turn off jdbc auto commit
+    HIVE-12523 : ATS HIVE_QUERY_ID api returns different dagName than TEZ_DAG_ID api
+    HIVE-12529 HiveTxnManager.acquireLocks() should not block forever
+    HIVE-12307 Streaming API TransactionBatch.close() must abort any remaining transactions in the batch
+    HIVE-12476: Oracle directSQL NPE error when fetching empty to null for serdeproperties
+    HIVE-12498 - ACID: Setting OrcRecordUpdater.OrcOptions.tableProperties() has no effect
+    HIVE-11497 - Make sure --orcfiledump utility includes OrcRecordUpdate.AcidStats
+    HIVE-11523 - org.apache.hadoop.hive.ql.io.orc.FileDump should handle errors
+    HIVE-11669 - OrcFileDump service should support directories
+    HIVE-11546 - Projected columns read size should be scaled to split size for ORC Splits
+    HIVE-11468: Vectorize: Struct IN() clauses
+    HIVE-11892: UDTF run in local fetch task does not return rows forwarded during GenericUDTF.close()
+    HIVE-12384 Union Operator may produce incorrect result on TEZ
+    HIVE-12418:HiveHBaseTableInputFormat.getRecordReader() causes Zookeeper connection leak.
+    HIVE-12389 CompactionTxnHandler.cleanEmptyAbortedTxns() should safeguard against huge IN clauses
+    HIVE-11831 TXN tables in Oracle should be created with ROWDEPENDENCIES
+    HIVE-11948 Investigate TxnHandler and CompactionTxnHandler to see where we improve concurrency
+    HIVE-12450: OrcFileMergeOperator does not use correct compression buffer size
+    HIVE-12250:query on hive table on hbasestoragehandler leak zookeeper connection
+    HIVE-12387: When using Hive on Tez or MR, no caller context shows up in YARN audit logs
+    HIVE-10778: LLAP: Utilities::gWorkMap needs to be cleaned in HiveServer2
+    HIVE-12437: SMB join in tez fails when one of the tables is empty
+    HIVE-10397 - Fix Split Computation for Acid tables with Delta files
+    HIVE-10592 - query fails on ORC ppd on timestamp datatype on stripes with all null on the column
+    HIVE-12280: HiveConnection does not try other HS2 after failure for service discovery
+    HIVE-12235: a way for admin and jdbc/odbc client to see which hiveserver2 connected in ZooKeeper discovery service
+    HIVE-11634: Gen Plan Changes to support multi col in clause
+    HIVE-12387: Bug with logging improvements in ATS
+    HIVE-11422: Join a ACID table with non-ACID table fail with MR
+    HIVE-12312 : Excessive logging in PPD code
+    HIVE-12282: beeline - update command printing in verbose mode
+    HIVE-12327: WebHCat e2e tests TestJob_1 and TestJob_2 fail
+    HIVE-12266 When client exists abnormally, it doesn't release ACID locks
+    HIVE-12396 : BucketingSortingReduceSinkOptimizer may still throw IOB exception for duplicate columns
+    HIVE-12357: Allow user to set tez job name
+    HIVE-12387: Issues in Hive's use of CallerContext
+    HIVE-11462: GenericUDFStruct should constant fold at compile time
+    HIVE-11428: Performance: Struct IN() clauses are extremely slow (~10x slower)
+    HIVE-11448: Support vectorization of Multi-OR and Multi-AND
+    HIVE-11698 Add additional test for PointLookupOptimizer
+    HIVE-11573 PointLookupOptimizer can be pessimistic at a low nDV
+    HIVE-11398: Parse wide OR and wide AND trees to flat OR/AND trees
+    HIVE-11940: 'INSERT OVERWRITE' query is very slow because it creates one distcp per file to copy data from staging directory to target directory
+    HIVE-12076 : WebHCat listing jobs after the given JobId even when templeton.jobs.listorder is set to lexicographicaldesc
+    HIVE-11724 : WebHcat get jobs to order jobs on time order with latest at top
+    HIVE-12364-insert into directory query fail, using distcp when data size>hive.exec.copyfile.maxsize (default 32MB)
+    HIVE-11461 Transform flat AND/OR into IN struct clause to 2.3-maint
+    HIVE-12230 custom UDF configure() not called in Vectorization mode
+    HIVE-12232 : BucketingSortingReduceSinkOptimizer throws IOB exception for duplicate columns
+    HIVE-11510 : Metatool updateLocation warning on views
+    HIVE-12223: Filter on Grouping__ID does not work properly
+    HIVE-12344: Wrong types inferred for SemiJoin generation in CBO
+    HIVE-11745 : Alter table Exchange partition with multiple partition_spec is not working
+    HIVE-12345: Followup for HIVE-9013 : Hidden conf vars still visible through beeline
+    HIVE-7723:Explain plan for complex query with lots of partitions is slow due to in-efficient collection used to find a matching ReadEntity
+    HIVE-12156: expanding view doesn't quote reserved keyword
+    HIVE-12252 Streaming API HiveEndPoint can be created w/o partitionVals for partitioned table
+    HIVE-11825 :  get_json_object(col,'$.a') is null in where clause didnt work
+    HIVE-12318 qtest failing due to NPE in logStats
+    HIVE-12295 : change some logs from info to debug
+    HIVE-12273: Improve user level explain
+    HIVE-11950: WebHCat status file doesn't show UTF8 character
+    HIVE-12206: using UDF in same session after other queries fails with ClassNotFound error
+    HIVE-11916 TxnHandler.getOpenTxnsInfo() and getOpenTxns() may produce inconsistent result
+    HIVE-12277: Hive macro results on macro_duplicate.q different after adding ORDER BY
+    HIVE-11934 Transaction lock retry logic results in infinite loop
+    HIVE-11149 - sometimes HashMap in PerfLogger.java hangs
+    HIVE-11988 SUMMARY-[security issue with hive & ranger for import table command]
+    HIVE-11914 When transactions gets a heartbeat, it doesn't update the lock heartbeat.
+    HIVE-11720:  Allow customers set a custom request/response header size for hiveserver2 using http
+    HIVE-12254: Improve logging with yarn/hdfs
+    HIVE-12249: Improve logging with tez
+    HIVE-11540 Too many delta files during Compaction - OOM
+    HIVE-11997 Add ability to send Compaction Jobs to specific queue
+    HIVE-11998 Improve Compaction process logging
+    HIVE-12003,HIVE-12276 Fix messages in InvalidTable
+    HIVE-10807 : Invalidate basic stats for insert queries if autogather=false
+    HIVE-9013 - beeline (hiveserver2 client) exposes sensitive metastore DB connection info (connection, password)
+    HIVE-12261 : schematool version info exit status should depend on compatibility, not equality
+    HIVE-12262: Session log dir cannot be created in some cases
+    HIVE-10755: Rework on HIVE-5193 to enhance the column oriented table access
+    HIVE-10752: Revert HIVE-5193
+    HIVE-12084 : Hive queries with ORDER BY and large LIMIT fails with OutOfMemoryError Java heap space
+    HIVE-11901 : StorageBasedAuthorizationProvider requires write permission on table for SELECT statements
+    HIVE-11807: Adjust compression buffer size to avoid creation of too many small stripes
+    HIVE-12204: Tez queries stopped running with ApplicationNotRunningException
+    HIVE-12201: Tez settings need to be shown in set -v output when execution engine is tez.
+    HIVE-11668 : make sure directsql calls pre-query init when needed
+    HIVE-11123 : Fix how to confirm the RDBMS product name at Metastore.
+    HIVE-12057 : ORC sarg is logged too much
+    HIVE-12083 : HIVE-10965 introduces thrift error if partNames or colNames are empty
+    HIVE-11835: Type decimal(1,1) reads 0.0, 0.00, etc from text file as NULL
+    HIVE-11499: Hiveserver2 failing with OOM PermGen when using temporary functions due to DataNucleus caching classloaders
+    HIVE-12179: Add option to not add spark-assembly.jar to Hive classpath
+    HIVE-11432 : Hive macro give same result for different arguments
+    HIVE-9695: Redundant filter operator in reducer Vertex when CBO is disabled
+    HIVE-11583: When PTF is used over a large partitions result could be corrupted
+    HIVE-11737: IndexOutOfBounds compiling query with duplicated groupby keys
+    HIVE-11712: Duplicate groupby keys cause ClassCastException
+    HIVE-11008: webhcat GET /jobs retries on getting job details from history server is too agressive
+    HIVE-11919: Hive Union Type Mismatch
+    HIVE-11995 : Remove repetitively setting permissions in insert/load overwrite partition
+    HIVE-11964: RelOptHiveTable.hiveColStatsMap might contain mismatched column stats
+    HIVE-11748: HivePreparedStatement's setTimestamp() does not quote value as required
+    HIVE-10980 : Merge of dynamic partitions loads all data to default partition
+    HIVE-11723 : Incorrect string literal escaping
+    HIVE-5623: ORC accessing array column that's empty will fail with java out of bound exception
+    HIVE-12011: unable to create temporary table using CTAS if regular table with that name already exists
+    HIVE-12003 : Hive Streaming API : Add check to ensure table is transactional
+    HIVE-11983: Hive streaming API uses incorrect logic to assign buckets to incoming records
+    HIVE-11977 : Hive should handle an external avro table with zero length files present
+    HIVE-12021 - wrong results: HivePreFilteringRule may introduce wrong common operands
+    HIVE-12012: select query on json table with map containing numeric values fails
+    HIVE-11915 : BoneCP returns closed connections from the pool
+    HIVE-11920: ADD JAR failing with URL schemes other than file/ivy/hdfs
+    HIVE-11902 Abort txn cleanup thread throws SyntaxErrorException
+    HIVE-11613 : schematool should return non zero exit status for info command, if state is inconsistent
+    HIVE-11990: Humboldt: loading data inpath from a temporary table dir fails.
+    HIVE-11960: braces in join conditions are not supported
+    HIVE-11517: Vectorized auto_smb_mapjoin_14.q produces different results
 
+
+INTERNAL FIXES (NO APACHE JIRA)
+    MHIVE-629: Hive schema initialization failed for azuredb
+    MHIVE-661 - fix NOTIFICATION_SEQUENCE table creation in azuredb.sql
+    BUG-45882 : Hive query fails with java.util.NoSuchElementException
+    BUG-48761 : Invalid caller context from Hive provided to HDFS
+    BUG-48170: Hive queries after the metastore restart seems to be stuck with log message LockResponse(lockid:##, state:WAITING)
