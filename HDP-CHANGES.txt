@@ -267,6 +267,7 @@ BUG FIXES
     HIVE-11990: loading data inpath from a temporary table dir fails.
     HIVE-11960: braces in join conditions are not supported
     HIVE-11517: Vectorized auto_smb_mapjoin_14.q produces different results
+    HIVE-12522: Wrong FS error during Tez merge files when warehouse and scratchdir are on different FS
 
 
 INTERNAL FIXES (NO APACHE JIRA)
