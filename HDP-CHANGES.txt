@@ -125,4 +125,5 @@ BUG FIXES
     HIVE-5277 : HBase handler skips rows with null valued first cells when only row key is selected
     HIVE-11152 : Swapping join inputs in ASTConverter
     HIVE-11928 : ORC footer section can also exceed protobuf message limit
+    HIVE-12522: Wrong FS error during Tez merge files when warehouse and scratchdir are on different FS
 
