@@ -55,7 +55,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.common.ObjectPair;
-import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.common.StatsSetupConst.StatDB;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
@@ -2367,6 +2366,12 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           LOG.warn(ErrorMsg.OUTERJOIN_USES_FILTERS.getErrorCodedMsg());
           joinTree.getFiltersForPushing().get(1).add(joinCond);
         }
+      } else if (type.equals(JoinType.LEFTSEMI)) {
+        joinTree.getExpressions().get(0).add(leftCondn);
+        joinTree.getExpressions().get(1).add(rightCondn);
+        boolean nullsafe = joinCond.getToken().getType() == HiveParser.EQUAL_NS;
+        joinTree.getNullSafes().add(nullsafe);
+        joinTree.getFiltersForPushing().get(1).add(joinCond);
       } else {
         joinTree.getFiltersForPushing().get(1).add(joinCond);
       }
@@ -9643,7 +9648,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
          * as Join conditions
          */
         Set<String> dests = qb.getParseInfo().getClauseNames();
-        if ( dests.size() == 1 ) {
+        if ( dests.size() == 1 && joinTree.getNoOuterJoin()) {
           String dest = dests.iterator().next();
           ASTNode whereClause = qb.getParseInfo().getWhrForClause(dest);
           if ( whereClause != null ) {
@@ -11766,9 +11771,9 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       else
       {
         int amt = Integer.parseInt(amtNode.getText());
-        if ( amt < 0 ) {
+        if ( amt <= 0 ) {
           throw new SemanticException(
-              "Window Frame Boundary Amount must be a +ve integer, amount provide is: " + amt);
+              "Window Frame Boundary Amount must be a positive integer, provided amount is: " + amt);
         }
         bs.setAmt(amt);
       }
