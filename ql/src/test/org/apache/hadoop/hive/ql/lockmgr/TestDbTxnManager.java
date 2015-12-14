@@ -20,7 +20,10 @@ package org.apache.hadoop.hive.ql.lockmgr;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
-import org.apache.hadoop.hive.metastore.api.ShowLocksResponse;import org.apache.hadoop.hive.metastore.api.ShowLocksResponseElement;import org.apache.hadoop.hive.metastore.txn.TxnDbUtil;
+import org.apache.hadoop.hive.metastore.api.ShowLocksResponse;
+import org.apache.hadoop.hive.metastore.api.ShowLocksResponseElement;
+import org.apache.hadoop.hive.metastore.txn.TxnDbUtil;
+import org.apache.hadoop.hive.metastore.txn.TxnHandler;
 import org.apache.hadoop.hive.ql.Context;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.QueryPlan;
@@ -86,7 +89,7 @@ public class TestDbTxnManager {
     List<HiveLock> locks = ctx.getHiveLocks();
     Assert.assertEquals(1, locks.size());
     Assert.assertEquals(1,
-        TxnDbUtil.countLockComponents(((DbLockManager.DbHiveLock) locks.get(0)).lockId));
+      TxnDbUtil.countLockComponents(((DbLockManager.DbHiveLock) locks.get(0)).lockId));
     txnMgr.getLockManager().unlock(locks.get(0));
     locks = txnMgr.getLockManager().getLocks(false, false);
     Assert.assertEquals(0, locks.size());
@@ -153,7 +156,7 @@ public class TestDbTxnManager {
     List<HiveLock> locks = ctx.getHiveLocks();
     Assert.assertEquals(1, locks.size());
     Assert.assertEquals(1,
-        TxnDbUtil.countLockComponents(((DbLockManager.DbHiveLock) locks.get(0)).lockId));
+      TxnDbUtil.countLockComponents(((DbLockManager.DbHiveLock) locks.get(0)).lockId));
     txnMgr.commitTxn();
     locks = txnMgr.getLockManager().getLocks(false, false);
     Assert.assertEquals(0, locks.size());
@@ -198,9 +201,8 @@ public class TestDbTxnManager {
   }
   @Test
   public void testExceptions() throws Exception {
-    WriteEntity we = addPartitionOutput(newTable(true), WriteEntity.WriteType.INSERT);
+    addPartitionOutput(newTable(true), WriteEntity.WriteType.INSERT);
     QueryPlan qp = new MockQueryPlan(this);
-//    txnMgr.acquireLocks(qp, ctx, "PeterI");
     txnMgr.openTxn("NicholasII");
     Thread.sleep(HiveConf.getTimeVar(conf, HiveConf.ConfVars.HIVE_TXN_TIMEOUT, TimeUnit.MILLISECONDS));
     runReaper();
@@ -226,6 +228,33 @@ public class TestDbTxnManager {
     }
     Assert.assertNotNull("Expected exception2", exception);
     Assert.assertEquals("Wrong Exception2", ErrorMsg.TXN_NO_SUCH_TRANSACTION, exception.getCanonicalErrorMsg());
+  }
+
+  @Test
+  public void testLockTimeout() throws Exception {
+    addPartitionInput(newTable(true));
+    QueryPlan qp = new MockQueryPlan(this);
+    //make sure it works with nothing to expire
+    expireLocks(txnMgr, 0);
+    //create a few read locks, all on the same resource
+    for(int i = 0; i < 5; i++) {
+      ((DbTxnManager)txnMgr).acquireLocks(qp, ctx, "PeterI" + i, true); // No heartbeat
+    }
+    expireLocks(txnMgr, 5);
+    //create a lot of locks
+    for(int i = 0; i < TxnHandler.TIMED_OUT_TXN_ABORT_BATCH_SIZE + 17; i++) {
+      ((DbTxnManager)txnMgr).acquireLocks(qp, ctx, "PeterI" + i, true); // No heartbeat
+    }
+    expireLocks(txnMgr, TxnHandler.TIMED_OUT_TXN_ABORT_BATCH_SIZE + 17);
+  }
+  private void expireLocks(HiveTxnManager txnMgr, int numLocksBefore) throws Exception {
+    DbLockManager lockManager = (DbLockManager)txnMgr.getLockManager();
+    ShowLocksResponse resp = lockManager.getLocks();
+    Assert.assertEquals("Wrong number of locks before expire", numLocksBefore, resp.getLocks().size());
+    Thread.sleep(HiveConf.getTimeVar(conf, HiveConf.ConfVars.HIVE_TXN_TIMEOUT, TimeUnit.MILLISECONDS));
+    runReaper();
+    resp = lockManager.getLocks();
+    Assert.assertEquals("Expected all locks to expire", 0, resp.getLocks().size());
   }
 
   @Test
@@ -431,15 +460,15 @@ public class TestDbTxnManager {
   }
 
   private static class MockQueryPlan extends QueryPlan {
-    private HashSet<ReadEntity> inputs;
-    private HashSet<WriteEntity> outputs;
+    private final HashSet<ReadEntity> inputs = new HashSet<>();
+    private final HashSet<WriteEntity> outputs = new HashSet<>();
     private final String queryId;
 
     MockQueryPlan(TestDbTxnManager test) {
       HashSet<ReadEntity> r = test.readEntities;
       HashSet<WriteEntity> w = test.writeEntities;
-      inputs = (r == null) ? new HashSet<ReadEntity>() : r;
-      outputs = (w == null) ? new HashSet<WriteEntity>() : w;
+      inputs.addAll(test.readEntities);
+      outputs.addAll(test.writeEntities);
       queryId = makeQueryId();
     }
 
