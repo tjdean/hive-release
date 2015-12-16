@@ -18,7 +18,6 @@
 package org.apache.hadoop.hive.ql.lockmgr;
 
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.ql.exec.Utilities;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -26,6 +25,7 @@ import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.api.*;
 import org.apache.hadoop.hive.ql.ErrorMsg;
+import org.apache.hadoop.hive.ql.exec.DDLTask;
 import org.apache.thrift.TException;
 
 import java.io.ByteArrayOutputStream;
@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -84,8 +85,13 @@ public class DbLockManager implements HiveLockManager{
    * @return the result of the lock attempt
    */
   LockState lock(LockRequest lock, String queryId, boolean isBlocking, List<HiveLock> acquiredLocks) throws LockException {
+    Objects.requireNonNull(queryId, "queryId cannot be null");
     nextSleep = 50;
-    //get from conf to pick up changes; make not to set too low and kill the metastore
+    /*
+     * get from conf to pick up changes; make sure not to set too low and kill the metastore
+     * MAX_SLEEP is the max time each backoff() will wait for, thus the total time to wait for
+     * successful lock acquisition is approximately (see backoff()) maxNumWaits * MAX_SLEEP.
+     */
     MAX_SLEEP = Math.max(15000, conf.getTimeVar(HiveConf.ConfVars.HIVE_LOCK_SLEEP_BETWEEN_RETRIES, TimeUnit.MILLISECONDS));
     int maxNumWaits = Math.max(0, conf.getIntVar(HiveConf.ConfVars.HIVE_LOCK_NUMRETRIES));
     try {
@@ -110,6 +116,12 @@ public class DbLockManager implements HiveLockManager{
       locks.add(hl);
       if (res.getState() != LockState.ACQUIRED) {
         if(res.getState() == LockState.WAITING) {
+          /**
+           * the {@link #unlock(HiveLock)} here is more about future proofing when support for
+           * multi-statement txns is added.  In that case it's reasonable for the client
+           * to retry this part of txn or try something else w/o aborting the whole txn.
+           * Also for READ_COMMITTED (when and if that is supported).
+           */
           unlock(hl);//remove the locks in Waiting state
           LockException le = new LockException(null, ErrorMsg.LOCK_ACQUIRE_TIMEDOUT,
             lock.toString(), Long.toString(retryDuration), res.toString());
@@ -123,8 +135,8 @@ public class DbLockManager implements HiveLockManager{
       acquiredLocks.add(hl);
       return res.getState();
     } catch (NoSuchTxnException e) {
-      LOG.error("Metastore could not find txnid " + lock.getTxnid());
-      throw new LockException(ErrorMsg.TXNMGR_NOT_INSTANTIATED.getMsg(), e);
+      LOG.error("Metastore could not find " + JavaUtils.txnIdToString(lock.getTxnid()));
+      throw new LockException(e, ErrorMsg.TXN_NO_SUCH_TRANSACTION, JavaUtils.txnIdToString(lock.getTxnid()));
     } catch (TxnAbortedException e) {
       LOG.error("Transaction " + JavaUtils.txnIdToString(lock.getTxnid()) + " already aborted.");
       throw new LockException(e, ErrorMsg.TXN_ABORTED, JavaUtils.txnIdToString(lock.getTxnid()));
@@ -133,8 +145,6 @@ public class DbLockManager implements HiveLockManager{
           e);
     }
   }
-  private static final int separator = Utilities.tabCode;
-  private static final int terminator = Utilities.newLineCode;
   private void showLocksNewFormat(String preamble) throws LockException {
     ShowLocksResponse rsp = getLocks();
 
@@ -142,60 +152,7 @@ public class DbLockManager implements HiveLockManager{
     ByteArrayOutputStream baos = new ByteArrayOutputStream(1024*2);
     DataOutputStream os = new DataOutputStream(baos);
     try {
-      os.writeBytes(preamble);
-      os.write(terminator);
-      // Write a header
-      os.writeBytes("Lock ID");
-      os.write(separator);
-      os.writeBytes("Database");
-      os.write(separator);
-      os.writeBytes("Table");
-      os.write(separator);
-      os.writeBytes("Partition");
-      os.write(separator);
-      os.writeBytes("State");
-      os.write(separator);
-      os.writeBytes("Type");
-      os.write(separator);
-      os.writeBytes("Transaction ID");
-      os.write(separator);
-      os.writeBytes("Last Hearbeat");
-      os.write(separator);
-      os.writeBytes("Acquired At");
-      os.write(separator);
-      os.writeBytes("User");
-      os.write(separator);
-      os.writeBytes("Hostname");
-      os.write(terminator);
-
-      List<ShowLocksResponseElement> locks = rsp.getLocks();
-      if (locks != null) {
-        for (ShowLocksResponseElement lock : locks) {
-          os.writeBytes(Long.toString(lock.getLockid()));
-          os.write(separator);
-          os.writeBytes(lock.getDbname());
-          os.write(separator);
-          os.writeBytes((lock.getTablename() == null) ? "NULL" : lock.getTablename());
-          os.write(separator);
-          os.writeBytes((lock.getPartname() == null) ? "NULL" : lock.getPartname());
-          os.write(separator);
-          os.writeBytes(lock.getState().toString());
-          os.write(separator);
-          os.writeBytes(lock.getType().toString());
-          os.write(separator);
-          os.writeBytes((lock.getTxnid() == 0) ? "NULL" : Long.toString(lock.getTxnid()));
-          os.write(separator);
-          os.writeBytes(Long.toString(lock.getLastheartbeat()));
-          os.write(separator);
-          os.writeBytes((lock.getAcquiredat() == 0) ? "NULL" : Long.toString(lock.getAcquiredat()));
-          os.write(separator);
-          os.writeBytes(lock.getUser());
-          os.write(separator);
-          os.writeBytes(lock.getHostname());
-          os.write(separator);
-          os.write(terminator);
-        }
-      }
+      DDLTask.dumpLockInfo(os, rsp);
       os.flush();
       LOG.info(baos.toString());
     }

@@ -456,9 +456,9 @@ final class SearchArgumentImpl implements SearchArgument {
           if (val instanceof HiveChar) {
             return ((HiveChar) val).getPaddedValue();
           } else if (val instanceof String) {
-            return lit;
+            return val;
           } else {
-            return lit.toString();
+            return val.toString();
           }
         case FLOAT:
           return Double.parseDouble(lit.getValue().toString());
