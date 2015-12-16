@@ -2,3 +2,4 @@ CHANGES in the branch which are not yet committed to Apache
 
   HIVE-12447 (BUG-49894). Fix LlapTaskReporter post TEZ-808 changes.
   HIVE-12448 (BUG-49894). Change to tracking of dag status via dagIdentifier instead of dag name.
+  HIVE-12692 (BUG-49970). Make use of the Tez HadoopShim in TaskRunner usage.
