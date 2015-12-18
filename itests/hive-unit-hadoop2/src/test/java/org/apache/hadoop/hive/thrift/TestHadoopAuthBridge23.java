@@ -225,6 +225,10 @@ public class TestHadoopAuthBridge23 extends TestCase {
 
   public void testSaslWithHiveMetaStore() throws Exception {
     setup();
+
+    final String proxyUserName = UserGroupInformation.getCurrentUser().getShortUserName();
+    setGroupsInConf(new String[] {"*"}, proxyUserName);
+
     UserGroupInformation clientUgi = UserGroupInformation.getCurrentUser();
     obtainTokenAndAddIntoUGI(clientUgi, null);
     obtainTokenAndAddIntoUGI(clientUgi, "tokenForFooTablePartition");
