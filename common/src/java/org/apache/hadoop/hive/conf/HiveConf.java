@@ -1307,16 +1307,16 @@ public class HiveConf extends Configuration {
         "we are increasing the number of files possibly by a big margin. So, we merge aggressively."),
     HIVEOPTCORRELATION("hive.optimize.correlation", false, "exploit intra-query correlations."),
 
-    HIVE_OPTIMIZE_LIMIT_JOIN_TRANSPOSE("hive.optimize.limitjointranspose", false,
-        "Whether to push a limit through left/right outer join. If the value is true and the size of the outer\n" +
-        "input is reduced enough (as specified in hive.optimize.limitjointranspose.reduction), the limit is pushed\n" +
-        "to the outer input; to remain semantically correct, the limit is kept on top of the join too."),
-    HIVE_OPTIMIZE_LIMIT_JOIN_TRANSPOSE_REDUCTION_PERCENTAGE("hive.optimize.limitjointranspose.reductionpercentage", 1.0f,
-        "When hive.optimize.limitjointranspose is true, this variable specifies the minimal reduction of the\n" +
-        "size of the outer input of the join that we should get in order to apply the rule."),
-    HIVE_OPTIMIZE_LIMIT_JOIN_TRANSPOSE_REDUCTION_TUPLES("hive.optimize.limitjointranspose.reductiontuples", (long) 0,
-        "When hive.optimize.limitjointranspose is true, this variable specifies the minimal reduction in the\n" +
-        "number of tuples of the outer input of the join that you should get in order to apply the rule."),
+    HIVE_OPTIMIZE_LIMIT_TRANSPOSE("hive.optimize.limittranspose", false,
+        "Whether to push a limit through left/right outer join or union. If the value is true and the size of the outer\n" +
+        "input is reduced enough (as specified in hive.optimize.limittranspose.reduction), the limit is pushed\n" +
+        "to the outer input or union; to remain semantically correct, the limit is kept on top of the join or the union too."),
+    HIVE_OPTIMIZE_LIMIT_TRANSPOSE_REDUCTION_PERCENTAGE("hive.optimize.limittranspose.reductionpercentage", 1.0f,
+        "When hive.optimize.limittranspose is true, this variable specifies the minimal reduction of the\n" +
+        "size of the outer input of the join or input of the union that we should get in order to apply the rule."),
+    HIVE_OPTIMIZE_LIMIT_TRANSPOSE_REDUCTION_TUPLES("hive.optimize.limittranspose.reductiontuples", (long) 0,
+        "When hive.optimize.limittranspose is true, this variable specifies the minimal reduction in the\n" +
+        "number of tuples of the outer input of the join or the input of the union that you should get in order to apply the rule."),
 
     HIVE_OPTIMIZE_SKEWJOIN_COMPILETIME("hive.optimize.skewjoin.compiletime", false,
         "Whether to create a separate plan for skewed keys for the tables in the join.\n" +
@@ -1846,7 +1846,8 @@ public class HiveConf extends Configuration {
 
     // HiveServer2 WebUI
     HIVE_SERVER2_WEBUI_BIND_HOST("hive.server2.webui.host", "0.0.0.0", "The host address the HiveServer2 WebUI will listen on"),
-    HIVE_SERVER2_WEBUI_PORT("hive.server2.webui.port", 10002, "The port the HiveServer2 WebUI will listen on"),
+    HIVE_SERVER2_WEBUI_PORT("hive.server2.webui.port", 10002, "The port the HiveServer2 WebUI will listen on. This can be"
+        + "set to 0 or a negative integer to disable the web UI"),
     HIVE_SERVER2_WEBUI_MAX_THREADS("hive.server2.webui.max.threads", 50, "The max HiveServer2 WebUI threads"),
     HIVE_SERVER2_WEBUI_USE_SSL("hive.server2.webui.use.ssl", false,
         "Set this to true for using SSL encryption for HiveServer2 WebUI."),
