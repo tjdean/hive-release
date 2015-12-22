@@ -1,7 +1,6 @@
 set hive.mapred.mode=nonstrict;
 set hive.explain.user=false;
 set hive.auto.convert.join.noconditionaltask.size=60000000;
-set hive.log.trace.id=mrrTest;
 
 -- simple query with multiple reduce stages
 -- SORT_QUERY_RESULTS
@@ -52,7 +51,6 @@ WHERE
   s1.cnt > 1
 ORDER BY s1.key;
 
-set hive.log.trace.id=Test2;
 set hive.auto.convert.join=true;
 -- query with broadcast join in the reduce stage
 EXPLAIN

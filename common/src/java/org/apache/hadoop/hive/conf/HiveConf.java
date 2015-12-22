@@ -84,7 +84,6 @@ public class HiveConf extends Configuration {
 
   private Pattern modWhiteListPattern = null;
   private volatile boolean isSparkConfigUpdated = false;
-  private static final int LOG_PREFIX_LENGTH = 64;
 
   public boolean getSparkConfigUpdated() {
     return isSparkConfigUpdated;
@@ -2553,11 +2552,6 @@ public class HiveConf extends Configuration {
         "Enable memory manager for tez"),
     HIVE_HASH_TABLE_INFLATION_FACTOR("hive.hash.table.inflation.factor", (float) 2.0,
         "Expected inflation factor between disk/in memory representation of hash tables"),
-    HIVE_LOG_TRACE_ID("hive.log.trace.id", "",
-        "Log tracing id that can be used by upstream clients for tracking respective logs. " +
-        "Truncated to " + LOG_PREFIX_LENGTH + " characters. Defaults to use auto-generated session id."),
-
-
     HIVE_CONF_RESTRICTED_LIST("hive.conf.restricted.list",
         "hive.security.authenticator.manager,hive.security.authorization.manager,hive.users.in.admin.role",
         "Comma separated list of configuration options which are immutable at runtime"),
@@ -2567,7 +2561,6 @@ public class HiveConf extends Configuration {
     HIVE_CONF_INTERNAL_VARIABLE_LIST("hive.conf.internal.variable.list",
         "hive.added.files.path,hive.added.jars.path,hive.added.archives.path",
         "Comma separated list of variables which are used internally and should not be configurable.");
-
 
     public final String varname;
     private final String altName;
@@ -3064,20 +3057,6 @@ public class HiveConf extends Configuration {
       return conf.get(var.varname, conf.get(var.altName, defaultVal));
     }
     return conf.get(var.varname, defaultVal);
-  }
-
-  public String getLogIdVar(String defaultValue) {
-    String retval = getVar(ConfVars.HIVE_LOG_TRACE_ID);
-    if (retval.equals("")) {
-      l4j.info("Using the default value passed in for log id: " + defaultValue);
-      retval = defaultValue;
-    }
-    if (retval.length() > LOG_PREFIX_LENGTH) {
-      l4j.warn("The original log id prefix is " + retval + " has been truncated to "
-          + retval.substring(0, LOG_PREFIX_LENGTH - 1));
-      retval = retval.substring(0, LOG_PREFIX_LENGTH - 1);
-    }
-    return retval;
   }
 
   public static void setVar(Configuration conf, ConfVars var, String val) {
