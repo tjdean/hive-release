@@ -37,6 +37,7 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.FileSinkOperator;
 import org.apache.hadoop.hive.ql.exec.Operator;
 import org.apache.hadoop.hive.ql.exec.OperatorUtils;
+import org.apache.hadoop.hive.ql.io.AcidUtils;
 import org.apache.hadoop.hive.ql.io.HiveInputFormat;
 import org.apache.hadoop.hive.ql.optimizer.physical.BucketingSortingCtx.BucketCol;
 import org.apache.hadoop.hive.ql.optimizer.physical.BucketingSortingCtx.SortCol;
@@ -59,7 +60,7 @@ import com.google.common.collect.Interner;
  * This class is also used in the explain command any property with the
  * appropriate annotation will be displayed in the explain output.
  */
-@SuppressWarnings({"serial", "deprecation"})
+@SuppressWarnings({"serial"})
 public class MapWork extends BaseWork {
 
   // use LinkedHashMap to make sure the iteration order is
@@ -122,6 +123,8 @@ public class MapWork extends BaseWork {
   private Map<String, List<TableDesc>> eventSourceTableDescMap =
       new LinkedHashMap<String, List<TableDesc>>();
   private Map<String, List<String>> eventSourceColumnNameMap =
+      new LinkedHashMap<String, List<String>>();
+  private Map<String, List<String>> eventSourceColumnTypeMap =
       new LinkedHashMap<String, List<String>>();
   private Map<String, List<ExprNodeDesc>> eventSourcePartKeyExprMap =
       new LinkedHashMap<String, List<ExprNodeDesc>>();
@@ -205,22 +208,37 @@ public class MapWork extends BaseWork {
   }
 
   public void deriveLlap(Configuration conf) {
-    boolean hasLlap = false, hasNonLlap = false;
+    boolean hasLlap = false, hasNonLlap = false, hasAcid = false;
     boolean isLlapOn = HiveInputFormat.isLlapEnabled(conf),
         canWrapAny = isLlapOn && HiveInputFormat.canWrapAnyForLlap(conf, this);
     boolean hasPathToPartInfo = (pathToPartitionInfo != null && !pathToPartitionInfo.isEmpty());
     if (canWrapAny && hasPathToPartInfo) {
+      assert isLlapOn;
       for (PartitionDesc part : pathToPartitionInfo.values()) {
-        boolean isUsingLlapIo = isLlapOn
-            && HiveInputFormat.canWrapForLlap(part.getInputFileFormatClass());
-        hasLlap |= isUsingLlapIo;
-        hasNonLlap |= (!isUsingLlapIo);
+        boolean isUsingLlapIo = HiveInputFormat.canWrapForLlap(part.getInputFileFormatClass());
+        if (isUsingLlapIo) {
+          if (part.getTableDesc() != null &&
+              AcidUtils.isTablePropertyTransactional(part.getTableDesc().getProperties())) {
+            hasAcid = true;
+          } else {
+            hasLlap = true;
+          }
+        } else {
+          hasNonLlap = true;
+        }
       }
-    } else {
-      hasNonLlap = true;
     }
-    llapIoDesc = isLlapOn ? (canWrapAny ? (hasPathToPartInfo ? ((hasLlap == hasNonLlap) ?
-        "some inputs" : (hasLlap ? "all inputs" : "no inputs")) : "unknown") : "no inputs") : null;
+    llapIoDesc = deriveLlapIoDescString(
+        isLlapOn, canWrapAny, hasPathToPartInfo, hasLlap, hasNonLlap, hasAcid);
+  }
+
+  private static String deriveLlapIoDescString(boolean isLlapOn, boolean canWrapAny,
+      boolean hasPathToPartInfo, boolean hasLlap, boolean hasNonLlap, boolean hasAcid) {
+    if (!isLlapOn) return null; // LLAP IO is off, don't output.
+    if (!canWrapAny) return "no inputs"; // Cannot use with input formats.
+    if (!hasPathToPartInfo) return "unknown"; // No information to judge.
+    if (hasAcid) return "may be used (ACID table)";
+    return (hasLlap ? (hasNonLlap ? "some inputs" : "all inputs") : "no inputs");
   }
 
   public void internTable(Interner<TableDesc> interner) {
@@ -566,6 +584,10 @@ public class MapWork extends BaseWork {
 
   public Map<String, List<String>> getEventSourceColumnNameMap() {
     return eventSourceColumnNameMap;
+  }
+
+  public Map<String, List<String>> getEventSourceColumnTypeMap() {
+    return eventSourceColumnTypeMap;
   }
 
   public Map<String, List<ExprNodeDesc>> getEventSourcePartKeyExprMap() {
