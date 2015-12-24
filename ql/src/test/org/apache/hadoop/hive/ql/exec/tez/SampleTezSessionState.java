@@ -18,8 +18,6 @@
 
 package org.apache.hadoop.hive.ql.exec.tez;
 
-import org.apache.hadoop.hive.ql.exec.tez.TezSessionPoolManager.TezSessionPoolSession;
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 
@@ -36,7 +34,7 @@ import org.apache.tez.dag.api.TezException;
  * use case from hive server 2, we need a session simulation.
  *
  */
-public class SampleTezSessionState extends TezSessionPoolSession {
+public class SampleTezSessionState extends TezSessionState {
 
   private boolean open;
   private final String sessionId;
@@ -44,8 +42,8 @@ public class SampleTezSessionState extends TezSessionPoolSession {
   private String user;
   private boolean doAsEnabled;
 
-  public SampleTezSessionState(String sessionId, TezSessionPoolManager parent) {
-    super(sessionId, parent);
+  public SampleTezSessionState(String sessionId) {
+    super(sessionId);
     this.sessionId = sessionId;
   }
 
