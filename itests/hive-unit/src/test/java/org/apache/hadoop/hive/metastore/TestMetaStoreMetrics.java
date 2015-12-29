@@ -139,12 +139,15 @@ public class TestMetaStoreMetrics {
     driver.run("drop database tempdb cascade");
 
     //give timer thread a chance to print the metrics
-    Thread.sleep(2000);
+    CodahaleMetrics metrics = (CodahaleMetrics) MetricsFactory.getInstance();
+    String json = metrics.dumpJson();
+    MetricsTestUtils.verifyMetricsJson(json, MetricsTestUtils.COUNTER, MetricsConstant.CREATE_TOTAL_DATABASES, 2);
+    MetricsTestUtils.verifyMetricsJson(json, MetricsTestUtils.COUNTER, MetricsConstant.CREATE_TOTAL_TABLES, 7);
+    MetricsTestUtils.verifyMetricsJson(json, MetricsTestUtils.COUNTER, MetricsConstant.CREATE_TOTAL_PARTITIONS, 9);
 
-    MetricsTestUtils.verifyMetricFile(jsonReportFile, MetricsTestUtils.COUNTER, MetricsConstant.DELTA_TOTAL_DATABASES, 1);
-    MetricsTestUtils.verifyMetricFile(jsonReportFile, MetricsTestUtils.COUNTER, MetricsConstant.DELTA_TOTAL_TABLES, 4);
-    MetricsTestUtils.verifyMetricFile(jsonReportFile, MetricsTestUtils.COUNTER, MetricsConstant.DELTA_TOTAL_PARTITIONS, 6);
-
+    MetricsTestUtils.verifyMetricsJson(json, MetricsTestUtils.COUNTER, MetricsConstant.DELETE_TOTAL_DATABASES, 1);
+    MetricsTestUtils.verifyMetricsJson(json, MetricsTestUtils.COUNTER, MetricsConstant.DELETE_TOTAL_TABLES, 3);
+    MetricsTestUtils.verifyMetricsJson(json, MetricsTestUtils.COUNTER, MetricsConstant.DELETE_TOTAL_PARTITIONS, 3);
 
     //to test initial metadata count metrics.
     hiveConf.setVar(HiveConf.ConfVars.METASTORE_RAW_STORE_IMPL, ObjectStore.class.getName());
