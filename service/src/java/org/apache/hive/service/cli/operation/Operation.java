@@ -21,14 +21,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Sets;
-
 import org.apache.hadoop.hive.common.metrics.common.Metrics;
 import org.apache.hadoop.hive.common.metrics.common.MetricsConstant;
 import org.apache.hadoop.hive.common.metrics.common.MetricsFactory;
@@ -53,8 +50,8 @@ import org.apache.logging.log4j.ThreadContext;
 
 public abstract class Operation {
   // Constants of the key strings for the log4j ThreadContext.
-  public static final String SESSIONID_LOG_KEY = "sessionId";
-  public static final String QUERYID_LOG_KEY = "queryId";
+  private static final String QUERYID = "QueryId";
+  private static final String SESSIONID = "SessionId";
 
   protected final HiveSession parentSession;
   private OperationState state = OperationState.INITIALIZED;
@@ -70,7 +67,6 @@ public abstract class Operation {
   protected volatile Future<?> backgroundHandle;
   protected OperationLog operationLog;
   protected boolean isOperationLogEnabled;
-  protected Map<String, String> confOverlay = new HashMap<String, String>();
 
   private long operationTimeout;
   private volatile long lastAccessTime;
@@ -79,14 +75,7 @@ public abstract class Operation {
       EnumSet.of(FetchOrientation.FETCH_NEXT,FetchOrientation.FETCH_FIRST);
 
   protected Operation(HiveSession parentSession, OperationType opType, boolean runInBackground) {
-    this(parentSession, null, opType, runInBackground);
- }
-
-  protected Operation(HiveSession parentSession, Map<String, String> confOverlay, OperationType opType, boolean runInBackground) {
     this.parentSession = parentSession;
-    if (confOverlay != null) {
-      this.confOverlay = confOverlay;
-    }
     this.runAsync = runInBackground;
     this.opHandle = new OperationHandle(opType, parentSession.getProtocolVersion());
     lastAccessTime = System.currentTimeMillis();
@@ -269,8 +258,8 @@ public abstract class Operation {
    * Register logging context so that Log4J can print QueryId and/or SessionId for each message
    */
   protected void registerLoggingContext() {
-    ThreadContext.put(SESSIONID_LOG_KEY, SessionState.get().getSessionId());
-    ThreadContext.put(QUERYID_LOG_KEY, confOverlay.get(HiveConf.ConfVars.HIVEQUERYID.varname));
+    ThreadContext.put(QUERYID, SessionState.get().getQueryId());
+    ThreadContext.put(SESSIONID, SessionState.get().getSessionId());
   }
 
   /**

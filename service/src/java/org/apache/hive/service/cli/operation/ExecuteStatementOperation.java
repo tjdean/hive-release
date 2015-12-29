@@ -18,6 +18,7 @@
 package org.apache.hive.service.cli.operation;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.hadoop.hive.ql.processors.CommandProcessor;
@@ -28,11 +29,13 @@ import org.apache.hive.service.cli.session.HiveSession;
 
 public abstract class ExecuteStatementOperation extends Operation {
   protected String statement = null;
+  protected Map<String, String> confOverlay = new HashMap<String, String>();
 
   public ExecuteStatementOperation(HiveSession parentSession, String statement,
       Map<String, String> confOverlay, boolean runInBackground) {
-    super(parentSession, confOverlay, OperationType.EXECUTE_STATEMENT, runInBackground);
+    super(parentSession, OperationType.EXECUTE_STATEMENT, runInBackground);
     this.statement = statement;
+    setConfOverlay(confOverlay);
   }
 
   public String getStatement() {
@@ -53,5 +56,15 @@ public abstract class ExecuteStatementOperation extends Operation {
       return new SQLOperation(parentSession, statement, confOverlay, runAsync);
     }
     return new HiveCommandOperation(parentSession, statement, processor, confOverlay);
+  }
+
+  protected Map<String, String> getConfOverlay() {
+    return confOverlay;
+  }
+
+  protected void setConfOverlay(Map<String, String> confOverlay) {
+    if (confOverlay != null) {
+      this.confOverlay = confOverlay;
+    }
   }
 }
