@@ -126,7 +126,6 @@ ltrim
 map
 map_keys
 map_values
-matchpath
 max
 md5
 min
@@ -336,7 +335,6 @@ POSTHOOK: type: SHOWFUNCTIONS
 map
 map_keys
 map_values
-matchpath
 max
 md5
 min

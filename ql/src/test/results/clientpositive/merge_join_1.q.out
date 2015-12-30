@@ -95,7 +95,7 @@ STAGE PLANS:
             alias: test_join_1
             Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
             Filter Operator
-              predicate: (a is not null and b is not null) (type: boolean)
+              predicate: (b is not null and a is not null) (type: boolean)
               Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
               Select Operator
                 expressions: a (type: string), b (type: string)
