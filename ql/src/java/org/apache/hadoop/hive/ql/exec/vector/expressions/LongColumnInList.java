@@ -62,6 +62,7 @@ public class LongColumnInList extends VectorExpression implements ILongInExpr {
 
     LongColumnVector inputColVector = (LongColumnVector) batch.cols[colNum];
     LongColumnVector outputColVector = (LongColumnVector) batch.cols[outputColumn];
+    outputColVector.reset();
     int[] sel = batch.selected;
     boolean[] nullPos = inputColVector.isNull;
     boolean[] outNulls = outputColVector.isNull;

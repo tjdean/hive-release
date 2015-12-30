@@ -59,6 +59,7 @@ public class <ClassName> extends VectorExpression {
     DecimalColumnVector inputColVector1 = (DecimalColumnVector) batch.cols[colNum1];
     DecimalColumnVector inputColVector2 = (DecimalColumnVector) batch.cols[colNum2];
     DecimalColumnVector outputColVector = (DecimalColumnVector) batch.cols[outputColumn];
+    outputColVector.reset();
     int[] sel = batch.selected;
     int n = batch.size;
     HiveDecimalWritable[] vector1 = inputColVector1.vector;

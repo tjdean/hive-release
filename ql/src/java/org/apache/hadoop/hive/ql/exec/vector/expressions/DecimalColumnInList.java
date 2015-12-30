@@ -69,6 +69,7 @@ public class DecimalColumnInList extends VectorExpression implements IDecimalInE
 
     DecimalColumnVector inputColVector = (DecimalColumnVector) batch.cols[inputCol];
     LongColumnVector outputColVector = (LongColumnVector) batch.cols[outputColumn];
+    outputColVector.reset();
     int[] sel = batch.selected;
     boolean[] nullPos = inputColVector.isNull;
     boolean[] outNulls = outputColVector.isNull;

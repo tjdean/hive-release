@@ -89,9 +89,9 @@ public abstract class ColumnVector {
    *  - sets isRepeating to false
    */
   public void reset() {
-    if (!noNulls) {
-      Arrays.fill(isNull, false);
-    }
+    // We don't rely on all the VectorExpression derived classes to maintain isNull
+    // correctly, so we clear the flags each time.
+    Arrays.fill(isNull, false);
     noNulls = true;
     isRepeating = false;
     preFlattenNoNulls = true;

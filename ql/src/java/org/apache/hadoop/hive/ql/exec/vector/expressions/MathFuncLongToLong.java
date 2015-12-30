@@ -56,6 +56,7 @@ public abstract class MathFuncLongToLong extends VectorExpression {
 
     LongColumnVector inputColVector = (LongColumnVector) batch.cols[colNum];
     LongColumnVector outputColVector = (LongColumnVector) batch.cols[outputColumn];
+    outputColVector.reset();
     int[] sel = batch.selected;
     boolean[] inputIsNull = inputColVector.isNull;
     boolean[] outputIsNull = outputColVector.isNull;

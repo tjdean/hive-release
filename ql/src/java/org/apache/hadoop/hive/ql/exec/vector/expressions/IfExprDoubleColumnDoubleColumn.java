@@ -55,6 +55,7 @@ public class IfExprDoubleColumnDoubleColumn extends VectorExpression {
     DoubleColumnVector arg2ColVector = (DoubleColumnVector) batch.cols[arg2Column];
     DoubleColumnVector arg3ColVector = (DoubleColumnVector) batch.cols[arg3Column];
     DoubleColumnVector outputColVector = (DoubleColumnVector) batch.cols[outputColumn];
+    outputColVector.reset();
     int[] sel = batch.selected;
     boolean[] outputIsNull = outputColVector.isNull;
     outputColVector.noNulls = arg2ColVector.noNulls && arg3ColVector.noNulls;

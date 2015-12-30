@@ -63,6 +63,7 @@ public class DoubleColumnInList extends VectorExpression implements IDoubleInExp
 
     DoubleColumnVector inputColVector = (DoubleColumnVector) batch.cols[colNum];
     LongColumnVector outputColVector = (LongColumnVector) batch.cols[outputColumn];
+    outputColVector.reset();
     int[] sel = batch.selected;
     boolean[] nullPos = inputColVector.isNull;
     boolean[] outNulls = outputColVector.isNull;

@@ -55,6 +55,7 @@ public class <ClassName> extends VectorExpression {
 
     <InputColumnVectorType> inputColVector = (<InputColumnVectorType>) batch.cols[colNum];
     <OutputColumnVectorType> outputColVector = (<OutputColumnVectorType>) batch.cols[outputColumn];
+    outputColVector.reset();
     int[] sel = batch.selected;
     boolean[] inputIsNull = inputColVector.isNull;
     boolean[] outputIsNull = outputColVector.isNull;

@@ -56,6 +56,7 @@ public class FuncRoundWithNumDigitsDecimalToDecimal extends VectorExpression {
 
     DecimalColumnVector inputColVector = (DecimalColumnVector) batch.cols[colNum];
     DecimalColumnVector outputColVector = (DecimalColumnVector) batch.cols[outputColumn];
+    outputColVector.reset();
     int[] sel = batch.selected;
     boolean[] inputIsNull = inputColVector.isNull;
     boolean[] outputIsNull = outputColVector.isNull;

@@ -75,6 +75,7 @@ public class StringColumnInList extends VectorExpression implements IStringInExp
 
     BytesColumnVector inputColVector = (BytesColumnVector) batch.cols[inputCol];
     LongColumnVector outputColVector = (LongColumnVector) batch.cols[outputColumn];
+    outputColVector.reset();
     int[] sel = batch.selected;
     boolean[] nullPos = inputColVector.isNull;
     int n = batch.size;

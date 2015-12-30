@@ -57,6 +57,7 @@ public abstract class MathFuncLongToDouble extends VectorExpression {
 
     LongColumnVector inputColVector = (LongColumnVector) batch.cols[colNum];
     DoubleColumnVector outputColVector = (DoubleColumnVector) batch.cols[outputColumn];
+    outputColVector.reset();
     int[] sel = batch.selected;
     boolean[] inputIsNull = inputColVector.isNull;
     boolean[] outputIsNull = outputColVector.isNull;

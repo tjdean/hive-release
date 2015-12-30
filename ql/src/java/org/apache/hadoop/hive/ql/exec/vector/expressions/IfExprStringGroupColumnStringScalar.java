@@ -59,6 +59,7 @@ public class IfExprStringGroupColumnStringScalar extends VectorExpression {
     LongColumnVector arg1ColVector = (LongColumnVector) batch.cols[arg1Column];
     BytesColumnVector arg2ColVector = (BytesColumnVector) batch.cols[arg2Column];
     BytesColumnVector outputColVector = (BytesColumnVector) batch.cols[outputColumn];
+    outputColVector.reset();
     int[] sel = batch.selected;
     boolean[] outputIsNull = outputColVector.isNull;
     outputColVector.noNulls = arg2ColVector.noNulls;

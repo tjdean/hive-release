@@ -58,6 +58,7 @@ public class IfExprStringGroupColumnStringGroupColumn extends VectorExpression {
     BytesColumnVector arg2ColVector = (BytesColumnVector) batch.cols[arg2Column];
     BytesColumnVector arg3ColVector = (BytesColumnVector) batch.cols[arg3Column];
     BytesColumnVector outputColVector = (BytesColumnVector) batch.cols[outputColumn];
+    outputColVector.reset();
     int[] sel = batch.selected;
     boolean[] outputIsNull = outputColVector.isNull;
     outputColVector.noNulls = arg2ColVector.noNulls && arg3ColVector.noNulls;

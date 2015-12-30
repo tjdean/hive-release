@@ -54,6 +54,7 @@ public class IfExprLongColumnLongColumn extends VectorExpression {
     LongColumnVector arg2ColVector = (LongColumnVector) batch.cols[arg2Column];
     LongColumnVector arg3ColVector = (LongColumnVector) batch.cols[arg3Column];
     LongColumnVector outputColVector = (LongColumnVector) batch.cols[outputColumn];
+    outputColVector.reset();
     int[] sel = batch.selected;
     boolean[] outputIsNull = outputColVector.isNull;
     outputColVector.noNulls = arg2ColVector.noNulls && arg3ColVector.noNulls;

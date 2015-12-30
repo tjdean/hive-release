@@ -60,6 +60,7 @@ public class <ClassName> extends VectorExpression {
     LongColumnVector arg1ColVector = (LongColumnVector) batch.cols[arg1Column];
     <Arg3ColumnVectorType> arg3ColVector = (<Arg3ColumnVectorType>) batch.cols[arg3Column];
     <OutputColumnVectorType> outputColVector = (<OutputColumnVectorType>) batch.cols[outputColumn];
+    outputColVector.reset();
     int[] sel = batch.selected;
     boolean[] outputIsNull = outputColVector.isNull;
     outputColVector.noNulls = arg3ColVector.noNulls; // nulls can only come from arg3 column vector

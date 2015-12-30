@@ -59,6 +59,7 @@ public class IfExprStringScalarStringScalar extends VectorExpression {
 
     LongColumnVector arg1ColVector = (LongColumnVector) batch.cols[arg1Column];
     BytesColumnVector outputColVector = (BytesColumnVector) batch.cols[outputColumn];
+    outputColVector.reset();
     int[] sel = batch.selected;
     outputColVector.noNulls = true; // output must be a scalar and neither one is null
     outputColVector.isRepeating = false; // may override later

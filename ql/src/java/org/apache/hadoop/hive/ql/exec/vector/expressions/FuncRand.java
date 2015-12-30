@@ -49,6 +49,7 @@ public class FuncRand extends VectorExpression {
     }
 
     DoubleColumnVector outputColVector = (DoubleColumnVector) batch.cols[outputCol];
+    outputColVector.reset();
     int[] sel = batch.selected;
     int n = batch.size;
     double[] outputVector = outputColVector.vector;
