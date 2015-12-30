@@ -14,7 +14,6 @@
 
 package org.apache.hadoop.hive.llap.daemon;
 
-import org.apache.hadoop.hive.llap.daemon.impl.QueryIdentifier;
 import org.apache.hadoop.security.token.Token;
 import org.apache.tez.common.security.JobTokenIdentifier;
 import org.apache.tez.dag.records.TezTaskAttemptID;
@@ -25,6 +24,6 @@ public interface KilledTaskHandler {
   // inferred from this.
   // Passing in parameters until there's some dag information stored and tracked in the daemon.
   void taskKilled(String amLocation, int port, String user,
-                  Token<JobTokenIdentifier> jobToken, QueryIdentifier queryIdentifier,
+                  Token<JobTokenIdentifier> jobToken, String queryId, String dagName,
                   TezTaskAttemptID taskAttemptId);
 }

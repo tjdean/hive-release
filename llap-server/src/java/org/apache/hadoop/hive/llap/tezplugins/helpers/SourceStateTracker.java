@@ -24,8 +24,6 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.mutable.MutableInt;
-import org.apache.hadoop.hive.llap.daemon.impl.QueryIdentifier;
-import org.apache.hadoop.hive.llap.daemon.rpc.LlapDaemonProtocolProtos.QueryIdentifierProto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hive.llap.LlapNodeId;
@@ -47,33 +45,28 @@ public class SourceStateTracker {
   private final TaskCommunicatorContext taskCommunicatorContext;
   private final LlapTaskCommunicator taskCommunicator;
 
-  private final QueryIdentifierProto BASE_QUERY_IDENTIFIER;
-
   // Tracks vertices for which notifications have been registered
   private final Set<String> notificationRegisteredVertices = new HashSet<>();
 
   private final Map<String, SourceInfo> sourceInfoMap = new HashMap<>();
   private final Map<LlapNodeId, NodeInfo> nodeInfoMap = new HashMap<>();
 
-  private volatile QueryIdentifierProto currentQueryIdentifier;
+  private volatile String currentDagName;
 
   public SourceStateTracker(TaskCommunicatorContext taskCommunicatorContext,
                             LlapTaskCommunicator taskCommunicator) {
     this.taskCommunicatorContext = taskCommunicatorContext;
     this.taskCommunicator = taskCommunicator;
-    BASE_QUERY_IDENTIFIER = QueryIdentifierProto.newBuilder()
-        .setAppIdentifier(taskCommunicatorContext.getCurrentAppIdentifier()).build();
   }
 
   /**
    * To be invoked after each DAG completes.
    */
-  public synchronized void resetState(int newDagId) {
+  public synchronized void resetState(String newDagName) {
     sourceInfoMap.clear();
     nodeInfoMap.clear();
     notificationRegisteredVertices.clear();
-    this.currentQueryIdentifier =
-        QueryIdentifierProto.newBuilder(BASE_QUERY_IDENTIFIER).setDagIdentifier(newDagId).build();
+    this.currentDagName = newDagName;
   }
 
   /**
@@ -146,16 +139,16 @@ public class SourceStateTracker {
   }
 
 
-  // Assumes serialized DAGs within an AM, and a reset of structures after each DAG completes.
   /**
    * Constructs FragmentRuntimeInfo for scheduling within LLAP daemons.
    * Also caches state based on state updates.
+   * @param dagName
    * @param vertexName
    * @param fragmentNumber
    * @param priority
    * @return
    */
-  public synchronized FragmentRuntimeInfo getFragmentRuntimeInfo(String vertexName, int fragmentNumber,
+  public synchronized FragmentRuntimeInfo getFragmentRuntimeInfo(String dagName, String vertexName, int fragmentNumber,
                                                                  int priority) {
     FragmentRuntimeInfo.Builder builder = FragmentRuntimeInfo.newBuilder();
     maybeRegisterForVertexUpdates(vertexName);
@@ -289,8 +282,9 @@ public class SourceStateTracker {
 
   void sendStateUpdateToNode(LlapNodeId nodeId, String sourceName, VertexState state) {
     taskCommunicator.sendStateUpdate(nodeId.getHostname(), nodeId.getPort(),
-        SourceStateUpdatedRequestProto.newBuilder().setQueryIdentifier(currentQueryIdentifier)
-            .setSrcName(sourceName).setState(Converters.fromVertexState(state)).build());
+        SourceStateUpdatedRequestProto.newBuilder().setDagName(currentDagName).setSrcName(
+            sourceName)
+            .setState(Converters.fromVertexState(state)).build());
   }
 
 

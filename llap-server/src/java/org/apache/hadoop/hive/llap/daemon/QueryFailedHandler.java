@@ -14,9 +14,7 @@
 
 package org.apache.hadoop.hive.llap.daemon;
 
-import org.apache.hadoop.hive.llap.daemon.impl.QueryIdentifier;
-
 public interface QueryFailedHandler {
 
-  public void queryFailed(QueryIdentifier queryIdentifier);
+  public void queryFailed(String queryId, String dagName);
 }

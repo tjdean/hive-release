@@ -36,10 +36,10 @@ import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.llap.LlapNodeId;
+import org.apache.hadoop.hive.llap.configuration.LlapConfiguration;
 import org.apache.hadoop.hive.llap.daemon.rpc.LlapDaemonProtocolProtos;
 import org.apache.hadoop.hive.llap.daemon.rpc.LlapDaemonProtocolProtos.FragmentRuntimeInfo;
 import org.apache.hadoop.hive.llap.daemon.rpc.LlapDaemonProtocolProtos.QueryCompleteRequestProto;
-import org.apache.hadoop.hive.llap.daemon.rpc.LlapDaemonProtocolProtos.QueryIdentifierProto;
 import org.apache.hadoop.hive.llap.daemon.rpc.LlapDaemonProtocolProtos.SourceStateUpdatedRequestProto;
 import org.apache.hadoop.hive.llap.daemon.rpc.LlapDaemonProtocolProtos.SourceStateUpdatedResponseProto;
 import org.apache.hadoop.hive.llap.daemon.rpc.LlapDaemonProtocolProtos.SubmitWorkRequestProto;
@@ -86,8 +86,7 @@ public class LlapTaskCommunicator extends TezTaskCommunicatorImpl {
   private static final boolean isDebugEnabed = LOG.isDebugEnabled();
 
   private final SubmitWorkRequestProto BASE_SUBMIT_WORK_REQUEST;
-
-  private final ConcurrentMap<QueryIdentifierProto, ByteBuffer> credentialMap;
+  private final ConcurrentMap<String, ByteBuffer> credentialMap;
 
   // Tracks containerIds and taskAttemptIds, so can be kept independent of the running DAG.
   // When DAG specific cleanup happens, it'll be better to link this to a DAG though.
@@ -99,9 +98,6 @@ public class LlapTaskCommunicator extends TezTaskCommunicatorImpl {
   private long deleteDelayOnDagComplete;
   private final LlapTaskUmbilicalProtocol umbilical;
   private final Token<LlapTokenIdentifier> token;
-
-  private volatile int currentDagId;
-  private volatile QueryIdentifierProto currentQueryIdentifierProto;
 
   // These two structures track the list of known nodes, and the list of nodes which are sending in keep-alive heartbeats.
   // Primarily for debugging purposes a.t.m, since there's some unexplained TASK_TIMEOUTS which are currently being observed.
@@ -231,9 +227,8 @@ public class LlapTaskCommunicator extends TezTaskCommunicatorImpl {
                                          int priority)  {
     super.registerRunningTaskAttempt(containerId, taskSpec, additionalResources, credentials,
         credentialsChanged, priority);
-    int dagId = taskSpec.getTaskAttemptID().getTaskID().getVertexID().getDAGId().getId();
-    if (currentQueryIdentifierProto == null || (dagId != currentQueryIdentifierProto.getDagIdentifier())) {
-      resetCurrentDag(dagId);
+    if (taskSpec.getDAGName() != currentDagName) {
+      resetCurrentDag(taskSpec.getDAGName());
     }
 
 
@@ -257,7 +252,7 @@ public class LlapTaskCommunicator extends TezTaskCommunicatorImpl {
     nodesForQuery.add(nodeId);
 
     sourceStateTracker.registerTaskForStateUpdates(host, port, taskSpec.getInputs());
-    FragmentRuntimeInfo fragmentRuntimeInfo = sourceStateTracker.getFragmentRuntimeInfo(
+    FragmentRuntimeInfo fragmentRuntimeInfo = sourceStateTracker.getFragmentRuntimeInfo(taskSpec.getDAGName(),
         taskSpec.getVertexName(), taskSpec.getTaskAttemptID().getTaskID().getId(), priority);
     SubmitWorkRequestProto requestProto;
 
@@ -355,7 +350,7 @@ public class LlapTaskCommunicator extends TezTaskCommunicatorImpl {
     // NodeId can be null if the task gets unregistered due to failure / being killed by the daemon itself
     if (nodeId != null) {
       TerminateFragmentRequestProto request =
-          TerminateFragmentRequestProto.newBuilder().setQueryIdentifier(currentQueryIdentifierProto)
+          TerminateFragmentRequestProto.newBuilder().setDagName(currentDagName)
               .setFragmentIdentifierString(taskAttemptId.toString()).build();
       communicator.sendTerminateFragment(request, nodeId.getHostname(), nodeId.getPort(),
           new LlapDaemonProtocolClientProxy.ExecuteRequestCallback<TerminateFragmentResponseProto>() {
@@ -376,16 +371,12 @@ public class LlapTaskCommunicator extends TezTaskCommunicatorImpl {
     }
   }
 
-
-
-
   @Override
-  public void dagComplete(final int dagIdentifier) {
-    QueryCompleteRequestProto request = QueryCompleteRequestProto.newBuilder()
-        .setQueryIdentifier(constructQueryIdentifierProto(dagIdentifier))
-        .setDeleteDelay(deleteDelayOnDagComplete).build();
+  public void dagComplete(final String dagName) {
+    QueryCompleteRequestProto request = QueryCompleteRequestProto.newBuilder().setDagName(
+        dagName).setDeleteDelay(deleteDelayOnDagComplete).build();
     for (final LlapNodeId llapNodeId : nodesForQuery) {
-      LOG.info("Sending dagComplete message for {}, to {}", dagIdentifier, llapNodeId);
+      LOG.info("Sending dagComplete message for {}, to {}", dagName, llapNodeId);
       communicator.sendQueryComplete(request, llapNodeId.getHostname(), llapNodeId.getPort(),
           new LlapDaemonProtocolClientProxy.ExecuteRequestCallback<LlapDaemonProtocolProtos.QueryCompleteResponseProto>() {
             @Override
@@ -394,7 +385,7 @@ public class LlapTaskCommunicator extends TezTaskCommunicatorImpl {
 
             @Override
             public void indicateError(Throwable t) {
-              LOG.warn("Failed to indicate dag complete dagId={} to node {}", dagIdentifier, llapNodeId);
+              LOG.warn("Failed to indicate dag complete dagId={} to node {}", dagName, llapNodeId);
             }
           });
     }
@@ -505,12 +496,12 @@ public class LlapTaskCommunicator extends TezTaskCommunicatorImpl {
     }
   }
 
-  private void resetCurrentDag(int newDagId) {
+  private void resetCurrentDag(String newDagName) {
     // Working on the assumption that a single DAG runs at a time per AM.
-    currentQueryIdentifierProto = constructQueryIdentifierProto(newDagId);
-    sourceStateTracker.resetState(newDagId);
+    currentDagName = newDagName;
+    sourceStateTracker.resetState(newDagName);
     nodesForQuery.clear();
-    LOG.info("CurrentDagId set to: " + newDagId + ", name=" + getContext().getCurrentDagName());
+    LOG.info("CurrentDag set to: " + newDagName);
     // TODO Is it possible for heartbeats to come in from lost tasks - those should be told to die, which
     // is likely already happening.
   }
@@ -528,12 +519,10 @@ public class LlapTaskCommunicator extends TezTaskCommunicatorImpl {
     // Credentials can change across DAGs. Ideally construct only once per DAG.
     taskCredentials.addAll(getContext().getCredentials());
 
-    Preconditions.checkState(currentQueryIdentifierProto.getDagIdentifier() ==
-        taskSpec.getTaskAttemptID().getTaskID().getVertexID().getDAGId().getId());
-    ByteBuffer credentialsBinary = credentialMap.get(currentQueryIdentifierProto);
+    ByteBuffer credentialsBinary = credentialMap.get(taskSpec.getDAGName());
     if (credentialsBinary == null) {
       credentialsBinary = serializeCredentials(getContext().getCredentials());
-      credentialMap.putIfAbsent(currentQueryIdentifierProto, credentialsBinary.duplicate());
+      credentialMap.putIfAbsent(taskSpec.getDAGName(), credentialsBinary.duplicate());
     } else {
       credentialsBinary = credentialsBinary.duplicate();
     }
@@ -747,11 +736,5 @@ public class LlapTaskCommunicator extends TezTaskCommunicatorImpl {
       return biMap;
     }
 
-  }
-
-  private QueryIdentifierProto constructQueryIdentifierProto(int dagIdentifier) {
-    return QueryIdentifierProto.newBuilder()
-        .setAppIdentifier(getContext().getCurrentAppIdentifier()).setDagIdentifier(dagIdentifier)
-        .build();
   }
 }

@@ -134,7 +134,7 @@ public class TaskRunnerCallable extends CallableWithNdc<TaskRunner2Result> {
     // Register with the AMReporter when the callable is setup. Unregister once it starts running.
     if (jobToken != null) {
     this.amReporter.registerTask(request.getAmHost(), request.getAmPort(),
-        request.getUser(), jobToken, fragmentInfo.getQueryInfo().getQueryIdentifier());
+        request.getUser(), jobToken, null, request.getFragmentSpec().getDagName());
     }
     this.metrics = metrics;
     this.requestId = request.getFragmentSpec().getFragmentIdentifierString();
@@ -301,8 +301,9 @@ public class TaskRunnerCallable extends CallableWithNdc<TaskRunner2Result> {
    */
   public void reportTaskKilled() {
     killedTaskHandler
-        .taskKilled(request.getAmHost(), request.getAmPort(), request.getUser(), jobToken,
-            fragmentInfo.getQueryInfo().getQueryIdentifier(), taskSpec.getTaskAttemptID());
+        .taskKilled(request.getAmHost(), request.getAmPort(), request.getUser(), jobToken, null,
+            taskSpec.getDAGName(),
+            taskSpec.getTaskAttemptID());
   }
 
   public boolean canFinish() {
@@ -431,7 +432,6 @@ public class TaskRunnerCallable extends CallableWithNdc<TaskRunner2Result> {
       HistoryLogger
           .logFragmentEnd(request.getApplicationIdString(), request.getContainerIdString(),
               executionContext.getHostName(), request.getFragmentSpec().getDagName(),
-              fragmentInfo.getQueryInfo().getDagIdentifier(),
               request.getFragmentSpec().getVertexName(),
               request.getFragmentSpec().getFragmentNumber(),
               request.getFragmentSpec().getAttemptNumber(), taskRunnerCallable.threadName,
@@ -449,7 +449,6 @@ public class TaskRunnerCallable extends CallableWithNdc<TaskRunner2Result> {
       HistoryLogger
           .logFragmentEnd(request.getApplicationIdString(), request.getContainerIdString(),
               executionContext.getHostName(), request.getFragmentSpec().getDagName(),
-              fragmentInfo.getQueryInfo().getDagIdentifier(),
               request.getFragmentSpec().getVertexName(),
               request.getFragmentSpec().getFragmentNumber(),
               request.getFragmentSpec().getAttemptNumber(), taskRunnerCallable.threadName,

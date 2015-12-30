@@ -37,7 +37,7 @@ import org.apache.hadoop.hive.llap.daemon.rpc.LlapDaemonProtocolProtos.FragmentS
 import org.apache.hadoop.hive.llap.daemon.rpc.LlapDaemonProtocolProtos.SourceStateProto;
 
 public class QueryInfo {
-  private final QueryIdentifier queryIdentifier;
+  private final String queryId;
   private final String appIdString;
   private final String dagName;
   private final int dagIdentifier;
@@ -54,10 +54,10 @@ public class QueryInfo {
 
   private final FinishableStateTracker finishableStateTracker = new FinishableStateTracker();
 
-  public QueryInfo(QueryIdentifier queryIdentifier, String appIdString, String dagName, int dagIdentifier,
+  public QueryInfo(String queryId, String appIdString, String dagName, int dagIdentifier,
                    String user, ConcurrentMap<String, SourceStateProto> sourceStateMap,
                    String[] localDirsBase, FileSystem localFs) {
-    this.queryIdentifier = queryIdentifier;
+    this.queryId = queryId;
     this.appIdString = appIdString;
     this.dagName = dagName;
     this.dagIdentifier = dagIdentifier;
@@ -67,12 +67,16 @@ public class QueryInfo {
     this.localFs = localFs;
   }
 
-  public QueryIdentifier getQueryIdentifier() {
-    return queryIdentifier;
+  public String getQueryId() {
+    return queryId;
   }
 
   public String getAppIdString() {
     return appIdString;
+  }
+
+  public String getDagName() {
+    return dagName;
   }
 
   public int getDagIdentifier() {
