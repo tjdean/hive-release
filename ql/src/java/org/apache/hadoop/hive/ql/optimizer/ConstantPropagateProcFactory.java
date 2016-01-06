@@ -167,7 +167,9 @@ public final class ConstantPropagateProcFactory {
       // ExprNodeConstantDesc
       return null;
     }
-    LOG.debug("Casting " + desc + " to type " + ti);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Casting " + desc + " to type " + ti);
+    }
     ExprNodeConstantDesc c = (ExprNodeConstantDesc) desc;
     if (null != c.getFoldedFromVal() && priti.getTypeName().equals(serdeConstants.STRING_TYPE_NAME)) {
       // avoid double casting to preserve original string representation of constant.
@@ -329,7 +331,9 @@ public final class ConstantPropagateProcFactory {
       // Check if the function can be short cut.
       ExprNodeDesc shortcut = shortcutFunction(udf, newExprs, op);
       if (shortcut != null) {
-        LOG.debug("Folding expression:" + desc + " -> " + shortcut);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Folding expression:" + desc + " -> " + shortcut);
+        }
         return shortcut;
       }
       ((ExprNodeGenericFuncDesc) desc).setChildren(newExprs);
@@ -385,13 +389,17 @@ public final class ConstantPropagateProcFactory {
         // If all child expressions of deterministic function are constants, evaluate such UDF immediately
         ExprNodeDesc constant = evaluateFunction(udf, newExprs, desc.getChildren());
         if (constant != null) {
-          LOG.debug("Folding expression:" + desc + " -> " + constant);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Folding expression:" + desc + " -> " + constant);
+          }
           return constant;
         } else {
           // Check if the function can be short cut.
           ExprNodeDesc shortcut = shortcutFunction(udf, newExprs, op);
           if (shortcut != null) {
-            LOG.debug("Folding expression:" + desc + " -> " + shortcut);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("Folding expression:" + desc + " -> " + shortcut);
+            }
             return shortcut;
           }
           ((ExprNodeGenericFuncDesc) desc).setChildren(newExprs);
@@ -413,7 +421,9 @@ public final class ConstantPropagateProcFactory {
       Operator<? extends Serializable> parent = op.getParentOperators().get(tag);
       ExprNodeDesc col = evaluateColumn((ExprNodeColumnDesc) desc, cppCtx, parent);
       if (col != null) {
-        LOG.debug("Folding expression:" + desc + " -> " + col);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Folding expression:" + desc + " -> " + col);
+        }
         return col;
       }
     }
@@ -491,7 +501,9 @@ public final class ConstantPropagateProcFactory {
       }
       ColumnInfo ci = resolveColumn(rs, c);
       if (ci != null) {
-        LOG.debug("Filter " + udf + " is identified as a value assignment, propagate it.");
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Filter " + udf + " is identified as a value assignment, propagate it.");
+        }
         if (!v.getTypeInfo().equals(ci.getType())) {
           v = typeCast(v, ci.getType());
         }
@@ -502,7 +514,9 @@ public final class ConstantPropagateProcFactory {
     } else if (udf instanceof GenericUDFOPNull) {
       ExprNodeDesc operand = newExprs.get(0);
       if (operand instanceof ExprNodeColumnDesc) {
-        LOG.debug("Filter " + udf + " is identified as a value assignment, propagate it.");
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Filter " + udf + " is identified as a value assignment, propagate it.");
+        }
         ExprNodeColumnDesc c = (ExprNodeColumnDesc) operand;
         ColumnInfo ci = resolveColumn(rs, c);
         if (ci != null) {
@@ -766,11 +780,15 @@ public final class ConstantPropagateProcFactory {
     RowSchema rs = parent.getSchema();
     ColumnInfo ci = rs.getColumnInfo(desc.getColumn());
     if (ci == null) {
-      LOG.error("Reverse look up of column " + desc + " error!");
+      if (LOG.isErrorEnabled()) {
+        LOG.error("Reverse look up of column " + desc + " error!");
+      }
       ci = rs.getColumnInfo(desc.getTabAlias(), desc.getColumn());
     }
     if (ci == null) {
-      LOG.error("Can't resolve " + desc.getTabAlias() + "." + desc.getColumn());
+      if (LOG.isErrorEnabled()) {
+        LOG.error("Can't resolve " + desc.getTabAlias() + "." + desc.getColumn());
+      }
       return null;
     }
     ExprNodeDesc constant = null;
@@ -856,7 +874,9 @@ public final class ConstantPropagateProcFactory {
     try {
       ObjectInspector oi = udf.initialize(argois);
       Object o = udf.evaluate(arguments);
-      LOG.debug(udf.getClass().getName() + "(" + exprs + ")=" + o);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(udf.getClass().getName() + "(" + exprs + ")=" + o);
+      }
       if (o == null) {
         return new ExprNodeConstantDesc(
             TypeInfoUtils.getTypeInfoFromObjectInspector(oi), o);
@@ -916,7 +936,9 @@ public final class ConstantPropagateProcFactory {
       for (ColumnInfo col : schema.getSignature()) {
         ExprNodeDesc constant = constants.get(col);
         if (constant != null) {
-          LOG.debug("Replacing column " + col + " with constant " + constant + " in " + op);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Replacing column " + col + " with constant " + constant + " in " + op);
+          }
           if (!col.getType().equals(constant.getTypeInfo())) {
             constant = typeCast(constant, col.getType());
           }
@@ -952,22 +974,30 @@ public final class ConstantPropagateProcFactory {
       cppCtx.getOpToConstantExprs().put(op, constants);
 
       ExprNodeDesc condn = op.getConf().getPredicate();
-      LOG.debug("Old filter FIL[" + op.getIdentifier() + "] conditions:" + condn.getExprString());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Old filter FIL[" + op.getIdentifier() + "] conditions:" + condn.getExprString());
+      }
       ExprNodeDesc newCondn = foldExpr(condn, constants, cppCtx, op, 0, true);
       if (newCondn instanceof ExprNodeConstantDesc) {
         ExprNodeConstantDesc c = (ExprNodeConstantDesc) newCondn;
         if (Boolean.TRUE.equals(c.getValue())) {
           cppCtx.addOpToDelete(op);
-          LOG.debug("Filter expression " + condn + " holds true. Will delete it.");
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Filter expression " + condn + " holds true. Will delete it.");
+          }
         } else if (Boolean.FALSE.equals(c.getValue())) {
-          LOG.warn("Filter expression " + condn + " holds false!");
+          if (LOG.isWarnEnabled()) {
+            LOG.warn("Filter expression " + condn + " holds false!");
+          }
         }
       }
       if (newCondn instanceof ExprNodeConstantDesc && ((ExprNodeConstantDesc)newCondn).getValue() == null) {
         // where null is same as where false
         newCondn = new ExprNodeConstantDesc(Boolean.FALSE);
       }
-      LOG.debug("New filter FIL[" + op.getIdentifier() + "] conditions:" + newCondn.getExprString());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("New filter FIL[" + op.getIdentifier() + "] conditions:" + newCondn.getExprString());
+      }
 
       // merge it with the downstream col list
       op.getConf().setPredicate(newCondn);
@@ -1093,7 +1123,9 @@ public final class ConstantPropagateProcFactory {
             columnExprMap.put(columnNames.get(i), newCol);
           }
         }
-        LOG.debug("New column list:(" + StringUtils.join(colList, " ") + ")");
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("New column list:(" + StringUtils.join(colList, " ") + ")");
+        }
       }
       return null;
     }
@@ -1171,7 +1203,9 @@ public final class ConstantPropagateProcFactory {
       Operator<?> op = (Operator<?>) nd;
       ConstantPropagateProcCtx cppCtx = (ConstantPropagateProcCtx) ctx;
       cppCtx.getOpToConstantExprs().put(op, new HashMap<ColumnInfo, ExprNodeDesc>());
-      LOG.debug("Stop propagate constants on op " + op.getOperatorId());
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Stop propagate constants on op " + op.getOperatorId());
+      }
       return null;
     }
   }
@@ -1203,7 +1237,9 @@ public final class ConstantPropagateProcFactory {
           && op.getChildOperators().get(0) instanceof JoinOperator) {
         JoinOperator joinOp = (JoinOperator) op.getChildOperators().get(0);
         if (skipFolding(joinOp.getConf())) {
-          LOG.debug("Skip folding in outer join " + op);
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Skip folding in outer join " + op);
+          }
           cppCtx.getOpToConstantExprs().put(op, new HashMap<ColumnInfo, ExprNodeDesc>());
           return null;
         }
@@ -1211,7 +1247,9 @@ public final class ConstantPropagateProcFactory {
 
       if (rsDesc.getDistinctColumnIndices() != null
           && !rsDesc.getDistinctColumnIndices().isEmpty()) {
-        LOG.debug("Skip folding in distinct subqueries " + op);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Skip folding in distinct subqueries " + op);
+        }
         cppCtx.getOpToConstantExprs().put(op, new HashMap<ColumnInfo, ExprNodeDesc>());
         return null;
       }
@@ -1292,10 +1330,14 @@ public final class ConstantPropagateProcFactory {
       //    Except one case that the join operator is followed by a redistribution (RS operator).
       if (op.getChildOperators().size() == 1
           && op.getChildOperators().get(0) instanceof ReduceSinkOperator) {
-        LOG.debug("Skip JOIN-RS structure.");
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Skip JOIN-RS structure.");
+        }
         return null;
       }
-      LOG.info("Old exprs " + conf.getExprs());
+      if (LOG.isInfoEnabled()) {
+        LOG.info("Old exprs " + conf.getExprs());
+      }
       Iterator<Entry<Byte, List<ExprNodeDesc>>> itr = conf.getExprs().entrySet().iterator();
       while (itr.hasNext()) {
         Entry<Byte, List<ExprNodeDesc>> e = itr.next();
@@ -1308,14 +1350,18 @@ public final class ConstantPropagateProcFactory {
         for (ExprNodeDesc expr : exprs) {
           ExprNodeDesc newExpr = foldExpr(expr, constants, cppCtx, op, tag, false);
           if (newExpr instanceof ExprNodeConstantDesc) {
-            LOG.info("expr " + newExpr + " fold from " + expr + " is removed.");
+            if (LOG.isInfoEnabled()) {
+              LOG.info("expr " + newExpr + " fold from " + expr + " is removed.");
+            }
             continue;
           }
           newExprs.add(newExpr);
         }
         e.setValue(newExprs);
       }
-      LOG.info("New exprs " + conf.getExprs());
+      if (LOG.isInfoEnabled()) {
+        LOG.info("New exprs " + conf.getExprs());
+      }
 
       for (List<ExprNodeDesc> v : conf.getFilters().values()) {
         for (int i = 0; i < v.size(); i++) {
