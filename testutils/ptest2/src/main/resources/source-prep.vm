@@ -84,7 +84,7 @@ cd $workingDir/
   fi
   if [[ "${buildTool}" == "maven" ]]
   then
-    rm -rf $workingDir/maven/org/apache/hive
+    rm -rf $workingDir/maven/org/apache
     mvn -B clean install -DskipTests -Dmaven.repo.local=$workingDir/maven $mavenArgs $mavenBuildArgs
     mvn -B test -Dmaven.repo.local=$workingDir/maven -Dtest=TestDummy $mavenArgs $mavenTestArgs
     cd itests
