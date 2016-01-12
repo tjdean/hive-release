@@ -68,11 +68,13 @@ public class PartitionDesc implements Serializable, Cloneable {
 
   private String baseFileName;
 
+  private VectorPartitionDesc vectorPartitionDesc;
+
   public void setBaseFileName(String baseFileName) {
     this.baseFileName = baseFileName;
   }
 
-  public PartitionDesc() {    
+  public PartitionDesc() {
   }
 
   public PartitionDesc(final TableDesc table, final LinkedHashMap<String, String> partSpec) {
@@ -248,6 +250,9 @@ public class PartitionDesc implements Serializable, Cloneable {
       ret.partSpec = new java.util.LinkedHashMap<String, String>();
       ret.partSpec.putAll(partSpec);
     }
+    if (vectorPartitionDesc != null) {
+      ret.vectorPartitionDesc = vectorPartitionDesc.clone();
+    }
     return ret;
   }
 
@@ -276,5 +281,13 @@ public class PartitionDesc implements Serializable, Cloneable {
 
   public void intern(Interner<TableDesc> interner) {
     this.tableDesc = interner.intern(tableDesc);
+  }
+
+  public void setVectorPartitionDesc(VectorPartitionDesc vectorPartitionDesc) {
+    this.vectorPartitionDesc = vectorPartitionDesc;
+  }
+
+  public VectorPartitionDesc getVectorPartitionDesc() {
+    return vectorPartitionDesc;
   }
 }

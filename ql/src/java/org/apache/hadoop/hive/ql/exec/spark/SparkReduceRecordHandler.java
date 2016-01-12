@@ -70,7 +70,6 @@ import org.apache.hadoop.util.StringUtils;
 public class SparkReduceRecordHandler extends SparkRecordHandler {
 
   private static final Log LOG = LogFactory.getLog(SparkReduceRecordHandler.class);
-  private static final String PLAN_KEY = "__REDUCE_PLAN__";
 
   // Input value serde needs to be an array to support different SerDe
   // for different tags
@@ -153,8 +152,6 @@ public class SparkReduceRecordHandler extends SparkRecordHandler {
           /* vectorization only works with struct object inspectors */
           valueStructInspectors[tag] = (StructObjectInspector) valueObjectInspector[tag];
 
-          batches[tag] = VectorizedBatchUtil.constructVectorizedRowBatch(keyStructInspector,
-              valueStructInspectors[tag]);
           final int totalColumns = keysColumnOffset
               + valueStructInspectors[tag].getAllStructFieldRefs().size();
           valueStringWriters[tag] = new ArrayList<VectorExpressionWriter>(totalColumns);
@@ -163,24 +160,11 @@ public class SparkReduceRecordHandler extends SparkRecordHandler {
           valueStringWriters[tag].addAll(Arrays.asList(VectorExpressionWriterFactory
               .genVectorStructExpressionWritables(valueStructInspectors[tag])));
 
-          /*
-           * The row object inspector used by ReduceWork needs to be a
-           * **standard** struct object inspector, not just any struct object
-           * inspector.
-           */
-          ArrayList<String> colNames = new ArrayList<String>();
-          List<? extends StructField> fields = keyStructInspector.getAllStructFieldRefs();
-          for (StructField field : fields) {
-            colNames.add(Utilities.ReduceField.KEY.toString() + "." + field.getFieldName());
-            ois.add(field.getFieldObjectInspector());
-          }
-          fields = valueStructInspectors[tag].getAllStructFieldRefs();
-          for (StructField field : fields) {
-            colNames.add(Utilities.ReduceField.VALUE.toString() + "." + field.getFieldName());
-            ois.add(field.getFieldObjectInspector());
-          }
-          rowObjectInspector[tag] = ObjectInspectorFactory.getStandardStructObjectInspector(
-              colNames, ois);
+          rowObjectInspector[tag] = Utilities.constructVectorizedReduceRowOI(keyStructInspector,
+              valueStructInspectors[tag]);
+          batches[tag] = gWork.getVectorizedRowBatchCtx().createVectorizedRowBatch();
+
+
         } else {
           ois.add(keyObjectInspector);
           ois.add(valueObjectInspector[tag]);

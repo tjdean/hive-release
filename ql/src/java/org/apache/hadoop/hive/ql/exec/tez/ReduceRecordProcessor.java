@@ -129,7 +129,6 @@ public class ReduceRecordProcessor  extends RecordProcessor{
         tagToReducerMap.put(mergeReduceWork.getTag(), mergeReduceWork);
       }
 
-      bigTablePosition = (byte) reduceWork.getTag();
       ((TezContext) MapredContext.get()).setDummyOpsMap(connectOps);
     }
 
@@ -230,9 +229,12 @@ public class ReduceRecordProcessor  extends RecordProcessor{
     KeyValuesReader reader = (KeyValuesReader) inputs.get(inputName).getReader();
 
     sources[tag] = new ReduceRecordSource();
-    sources[tag].init(jconf, redWork.getReducer(), redWork.getVectorMode(), keyTableDesc,
+    // Only the big table input source should be vectorized (if applicable)
+    // Note this behavior may have to change if we ever implement a vectorized merge join
+    boolean vectorizedRecordSource = (tag == bigTablePosition) && redWork.getVectorMode();
+    sources[tag].init(jconf, redWork.getReducer(), vectorizedRecordSource, keyTableDesc,
         valueTableDesc, reader, tag == bigTablePosition, (byte) tag,
-        redWork.getVectorScratchColumnTypeMap());
+        redWork.getVectorizedRowBatchCtx());
     ois[tag] = sources[tag].getObjectInspector();
   }
 

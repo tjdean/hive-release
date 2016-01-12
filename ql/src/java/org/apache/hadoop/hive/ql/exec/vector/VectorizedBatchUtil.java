@@ -50,9 +50,13 @@ import org.apache.hadoop.hive.serde2.objectinspector.StandardStructObjectInspect
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.DecimalTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.MapTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.StructTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
+import org.apache.hadoop.hive.serde2.typeinfo.UnionTypeInfo;
 import org.apache.hadoop.io.BooleanWritable;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.DataOutputBuffer;
@@ -108,123 +112,55 @@ public class VectorizedBatchUtil {
     batch.size = size;
   }
 
-  /**
-   * Walk through the object inspector and add column vectors
-   *
-   * @param oi
-   * @param cvList
-   *          ColumnVectors are populated in this list
-   */
-  private static void allocateColumnVector(StructObjectInspector oi,
-      List<ColumnVector> cvList) throws HiveException {
-    if (cvList == null) {
-      throw new HiveException("Null columnvector list");
+  public static ColumnVector createColumnVector(String typeName) {
+    typeName = typeName.toLowerCase();
+
+    // Allow undecorated CHAR and VARCHAR to support scratch column type names.
+    if (typeName.equals("char") || typeName.equals("varchar")) {
+      return new BytesColumnVector(VectorizedRowBatch.DEFAULT_SIZE);
     }
-    if (oi == null) {
-      return;
-    }
-    final List<? extends StructField> fields = oi.getAllStructFieldRefs();
-    for(StructField field : fields) {
-      ObjectInspector fieldObjectInspector = field.getFieldObjectInspector();
-      switch(fieldObjectInspector.getCategory()) {
-      case PRIMITIVE:
-        PrimitiveObjectInspector poi = (PrimitiveObjectInspector) fieldObjectInspector;
-        switch(poi.getPrimitiveCategory()) {
-        case BOOLEAN:
-        case BYTE:
-        case SHORT:
-        case INT:
-        case LONG:
-        case TIMESTAMP:
-        case DATE:
-        case INTERVAL_YEAR_MONTH:
-        case INTERVAL_DAY_TIME:
-          cvList.add(new LongColumnVector(VectorizedRowBatch.DEFAULT_SIZE));
-          break;
-        case FLOAT:
-        case DOUBLE:
-          cvList.add(new DoubleColumnVector(VectorizedRowBatch.DEFAULT_SIZE));
-          break;
-        case BINARY:
-        case STRING:
-        case CHAR:
-        case VARCHAR:
-          cvList.add(new BytesColumnVector(VectorizedRowBatch.DEFAULT_SIZE));
-          break;
-        case DECIMAL:
-          DecimalTypeInfo tInfo = (DecimalTypeInfo) poi.getTypeInfo();
-          cvList.add(new DecimalColumnVector(VectorizedRowBatch.DEFAULT_SIZE,
-              tInfo.precision(), tInfo.scale()));
-          break;
-        default:
-          throw new HiveException("Vectorizaton is not supported for datatype:"
-              + poi.getPrimitiveCategory());
+
+    TypeInfo typeInfo = (TypeInfo) TypeInfoUtils.getTypeInfoFromTypeString(typeName);
+    return createColumnVector(typeInfo);
+  }
+
+  public static ColumnVector createColumnVector(TypeInfo typeInfo) {
+    switch(typeInfo.getCategory()) {
+    case PRIMITIVE:
+      {
+        PrimitiveTypeInfo primitiveTypeInfo = (PrimitiveTypeInfo) typeInfo;
+        switch(primitiveTypeInfo.getPrimitiveCategory()) {
+          case BOOLEAN:
+          case BYTE:
+          case SHORT:
+          case INT:
+          case LONG:
+          case TIMESTAMP:
+          case DATE:
+          case INTERVAL_YEAR_MONTH:
+          case INTERVAL_DAY_TIME:
+            return new LongColumnVector(VectorizedRowBatch.DEFAULT_SIZE);
+          case FLOAT:
+          case DOUBLE:
+            return new DoubleColumnVector(VectorizedRowBatch.DEFAULT_SIZE);
+          case BINARY:
+          case STRING:
+          case CHAR:
+          case VARCHAR:
+            return new BytesColumnVector(VectorizedRowBatch.DEFAULT_SIZE);
+          case DECIMAL:
+            DecimalTypeInfo tInfo = (DecimalTypeInfo) primitiveTypeInfo;
+            return new DecimalColumnVector(VectorizedRowBatch.DEFAULT_SIZE,
+                tInfo.precision(), tInfo.scale());
+          default:
+            throw new RuntimeException("Vectorizaton is not supported for datatype:"
+                + primitiveTypeInfo.getPrimitiveCategory());
         }
-        break;
-      case STRUCT:
-        throw new HiveException("Struct not supported");
-      default:
-        throw new HiveException("Flattening is not supported for datatype:"
-            + fieldObjectInspector.getCategory());
       }
+    default:
+      throw new RuntimeException("Vectorization is not supported for datatype:"
+          + typeInfo.getCategory());
     }
-  }
-
-
-  /**
-   * Create VectorizedRowBatch from ObjectInspector
-   *
-   * @param oi
-   * @return
-   * @throws HiveException
-   */
-  public static VectorizedRowBatch constructVectorizedRowBatch(
-      StructObjectInspector oi) throws HiveException {
-    final List<ColumnVector> cvList = new LinkedList<ColumnVector>();
-    allocateColumnVector(oi, cvList);
-    final VectorizedRowBatch result = new VectorizedRowBatch(cvList.size());
-    int i = 0;
-    for(ColumnVector cv : cvList) {
-      result.cols[i++] = cv;
-    }
-    return result;
-  }
-
-  /**
-   * Create VectorizedRowBatch from key and value object inspectors
-   *
-   * @param keyInspector
-   * @param valueInspector
-   * @return VectorizedRowBatch
-   * @throws HiveException
-   */
-  public static VectorizedRowBatch constructVectorizedRowBatch(
-      StructObjectInspector keyInspector, StructObjectInspector valueInspector)
-          throws HiveException {
-    final List<ColumnVector> cvList = new LinkedList<ColumnVector>();
-    allocateColumnVector(keyInspector, cvList);
-    allocateColumnVector(valueInspector, cvList);
-    final VectorizedRowBatch result = new VectorizedRowBatch(cvList.size());
-    result.cols = cvList.toArray(result.cols);
-    return result;
-  }
-
-  /**
-   * Iterates through all columns in a given row and populates the batch
-   *
-   * @param row
-   * @param oi
-   * @param rowIndex
-   * @param batch
-   * @param buffer
-   * @throws HiveException
-   */
-  public static void addRowToBatch(Object row, StructObjectInspector oi,
-          int rowIndex,
-          VectorizedRowBatch batch,
-          DataOutputBuffer buffer
-          ) throws HiveException {
-    addRowToBatchFrom(row, oi, rowIndex, 0, batch, buffer);
   }
 
   /**
@@ -559,7 +495,7 @@ public class VectorizedBatchUtil {
     for(StructField field : fields) {
       TypeInfo typeInfo = TypeInfoUtils.getTypeInfoFromTypeString(
           field.getFieldObjectInspector().getTypeName());
-      ObjectInspector standardWritableObjectInspector = 
+      ObjectInspector standardWritableObjectInspector =
               TypeInfoUtils.getStandardWritableObjectInspectorFromTypeInfo(typeInfo);
       oids.add(standardWritableObjectInspector);
       columnNames.add(field.getFieldName());
@@ -567,31 +503,30 @@ public class VectorizedBatchUtil {
     return ObjectInspectorFactory.getStandardStructObjectInspector(columnNames,oids);
   }
 
-  public static PrimitiveTypeInfo[] primitiveTypeInfosFromStructObjectInspector(
+  public static String[] columnNamesFromStructObjectInspector(
       StructObjectInspector structObjectInspector) throws HiveException {
 
     List<? extends StructField> fields = structObjectInspector.getAllStructFieldRefs();
-    PrimitiveTypeInfo[] result = new PrimitiveTypeInfo[fields.size()];
+    String[] result = new String[fields.size()];
 
     int i = 0;
     for(StructField field : fields) {
-      TypeInfo typeInfo = TypeInfoUtils.getTypeInfoFromTypeString(
-          field.getFieldObjectInspector().getTypeName());
-      result[i++] =  (PrimitiveTypeInfo) typeInfo;
+      result[i++] =  field.getFieldName();
     }
     return result;
   }
 
-  public static PrimitiveTypeInfo[] primitiveTypeInfosFromTypeNames(
-      String[] typeNames) throws HiveException {
+  public static TypeInfo[] typeInfosFromTypeNames(String[] typeNames) throws HiveException {
+    ArrayList<TypeInfo> typeInfoList =
+        TypeInfoUtils.typeInfosFromTypeNames(Arrays.asList(typeNames));
+    return typeInfoList.toArray(new TypeInfo[0]);
+  }
 
-    PrimitiveTypeInfo[] result = new PrimitiveTypeInfo[typeNames.length];
-
-    for(int i = 0; i < typeNames.length; i++) {
-      TypeInfo typeInfo = TypeInfoUtils.getTypeInfoFromTypeString(typeNames[i]);
-      result[i] =  (PrimitiveTypeInfo) typeInfo;
-    }
-    return result;
+  public static TypeInfo[] typeInfosFromStructObjectInspector(
+      StructObjectInspector structObjectInspector) {
+    ArrayList<TypeInfo> typeInfoList =
+        TypeInfoUtils.typeInfosFromStructObjectInspector(structObjectInspector);
+    return typeInfoList.toArray(new TypeInfo[0]);
   }
 
   /**
@@ -645,12 +580,21 @@ public class VectorizedBatchUtil {
   public static void debugDisplayOneRow(VectorizedRowBatch batch, int index, String prefix) {
     StringBuffer sb = new StringBuffer();
     sb.append(prefix + " row " + index + " ");
-    for (int column = 0; column < batch.cols.length; column++) {
+    for (int p = 0; p < batch.projectionSize; p++) {
+      int column = batch.projectedColumns[p];
+      if (p == column) {
+        sb.append("(col " + p + ") ");
+      } else {
+        sb.append("(proj col " + p + " col " + column + ") ");
+      }
       ColumnVector colVector = batch.cols[column];
       if (colVector == null) {
-        sb.append("(null colVector " + column + ")");
+        sb.append("(null ColumnVector)");
       } else {
         boolean isRepeating = colVector.isRepeating;
+        if (isRepeating) {
+          sb.append("(repeating)");
+        }
         index = (isRepeating ? 0 : index);
         if (colVector.noNulls || !colVector.isNull[index]) {
           if (colVector instanceof LongColumnVector) {
