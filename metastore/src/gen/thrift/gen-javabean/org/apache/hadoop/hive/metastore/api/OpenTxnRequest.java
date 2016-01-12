@@ -37,6 +37,7 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
   private static final org.apache.thrift.protocol.TField NUM_TXNS_FIELD_DESC = new org.apache.thrift.protocol.TField("num_txns", org.apache.thrift.protocol.TType.I32, (short)1);
   private static final org.apache.thrift.protocol.TField USER_FIELD_DESC = new org.apache.thrift.protocol.TField("user", org.apache.thrift.protocol.TType.STRING, (short)2);
   private static final org.apache.thrift.protocol.TField HOSTNAME_FIELD_DESC = new org.apache.thrift.protocol.TField("hostname", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField AGENT_INFO_FIELD_DESC = new org.apache.thrift.protocol.TField("agentInfo", org.apache.thrift.protocol.TType.STRING, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -47,12 +48,14 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
   private int num_txns; // required
   private String user; // required
   private String hostname; // required
+  private String agentInfo; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     NUM_TXNS((short)1, "num_txns"),
     USER((short)2, "user"),
-    HOSTNAME((short)3, "hostname");
+    HOSTNAME((short)3, "hostname"),
+    AGENT_INFO((short)4, "agentInfo");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -73,6 +76,8 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
           return USER;
         case 3: // HOSTNAME
           return HOSTNAME;
+        case 4: // AGENT_INFO
+          return AGENT_INFO;
         default:
           return null;
       }
@@ -115,6 +120,7 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
   // isset id assignments
   private static final int __NUM_TXNS_ISSET_ID = 0;
   private byte __isset_bitfield = 0;
+  private static final _Fields optionals[] = {_Fields.AGENT_INFO};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -124,11 +130,15 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.HOSTNAME, new org.apache.thrift.meta_data.FieldMetaData("hostname", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.AGENT_INFO, new org.apache.thrift.meta_data.FieldMetaData("agentInfo", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(OpenTxnRequest.class, metaDataMap);
   }
 
   public OpenTxnRequest() {
+    this.agentInfo = "Unknown";
+
   }
 
   public OpenTxnRequest(
@@ -155,6 +165,9 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
     if (other.isSetHostname()) {
       this.hostname = other.hostname;
     }
+    if (other.isSetAgentInfo()) {
+      this.agentInfo = other.agentInfo;
+    }
   }
 
   public OpenTxnRequest deepCopy() {
@@ -167,6 +180,8 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
     this.num_txns = 0;
     this.user = null;
     this.hostname = null;
+    this.agentInfo = "Unknown";
+
   }
 
   public int getNum_txns() {
@@ -237,6 +252,29 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
     }
   }
 
+  public String getAgentInfo() {
+    return this.agentInfo;
+  }
+
+  public void setAgentInfo(String agentInfo) {
+    this.agentInfo = agentInfo;
+  }
+
+  public void unsetAgentInfo() {
+    this.agentInfo = null;
+  }
+
+  /** Returns true if field agentInfo is set (has been assigned a value) and false otherwise */
+  public boolean isSetAgentInfo() {
+    return this.agentInfo != null;
+  }
+
+  public void setAgentInfoIsSet(boolean value) {
+    if (!value) {
+      this.agentInfo = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case NUM_TXNS:
@@ -263,6 +301,14 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
       }
       break;
 
+    case AGENT_INFO:
+      if (value == null) {
+        unsetAgentInfo();
+      } else {
+        setAgentInfo((String)value);
+      }
+      break;
+
     }
   }
 
@@ -276,6 +322,9 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
 
     case HOSTNAME:
       return getHostname();
+
+    case AGENT_INFO:
+      return getAgentInfo();
 
     }
     throw new IllegalStateException();
@@ -294,6 +343,8 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
       return isSetUser();
     case HOSTNAME:
       return isSetHostname();
+    case AGENT_INFO:
+      return isSetAgentInfo();
     }
     throw new IllegalStateException();
   }
@@ -335,6 +386,15 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
       if (!(this_present_hostname && that_present_hostname))
         return false;
       if (!this.hostname.equals(that.hostname))
+        return false;
+    }
+
+    boolean this_present_agentInfo = true && this.isSetAgentInfo();
+    boolean that_present_agentInfo = true && that.isSetAgentInfo();
+    if (this_present_agentInfo || that_present_agentInfo) {
+      if (!(this_present_agentInfo && that_present_agentInfo))
+        return false;
+      if (!this.agentInfo.equals(that.agentInfo))
         return false;
     }
 
@@ -401,6 +461,16 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetAgentInfo()).compareTo(other.isSetAgentInfo());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetAgentInfo()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.agentInfo, other.agentInfo);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -440,6 +510,16 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
       sb.append(this.hostname);
     }
     first = false;
+    if (isSetAgentInfo()) {
+      if (!first) sb.append(", ");
+      sb.append("agentInfo:");
+      if (this.agentInfo == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.agentInfo);
+      }
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -521,6 +601,14 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 4: // AGENT_INFO
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.agentInfo = iprot.readString();
+              struct.setAgentInfoIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -547,6 +635,13 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
         oprot.writeString(struct.hostname);
         oprot.writeFieldEnd();
       }
+      if (struct.agentInfo != null) {
+        if (struct.isSetAgentInfo()) {
+          oprot.writeFieldBegin(AGENT_INFO_FIELD_DESC);
+          oprot.writeString(struct.agentInfo);
+          oprot.writeFieldEnd();
+        }
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -567,6 +662,14 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
       oprot.writeI32(struct.num_txns);
       oprot.writeString(struct.user);
       oprot.writeString(struct.hostname);
+      BitSet optionals = new BitSet();
+      if (struct.isSetAgentInfo()) {
+        optionals.set(0);
+      }
+      oprot.writeBitSet(optionals, 1);
+      if (struct.isSetAgentInfo()) {
+        oprot.writeString(struct.agentInfo);
+      }
     }
 
     @Override
@@ -578,6 +681,11 @@ public class OpenTxnRequest implements org.apache.thrift.TBase<OpenTxnRequest, O
       struct.setUserIsSet(true);
       struct.hostname = iprot.readString();
       struct.setHostnameIsSet(true);
+      BitSet incoming = iprot.readBitSet(1);
+      if (incoming.get(0)) {
+        struct.agentInfo = iprot.readString();
+        struct.setAgentInfoIsSet(true);
+      }
     }
   }
 

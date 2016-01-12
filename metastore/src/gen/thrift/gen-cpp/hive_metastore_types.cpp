@@ -7336,6 +7336,21 @@ void swap(Function &a, Function &b) {
 const char* TxnInfo::ascii_fingerprint = "6C5C0773A901CCA3BE9D085B3B47A767";
 const uint8_t TxnInfo::binary_fingerprint[16] = {0x6C,0x5C,0x07,0x73,0xA9,0x01,0xCC,0xA3,0xBE,0x9D,0x08,0x5B,0x3B,0x47,0xA7,0x67};
 
+void TxnInfo::__set_agentInfo(const std::string& val) {
+  this->agentInfo = val;
+__isset.agentInfo = true;
+}
+
+void TxnInfo::__set_heartbeatCount(const int32_t val) {
+  this->heartbeatCount = val;
+__isset.heartbeatCount = true;
+}
+
+void TxnInfo::__set_metaInfo(const std::string& val) {
+  this->metaInfo = val;
+__isset.metaInfo = true;
+}
+
 uint32_t TxnInfo::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
@@ -7394,6 +7409,30 @@ uint32_t TxnInfo::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 5:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->agentInfo);
+          this->__isset.agentInfo = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 6:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->heartbeatCount);
+          this->__isset.heartbeatCount = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 7:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->metaInfo);
+          this->__isset.metaInfo = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -7434,6 +7473,21 @@ uint32_t TxnInfo::write(::apache::thrift::protocol::TProtocol* oprot) const {
   xfer += oprot->writeString(this->hostname);
   xfer += oprot->writeFieldEnd();
 
+  if (this->__isset.agentInfo) {
+    xfer += oprot->writeFieldBegin("agentInfo", ::apache::thrift::protocol::T_STRING, 5);
+    xfer += oprot->writeString(this->agentInfo);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.heartbeatCount) {
+    xfer += oprot->writeFieldBegin("heartbeatCount", ::apache::thrift::protocol::T_I32, 6);
+    xfer += oprot->writeI32(this->heartbeatCount);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.metaInfo) {
+    xfer += oprot->writeFieldBegin("metaInfo", ::apache::thrift::protocol::T_STRING, 7);
+    xfer += oprot->writeString(this->metaInfo);
+    xfer += oprot->writeFieldEnd();
+  }
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -7445,6 +7499,10 @@ void swap(TxnInfo &a, TxnInfo &b) {
   swap(a.state, b.state);
   swap(a.user, b.user);
   swap(a.hostname, b.hostname);
+  swap(a.agentInfo, b.agentInfo);
+  swap(a.heartbeatCount, b.heartbeatCount);
+  swap(a.metaInfo, b.metaInfo);
+  swap(a.__isset, b.__isset);
 }
 
 const char* GetOpenTxnsInfoResponse::ascii_fingerprint = "CCF769BBD33005B61F2079A6665E3B9C";
@@ -7651,6 +7709,11 @@ void swap(GetOpenTxnsResponse &a, GetOpenTxnsResponse &b) {
 const char* OpenTxnRequest::ascii_fingerprint = "3368C2F81F2FEF71F11EDACDB2A3ECEF";
 const uint8_t OpenTxnRequest::binary_fingerprint[16] = {0x33,0x68,0xC2,0xF8,0x1F,0x2F,0xEF,0x71,0xF1,0x1E,0xDA,0xCD,0xB2,0xA3,0xEC,0xEF};
 
+void OpenTxnRequest::__set_agentInfo(const std::string& val) {
+  this->agentInfo = val;
+__isset.agentInfo = true;
+}
+
 uint32_t OpenTxnRequest::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
@@ -7698,6 +7761,14 @@ uint32_t OpenTxnRequest::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->agentInfo);
+          this->__isset.agentInfo = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -7732,6 +7803,11 @@ uint32_t OpenTxnRequest::write(::apache::thrift::protocol::TProtocol* oprot) con
   xfer += oprot->writeString(this->hostname);
   xfer += oprot->writeFieldEnd();
 
+  if (this->__isset.agentInfo) {
+    xfer += oprot->writeFieldBegin("agentInfo", ::apache::thrift::protocol::T_STRING, 4);
+    xfer += oprot->writeString(this->agentInfo);
+    xfer += oprot->writeFieldEnd();
+  }
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -8088,6 +8164,11 @@ void swap(LockComponent &a, LockComponent &b) {
 const char* LockRequest::ascii_fingerprint = "46BC5ED7196BC16CB216AD5CC67C6930";
 const uint8_t LockRequest::binary_fingerprint[16] = {0x46,0xBC,0x5E,0xD7,0x19,0x6B,0xC1,0x6C,0xB2,0x16,0xAD,0x5C,0xC6,0x7C,0x69,0x30};
 
+void LockRequest::__set_agentInfo(const std::string& val) {
+  this->agentInfo = val;
+__isset.agentInfo = true;
+}
+
 uint32_t LockRequest::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
@@ -8155,6 +8236,14 @@ uint32_t LockRequest::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 5:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->agentInfo);
+          this->__isset.agentInfo = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -8202,6 +8291,11 @@ uint32_t LockRequest::write(::apache::thrift::protocol::TProtocol* oprot) const 
   xfer += oprot->writeString(this->hostname);
   xfer += oprot->writeFieldEnd();
 
+  if (this->__isset.agentInfo) {
+    xfer += oprot->writeFieldBegin("agentInfo", ::apache::thrift::protocol::T_STRING, 5);
+    xfer += oprot->writeString(this->agentInfo);
+    xfer += oprot->writeFieldEnd();
+  }
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -8213,6 +8307,7 @@ void swap(LockRequest &a, LockRequest &b) {
   swap(a.txnid, b.txnid);
   swap(a.user, b.user);
   swap(a.hostname, b.hostname);
+  swap(a.agentInfo, b.agentInfo);
   swap(a.__isset, b.__isset);
 }
 
@@ -8301,6 +8396,16 @@ void swap(LockResponse &a, LockResponse &b) {
 const char* CheckLockRequest::ascii_fingerprint = "56A59CE7FFAF82BCA8A19FAACDE4FB75";
 const uint8_t CheckLockRequest::binary_fingerprint[16] = {0x56,0xA5,0x9C,0xE7,0xFF,0xAF,0x82,0xBC,0xA8,0xA1,0x9F,0xAA,0xCD,0xE4,0xFB,0x75};
 
+void CheckLockRequest::__set_txnid(const int64_t val) {
+  this->txnid = val;
+__isset.txnid = true;
+}
+
+void CheckLockRequest::__set_elapsed_ms(const int64_t val) {
+  this->elapsed_ms = val;
+__isset.elapsed_ms = true;
+}
+
 uint32_t CheckLockRequest::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
@@ -8330,6 +8435,22 @@ uint32_t CheckLockRequest::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->txnid);
+          this->__isset.txnid = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->elapsed_ms);
+          this->__isset.elapsed_ms = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -8352,6 +8473,16 @@ uint32_t CheckLockRequest::write(::apache::thrift::protocol::TProtocol* oprot) c
   xfer += oprot->writeI64(this->lockid);
   xfer += oprot->writeFieldEnd();
 
+  if (this->__isset.txnid) {
+    xfer += oprot->writeFieldBegin("txnid", ::apache::thrift::protocol::T_I64, 2);
+    xfer += oprot->writeI64(this->txnid);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.elapsed_ms) {
+    xfer += oprot->writeFieldBegin("elapsed_ms", ::apache::thrift::protocol::T_I64, 3);
+    xfer += oprot->writeI64(this->elapsed_ms);
+    xfer += oprot->writeFieldEnd();
+  }
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -8429,6 +8560,26 @@ void swap(UnlockRequest &a, UnlockRequest &b) {
 const char* ShowLocksRequest::ascii_fingerprint = "99914B932BD37A50B983C5E7C90AE93B";
 const uint8_t ShowLocksRequest::binary_fingerprint[16] = {0x99,0x91,0x4B,0x93,0x2B,0xD3,0x7A,0x50,0xB9,0x83,0xC5,0xE7,0xC9,0x0A,0xE9,0x3B};
 
+void ShowLocksRequest::__set_dbname(const std::string& val) {
+  this->dbname = val;
+__isset.dbname = true;
+}
+
+void ShowLocksRequest::__set_tablename(const std::string& val) {
+  this->tablename = val;
+__isset.tablename = true;
+}
+
+void ShowLocksRequest::__set_partname(const std::string& val) {
+  this->partname = val;
+__isset.partname = true;
+}
+
+void ShowLocksRequest::__set_isExtended(const bool val) {
+  this->isExtended = val;
+__isset.isExtended = true;
+}
+
 uint32_t ShowLocksRequest::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
@@ -8447,7 +8598,44 @@ uint32_t ShowLocksRequest::read(::apache::thrift::protocol::TProtocol* iprot) {
     if (ftype == ::apache::thrift::protocol::T_STOP) {
       break;
     }
-    xfer += iprot->skip(ftype);
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->dbname);
+          this->__isset.dbname = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->tablename);
+          this->__isset.tablename = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->partname);
+          this->__isset.partname = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->isExtended);
+          this->__isset.isExtended = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
     xfer += iprot->readFieldEnd();
   }
 
@@ -8460,6 +8648,26 @@ uint32_t ShowLocksRequest::write(::apache::thrift::protocol::TProtocol* oprot) c
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ShowLocksRequest");
 
+  if (this->__isset.dbname) {
+    xfer += oprot->writeFieldBegin("dbname", ::apache::thrift::protocol::T_STRING, 1);
+    xfer += oprot->writeString(this->dbname);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.tablename) {
+    xfer += oprot->writeFieldBegin("tablename", ::apache::thrift::protocol::T_STRING, 2);
+    xfer += oprot->writeString(this->tablename);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.partname) {
+    xfer += oprot->writeFieldBegin("partname", ::apache::thrift::protocol::T_STRING, 3);
+    xfer += oprot->writeString(this->partname);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.isExtended) {
+    xfer += oprot->writeFieldBegin("isExtended", ::apache::thrift::protocol::T_BOOL, 4);
+    xfer += oprot->writeBool(this->isExtended);
+    xfer += oprot->writeFieldEnd();
+  }
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -8473,6 +8681,31 @@ void swap(ShowLocksRequest &a, ShowLocksRequest &b) {
 
 const char* ShowLocksResponseElement::ascii_fingerprint = "5AD11F0E0EF1EE0A7C08B00FEFCFF24F";
 const uint8_t ShowLocksResponseElement::binary_fingerprint[16] = {0x5A,0xD1,0x1F,0x0E,0x0E,0xF1,0xEE,0x0A,0x7C,0x08,0xB0,0x0F,0xEF,0xCF,0xF2,0x4F};
+
+void ShowLocksResponseElement::__set_heartbeatCount(const int32_t val) {
+  this->heartbeatCount = val;
+__isset.heartbeatCount = true;
+}
+
+void ShowLocksResponseElement::__set_agentInfo(const std::string& val) {
+  this->agentInfo = val;
+__isset.agentInfo = true;
+}
+
+void ShowLocksResponseElement::__set_blockedByExtId(const int64_t val) {
+  this->blockedByExtId = val;
+__isset.blockedByExtId = true;
+}
+
+void ShowLocksResponseElement::__set_blockedByIntId(const int64_t val) {
+  this->blockedByIntId = val;
+__isset.blockedByIntId = true;
+}
+
+void ShowLocksResponseElement::__set_lockIdInternal(const int64_t val) {
+  this->lockIdInternal = val;
+__isset.lockIdInternal = true;
+}
 
 uint32_t ShowLocksResponseElement::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -8593,6 +8826,46 @@ uint32_t ShowLocksResponseElement::read(::apache::thrift::protocol::TProtocol* i
           xfer += iprot->skip(ftype);
         }
         break;
+      case 12:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->heartbeatCount);
+          this->__isset.heartbeatCount = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 13:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->agentInfo);
+          this->__isset.agentInfo = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 14:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->blockedByExtId);
+          this->__isset.blockedByExtId = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 15:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->blockedByIntId);
+          this->__isset.blockedByIntId = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 16:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->lockIdInternal);
+          this->__isset.lockIdInternal = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -8671,6 +8944,31 @@ uint32_t ShowLocksResponseElement::write(::apache::thrift::protocol::TProtocol* 
   xfer += oprot->writeString(this->hostname);
   xfer += oprot->writeFieldEnd();
 
+  if (this->__isset.heartbeatCount) {
+    xfer += oprot->writeFieldBegin("heartbeatCount", ::apache::thrift::protocol::T_I32, 12);
+    xfer += oprot->writeI32(this->heartbeatCount);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.agentInfo) {
+    xfer += oprot->writeFieldBegin("agentInfo", ::apache::thrift::protocol::T_STRING, 13);
+    xfer += oprot->writeString(this->agentInfo);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.blockedByExtId) {
+    xfer += oprot->writeFieldBegin("blockedByExtId", ::apache::thrift::protocol::T_I64, 14);
+    xfer += oprot->writeI64(this->blockedByExtId);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.blockedByIntId) {
+    xfer += oprot->writeFieldBegin("blockedByIntId", ::apache::thrift::protocol::T_I64, 15);
+    xfer += oprot->writeI64(this->blockedByIntId);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.lockIdInternal) {
+    xfer += oprot->writeFieldBegin("lockIdInternal", ::apache::thrift::protocol::T_I64, 16);
+    xfer += oprot->writeI64(this->lockIdInternal);
+    xfer += oprot->writeFieldEnd();
+  }
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -8689,6 +8987,11 @@ void swap(ShowLocksResponseElement &a, ShowLocksResponseElement &b) {
   swap(a.acquiredat, b.acquiredat);
   swap(a.user, b.user);
   swap(a.hostname, b.hostname);
+  swap(a.heartbeatCount, b.heartbeatCount);
+  swap(a.agentInfo, b.agentInfo);
+  swap(a.blockedByExtId, b.blockedByExtId);
+  swap(a.blockedByIntId, b.blockedByIntId);
+  swap(a.lockIdInternal, b.lockIdInternal);
   swap(a.__isset, b.__isset);
 }
 
@@ -9228,6 +9531,26 @@ void swap(ShowCompactRequest &a, ShowCompactRequest &b) {
 const char* ShowCompactResponseElement::ascii_fingerprint = "2F338C265DC4FD82DD13F4966FE43F13";
 const uint8_t ShowCompactResponseElement::binary_fingerprint[16] = {0x2F,0x33,0x8C,0x26,0x5D,0xC4,0xFD,0x82,0xDD,0x13,0xF4,0x96,0x6F,0xE4,0x3F,0x13};
 
+void ShowCompactResponseElement::__set_hightestTxnId(const int64_t val) {
+  this->hightestTxnId = val;
+__isset.hightestTxnId = true;
+}
+
+void ShowCompactResponseElement::__set_metaInfo(const std::string& val) {
+  this->metaInfo = val;
+__isset.metaInfo = true;
+}
+
+void ShowCompactResponseElement::__set_endTime(const int64_t val) {
+  this->endTime = val;
+__isset.endTime = true;
+}
+
+void ShowCompactResponseElement::__set_hadoopJobId(const std::string& val) {
+  this->hadoopJobId = val;
+__isset.hadoopJobId = true;
+}
+
 uint32_t ShowCompactResponseElement::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   uint32_t xfer = 0;
@@ -9318,6 +9641,38 @@ uint32_t ShowCompactResponseElement::read(::apache::thrift::protocol::TProtocol*
           xfer += iprot->skip(ftype);
         }
         break;
+      case 9:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->hightestTxnId);
+          this->__isset.hightestTxnId = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 10:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->metaInfo);
+          this->__isset.metaInfo = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 11:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->endTime);
+          this->__isset.endTime = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 12:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->hadoopJobId);
+          this->__isset.hadoopJobId = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -9378,6 +9733,26 @@ uint32_t ShowCompactResponseElement::write(::apache::thrift::protocol::TProtocol
     xfer += oprot->writeString(this->runAs);
     xfer += oprot->writeFieldEnd();
   }
+  if (this->__isset.hightestTxnId) {
+    xfer += oprot->writeFieldBegin("hightestTxnId", ::apache::thrift::protocol::T_I64, 9);
+    xfer += oprot->writeI64(this->hightestTxnId);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.metaInfo) {
+    xfer += oprot->writeFieldBegin("metaInfo", ::apache::thrift::protocol::T_STRING, 10);
+    xfer += oprot->writeString(this->metaInfo);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.endTime) {
+    xfer += oprot->writeFieldBegin("endTime", ::apache::thrift::protocol::T_I64, 11);
+    xfer += oprot->writeI64(this->endTime);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.hadoopJobId) {
+    xfer += oprot->writeFieldBegin("hadoopJobId", ::apache::thrift::protocol::T_STRING, 12);
+    xfer += oprot->writeString(this->hadoopJobId);
+    xfer += oprot->writeFieldEnd();
+  }
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -9393,6 +9768,10 @@ void swap(ShowCompactResponseElement &a, ShowCompactResponseElement &b) {
   swap(a.workerid, b.workerid);
   swap(a.start, b.start);
   swap(a.runAs, b.runAs);
+  swap(a.hightestTxnId, b.hightestTxnId);
+  swap(a.metaInfo, b.metaInfo);
+  swap(a.endTime, b.endTime);
+  swap(a.hadoopJobId, b.hadoopJobId);
   swap(a.__isset, b.__isset);
 }
 

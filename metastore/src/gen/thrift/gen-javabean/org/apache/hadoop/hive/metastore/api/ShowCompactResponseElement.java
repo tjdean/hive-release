@@ -42,6 +42,10 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
   private static final org.apache.thrift.protocol.TField WORKERID_FIELD_DESC = new org.apache.thrift.protocol.TField("workerid", org.apache.thrift.protocol.TType.STRING, (short)6);
   private static final org.apache.thrift.protocol.TField START_FIELD_DESC = new org.apache.thrift.protocol.TField("start", org.apache.thrift.protocol.TType.I64, (short)7);
   private static final org.apache.thrift.protocol.TField RUN_AS_FIELD_DESC = new org.apache.thrift.protocol.TField("runAs", org.apache.thrift.protocol.TType.STRING, (short)8);
+  private static final org.apache.thrift.protocol.TField HIGHTEST_TXN_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("hightestTxnId", org.apache.thrift.protocol.TType.I64, (short)9);
+  private static final org.apache.thrift.protocol.TField META_INFO_FIELD_DESC = new org.apache.thrift.protocol.TField("metaInfo", org.apache.thrift.protocol.TType.STRING, (short)10);
+  private static final org.apache.thrift.protocol.TField END_TIME_FIELD_DESC = new org.apache.thrift.protocol.TField("endTime", org.apache.thrift.protocol.TType.I64, (short)11);
+  private static final org.apache.thrift.protocol.TField HADOOP_JOB_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("hadoopJobId", org.apache.thrift.protocol.TType.STRING, (short)12);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -57,6 +61,10 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
   private String workerid; // optional
   private long start; // optional
   private String runAs; // optional
+  private long hightestTxnId; // optional
+  private String metaInfo; // optional
+  private long endTime; // optional
+  private String hadoopJobId; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -71,7 +79,11 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
     STATE((short)5, "state"),
     WORKERID((short)6, "workerid"),
     START((short)7, "start"),
-    RUN_AS((short)8, "runAs");
+    RUN_AS((short)8, "runAs"),
+    HIGHTEST_TXN_ID((short)9, "hightestTxnId"),
+    META_INFO((short)10, "metaInfo"),
+    END_TIME((short)11, "endTime"),
+    HADOOP_JOB_ID((short)12, "hadoopJobId");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -102,6 +114,14 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
           return START;
         case 8: // RUN_AS
           return RUN_AS;
+        case 9: // HIGHTEST_TXN_ID
+          return HIGHTEST_TXN_ID;
+        case 10: // META_INFO
+          return META_INFO;
+        case 11: // END_TIME
+          return END_TIME;
+        case 12: // HADOOP_JOB_ID
+          return HADOOP_JOB_ID;
         default:
           return null;
       }
@@ -164,11 +184,21 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     tmpMap.put(_Fields.RUN_AS, new org.apache.thrift.meta_data.FieldMetaData("runAs", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.HIGHTEST_TXN_ID, new org.apache.thrift.meta_data.FieldMetaData("hightestTxnId", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.META_INFO, new org.apache.thrift.meta_data.FieldMetaData("metaInfo", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.END_TIME, new org.apache.thrift.meta_data.FieldMetaData("endTime", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.HADOOP_JOB_ID, new org.apache.thrift.meta_data.FieldMetaData("hadoopJobId", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ShowCompactResponseElement.class, metaDataMap);
   }
 
   public ShowCompactResponseElement() {
+    this.hadoopJobId = "None";
+
   }
 
   public ShowCompactResponseElement(
@@ -211,6 +241,14 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
     if (other.isSetRunAs()) {
       this.runAs = other.runAs;
     }
+    this.hightestTxnId = other.hightestTxnId;
+    if (other.isSetMetaInfo()) {
+      this.metaInfo = other.metaInfo;
+    }
+    this.endTime = other.endTime;
+    if (other.isSetHadoopJobId()) {
+      this.hadoopJobId = other.hadoopJobId;
+    }
   }
 
   public ShowCompactResponseElement deepCopy() {
@@ -228,6 +266,13 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
     setStartIsSet(false);
     this.start = 0;
     this.runAs = null;
+    setHightestTxnIdIsSet(false);
+    this.hightestTxnId = 0;
+    this.metaInfo = null;
+    setEndTimeIsSet(false);
+    this.endTime = 0;
+    this.hadoopJobId = "None";
+
   }
 
   public String getDbname() {
@@ -421,6 +466,96 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
     }
   }
 
+  public long getHightestTxnId() {
+    return this.hightestTxnId;
+  }
+
+  public void setHightestTxnId(long hightestTxnId) {
+    this.hightestTxnId = hightestTxnId;
+    setHightestTxnIdIsSet(true);
+  }
+
+  public void unsetHightestTxnId() {
+    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __HIGHTESTTXNID_ISSET_ID);
+  }
+
+  /** Returns true if field hightestTxnId is set (has been assigned a value) and false otherwise */
+  public boolean isSetHightestTxnId() {
+    return EncodingUtils.testBit(__isset_bitfield, __HIGHTESTTXNID_ISSET_ID);
+  }
+
+  public void setHightestTxnIdIsSet(boolean value) {
+    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __HIGHTESTTXNID_ISSET_ID, value);
+  }
+
+  public String getMetaInfo() {
+    return this.metaInfo;
+  }
+
+  public void setMetaInfo(String metaInfo) {
+    this.metaInfo = metaInfo;
+  }
+
+  public void unsetMetaInfo() {
+    this.metaInfo = null;
+  }
+
+  /** Returns true if field metaInfo is set (has been assigned a value) and false otherwise */
+  public boolean isSetMetaInfo() {
+    return this.metaInfo != null;
+  }
+
+  public void setMetaInfoIsSet(boolean value) {
+    if (!value) {
+      this.metaInfo = null;
+    }
+  }
+
+  public long getEndTime() {
+    return this.endTime;
+  }
+
+  public void setEndTime(long endTime) {
+    this.endTime = endTime;
+    setEndTimeIsSet(true);
+  }
+
+  public void unsetEndTime() {
+    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __ENDTIME_ISSET_ID);
+  }
+
+  /** Returns true if field endTime is set (has been assigned a value) and false otherwise */
+  public boolean isSetEndTime() {
+    return EncodingUtils.testBit(__isset_bitfield, __ENDTIME_ISSET_ID);
+  }
+
+  public void setEndTimeIsSet(boolean value) {
+    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __ENDTIME_ISSET_ID, value);
+  }
+
+  public String getHadoopJobId() {
+    return this.hadoopJobId;
+  }
+
+  public void setHadoopJobId(String hadoopJobId) {
+    this.hadoopJobId = hadoopJobId;
+  }
+
+  public void unsetHadoopJobId() {
+    this.hadoopJobId = null;
+  }
+
+  /** Returns true if field hadoopJobId is set (has been assigned a value) and false otherwise */
+  public boolean isSetHadoopJobId() {
+    return this.hadoopJobId != null;
+  }
+
+  public void setHadoopJobIdIsSet(boolean value) {
+    if (!value) {
+      this.hadoopJobId = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case DBNAME:
@@ -487,6 +622,38 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
       }
       break;
 
+    case HIGHTEST_TXN_ID:
+      if (value == null) {
+        unsetHightestTxnId();
+      } else {
+        setHightestTxnId((Long)value);
+      }
+      break;
+
+    case META_INFO:
+      if (value == null) {
+        unsetMetaInfo();
+      } else {
+        setMetaInfo((String)value);
+      }
+      break;
+
+    case END_TIME:
+      if (value == null) {
+        unsetEndTime();
+      } else {
+        setEndTime((Long)value);
+      }
+      break;
+
+    case HADOOP_JOB_ID:
+      if (value == null) {
+        unsetHadoopJobId();
+      } else {
+        setHadoopJobId((String)value);
+      }
+      break;
+
     }
   }
 
@@ -516,6 +683,18 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
     case RUN_AS:
       return getRunAs();
 
+    case HIGHTEST_TXN_ID:
+      return getHightestTxnId();
+
+    case META_INFO:
+      return getMetaInfo();
+
+    case END_TIME:
+      return getEndTime();
+
+    case HADOOP_JOB_ID:
+      return getHadoopJobId();
+
     }
     throw new IllegalStateException();
   }
@@ -543,6 +722,14 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
       return isSetStart();
     case RUN_AS:
       return isSetRunAs();
+    case HIGHTEST_TXN_ID:
+      return isSetHightestTxnId();
+    case META_INFO:
+      return isSetMetaInfo();
+    case END_TIME:
+      return isSetEndTime();
+    case HADOOP_JOB_ID:
+      return isSetHadoopJobId();
     }
     throw new IllegalStateException();
   }
@@ -629,6 +816,42 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
       if (!(this_present_runAs && that_present_runAs))
         return false;
       if (!this.runAs.equals(that.runAs))
+        return false;
+    }
+
+    boolean this_present_hightestTxnId = true && this.isSetHightestTxnId();
+    boolean that_present_hightestTxnId = true && that.isSetHightestTxnId();
+    if (this_present_hightestTxnId || that_present_hightestTxnId) {
+      if (!(this_present_hightestTxnId && that_present_hightestTxnId))
+        return false;
+      if (this.hightestTxnId != that.hightestTxnId)
+        return false;
+    }
+
+    boolean this_present_metaInfo = true && this.isSetMetaInfo();
+    boolean that_present_metaInfo = true && that.isSetMetaInfo();
+    if (this_present_metaInfo || that_present_metaInfo) {
+      if (!(this_present_metaInfo && that_present_metaInfo))
+        return false;
+      if (!this.metaInfo.equals(that.metaInfo))
+        return false;
+    }
+
+    boolean this_present_endTime = true && this.isSetEndTime();
+    boolean that_present_endTime = true && that.isSetEndTime();
+    if (this_present_endTime || that_present_endTime) {
+      if (!(this_present_endTime && that_present_endTime))
+        return false;
+      if (this.endTime != that.endTime)
+        return false;
+    }
+
+    boolean this_present_hadoopJobId = true && this.isSetHadoopJobId();
+    boolean that_present_hadoopJobId = true && that.isSetHadoopJobId();
+    if (this_present_hadoopJobId || that_present_hadoopJobId) {
+      if (!(this_present_hadoopJobId && that_present_hadoopJobId))
+        return false;
+      if (!this.hadoopJobId.equals(that.hadoopJobId))
         return false;
     }
 
@@ -770,6 +993,46 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetHightestTxnId()).compareTo(other.isSetHightestTxnId());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetHightestTxnId()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.hightestTxnId, other.hightestTxnId);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetMetaInfo()).compareTo(other.isSetMetaInfo());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetMetaInfo()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.metaInfo, other.metaInfo);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetEndTime()).compareTo(other.isSetEndTime());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetEndTime()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.endTime, other.endTime);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetHadoopJobId()).compareTo(other.isSetHadoopJobId());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetHadoopJobId()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.hadoopJobId, other.hadoopJobId);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -854,6 +1117,38 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
         sb.append("null");
       } else {
         sb.append(this.runAs);
+      }
+      first = false;
+    }
+    if (isSetHightestTxnId()) {
+      if (!first) sb.append(", ");
+      sb.append("hightestTxnId:");
+      sb.append(this.hightestTxnId);
+      first = false;
+    }
+    if (isSetMetaInfo()) {
+      if (!first) sb.append(", ");
+      sb.append("metaInfo:");
+      if (this.metaInfo == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.metaInfo);
+      }
+      first = false;
+    }
+    if (isSetEndTime()) {
+      if (!first) sb.append(", ");
+      sb.append("endTime:");
+      sb.append(this.endTime);
+      first = false;
+    }
+    if (isSetHadoopJobId()) {
+      if (!first) sb.append(", ");
+      sb.append("hadoopJobId:");
+      if (this.hadoopJobId == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.hadoopJobId);
       }
       first = false;
     }
@@ -982,6 +1277,38 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 9: // HIGHTEST_TXN_ID
+            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+              struct.hightestTxnId = iprot.readI64();
+              struct.setHightestTxnIdIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 10: // META_INFO
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.metaInfo = iprot.readString();
+              struct.setMetaInfoIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 11: // END_TIME
+            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+              struct.endTime = iprot.readI64();
+              struct.setEndTimeIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 12: // HADOOP_JOB_ID
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.hadoopJobId = iprot.readString();
+              struct.setHadoopJobIdIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -1041,6 +1368,30 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
           oprot.writeFieldEnd();
         }
       }
+      if (struct.isSetHightestTxnId()) {
+        oprot.writeFieldBegin(HIGHTEST_TXN_ID_FIELD_DESC);
+        oprot.writeI64(struct.hightestTxnId);
+        oprot.writeFieldEnd();
+      }
+      if (struct.metaInfo != null) {
+        if (struct.isSetMetaInfo()) {
+          oprot.writeFieldBegin(META_INFO_FIELD_DESC);
+          oprot.writeString(struct.metaInfo);
+          oprot.writeFieldEnd();
+        }
+      }
+      if (struct.isSetEndTime()) {
+        oprot.writeFieldBegin(END_TIME_FIELD_DESC);
+        oprot.writeI64(struct.endTime);
+        oprot.writeFieldEnd();
+      }
+      if (struct.hadoopJobId != null) {
+        if (struct.isSetHadoopJobId()) {
+          oprot.writeFieldBegin(HADOOP_JOB_ID_FIELD_DESC);
+          oprot.writeString(struct.hadoopJobId);
+          oprot.writeFieldEnd();
+        }
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -1075,7 +1426,19 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
       if (struct.isSetRunAs()) {
         optionals.set(3);
       }
-      oprot.writeBitSet(optionals, 4);
+      if (struct.isSetHightestTxnId()) {
+        optionals.set(4);
+      }
+      if (struct.isSetMetaInfo()) {
+        optionals.set(5);
+      }
+      if (struct.isSetEndTime()) {
+        optionals.set(6);
+      }
+      if (struct.isSetHadoopJobId()) {
+        optionals.set(7);
+      }
+      oprot.writeBitSet(optionals, 8);
       if (struct.isSetPartitionname()) {
         oprot.writeString(struct.partitionname);
       }
@@ -1087,6 +1450,18 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
       }
       if (struct.isSetRunAs()) {
         oprot.writeString(struct.runAs);
+      }
+      if (struct.isSetHightestTxnId()) {
+        oprot.writeI64(struct.hightestTxnId);
+      }
+      if (struct.isSetMetaInfo()) {
+        oprot.writeString(struct.metaInfo);
+      }
+      if (struct.isSetEndTime()) {
+        oprot.writeI64(struct.endTime);
+      }
+      if (struct.isSetHadoopJobId()) {
+        oprot.writeString(struct.hadoopJobId);
       }
     }
 
@@ -1101,7 +1476,7 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
       struct.setTypeIsSet(true);
       struct.state = iprot.readString();
       struct.setStateIsSet(true);
-      BitSet incoming = iprot.readBitSet(4);
+      BitSet incoming = iprot.readBitSet(8);
       if (incoming.get(0)) {
         struct.partitionname = iprot.readString();
         struct.setPartitionnameIsSet(true);
@@ -1117,6 +1492,22 @@ public class ShowCompactResponseElement implements org.apache.thrift.TBase<ShowC
       if (incoming.get(3)) {
         struct.runAs = iprot.readString();
         struct.setRunAsIsSet(true);
+      }
+      if (incoming.get(4)) {
+        struct.hightestTxnId = iprot.readI64();
+        struct.setHightestTxnIdIsSet(true);
+      }
+      if (incoming.get(5)) {
+        struct.metaInfo = iprot.readString();
+        struct.setMetaInfoIsSet(true);
+      }
+      if (incoming.get(6)) {
+        struct.endTime = iprot.readI64();
+        struct.setEndTimeIsSet(true);
+      }
+      if (incoming.get(7)) {
+        struct.hadoopJobId = iprot.readString();
+        struct.setHadoopJobIdIsSet(true);
       }
     }
   }

@@ -4051,6 +4051,11 @@ class TxnInfo {
   TxnState::type state;
   std::string user;
   std::string hostname;
+  std::string agentInfo;
+  int32_t heartbeatCount;
+  std::string metaInfo;
+
+  _TxnInfo__isset __isset;
 
   void __set_id(const int64_t val) {
     id = val;
@@ -4068,6 +4073,12 @@ class TxnInfo {
     hostname = val;
   }
 
+  void __set_agentInfo(const std::string& val);
+
+  void __set_heartbeatCount(const int32_t val);
+
+  void __set_metaInfo(const std::string& val);
+
   bool operator == (const TxnInfo & rhs) const
   {
     if (!(id == rhs.id))
@@ -4077,6 +4088,18 @@ class TxnInfo {
     if (!(user == rhs.user))
       return false;
     if (!(hostname == rhs.hostname))
+      return false;
+    if (__isset.agentInfo != rhs.__isset.agentInfo)
+      return false;
+    else if (__isset.agentInfo && !(agentInfo == rhs.agentInfo))
+      return false;
+    if (__isset.heartbeatCount != rhs.__isset.heartbeatCount)
+      return false;
+    else if (__isset.heartbeatCount && !(heartbeatCount == rhs.heartbeatCount))
+      return false;
+    if (__isset.metaInfo != rhs.__isset.metaInfo)
+      return false;
+    else if (__isset.metaInfo && !(metaInfo == rhs.metaInfo))
       return false;
     return true;
   }
@@ -4209,6 +4232,8 @@ class OpenTxnRequest {
     hostname = val;
   }
 
+  void __set_agentInfo(const std::string& val);
+
   bool operator == (const OpenTxnRequest & rhs) const
   {
     if (!(num_txns == rhs.num_txns))
@@ -4216,6 +4241,10 @@ class OpenTxnRequest {
     if (!(user == rhs.user))
       return false;
     if (!(hostname == rhs.hostname))
+      return false;
+    if (__isset.agentInfo != rhs.__isset.agentInfo)
+      return false;
+    else if (__isset.agentInfo && !(agentInfo == rhs.agentInfo))
       return false;
     return true;
   }
@@ -4441,6 +4470,7 @@ class LockRequest {
   int64_t txnid;
   std::string user;
   std::string hostname;
+  std::string agentInfo;
 
   _LockRequest__isset __isset;
 
@@ -4461,6 +4491,8 @@ class LockRequest {
     hostname = val;
   }
 
+  void __set_agentInfo(const std::string& val);
+
   bool operator == (const LockRequest & rhs) const
   {
     if (!(component == rhs.component))
@@ -4472,6 +4504,10 @@ class LockRequest {
     if (!(user == rhs.user))
       return false;
     if (!(hostname == rhs.hostname))
+      return false;
+    if (__isset.agentInfo != rhs.__isset.agentInfo)
+      return false;
+    else if (__isset.agentInfo && !(agentInfo == rhs.agentInfo))
       return false;
     return true;
   }
@@ -4666,6 +4702,11 @@ class ShowLocksResponseElement {
   int64_t acquiredat;
   std::string user;
   std::string hostname;
+  int32_t heartbeatCount;
+  std::string agentInfo;
+  int64_t blockedByExtId;
+  int64_t blockedByIntId;
+  int64_t lockIdInternal;
 
   _ShowLocksResponseElement__isset __isset;
 
@@ -4717,6 +4758,16 @@ class ShowLocksResponseElement {
     hostname = val;
   }
 
+  void __set_heartbeatCount(const int32_t val);
+
+  void __set_agentInfo(const std::string& val);
+
+  void __set_blockedByExtId(const int64_t val);
+
+  void __set_blockedByIntId(const int64_t val);
+
+  void __set_lockIdInternal(const int64_t val);
+
   bool operator == (const ShowLocksResponseElement & rhs) const
   {
     if (!(lockid == rhs.lockid))
@@ -4748,6 +4799,26 @@ class ShowLocksResponseElement {
     if (!(user == rhs.user))
       return false;
     if (!(hostname == rhs.hostname))
+      return false;
+    if (__isset.heartbeatCount != rhs.__isset.heartbeatCount)
+      return false;
+    else if (__isset.heartbeatCount && !(heartbeatCount == rhs.heartbeatCount))
+      return false;
+    if (__isset.agentInfo != rhs.__isset.agentInfo)
+      return false;
+    else if (__isset.agentInfo && !(agentInfo == rhs.agentInfo))
+      return false;
+    if (__isset.blockedByExtId != rhs.__isset.blockedByExtId)
+      return false;
+    else if (__isset.blockedByExtId && !(blockedByExtId == rhs.blockedByExtId))
+      return false;
+    if (__isset.blockedByIntId != rhs.__isset.blockedByIntId)
+      return false;
+    else if (__isset.blockedByIntId && !(blockedByIntId == rhs.blockedByIntId))
+      return false;
+    if (__isset.lockIdInternal != rhs.__isset.lockIdInternal)
+      return false;
+    else if (__isset.lockIdInternal && !(lockIdInternal == rhs.lockIdInternal))
       return false;
     return true;
   }
@@ -5087,6 +5158,10 @@ class ShowCompactResponseElement {
   std::string workerid;
   int64_t start;
   std::string runAs;
+  int64_t hightestTxnId;
+  std::string metaInfo;
+  int64_t endTime;
+  std::string hadoopJobId;
 
   _ShowCompactResponseElement__isset __isset;
 
@@ -5126,6 +5201,14 @@ class ShowCompactResponseElement {
     __isset.runAs = true;
   }
 
+  void __set_hightestTxnId(const int64_t val);
+
+  void __set_metaInfo(const std::string& val);
+
+  void __set_endTime(const int64_t val);
+
+  void __set_hadoopJobId(const std::string& val);
+
   bool operator == (const ShowCompactResponseElement & rhs) const
   {
     if (!(dbname == rhs.dbname))
@@ -5151,6 +5234,22 @@ class ShowCompactResponseElement {
     if (__isset.runAs != rhs.__isset.runAs)
       return false;
     else if (__isset.runAs && !(runAs == rhs.runAs))
+      return false;
+    if (__isset.hightestTxnId != rhs.__isset.hightestTxnId)
+      return false;
+    else if (__isset.hightestTxnId && !(hightestTxnId == rhs.hightestTxnId))
+      return false;
+    if (__isset.metaInfo != rhs.__isset.metaInfo)
+      return false;
+    else if (__isset.metaInfo && !(metaInfo == rhs.metaInfo))
+      return false;
+    if (__isset.endTime != rhs.__isset.endTime)
+      return false;
+    else if (__isset.endTime && !(endTime == rhs.endTime))
+      return false;
+    if (__isset.hadoopJobId != rhs.__isset.hadoopJobId)
+      return false;
+    else if (__isset.hadoopJobId && !(hadoopJobId == rhs.hadoopJobId))
       return false;
     return true;
   }

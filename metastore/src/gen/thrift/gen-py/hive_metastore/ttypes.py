@@ -6438,6 +6438,9 @@ class TxnInfo:
    - state
    - user
    - hostname
+   - agentInfo
+   - heartbeatCount
+   - metaInfo
   """
 
   thrift_spec = (
@@ -6446,13 +6449,19 @@ class TxnInfo:
     (2, TType.I32, 'state', None, None, ), # 2
     (3, TType.STRING, 'user', None, None, ), # 3
     (4, TType.STRING, 'hostname', None, None, ), # 4
+    (5, TType.STRING, 'agentInfo', None, "Unknown", ), # 5
+    (6, TType.I32, 'heartbeatCount', None, 0, ), # 6
+    (7, TType.STRING, 'metaInfo', None, None, ), # 7
   )
 
-  def __init__(self, id=None, state=None, user=None, hostname=None,):
+  def __init__(self, id=None, state=None, user=None, hostname=None, agentInfo=thrift_spec[5][4], heartbeatCount=thrift_spec[6][4], metaInfo=None,):
     self.id = id
     self.state = state
     self.user = user
     self.hostname = hostname
+    self.agentInfo = agentInfo
+    self.heartbeatCount = heartbeatCount
+    self.metaInfo = metaInfo
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -6483,6 +6492,21 @@ class TxnInfo:
           self.hostname = iprot.readString();
         else:
           iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.STRING:
+          self.agentInfo = iprot.readString()
+        else:
+          iprot.skip(ftype)
+      elif fid == 6:
+        if ftype == TType.I32:
+          self.heartbeatCount = iprot.readI32()
+        else:
+          iprot.skip(ftype)
+      elif fid == 7:
+        if ftype == TType.STRING:
+          self.metaInfo = iprot.readString()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -6508,6 +6532,18 @@ class TxnInfo:
     if self.hostname is not None:
       oprot.writeFieldBegin('hostname', TType.STRING, 4)
       oprot.writeString(self.hostname)
+      oprot.writeFieldEnd()
+    if self.agentInfo is not None:
+      oprot.writeFieldBegin('agentInfo', TType.STRING, 5)
+      oprot.writeString(self.agentInfo)
+      oprot.writeFieldEnd()
+    if self.heartbeatCount is not None:
+      oprot.writeFieldBegin('heartbeatCount', TType.I32, 6)
+      oprot.writeI32(self.heartbeatCount)
+      oprot.writeFieldEnd()
+    if self.metaInfo is not None:
+      oprot.writeFieldBegin('metaInfo', TType.STRING, 7)
+      oprot.writeString(self.metaInfo)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -6710,6 +6746,7 @@ class OpenTxnRequest:
    - num_txns
    - user
    - hostname
+   - agentInfo
   """
 
   thrift_spec = (
@@ -6717,12 +6754,14 @@ class OpenTxnRequest:
     (1, TType.I32, 'num_txns', None, None, ), # 1
     (2, TType.STRING, 'user', None, None, ), # 2
     (3, TType.STRING, 'hostname', None, None, ), # 3
+    (4, TType.STRING, 'agentInfo', None, "Unknown", ), # 4
   )
 
-  def __init__(self, num_txns=None, user=None, hostname=None,):
+  def __init__(self, num_txns=None, user=None, hostname=None, agentInfo=thrift_spec[4][4],):
     self.num_txns = num_txns
     self.user = user
     self.hostname = hostname
+    self.agentInfo = agentInfo
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -6748,6 +6787,11 @@ class OpenTxnRequest:
           self.hostname = iprot.readString();
         else:
           iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.STRING:
+          self.agentInfo = iprot.readString()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -6769,6 +6813,10 @@ class OpenTxnRequest:
     if self.hostname is not None:
       oprot.writeFieldBegin('hostname', TType.STRING, 3)
       oprot.writeString(self.hostname)
+      oprot.writeFieldEnd()
+    if self.agentInfo is not None:
+      oprot.writeFieldBegin('agentInfo', TType.STRING, 4)
+      oprot.writeString(self.agentInfo)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -7109,6 +7157,7 @@ class LockRequest:
    - txnid
    - user
    - hostname
+   - agentInfo
   """
 
   thrift_spec = (
@@ -7117,13 +7166,15 @@ class LockRequest:
     (2, TType.I64, 'txnid', None, None, ), # 2
     (3, TType.STRING, 'user', None, None, ), # 3
     (4, TType.STRING, 'hostname', None, None, ), # 4
+    (5, TType.STRING, 'agentInfo', None, "Unknown", ), # 5
   )
 
-  def __init__(self, component=None, txnid=None, user=None, hostname=None,):
+  def __init__(self, component=None, txnid=None, user=None, hostname=None, agentInfo=thrift_spec[5][4],):
     self.component = component
     self.txnid = txnid
     self.user = user
     self.hostname = hostname
+    self.agentInfo = agentInfo
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -7160,6 +7211,11 @@ class LockRequest:
           self.hostname = iprot.readString();
         else:
           iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.STRING:
+          self.agentInfo = iprot.readString()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -7188,6 +7244,10 @@ class LockRequest:
     if self.hostname is not None:
       oprot.writeFieldBegin('hostname', TType.STRING, 4)
       oprot.writeString(self.hostname)
+      oprot.writeFieldEnd()
+    if self.agentInfo is not None:
+      oprot.writeFieldBegin('agentInfo', TType.STRING, 5)
+      oprot.writeString(self.agentInfo)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -7293,15 +7353,21 @@ class CheckLockRequest:
   """
   Attributes:
    - lockid
+   - txnid
+   - elapsed_ms
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.I64, 'lockid', None, None, ), # 1
+    (2, TType.I64, 'txnid', None, None, ), # 2
+    (3, TType.I64, 'elapsed_ms', None, None, ), # 3
   )
 
-  def __init__(self, lockid=None,):
+  def __init__(self, lockid=None, txnid=None, elapsed_ms=None,):
     self.lockid = lockid
+    self.txnid = txnid
+    self.elapsed_ms = elapsed_ms
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -7317,6 +7383,16 @@ class CheckLockRequest:
           self.lockid = iprot.readI64();
         else:
           iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I64:
+          self.txnid = iprot.readI64()
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.I64:
+          self.elapsed_ms = iprot.readI64()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -7330,6 +7406,14 @@ class CheckLockRequest:
     if self.lockid is not None:
       oprot.writeFieldBegin('lockid', TType.I64, 1)
       oprot.writeI64(self.lockid)
+      oprot.writeFieldEnd()
+    if self.txnid is not None:
+      oprot.writeFieldBegin('txnid', TType.I64, 2)
+      oprot.writeI64(self.txnid)
+      oprot.writeFieldEnd()
+    if self.elapsed_ms is not None:
+      oprot.writeFieldBegin('elapsed_ms', TType.I64, 3)
+      oprot.writeI64(self.elapsed_ms)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -7414,9 +7498,27 @@ class UnlockRequest:
     return not (self == other)
 
 class ShowLocksRequest:
+  """
+  Attributes:
+   - dbname
+   - tablename
+   - partname
+   - isExtended
+  """
 
   thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'dbname', None, None, ), # 1
+    (2, TType.STRING, 'tablename', None, None, ), # 2
+    (3, TType.STRING, 'partname', None, None, ), # 3
+    (4, TType.BOOL, 'isExtended', None, False, ), # 4
   )
+
+  def __init__(self, dbname=None, tablename=None, partname=None, isExtended=thrift_spec[4][4],):
+    self.dbname = dbname
+    self.tablename = tablename
+    self.partname = partname
+    self.isExtended = isExtended
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -7427,6 +7529,26 @@ class ShowLocksRequest:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
         break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.dbname = iprot.readString()
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.tablename = iprot.readString()
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.STRING:
+          self.partname = iprot.readString()
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.BOOL:
+          self.isExtended = iprot.readBool()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -7437,6 +7559,22 @@ class ShowLocksRequest:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('ShowLocksRequest')
+    if self.dbname is not None:
+      oprot.writeFieldBegin('dbname', TType.STRING, 1)
+      oprot.writeString(self.dbname)
+      oprot.writeFieldEnd()
+    if self.tablename is not None:
+      oprot.writeFieldBegin('tablename', TType.STRING, 2)
+      oprot.writeString(self.tablename)
+      oprot.writeFieldEnd()
+    if self.partname is not None:
+      oprot.writeFieldBegin('partname', TType.STRING, 3)
+      oprot.writeString(self.partname)
+      oprot.writeFieldEnd()
+    if self.isExtended is not None:
+      oprot.writeFieldBegin('isExtended', TType.BOOL, 4)
+      oprot.writeBool(self.isExtended)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -7469,6 +7607,11 @@ class ShowLocksResponseElement:
    - acquiredat
    - user
    - hostname
+   - heartbeatCount
+   - agentInfo
+   - blockedByExtId
+   - blockedByIntId
+   - lockIdInternal
   """
 
   thrift_spec = (
@@ -7484,9 +7627,14 @@ class ShowLocksResponseElement:
     (9, TType.I64, 'acquiredat', None, None, ), # 9
     (10, TType.STRING, 'user', None, None, ), # 10
     (11, TType.STRING, 'hostname', None, None, ), # 11
+    (12, TType.I32, 'heartbeatCount', None, 0, ), # 12
+    (13, TType.STRING, 'agentInfo', None, None, ), # 13
+    (14, TType.I64, 'blockedByExtId', None, None, ), # 14
+    (15, TType.I64, 'blockedByIntId', None, None, ), # 15
+    (16, TType.I64, 'lockIdInternal', None, None, ), # 16
   )
 
-  def __init__(self, lockid=None, dbname=None, tablename=None, partname=None, state=None, type=None, txnid=None, lastheartbeat=None, acquiredat=None, user=None, hostname=None,):
+  def __init__(self, lockid=None, dbname=None, tablename=None, partname=None, state=None, type=None, txnid=None, lastheartbeat=None, acquiredat=None, user=None, hostname=None, heartbeatCount=thrift_spec[12][4], agentInfo=None, blockedByExtId=None, blockedByIntId=None, lockIdInternal=None,):
     self.lockid = lockid
     self.dbname = dbname
     self.tablename = tablename
@@ -7498,6 +7646,11 @@ class ShowLocksResponseElement:
     self.acquiredat = acquiredat
     self.user = user
     self.hostname = hostname
+    self.heartbeatCount = heartbeatCount
+    self.agentInfo = agentInfo
+    self.blockedByExtId = blockedByExtId
+    self.blockedByIntId = blockedByIntId
+    self.lockIdInternal = lockIdInternal
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -7563,6 +7716,31 @@ class ShowLocksResponseElement:
           self.hostname = iprot.readString();
         else:
           iprot.skip(ftype)
+      elif fid == 12:
+        if ftype == TType.I32:
+          self.heartbeatCount = iprot.readI32()
+        else:
+          iprot.skip(ftype)
+      elif fid == 13:
+        if ftype == TType.STRING:
+          self.agentInfo = iprot.readString()
+        else:
+          iprot.skip(ftype)
+      elif fid == 14:
+        if ftype == TType.I64:
+          self.blockedByExtId = iprot.readI64()
+        else:
+          iprot.skip(ftype)
+      elif fid == 15:
+        if ftype == TType.I64:
+          self.blockedByIntId = iprot.readI64()
+        else:
+          iprot.skip(ftype)
+      elif fid == 16:
+        if ftype == TType.I64:
+          self.lockIdInternal = iprot.readI64()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -7616,6 +7794,26 @@ class ShowLocksResponseElement:
     if self.hostname is not None:
       oprot.writeFieldBegin('hostname', TType.STRING, 11)
       oprot.writeString(self.hostname)
+      oprot.writeFieldEnd()
+    if self.heartbeatCount is not None:
+      oprot.writeFieldBegin('heartbeatCount', TType.I32, 12)
+      oprot.writeI32(self.heartbeatCount)
+      oprot.writeFieldEnd()
+    if self.agentInfo is not None:
+      oprot.writeFieldBegin('agentInfo', TType.STRING, 13)
+      oprot.writeString(self.agentInfo)
+      oprot.writeFieldEnd()
+    if self.blockedByExtId is not None:
+      oprot.writeFieldBegin('blockedByExtId', TType.I64, 14)
+      oprot.writeI64(self.blockedByExtId)
+      oprot.writeFieldEnd()
+    if self.blockedByIntId is not None:
+      oprot.writeFieldBegin('blockedByIntId', TType.I64, 15)
+      oprot.writeI64(self.blockedByIntId)
+      oprot.writeFieldEnd()
+    if self.lockIdInternal is not None:
+      oprot.writeFieldBegin('lockIdInternal', TType.I64, 16)
+      oprot.writeI64(self.lockIdInternal)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -8125,6 +8323,10 @@ class ShowCompactResponseElement:
    - workerid
    - start
    - runAs
+   - hightestTxnId
+   - metaInfo
+   - endTime
+   - hadoopJobId
   """
 
   thrift_spec = (
@@ -8137,9 +8339,13 @@ class ShowCompactResponseElement:
     (6, TType.STRING, 'workerid', None, None, ), # 6
     (7, TType.I64, 'start', None, None, ), # 7
     (8, TType.STRING, 'runAs', None, None, ), # 8
+    (9, TType.I64, 'hightestTxnId', None, None, ), # 9
+    (10, TType.STRING, 'metaInfo', None, None, ), # 10
+    (11, TType.I64, 'endTime', None, None, ), # 11
+    (12, TType.STRING, 'hadoopJobId', None, "None", ), # 12
   )
 
-  def __init__(self, dbname=None, tablename=None, partitionname=None, type=None, state=None, workerid=None, start=None, runAs=None,):
+  def __init__(self, dbname=None, tablename=None, partitionname=None, type=None, state=None, workerid=None, start=None, runAs=None, hightestTxnId=None, metaInfo=None, endTime=None, hadoopJobId=thrift_spec[12][4],):
     self.dbname = dbname
     self.tablename = tablename
     self.partitionname = partitionname
@@ -8148,6 +8354,10 @@ class ShowCompactResponseElement:
     self.workerid = workerid
     self.start = start
     self.runAs = runAs
+    self.hightestTxnId = hightestTxnId
+    self.metaInfo = metaInfo
+    self.endTime = endTime
+    self.hadoopJobId = hadoopJobId
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -8198,6 +8408,26 @@ class ShowCompactResponseElement:
           self.runAs = iprot.readString();
         else:
           iprot.skip(ftype)
+      elif fid == 9:
+        if ftype == TType.I64:
+          self.hightestTxnId = iprot.readI64()
+        else:
+          iprot.skip(ftype)
+      elif fid == 10:
+        if ftype == TType.STRING:
+          self.metaInfo = iprot.readString()
+        else:
+          iprot.skip(ftype)
+      elif fid == 11:
+        if ftype == TType.I64:
+          self.endTime = iprot.readI64()
+        else:
+          iprot.skip(ftype)
+      elif fid == 12:
+        if ftype == TType.STRING:
+          self.hadoopJobId = iprot.readString()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -8239,6 +8469,22 @@ class ShowCompactResponseElement:
     if self.runAs is not None:
       oprot.writeFieldBegin('runAs', TType.STRING, 8)
       oprot.writeString(self.runAs)
+      oprot.writeFieldEnd()
+    if self.hightestTxnId is not None:
+      oprot.writeFieldBegin('hightestTxnId', TType.I64, 9)
+      oprot.writeI64(self.hightestTxnId)
+      oprot.writeFieldEnd()
+    if self.metaInfo is not None:
+      oprot.writeFieldBegin('metaInfo', TType.STRING, 10)
+      oprot.writeString(self.metaInfo)
+      oprot.writeFieldEnd()
+    if self.endTime is not None:
+      oprot.writeFieldBegin('endTime', TType.I64, 11)
+      oprot.writeI64(self.endTime)
+      oprot.writeFieldEnd()
+    if self.hadoopJobId is not None:
+      oprot.writeFieldBegin('hadoopJobId', TType.STRING, 12)
+      oprot.writeString(self.hadoopJobId)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
