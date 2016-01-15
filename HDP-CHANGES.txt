@@ -268,6 +268,22 @@ BUG FIXES
     HIVE-11960: braces in join conditions are not supported
     HIVE-11517: Vectorized auto_smb_mapjoin_14.q produces different results
     HIVE-12522: Wrong FS error during Tez merge files when warehouse and scratchdir are on different FS
+    HIVE-11141: Improve RuleRegExp when the Expression node stack gets huge
+    HIVE-11291: Avoid allocation storm while doing rule matching on operator/expression trees
+    HIVE-11310: Avoid expensive AST tree conversion to String for expressions in WHERE clause
+    HIVE-11311: Avoid dumping AST tree String in Explain unless necessary
+    HIVE-11328: Avoid String representation of expression nodes in ConstantPropagateProcFactory unless necessary
+    HIVE-11330: Add early termination for recursion in StatsRulesProcFactory.evaluateExpression
+    HIVE-11397: Parse Hive OR clauses as they are written into the AST
+    HIVE-11406: Vectorization: StringExpr::compare() == 0 is bad for performance
+    HIVE-11405: Add early termination for recursion in StatsRulesProcFactory.evaluateExpression for OR expression
+    HIVE-12766: TezTask does not close DagClient after execution
+    HIVE-12660: HS2 memory leak with .hiverc file use
+    HIVE-12799: Always use Schema Evolution for ACID
+    HIVE-12728: Apply DDL restrictions for ORC schema evolution
+    HIVE-12625: Backport to branch-1 HIVE-11981 ORC Schema Evolution Issues (Vectorized, ACID, and Non-Vectorized)
+    HIVE-11981: ORC Schema Evolution Issues (Vectorized, ACID, and Non-Vectorized)
+    HIVE-12706: Incorrect output from from_utc_timestamp()/to_utc_timestamp when local timezone has DST
 
 
 INTERNAL FIXES (NO APACHE JIRA)
@@ -276,3 +292,4 @@ INTERNAL FIXES (NO APACHE JIRA)
     BUG-45882 : Hive query fails with java.util.NoSuchElementException
     BUG-48761 : Invalid caller context from Hive provided to HDFS
     BUG-48170: Hive queries after the metastore restart seems to be stuck with log message LockResponse(lockid:##, state:WAITING)
+    BUG-50428: Schema and thrift changes needed for ACID in 2.4
