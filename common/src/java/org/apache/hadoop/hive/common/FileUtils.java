@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hive.common;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
@@ -758,5 +759,9 @@ public final class FileUtils {
     } catch (FileNotFoundException e) {
       return null;
     }
+  }
+
+  public static void deleteDirectory(File directory) throws IOException {
+    org.apache.commons.io.FileUtils.deleteDirectory(directory);
   }
 }
