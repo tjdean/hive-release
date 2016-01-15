@@ -74,6 +74,8 @@ public class TestHs2Metrics {
     confOverlay = new HashMap<String, String>();
     confOverlay.put(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
     confOverlay.put(HiveConf.ConfVars.SEMANTIC_ANALYZER_HOOK.varname, MetricCheckingHook.class.getName());
+    confOverlay.put(HiveConf.ConfVars.HIVE_SERVER2_METRICS_ENABLED.varname, "true");
+    confOverlay.put(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
     miniHS2.start(confOverlay);
 
     //for Metrics.  MiniHS2 init code-path doesn't go through HiveServer2.startHiveServer2().
@@ -81,12 +83,9 @@ public class TestHs2Metrics {
     jsonReportFile = new File(workDir, "json_reporting");
     jsonReportFile.delete();
     HiveConf conf = new HiveConf();
-    conf.setBoolVar(HiveConf.ConfVars.HIVE_SERVER2_METRICS_ENABLED, true);
-    conf.setBoolVar(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY, false);
-    conf.setVar(HiveConf.ConfVars.HIVE_METRICS_REPORTER, MetricsReporting.JSON_FILE.name() + "," + MetricsReporting.JMX.name());
-    conf.setVar(HiveConf.ConfVars.HIVE_METRICS_JSON_FILE_LOCATION, jsonReportFile.toString());
-    conf.setVar(HiveConf.ConfVars.HIVE_METRICS_JSON_FILE_INTERVAL, "100ms");
-    MetricsFactory.init(conf);
+
+
+    metrics = (CodahaleMetrics) MetricsFactory.getInstance();
   }
 
   @Test
