@@ -137,7 +137,8 @@ public class Worker extends CompactorThread {
         final ValidTxnList txns =
             CompactionTxnHandler.createValidCompactTxnList(txnHandler.getOpenTxnsInfo());
         LOG.debug("ValidCompactTxnList: " + txns.writeToString());
-        final StringBuffer jobName = new StringBuffer(name);
+        txnHandler.setCompactionHighestTxnId(ci, txns.getHighWatermark());
+        final StringBuilder jobName = new StringBuilder(name);
         jobName.append("-compactor-");
         jobName.append(ci.getFullPartitionName());
 
