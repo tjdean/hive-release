@@ -200,8 +200,9 @@ public class TestDbTxnManager {
   public void testExceptions() throws Exception {
     WriteEntity we = addPartitionOutput(newTable(true), WriteEntity.WriteType.INSERT);
     QueryPlan qp = new MockQueryPlan(this);
-    txnMgr.acquireLocks(qp, ctx, "PeterI");
+//    txnMgr.acquireLocks(qp, ctx, "PeterI");
     txnMgr.openTxn("NicholasII");
+    Thread.sleep(HiveConf.getTimeVar(conf, HiveConf.ConfVars.HIVE_TXN_TIMEOUT, TimeUnit.MILLISECONDS));
     runReaper();
     LockException exception = null;
     try {
@@ -212,8 +213,10 @@ public class TestDbTxnManager {
     }
     Assert.assertNotNull("Expected exception1", exception);
     Assert.assertEquals("Wrong Exception1", ErrorMsg.TXN_ABORTED, exception.getCanonicalErrorMsg());
+
     exception = null;
     txnMgr.openTxn("AlexanderIII");
+    Thread.sleep(HiveConf.getTimeVar(conf, HiveConf.ConfVars.HIVE_TXN_TIMEOUT, TimeUnit.MILLISECONDS));
     runReaper();
     try {
       txnMgr.rollbackTxn();
@@ -223,20 +226,6 @@ public class TestDbTxnManager {
     }
     Assert.assertNotNull("Expected exception2", exception);
     Assert.assertEquals("Wrong Exception2", ErrorMsg.TXN_NO_SUCH_TRANSACTION, exception.getCanonicalErrorMsg());
-    exception = null;
-    txnMgr.openTxn("PeterI");
-    txnMgr.acquireLocks(qp, ctx, "PeterI");
-    List<HiveLock> locks = ctx.getHiveLocks();
-    Assert.assertThat("Unexpected lock count", locks.size(), is(1));
-    runReaper();
-    try {
-      txnMgr.heartbeat();
-    }
-    catch(LockException ex) {
-      exception = ex;
-    }
-    Assert.assertNotNull("Expected exception3", exception);
-    Assert.assertEquals("Wrong Exception3", ErrorMsg.TXN_ABORTED, exception.getCanonicalErrorMsg());
   }
 
   @Test
@@ -355,17 +344,82 @@ public class TestDbTxnManager {
     Assert.assertTrue(sawException);
   }
 
+  @Test
+  public void testLockAcquisitionAndRelease() throws Exception {
+    addTableInput();
+    QueryPlan qp = new MockQueryPlan(this);
+    txnMgr.acquireLocks(qp, ctx, "fred");
+    List<HiveLock> locks = ctx.getHiveLocks();
+    Assert.assertEquals(1, locks.size());
+    txnMgr.releaseLocks(locks);
+    locks = txnMgr.getLockManager().getLocks(false, false);
+    Assert.assertEquals(0, locks.size());
+  }
+
+  @Test
+  public void testHeartbeater() throws Exception {
+    Assert.assertTrue(txnMgr instanceof DbTxnManager);
+
+    addTableInput();
+    LockException exception = null;
+    QueryPlan qp = new MockQueryPlan(this);
+
+    // Case 1: If there's no delay for the heartbeat, txn should be able to commit
+    txnMgr.openTxn("fred");
+    txnMgr.acquireLocks(qp, ctx, "fred"); // heartbeat started..
+    runReaper();
+    try {
+      txnMgr.commitTxn();
+    } catch (LockException e) {
+      exception = e;
+    }
+    Assert.assertNull("Txn commit should be successful", exception);
+    exception = null;
+
+    // Case 2: If there's delay for the heartbeat, but the delay is within the reaper's tolerance,
+    //         then txt should be able to commit
+    txnMgr.openTxn("tom");
+    // Start the heartbeat after a delay, which is shorter than  the HIVE_TXN_TIMEOUT
+    ((DbTxnManager) txnMgr).acquireLocksWithHeartbeatDelay(qp, ctx, "tom",
+        HiveConf.getTimeVar(conf, HiveConf.ConfVars.HIVE_TXN_TIMEOUT, TimeUnit.MILLISECONDS) / 2);
+    runReaper();
+    try {
+      txnMgr.commitTxn();
+    } catch (LockException e) {
+      exception = e;
+    }
+    Assert.assertNull("Txn commit should also be successful", exception);
+    exception = null;
+
+    // Case 3: If there's delay for the heartbeat, and the delay is long enough to trigger the reaper,
+    //         then the txn will time out and be aborted.
+    //         Here we just don't send the heartbeat at all - an infinite delay.
+    txnMgr.openTxn("jerry");
+    // Start the heartbeat after a delay, which exceeds the HIVE_TXN_TIMEOUT
+    ((DbTxnManager) txnMgr).acquireLocks(qp, ctx, "jerry", true);
+    Thread.sleep(HiveConf.getTimeVar(conf, HiveConf.ConfVars.HIVE_TXN_TIMEOUT, TimeUnit.MILLISECONDS));
+    runReaper();
+    try {
+      txnMgr.commitTxn();
+    } catch (LockException e) {
+      exception = e;
+    }
+    Assert.assertNotNull("Txn should have been aborted", exception);
+    Assert.assertEquals(ErrorMsg.TXN_ABORTED, exception.getCanonicalErrorMsg());
+  }
+
   @Before
   public void setUp() throws Exception {
     TxnDbUtil.prepDb();
     txnMgr = TxnManagerFactory.getTxnManagerFactory().getTxnManager(conf);
+    txnMgr.getLockManager();//init lock manager
     Assert.assertTrue(txnMgr instanceof DbTxnManager);
     nextInput = 1;
     nextOutput = 1;
     readEntities = new HashSet<ReadEntity>();
     writeEntities = new HashSet<WriteEntity>();
     conf.setTimeVar(HiveConf.ConfVars.HIVE_TIMEDOUT_TXN_REAPER_START, 0, TimeUnit.SECONDS);
-    conf.setTimeVar(HiveConf.ConfVars.HIVE_TXN_TIMEOUT, 1, TimeUnit.MILLISECONDS);
+    conf.setTimeVar(HiveConf.ConfVars.HIVE_TXN_TIMEOUT, 1, TimeUnit.SECONDS);
     houseKeeperService = new AcidHouseKeeperService();
   }
 

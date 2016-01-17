@@ -1098,7 +1098,7 @@ public class Driver implements CommandProcessor {
       }
     } else {
       if (hiveLocks != null) {
-        txnMgr.getLockManager().releaseLocks(hiveLocks);
+        txnMgr.releaseLocks(hiveLocks);
       }
     }
     ctx.setHiveLocks(null);
