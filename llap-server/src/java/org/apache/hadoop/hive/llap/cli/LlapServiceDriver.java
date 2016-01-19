@@ -18,12 +18,12 @@
 
 package org.apache.hadoop.hive.llap.cli;
 
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Collection;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +31,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hive.common.CompressionUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
@@ -39,6 +40,8 @@ import org.apache.hadoop.hive.llap.io.api.impl.LlapInputFormat;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.io.HiveInputFormat;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.json.JSONObject;
 
@@ -48,7 +51,12 @@ public class LlapServiceDriver {
 
   protected static final Logger LOG = LoggerFactory.getLogger(LlapServiceDriver.class.getName());
   private static final String[] DEFAULT_AUX_CLASSES = new String[] {
-    "org.apache.hive.hcatalog.data.JsonSerDe", "org.apache.hadoop.hive.hbase.HBaseSerDe" };
+  "org.apache.hive.hcatalog.data.JsonSerDe" };
+  private static final String HBASE_SERDE_CLASS = "org.apache.hadoop.hive.hbase.HBaseSerDe";
+  private static final String[] NEEDED_CONFIGS = {
+    "tez-site.xml", "hive-site.xml", "llap-daemon-site.xml", "core-site.xml" };
+  private static final String[] OPTIONAL_CONFIGS = { "ssl-server.xml" };
+
 
   private final Configuration conf;
 
@@ -115,17 +123,16 @@ public class LlapServiceDriver {
     FileSystem fs = FileSystem.get(conf);
     FileSystem lfs = FileSystem.getLocal(conf).getRawFileSystem();
 
-    String[] neededConfig =
-        { "tez-site.xml", "hive-site.xml", "llap-daemon-site.xml", "core-site.xml" };
-
     // needed so that the file is actually loaded into configuration.
-    for (String f : neededConfig) {
+    for (String f : NEEDED_CONFIGS) {
       conf.addResource(f);
       if (conf.getResource(f) == null) {
         throw new Exception("Unable to find required config file: " + f);
       }
     }
-
+    for (String f : OPTIONAL_CONFIGS) {
+      conf.addResource(f);
+    }
     conf.reloadConfiguration();
 
     if (options.getName() != null) {
@@ -145,7 +152,7 @@ public class LlapServiceDriver {
         Preconditions.checkArgument(options.getXmx() < options.getSize(),
             "Working memory has to be smaller than the container sizing");
       }
-      if (HiveConf.getBoolVar(conf, HiveConf.ConfVars.LLAP_ORC_CACHE_ALLOCATE_DIRECT)) {
+      if (HiveConf.getBoolVar(conf, HiveConf.ConfVars.LLAP_ALLOCATOR_DIRECT)) {
         Preconditions.checkArgument(options.getXmx() + options.getCache() < options.getSize(),
             "Working memory + cache has to be smaller than the containing sizing ");
       }
@@ -165,7 +172,7 @@ public class LlapServiceDriver {
     }
 
     if (options.getCache() != -1) {
-      conf.setLong(HiveConf.ConfVars.LLAP_ORC_CACHE_MAX_SIZE.varname, options.getCache());
+      conf.setLong(HiveConf.ConfVars.LLAP_IO_MEMORY_MAX_SIZE.varname, options.getCache());
     }
 
     if (options.getXmx() != -1) {
@@ -215,25 +222,25 @@ public class LlapServiceDriver {
     // copy default aux classes (json/hbase)
 
     for (String className : DEFAULT_AUX_CLASSES) {
-      String jarPath = null;
-      boolean hasException = false;
+      localizeJarForClass(lfs, libDir, className, false);
+    }
+
+    if (options.getIsHBase()) {
       try {
-        Class<?> auxClass = Class.forName(className);
-        jarPath = Utilities.jarFinderGetJar(auxClass);
+        localizeJarForClass(lfs, libDir, HBASE_SERDE_CLASS, true);
+        Job fakeJob = new Job(new JobConf()); // HBase API is convoluted.
+        TableMapReduceUtil.addDependencyJars(fakeJob);
+        Collection<String> hbaseJars = fakeJob.getConfiguration().getStringCollection("tmpjars");
+        for (String jarPath : hbaseJars) {
+          if (!jarPath.isEmpty()) {
+            lfs.copyFromLocalFile(new Path(jarPath), libDir);
+          }
+        }
       } catch (Throwable t) {
-        hasException = true;
-        String err =
-            "Cannot find a jar for [" + className + "] due to an exception (" + t.getMessage()
-                + "); not packaging the jar";
-        LOG.error(err, t);
-        System.err.println(err);
-      }
-      if (jarPath != null) {
-        lfs.copyFromLocalFile(new Path(jarPath), libDir);
-      } else if (!hasException) {
-        String err = "Cannot find a jar for [" + className + "]; not packaging the jar";
+        String err = "Failed to add HBase jars. Use --auxhbase=false to avoid localizing them";
         LOG.error(err);
         System.err.println(err);
+        throw new RuntimeException(t);
       }
     }
 
@@ -251,22 +258,14 @@ public class LlapServiceDriver {
     Path confPath = new Path(tmpDir, "conf");
     lfs.mkdirs(confPath);
 
-    for (String f : neededConfig) {
-      if (f.equals("llap-daemon-site.xml")) {
-        FSDataOutputStream confStream = lfs.create(new Path(confPath, f));
-
-        Configuration copy = resolve(conf, "llap-daemon-site.xml");
-
-        for (Entry<Object, Object> props : options.getConfig().entrySet()) {
-          // overrides
-          copy.set((String) props.getKey(), (String) props.getValue());
-        }
-
-        copy.writeXml(confStream);
-        confStream.close();
-      } else {
-        // they will be file:// URLs
-        lfs.copyFromLocalFile(new Path(conf.getResource(f).toString()), confPath);
+    for (String f : NEEDED_CONFIGS) {
+      copyConfig(options, lfs, confPath, f);
+    }
+    for (String f : OPTIONAL_CONFIGS) {
+      try {
+        copyConfig(options, lfs, confPath, f);
+      } catch (Throwable t) {
+        LOG.info("Error getting an optional config " + f + "; ignoring: " + t.getMessage());
       }
     }
 
@@ -278,11 +277,11 @@ public class LlapServiceDriver {
     configs.put(ConfVars.LLAP_DAEMON_YARN_CONTAINER_MB.varname, HiveConf.getIntVar(conf,
         ConfVars.LLAP_DAEMON_YARN_CONTAINER_MB));
 
-    configs.put(HiveConf.ConfVars.LLAP_ORC_CACHE_MAX_SIZE.varname,
-        HiveConf.getLongVar(conf, HiveConf.ConfVars.LLAP_ORC_CACHE_MAX_SIZE));
+    configs.put(HiveConf.ConfVars.LLAP_IO_MEMORY_MAX_SIZE.varname,
+        HiveConf.getLongVar(conf, HiveConf.ConfVars.LLAP_IO_MEMORY_MAX_SIZE));
 
-    configs.put(HiveConf.ConfVars.LLAP_ORC_CACHE_ALLOCATE_DIRECT.varname,
-        HiveConf.getBoolVar(conf, HiveConf.ConfVars.LLAP_ORC_CACHE_ALLOCATE_DIRECT));
+    configs.put(HiveConf.ConfVars.LLAP_ALLOCATOR_DIRECT.varname,
+        HiveConf.getBoolVar(conf, HiveConf.ConfVars.LLAP_ALLOCATOR_DIRECT));
 
     configs.put(ConfVars.LLAP_DAEMON_MEMORY_PER_INSTANCE_MB.varname, HiveConf.getIntVar(conf,
         ConfVars.LLAP_DAEMON_MEMORY_PER_INSTANCE_MB));
@@ -310,6 +309,57 @@ public class LlapServiceDriver {
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("Exiting successfully");
+    }
+  }
+
+// TODO#: assumes throw
+  private void localizeJarForClass(FileSystem lfs, Path libDir, String className, boolean doThrow)
+      throws IOException {
+    String jarPath = null;
+    boolean hasException = false;
+    try {
+      Class<?> auxClass = Class.forName(className);
+      jarPath = Utilities.jarFinderGetJar(auxClass);
+    } catch (Throwable t) {
+      if (doThrow) {
+        throw (t instanceof IOException) ? (IOException)t : new IOException(t);
+      }
+      hasException = true;
+      String err =
+          "Cannot find a jar for [" + className + "] due to an exception (" + t.getMessage()
+              + "); not packaging the jar";
+      LOG.error(err, t);
+      System.err.println(err);
+    }
+    if (jarPath != null) {
+      lfs.copyFromLocalFile(new Path(jarPath), libDir);
+    } else if (!hasException) {
+      String err = "Cannot find a jar for [" + className + "]; not packaging the jar";
+      if (doThrow) {
+        throw new IOException(err);
+      }
+      LOG.error(err);
+      System.err.println(err);
+    }
+  }
+
+  private void copyConfig(
+      LlapOptions options, FileSystem lfs, Path confPath, String f) throws IOException {
+    if (f.equals("llap-daemon-site.xml")) {
+      FSDataOutputStream confStream = lfs.create(new Path(confPath, f));
+
+      Configuration copy = resolve(conf, "llap-daemon-site.xml");
+
+      for (Entry<Object, Object> props : options.getConfig().entrySet()) {
+        // overrides
+        copy.set((String) props.getKey(), (String) props.getValue());
+      }
+
+      copy.writeXml(confStream);
+      confStream.close();
+    } else {
+      // they will be file:// URLs
+      lfs.copyFromLocalFile(new Path(conf.getResource(f).toString()), confPath);
     }
   }
 }

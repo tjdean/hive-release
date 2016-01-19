@@ -132,6 +132,7 @@ public class TestJdbcDriver2 {
     Connection con1 = getConnection("default");
     System.setProperty(ConfVars.HIVE_SERVER2_LOGGING_OPERATION_LEVEL.varname, "verbose");
     System.setProperty(ConfVars.HIVEMAPREDMODE.varname, "nonstrict");
+    System.setProperty(ConfVars.HIVE_AUTHORIZATION_MANAGER.varname, "org.apache.hadoop.hive.ql.security.authorization.DefaultHiveAuthorizationProvider");
 
     Statement stmt1 = con1.createStatement();
     assertNotNull("Statement is null", stmt1);
@@ -897,7 +898,7 @@ public class TestJdbcDriver2 {
     assertEquals("[{\"m\":{},\"n\":1},{\"m\":{\"a\":\"b\",\"c\":\"d\"},\"n\":2}]", res.getString(16));
     assertEquals("2012-04-22 09:00:00.123456789", res.getString(17));
     assertEquals("2012-04-22 09:00:00.123456789", res.getTimestamp(17).toString());
-    assertEquals("123456789.0123456", res.getBigDecimal(18).toString());
+    assertEquals("123456789.1234560", res.getBigDecimal(18).toString());
     assertEquals("abcd", res.getString(19));
     assertEquals("2013-01-01", res.getString(20));
     assertEquals("2013-01-01", res.getDate(20).toString());

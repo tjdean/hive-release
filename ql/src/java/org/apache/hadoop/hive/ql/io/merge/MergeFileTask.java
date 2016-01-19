@@ -22,6 +22,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.ql.CompilationOpContext;
 import org.apache.hadoop.hive.ql.Context;
 import org.apache.hadoop.hive.ql.DriverContext;
 import org.apache.hadoop.hive.ql.QueryPlan;
@@ -60,8 +61,8 @@ public class MergeFileTask extends Task<MergeFileWork> implements Serializable,
 
   @Override
   public void initialize(HiveConf conf, QueryPlan queryPlan,
-      DriverContext driverContext) {
-    super.initialize(conf, queryPlan, driverContext);
+      DriverContext driverContext, CompilationOpContext opContext) {
+    super.initialize(conf, queryPlan, driverContext, opContext);
     job = new JobConf(conf, MergeFileTask.class);
     jobExecHelper = new HadoopJobExecHelper(job, this.console, this, this);
   }
@@ -149,7 +150,7 @@ public class MergeFileTask extends Task<MergeFileWork> implements Serializable,
       // Finally SUBMIT the JOB!
       rj = jc.submitJob(job);
 
-      returnVal = jobExecHelper.progress(rj, jc, null);
+      returnVal = jobExecHelper.progress(rj, jc);
       success = (returnVal == 0);
 
     } catch (Exception e) {

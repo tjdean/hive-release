@@ -143,7 +143,7 @@ public class HiveConf extends Configuration {
       HiveConf.ConfVars.METASTORE_VALIDATE_COLUMNS,
       HiveConf.ConfVars.METASTORE_VALIDATE_CONSTRAINTS,
       HiveConf.ConfVars.METASTORE_STORE_MANAGER_TYPE,
-      HiveConf.ConfVars.METASTORE_AUTO_CREATE_SCHEMA,
+      HiveConf.ConfVars.METASTORE_AUTO_CREATE_ALL,
       HiveConf.ConfVars.METASTORE_AUTO_START_MECHANISM_MODE,
       HiveConf.ConfVars.METASTORE_TRANSACTION_ISOLATION,
       HiveConf.ConfVars.METASTORE_CACHE_LEVEL2,
@@ -172,6 +172,7 @@ public class HiveConf extends Configuration {
       HiveConf.ConfVars.HIVE_AUTHORIZATION_MANAGER,
       HiveConf.ConfVars.HIVE_TXN_MANAGER,
       HiveConf.ConfVars.HIVE_TXN_TIMEOUT,
+      HiveConf.ConfVars.HIVE_TXN_HEARTBEAT_THREADPOOL_SIZE,
       HiveConf.ConfVars.HIVE_TXN_MAX_OPEN_BATCH,
       HiveConf.ConfVars.HIVE_METASTORE_STATS_NDV_DENSITY_FUNCTION,
       HiveConf.ConfVars.METASTORE_AGGREGATE_STATS_CACHE_ENABLED,
@@ -529,17 +530,16 @@ public class HiveConf extends Configuration {
         "List of comma separated metastore object types that should be pinned in the cache"),
     METASTORE_CONNECTION_POOLING_TYPE("datanucleus.connectionPoolingType", "BONECP",
         "Specify connection pool library for datanucleus"),
-    METASTORE_VALIDATE_TABLES("datanucleus.validateTables", false,
+    METASTORE_VALIDATE_TABLES("datanucleus.schema.validateTables", false,
         "validates existing schema against code. turn this on if you want to verify existing schema"),
-    METASTORE_VALIDATE_COLUMNS("datanucleus.validateColumns", false,
+    METASTORE_VALIDATE_COLUMNS("datanucleus.schema.validateColumns", false,
         "validates existing schema against code. turn this on if you want to verify existing schema"),
-    METASTORE_VALIDATE_CONSTRAINTS("datanucleus.validateConstraints", false,
+    METASTORE_VALIDATE_CONSTRAINTS("datanucleus.schema.validateConstraints", false,
         "validates existing schema against code. turn this on if you want to verify existing schema"),
     METASTORE_STORE_MANAGER_TYPE("datanucleus.storeManagerType", "rdbms", "metadata store type"),
-    METASTORE_AUTO_CREATE_SCHEMA("datanucleus.autoCreateSchema", false,
+    METASTORE_AUTO_CREATE_ALL("datanucleus.schema.autoCreateAll", false,
         "creates necessary schema on a startup if one doesn't exist. set this to false, after creating it once"),
-    METASTORE_FIXED_DATASTORE("datanucleus.fixedDatastore", true, "Dictates whether to allow updates to schema or not."),
-    METASTORE_SCHEMA_VERIFICATION("hive.metastore.schema.verification", true,
+    METASTORE_SCHEMA_VERIFICATION("hive.metastore.schema.verification", false,
         "Enforce metastore schema version consistency.\n" +
         "True: Verify that version information stored in metastore matches with one from Hive jars.  Also disable automatic\n" +
         "      schema migration attempt. Users are required to manually migrate schema after Hive upgrade which ensures\n" +
@@ -986,6 +986,7 @@ public class HiveConf extends Configuration {
     HIVETESTMODEDUMMYSTATAGGR("hive.test.dummystats.aggregator", "", "internal variable for test", false),
     HIVETESTMODEDUMMYSTATPUB("hive.test.dummystats.publisher", "", "internal variable for test", false),
     HIVETESTCURRENTTIMESTAMP("hive.test.currenttimestamp", null, "current timestamp for test", false),
+    HIVETESTMODEROLLBACKTXN("hive.test.rollbacktxn", false, "For testing only.  Will mark every ACID transaction aborted", false),
 
     HIVEMERGEMAPFILES("hive.merge.mapfiles", true,
         "Merge small files at the end of a map-only job"),
@@ -1503,6 +1504,9 @@ public class HiveConf extends Configuration {
     HIVE_TXN_TIMEOUT("hive.txn.timeout", "300s", new TimeValidator(TimeUnit.SECONDS),
         "time after which transactions are declared aborted if the client has not sent a heartbeat."),
 
+    HIVE_TXN_HEARTBEAT_THREADPOOL_SIZE("hive.txn.heartbeat.threadpool.size", 5, "The number of " +
+        "threads to use for heartbeating. For Hive CLI, 1 is enough. For HiveServer2, we need a few"),
+
     HIVE_TXN_MAX_OPEN_BATCH("hive.txn.max.open.batch", 1000,
         "Maximum number of transactions that can be fetched in one call to open_txns().\n" +
         "This controls how many transactions streaming agents such as Flume or Storm open\n" +
@@ -1636,7 +1640,7 @@ public class HiveConf extends Configuration {
     HIVE_AUTHORIZATION_ENABLED("hive.security.authorization.enabled", false,
         "enable or disable the Hive client authorization"),
     HIVE_AUTHORIZATION_MANAGER("hive.security.authorization.manager",
-        "org.apache.hadoop.hive.ql.security.authorization.DefaultHiveAuthorizationProvider",
+        "org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory",
         "The Hive client authorization manager class name. The user defined authorization class should implement \n" +
         "interface org.apache.hadoop.hive.ql.security.authorization.HiveAuthorizationProvider."),
     HIVE_AUTHENTICATOR_MANAGER("hive.security.authenticator.manager",
@@ -2324,21 +2328,25 @@ public class HiveConf extends Configuration {
         true,
         "Updates tez job execution progress in-place in the terminal."),
     LLAP_IO_ENABLED("hive.llap.io.enabled", false, "Whether the LLAP IO layer is enabled."),
-    LLAP_LOW_LEVEL_CACHE("hive.llap.io.use.lowlevel.cache", true, "Must always be true for now"),
-    LLAP_ORC_CACHE_MIN_ALLOC("hive.llap.io.cache.orc.alloc.min", 128 * 1024,
-        "Minimum allocation possible from LLAP low-level cache for ORC. Allocations below that\n" +
-        "will be padded to minimum allocation. Should generally be the same as expected ORC\n" +
-        "compression buffer size, or next lowest power of 2. Must be power of 2."),
-    LLAP_ORC_CACHE_MAX_ALLOC("hive.llap.io.cache.orc.alloc.max", 16 * 1024 * 1024,
-        "Maximum allocation possible from LLAP low-level cache for ORC. Should be as large as\n" +
-        "the largest expected ORC compression buffer size. Must be power of 2."),
-    LLAP_ORC_CACHE_ARENA_COUNT("hive.llap.io.cache.orc.arena.count", 8,
+    LLAP_IO_MEMORY_MODE("hive.llap.io.memory.mode", "cache",
+        new StringSet("cache", "allocator", "none"),
+        "LLAP IO memory usage; 'cache' (the default) uses data and metadata cache with a\n" +
+        "custom off-heap allocator, 'allocator' uses the custom allocator without the caches,\n" +
+        "'none' doesn't use either (this mode may result in significant performance degradation)"),
+    LLAP_ALLOCATOR_MIN_ALLOC("hive.llap.io.allocator.alloc.min", 128 * 1024,
+        "Minimum allocation possible from LLAP buddy allocator. Allocations below that are\n" +
+        "padded to minimum allocation. For ORC, should generally be the same as the expected\n" +
+        "compression buffer size, or next lowest power of 2. Must be a power of 2."),
+    LLAP_ALLOCATOR_MAX_ALLOC("hive.llap.io.allocator.alloc.max", 16 * 1024 * 1024,
+        "Maximum allocation possible from LLAP buddy allocator. For ORC, should be as large as\n" +
+        "the largest expected ORC compression buffer size. Must be a power of 2."),
+    LLAP_ALLOCATOR_ARENA_COUNT("hive.llap.io.allocator.arena.count", 8,
         "Arena count for LLAP low-level cache; cache will be allocated in the steps of\n" +
         "(size/arena_count) bytes. This size must be <= 1Gb and >= max allocation; if it is\n" +
         "not the case, an adjusted size will be used. Using powers of 2 is recommended."),
-    LLAP_ORC_CACHE_MAX_SIZE("hive.llap.io.cache.orc.size", 1024L * 1024 * 1024,
-        "Maximum size for ORC low-level cache; must be a multiple of arena size."),
-    LLAP_ORC_CACHE_ALLOCATE_DIRECT("hive.llap.io.cache.direct", true,
+    LLAP_IO_MEMORY_MAX_SIZE("hive.llap.io.memory.size", 1024L * 1024 * 1024,
+        "Maximum size for IO allocator or ORC low-level cache.", "hive.llap.io.cache.orc.size"),
+    LLAP_ALLOCATOR_DIRECT("hive.llap.io.allocator.direct", true,
         "Whether ORC low-level cache should use direct allocation."),
     LLAP_USE_LRFU("hive.llap.io.use.lrfu", false,
         "Whether ORC low-level cache should use LRFU cache policy instead of default (FIFO)."),
@@ -2392,9 +2400,10 @@ public class HiveConf extends Configuration {
         "ZooKeeper for ZooKeeper SecretManager."),
     LLAP_ZKSM_ZK_CONNECTION_STRING("hive.llap.zk.sm.connectionString", "",
         "ZooKeeper connection string for ZooKeeper SecretManager."),
-    LLAP_SECURITY_ACL("hive.llap.daemon.service.acl", "*", "The ACL for LLAP daemon."),
-    LLAP_MANAGEMENT_ACL("hive.llap.management.service.acl", "*",
-        "The ACL for LLAP daemon management."),
+    // Note: do not rename to ..service.acl; Hadoop generates .hosts setting name from this,
+    // resulting in a collision with existing hive.llap.daemon.service.hosts and bizarre errors.
+    LLAP_SECURITY_ACL("hive.llap.daemon.acl", "*", "The ACL for LLAP daemon."),
+    LLAP_MANAGEMENT_ACL("hive.llap.management.acl", "*", "The ACL for LLAP daemon management."),
     // Hadoop DelegationTokenManager default is 1 week.
     LLAP_DELEGATION_TOKEN_LIFETIME("hive.llap.daemon.delegation.token.lifetime", "14d",
          new TimeValidator(TimeUnit.SECONDS),
@@ -2408,7 +2417,8 @@ public class HiveConf extends Configuration {
       "Number of RPC handlers for LLAP daemon.", "llap.daemon.rpc.num.handlers"),
     LLAP_DAEMON_WORK_DIRS("hive.llap.daemon.work.dirs", "",
       "Working directories for the daemon. Needs to be set for a secure cluster, since LLAP may\n" +
-      "not have access to the default YARN working directories.", "llap.daemon.work.dirs"),
+      "not have access to the default YARN working directories. yarn.nodemanager.local-dirs is\n" +
+      "used if this is not set", "llap.daemon.work.dirs"),
     LLAP_DAEMON_YARN_SHUFFLE_PORT("hive.llap.daemon.yarn.shuffle.port", 15551,
       "YARN shuffle port for LLAP-daemon-hosted shuffle.", "llap.daemon.yarn.shuffle.port"),
     LLAP_DAEMON_YARN_CONTAINER_MB("hive.llap.daemon.yarn.container.mb", -1,
@@ -3198,8 +3208,7 @@ public class HiveConf extends Configuration {
     }
 
     if (getBoolVar(ConfVars.METASTORE_SCHEMA_VERIFICATION)) {
-      setBoolVar(ConfVars.METASTORE_AUTO_CREATE_SCHEMA, false);
-      setBoolVar(ConfVars.METASTORE_FIXED_DATASTORE, true);
+      setBoolVar(ConfVars.METASTORE_AUTO_CREATE_ALL, false);
     }
 
     if (getBoolVar(HiveConf.ConfVars.HIVECONFVALIDATION)) {

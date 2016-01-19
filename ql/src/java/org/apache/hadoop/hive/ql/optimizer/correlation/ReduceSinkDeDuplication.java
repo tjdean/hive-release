@@ -47,6 +47,7 @@ import org.apache.hadoop.hive.ql.lib.RuleRegExp;
 import org.apache.hadoop.hive.ql.optimizer.Transform;
 import org.apache.hadoop.hive.ql.parse.ParseContext;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
+import org.apache.hadoop.hive.ql.plan.ExprNodeConstantDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeDescUtils;
 import org.apache.hadoop.hive.ql.plan.PlanUtils;
@@ -186,22 +187,24 @@ public class ReduceSinkDeDuplication extends Transform {
       List<Operator<?>> parents = pJoin.getParentOperators();
       ReduceSinkOperator[] pRSs = parents.toArray(new ReduceSinkOperator[parents.size()]);
       ReduceSinkDesc cRSc = cRS.getConf();
-      ReduceSinkDesc pRS0c = pRSs[0].getConf();
-      if (cRSc.getKeyCols().size() < pRS0c.getKeyCols().size()) {
-        return false;
-      }
-      if (cRSc.getPartitionCols().size() != pRS0c.getPartitionCols().size()) {
-        return false;
-      }
-      Integer moveReducerNumTo = checkNumReducer(cRSc.getNumReducers(), pRS0c.getNumReducers());
-      if (moveReducerNumTo == null ||
-          moveReducerNumTo > 0 && cRSc.getNumReducers() < minReducer) {
-        return false;
-      }
+      for (ReduceSinkOperator pRSNs : pRSs) {
+        ReduceSinkDesc pRSNc = pRSNs.getConf();
+        if (cRSc.getKeyCols().size() < pRSNc.getKeyCols().size()) {
+          return false;
+        }
+        if (cRSc.getPartitionCols().size() != pRSNc.getPartitionCols().size()) {
+          return false;
+        }
+        Integer moveReducerNumTo = checkNumReducer(cRSc.getNumReducers(), pRSNc.getNumReducers());
+        if (moveReducerNumTo == null ||
+            moveReducerNumTo > 0 && cRSc.getNumReducers() < minReducer) {
+          return false;
+        }
 
-      Integer moveRSOrderTo = checkOrder(cRSc.getOrder(), pRS0c.getOrder());
-      if (moveRSOrderTo == null) {
-        return false;
+        Integer moveRSOrderTo = checkOrder(cRSc.getOrder(), pRSNc.getOrder());
+        if (moveRSOrderTo == null) {
+          return false;
+        }
       }
 
       boolean[] sorted = CorrelationUtilities.getSortedTags(pJoin);
@@ -231,11 +234,10 @@ public class ReduceSinkDeDuplication extends Transform {
         }
       }
 
-      if (moveReducerNumTo > 0) {
-        for (ReduceSinkOperator pRS : pRSs) {
-          pRS.getConf().setNumReducers(cRS.getConf().getNumReducers());
-        }
+      for (ReduceSinkOperator pRS : pRSs) {
+        pRS.getConf().setNumReducers(cRS.getConf().getNumReducers());
       }
+
       return true;
     }
 
@@ -387,6 +389,18 @@ public class ReduceSinkDeDuplication extends Transform {
      */
     private Integer checkExprs(List<ExprNodeDesc> ckeys, List<ExprNodeDesc> pkeys,
         ReduceSinkOperator cRS, ReduceSinkOperator pRS) throws SemanticException {
+      // If ckeys or pkeys have constant node expressions avoid the merge.
+      for (ExprNodeDesc ck : ckeys) {
+        if (ck instanceof ExprNodeConstantDesc) {
+          return null;
+        }
+      }
+      for (ExprNodeDesc pk : pkeys) {
+        if (pk instanceof ExprNodeConstantDesc) {
+          return null;
+        }
+      }
+
       Integer moveKeyColTo = 0;
       if (ckeys == null || ckeys.isEmpty()) {
         if (pkeys != null && !pkeys.isEmpty()) {

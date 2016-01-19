@@ -55,6 +55,7 @@ import javax.jdo.datastore.DataStoreCache;
 import javax.jdo.identity.IntIdentity;
 
 import com.google.common.annotations.VisibleForTesting;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configurable;
@@ -62,6 +63,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.common.ObjectPair;
+import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.common.classification.InterfaceAudience;
 import org.apache.hadoop.hive.common.classification.InterfaceStability;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -148,6 +150,7 @@ import org.apache.hive.common.util.HiveStringUtils;
 import org.apache.thrift.TException;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.NucleusContext;
+import org.datanucleus.AbstractNucleusContext;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
 import org.datanucleus.store.rdbms.exceptions.MissingTableException;
 
@@ -6424,12 +6427,24 @@ public class ObjectStore implements RawStore, Configurable {
       // DataNucleus objects get detached all over the place for no (real) reason.
       // So let's not use them anywhere unless absolutely necessary.
       Table table = ensureGetTable(statsDesc.getDbName(), statsDesc.getTableName());
+      List<String> colNames = new ArrayList<>();
       for (ColumnStatisticsObj statsObj:statsObjs) {
         // We have to get mtable again because DataNucleus.
         MTableColumnStatistics mStatsObj = StatObjectConverter.convertToMTableColumnStatistics(
             ensureGetMTable(statsDesc.getDbName(), statsDesc.getTableName()), statsDesc, statsObj);
         writeMTableColumnStatistics(table, mStatsObj);
+        colNames.add(statsObj.getColName());
       }
+
+      // Set the table properties
+      // No need to check again if it exists.
+      String dbname = table.getDbName();
+      String name = table.getTableName();
+      MTable oldt = getMTable(dbname, name);
+      Map<String, String> parameters = table.getParameters();
+      StatsSetupConst.setColumnStatsState(parameters, colNames);
+      oldt.setParameters(parameters);
+
       committed = commitTransaction();
       return committed;
     } finally {
@@ -6451,6 +6466,7 @@ public class ObjectStore implements RawStore, Configurable {
     Table table = ensureGetTable(statsDesc.getDbName(), statsDesc.getTableName());
     Partition partition = convertToPart(getMPartition(
         statsDesc.getDbName(), statsDesc.getTableName(), partVals));
+    List<String> colNames = new ArrayList<>();
     for (ColumnStatisticsObj statsObj:statsObjs) {
       // We have to get partition again because DataNucleus
       MPartition mPartition = getMPartition(
@@ -6461,7 +6477,15 @@ public class ObjectStore implements RawStore, Configurable {
       MPartitionColumnStatistics mStatsObj =
           StatObjectConverter.convertToMPartitionColumnStatistics(mPartition, statsDesc, statsObj);
       writeMPartitionColumnStatistics(table, partition, mStatsObj);
+      colNames.add(statsObj.getColName());
     }
+    // Set the partition properties
+    // No need to check again if it exists.
+    MPartition mPartition = getMPartition(
+        statsDesc.getDbName(), statsDesc.getTableName(), partVals);
+    Map<String, String> parameters = mPartition.getParameters();
+    StatsSetupConst.setColumnStatsState(parameters, colNames);
+    mPartition.setParameters(parameters);
     committed = commitTransaction();
     return committed;
     } finally {
@@ -7757,8 +7781,8 @@ public class ObjectStore implements RawStore, Configurable {
       JDOPersistenceManagerFactory jdoPmf = (JDOPersistenceManagerFactory) pmf;
       NucleusContext nc = jdoPmf.getNucleusContext();
       try {
-        Field classLoaderResolverMap =
-            NucleusContext.class.getDeclaredField("classLoaderResolverMap");
+        Field classLoaderResolverMap = AbstractNucleusContext.class.getDeclaredField(
+            "classLoaderResolverMap");
         classLoaderResolverMap.setAccessible(true);
         classLoaderResolverMap.set(nc, new HashMap<String, ClassLoaderResolver>());
         LOG.debug("Removed cached classloaders from DataNucleus NucleusContext");

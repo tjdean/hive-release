@@ -258,7 +258,11 @@ public class LlapDaemon extends CompositeService implements ContainerRunner, Lla
   public void shutdown() {
     LOG.info("LlapDaemon shutdown invoked");
     if (llapDaemonInfoBean != null) {
-      MBeans.unregister(llapDaemonInfoBean);
+      try {
+        MBeans.unregister(llapDaemonInfoBean);
+      } catch (Throwable ex) {
+        LOG.info("Error unregistering the bean; ignoring", ex);
+      }
     }
 
     if (pauseMonitor != null) {
@@ -282,6 +286,9 @@ public class LlapDaemon extends CompositeService implements ContainerRunner, Lla
       int numExecutors = HiveConf.getIntVar(daemonConf, ConfVars.LLAP_DAEMON_NUM_EXECUTORS);
 
       String localDirList = HiveConf.getVar(daemonConf, ConfVars.LLAP_DAEMON_WORK_DIRS);
+      if (localDirList == null || localDirList.isEmpty()) {
+        localDirList = daemonConf.get("yarn.nodemanager.local-dirs");
+      }
       String[] localDirs = (localDirList == null || localDirList.isEmpty()) ?
           new String[0] : StringUtils.getTrimmedStrings(localDirList);
       int rpcPort = HiveConf.getIntVar(daemonConf, ConfVars.LLAP_DAEMON_RPC_PORT);
@@ -290,14 +297,12 @@ public class LlapDaemon extends CompositeService implements ContainerRunner, Lla
           .getInt(ShuffleHandler.SHUFFLE_PORT_CONFIG_KEY, ShuffleHandler.DEFAULT_SHUFFLE_PORT);
       long executorMemoryBytes = HiveConf.getIntVar(
           daemonConf, ConfVars.LLAP_DAEMON_MEMORY_PER_INSTANCE_MB) * 1024l * 1024l;
-      long cacheMemoryBytes =
-          HiveConf.getLongVar(daemonConf, HiveConf.ConfVars.LLAP_ORC_CACHE_MAX_SIZE);
-      boolean isDirectCache =
-          HiveConf.getBoolVar(daemonConf, HiveConf.ConfVars.LLAP_ORC_CACHE_ALLOCATE_DIRECT);
+
+      long ioMemoryBytes = HiveConf.getLongVar(daemonConf, ConfVars.LLAP_IO_MEMORY_MAX_SIZE);
+      boolean isDirectCache = HiveConf.getBoolVar(daemonConf, ConfVars.LLAP_ALLOCATOR_DIRECT);
       boolean llapIoEnabled = HiveConf.getBoolVar(daemonConf, HiveConf.ConfVars.LLAP_IO_ENABLED);
-      llapDaemon =
-          new LlapDaemon(daemonConf, numExecutors, executorMemoryBytes, llapIoEnabled, isDirectCache,
-              cacheMemoryBytes, localDirs, rpcPort, mngPort, shufflePort);
+      llapDaemon = new LlapDaemon(daemonConf, numExecutors, executorMemoryBytes, llapIoEnabled,
+              isDirectCache, ioMemoryBytes, localDirs, rpcPort, mngPort, shufflePort);
 
       LOG.info("Adding shutdown hook for LlapDaemon");
       ShutdownHookManager.addShutdownHook(new CompositeServiceShutdownHook(llapDaemon), 1);

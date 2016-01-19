@@ -322,7 +322,9 @@ public class CalcitePlanner extends SemanticAnalyzer {
               || e instanceof CalciteSemanticException) {
             reAnalyzeAST = true;
           } else if (e instanceof SemanticException) {
-            throw (SemanticException) e;
+            // although, its likely to be a valid exception, we will retry
+            // with cbo off anyway.
+            reAnalyzeAST = true;
           } else if (e instanceof RuntimeException) {
             throw (RuntimeException) e;
           } else {
@@ -895,26 +897,26 @@ public class CalcitePlanner extends SemanticAnalyzer {
           list.add(mdProvider.getMetadataProvider());
           RelTraitSet desiredTraits = cluster
               .traitSetOf(HiveRelNode.CONVENTION, RelCollations.EMPTY);
-  
+
           HepProgramBuilder hepPgmBldr = new HepProgramBuilder().addMatchOrder(HepMatchOrder.BOTTOM_UP);
           hepPgmBldr.addRuleInstance(new JoinToMultiJoinRule(HiveJoin.class));
           hepPgmBldr.addRuleInstance(new LoptOptimizeJoinRule(HiveRelFactories.HIVE_JOIN_FACTORY,
               HiveRelFactories.HIVE_PROJECT_FACTORY, HiveRelFactories.HIVE_FILTER_FACTORY));
-  
+
           HepProgram hepPgm = hepPgmBldr.build();
           HepPlanner hepPlanner = new HepPlanner(hepPgm);
-  
+
           hepPlanner.registerMetadataProviders(list);
           RelMetadataProvider chainedProvider = ChainedRelMetadataProvider.of(list);
           cluster.setMetadataProvider(new CachingRelMetadataProvider(chainedProvider, hepPlanner));
-  
+
           RelNode rootRel = calcitePreCboPlan;
           hepPlanner.setRoot(rootRel);
           if (!calcitePreCboPlan.getTraitSet().equals(desiredTraits)) {
             rootRel = hepPlanner.changeTraits(calcitePreCboPlan, desiredTraits);
           }
           hepPlanner.setRoot(rootRel);
-  
+
           calciteOptimizedPlan = hepPlanner.findBestExp();
         } catch (Exception e) {
           boolean isMissingStats = noColsMissingStats.get() > 0;
@@ -1347,24 +1349,11 @@ public class CalcitePlanner extends SemanticAnalyzer {
 
     private RelNode genJoinRelNode(RelNode leftRel, RelNode rightRel, JoinType hiveJoinType,
         ASTNode joinCond) throws SemanticException {
-      RelNode joinRel = null;
 
-      // 1. construct the RowResolver for the new Join Node by combining row
-      // resolvers from left, right
       RowResolver leftRR = this.relToHiveRR.get(leftRel);
       RowResolver rightRR = this.relToHiveRR.get(rightRel);
-      RowResolver joinRR = null;
 
-      if (hiveJoinType != JoinType.LEFTSEMI) {
-        joinRR = RowResolver.getCombinedRR(leftRR, rightRR);
-      } else {
-        joinRR = new RowResolver();
-        if (!RowResolver.add(joinRR, leftRR)) {
-          LOG.warn("Duplicates detected when adding columns to RR: see previous message");
-        }
-      }
-
-      // 2. Construct ExpressionNodeDesc representing Join Condition
+      // 1. Construct ExpressionNodeDesc representing Join Condition
       RexNode calciteJoinCond = null;
       if (joinCond != null) {
         JoinTypeCheckCtx jCtx = new JoinTypeCheckCtx(leftRR, rightRR, hiveJoinType);
@@ -1385,12 +1374,12 @@ public class CalcitePlanner extends SemanticAnalyzer {
         calciteJoinCond = cluster.getRexBuilder().makeLiteral(true);
       }
 
-      // 3. Validate that join condition is legal (i.e no function refering to
+      // 2. Validate that join condition is legal (i.e no function refering to
       // both sides of join, only equi join)
       // TODO: Join filter handling (only supported for OJ by runtime or is it
       // supported for IJ as well)
 
-      // 4. Construct Join Rel Node
+      // 3. Construct Join Rel Node and RowResolver for the new Join Node
       boolean leftSemiJoin = false;
       JoinRelType calciteJoinType;
       switch (hiveJoinType) {
@@ -1413,6 +1402,8 @@ public class CalcitePlanner extends SemanticAnalyzer {
         break;
       }
 
+      RelNode topRel = null;
+      RowResolver topRR = null;
       if (leftSemiJoin) {
         List<RelDataTypeField> sysFieldList = new ArrayList<RelDataTypeField>();
         List<RexNode> leftJoinKeys = new ArrayList<RexNode>();
@@ -1432,19 +1423,60 @@ public class CalcitePlanner extends SemanticAnalyzer {
         calciteJoinCond = HiveCalciteUtil.projectNonColumnEquiConditions(
             HiveRelFactories.HIVE_PROJECT_FACTORY, inputRels, leftJoinKeys, rightJoinKeys, 0,
             leftKeys, rightKeys);
-
-        joinRel = HiveSemiJoin.getSemiJoin(cluster, cluster.traitSetOf(HiveRelNode.CONVENTION),
+        topRel = HiveSemiJoin.getSemiJoin(cluster, cluster.traitSetOf(HiveRelNode.CONVENTION),
             inputRels[0], inputRels[1], calciteJoinCond, ImmutableIntList.copyOf(leftKeys),
             ImmutableIntList.copyOf(rightKeys));
-      } else {
-        joinRel = HiveJoin.getJoin(cluster, leftRel, rightRel, calciteJoinCond, calciteJoinType,
-            leftSemiJoin);
-      }
-      // 5. Add new JoinRel & its RR to the maps
-      relToHiveColNameCalcitePosMap.put(joinRel, this.buildHiveToCalciteColumnMap(joinRR, joinRel));
-      relToHiveRR.put(joinRel, joinRR);
 
-      return joinRel;
+        // Create join RR: we need to check whether we need to update left RR in case
+        // previous call to projectNonColumnEquiConditions updated it
+        if (inputRels[0] != leftRel) {
+          RowResolver newLeftRR = new RowResolver();
+          if (!RowResolver.add(newLeftRR, leftRR)) {
+            LOG.warn("Duplicates detected when adding columns to RR: see previous message");
+          }
+          for (int i = leftRel.getRowType().getFieldCount();
+                  i < inputRels[0].getRowType().getFieldCount(); i++) {
+            ColumnInfo oColInfo = new ColumnInfo(
+                SemanticAnalyzer.getColumnInternalName(i),
+                TypeConverter.convert(inputRels[0].getRowType().getFieldList().get(i).getType()),
+                null, false);
+            newLeftRR.put(oColInfo.getTabAlias(), oColInfo.getInternalName(), oColInfo);
+          }
+
+          RowResolver joinRR = new RowResolver();
+          if (!RowResolver.add(joinRR, newLeftRR)) {
+            LOG.warn("Duplicates detected when adding columns to RR: see previous message");
+          }
+          relToHiveColNameCalcitePosMap.put(topRel, this.buildHiveToCalciteColumnMap(joinRR, topRel));
+          relToHiveRR.put(topRel, joinRR);
+
+          // Introduce top project operator to remove additional column(s) that have
+          // been introduced
+          List<RexNode> topFields = new ArrayList<RexNode>();
+          List<String> topFieldNames = new ArrayList<String>();
+          for (int i = 0; i < leftRel.getRowType().getFieldCount(); i++) {
+            final RelDataTypeField field = leftRel.getRowType().getFieldList().get(i);
+            topFields.add(leftRel.getCluster().getRexBuilder().makeInputRef(field.getType(), i));
+            topFieldNames.add(field.getName());
+          }
+          topRel = HiveRelFactories.HIVE_PROJECT_FACTORY.createProject(topRel, topFields, topFieldNames);
+        }
+
+        topRR = new RowResolver();
+        if (!RowResolver.add(topRR, leftRR)) {
+          LOG.warn("Duplicates detected when adding columns to RR: see previous message");
+        }
+      } else {
+        topRel = HiveJoin.getJoin(cluster, leftRel, rightRel, calciteJoinCond, calciteJoinType,
+            leftSemiJoin);
+        topRR = RowResolver.getCombinedRR(leftRR, rightRR);
+      }
+
+      // 4. Add new rel & its RR to the maps
+      relToHiveColNameCalcitePosMap.put(topRel, this.buildHiveToCalciteColumnMap(topRR, topRel));
+      relToHiveRR.put(topRel, topRR);
+
+      return topRel;
     }
 
     /**
@@ -1600,7 +1632,7 @@ public class CalcitePlanner extends SemanticAnalyzer {
           VirtualColumn vc = vcs.next();
           colInfo = new ColumnInfo(vc.getName(), vc.getTypeInfo(), tableAlias, true,
               vc.getIsHidden());
-          rr.put(tableAlias, vc.getName(), colInfo);
+          rr.put(tableAlias, vc.getName().toLowerCase(), colInfo);
           cInfoLst.add(colInfo);
           virtualCols.add(vc);
         }
@@ -2890,6 +2922,7 @@ public class CalcitePlanner extends SemanticAnalyzer {
             ExprNodeColumnDesc colExp = (ExprNodeColumnDesc) exp;
             String[] altMapping = inputRR.getAlternateMappings(colExp.getColumn());
             if (altMapping != null) {
+              // TODO: this can overwrite the mapping. Should this be allowed?
               out_rwsch.put(altMapping[0], altMapping[1], colInfo);
             }
           }
