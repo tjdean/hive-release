@@ -164,14 +164,17 @@ public class VectorizedRowBatchCtx {
         String key = vrbCtx.rowColumnNames[vrbCtx.dataColumnCount + i];
 
         // Create a Standard java object Inspector
+        TypeInfo partColTypeInfo = vrbCtx.rowColumnTypeInfos[vrbCtx.dataColumnCount + i];
         ObjectInspector objectInspector =
-            TypeInfoUtils.getStandardJavaObjectInspectorFromTypeInfo(
-                vrbCtx.rowColumnTypeInfos[vrbCtx.dataColumnCount + i]);
+            TypeInfoUtils.getStandardJavaObjectInspectorFromTypeInfo(partColTypeInfo);
         objectValue =
             ObjectInspectorConverters.
                 getConverter(PrimitiveObjectInspectorFactory.
                     javaStringObjectInspector, objectInspector).
                         convert(partSpec.get(key));
+        if (partColTypeInfo instanceof CharTypeInfo) {
+          objectValue = ((HiveChar) objectValue).getStrippedValue();
+        }
       }
       partitionValues[i] = objectValue;
     }
