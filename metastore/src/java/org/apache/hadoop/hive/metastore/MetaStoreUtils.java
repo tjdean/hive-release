@@ -192,7 +192,7 @@ public class MetaStoreUtils {
 
     Map<String,String> params = tbl.getParameters();
 
-    if (params.containsKey(StatsSetupConst.DO_NOT_UPDATE_STATS)){
+    if ((params!= null) && params.containsKey(StatsSetupConst.DO_NOT_UPDATE_STATS)){
       boolean doNotUpdateStats = Boolean.valueOf(params.get(StatsSetupConst.DO_NOT_UPDATE_STATS));
       params.remove(StatsSetupConst.DO_NOT_UPDATE_STATS);
       tbl.setParameters(params); // to make sure we remove this marker property
