@@ -5,7 +5,7 @@ import urllib2
 import sys
 import os
 
-patchFile = "hive-source-2.3.patch"
+patchFile = "hive-source-2.4.patch"
 
 #### try to revert patch if it exists
 statusOut = subprocess.check_output(["git", "status"])
@@ -25,7 +25,7 @@ except OSError:
 #### done removing the old patch file
 
 #### fetch the patch file
-url = 'http://dev.hortonworks.com.s3.amazonaws.com/HDP/centos6/2.x/PATCH_FILES/2.3.4.0/patch_files/hive-source.patch'
+url = 'http://dev.hortonworks.com.s3.amazonaws.com/HDP/centos6/2.x/PATCH_FILES/2.4.0.0/patch_files/hive-source.patch'
 response = urllib2.urlopen(url)
 downloadPatch = response.read()
 #### end of fetch of patch file
