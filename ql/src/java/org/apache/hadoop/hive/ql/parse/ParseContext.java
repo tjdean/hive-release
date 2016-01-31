@@ -111,6 +111,7 @@ public class ParseContext {
 
   private AnalyzeRewriteContext analyzeRewrite;
   private CreateTableDesc createTableDesc;
+  private boolean reduceSinkAddedBySortedDynPartition;
 
   private Map<SelectOperator, Table> viewProjectToViewSchema;  
   private ColumnAccessInfo columnAccessInfo;
@@ -582,5 +583,14 @@ public class ParseContext {
 
   public Map<String, Table> getTabNameToTabObject() {
     return tabNameToTabObject;
+  }
+  
+  public void setReduceSinkAddedBySortedDynPartition(
+      final boolean reduceSinkAddedBySortedDynPartition) {
+    this.reduceSinkAddedBySortedDynPartition = reduceSinkAddedBySortedDynPartition;
+  }
+
+  public boolean isReduceSinkAddedBySortedDynPartition() {
+    return reduceSinkAddedBySortedDynPartition;
   }
 }
