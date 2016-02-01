@@ -21,6 +21,7 @@ package org.apache.hadoop.hive.ql.exec;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.Future;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,7 +31,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.Future;
+import java.util.TreeMap;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -106,6 +107,8 @@ public class MapOperator extends Operator<MapWork> implements Serializable, Clon
   // context for current input file
   protected transient MapOpCtx[] currentCtxs;
   private transient final Map<String, Path> normalizedPaths = new HashMap<String, Path>();
+  private final Map<Integer, DummyStoreOperator> connectedOperators
+      = new TreeMap<Integer, DummyStoreOperator>();
 
   protected static class MapOpCtx {
 
@@ -692,4 +695,17 @@ public class MapOperator extends Operator<MapWork> implements Serializable, Clon
 
     return currentCtxs[0].deserializer;
   }
+
+  public void clearConnectedOperators() {
+    connectedOperators.clear();
+  }
+
+  public void setConnectedOperators(int tag, DummyStoreOperator dummyOp) {
+    connectedOperators.put(tag, dummyOp);
+  }
+
+  public Map<Integer, DummyStoreOperator> getConnectedOperators() {
+    return connectedOperators;
+  }
+
 }

@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.Callable;
 
 import org.apache.commons.logging.Log;
@@ -87,9 +86,6 @@ public class MapRecordProcessor extends RecordProcessor {
   List<BaseWork> mergeWorkList = null;
   List<String> cacheKeys;
   ObjectCache cache;
-
-  private static Map<Integer, DummyStoreOperator> connectOps =
-    new TreeMap<Integer, DummyStoreOperator>();
 
   public MapRecordProcessor(final JobConf jconf, final ProcessorContext context) throws Exception {
     super(jconf, context);
@@ -153,7 +149,8 @@ public class MapRecordProcessor extends RecordProcessor {
 
       mapOp.setExecContext(execContext);
 
-      connectOps.clear();
+      mapOp.clearConnectedOperators();
+      boolean fromCache = false;
       if (mergeWorkList != null) {
         MapOperator mergeMapOp = null;
         for (BaseWork mergeWork : mergeWorkList) {
@@ -198,14 +195,15 @@ public class MapRecordProcessor extends RecordProcessor {
               mergeMapOp.setChildren(jconf);
             }
 
-            l4j.info("BUG-48404: Class cast for operator tree of Map Work: " +
-                mergeMapWork.getName() + " operator pipeline: ");
-            DummyStoreOperator dummyOp = getJoinParentOp(mergeMapOp);
-            if (dummyOp instanceof TezDummyStoreOperator) {
-              // we ensure that we don't try to read any data for this table.
-              ((TezDummyStoreOperator) dummyOp).setFetchDone(skipRead);
+            Operator<? extends OperatorDesc> finalOp = getFinalOp(mergeMapOp);
+            if (finalOp instanceof TezDummyStoreOperator) {
+              // we ensure that we don't try to read any data in case of skip read.
+              ((TezDummyStoreOperator) finalOp).setFetchDone(skipRead);
+              mapOp.setConnectedOperators(mergeMapWork.getTag(), (DummyStoreOperator) finalOp);
+            } else {
+              // found the plan is already connected which means this is derived from the cache.
+              fromCache = true;
             }
-            connectOps.put(mergeMapWork.getTag(), dummyOp);
 
             mergeMapOp.passExecContext(new ExecMapperContext(jconf));
             mergeMapOp.initializeLocalWork(jconf);
@@ -213,7 +211,10 @@ public class MapRecordProcessor extends RecordProcessor {
         }
       }
 
-      ((TezContext) (MapredContext.get())).setDummyOpsMap(connectOps);
+      if (!fromCache) {
+        // if not from cache, we still need to hook up the plans.
+        ((TezContext) (MapredContext.get())).setDummyOpsMap(mapOp.getConnectedOperators());
+      }
 
       // initialize map operator
       mapOp.setConf(mapWork);
@@ -308,14 +309,12 @@ public class MapRecordProcessor extends RecordProcessor {
     return reader;
   }
 
-  private DummyStoreOperator getJoinParentOp(Operator<? extends OperatorDesc> mergeMapOp) {
-    l4j.info("BUG-48404: Operator is " + mergeMapOp + " is of type " +
-        mergeMapOp.getClass().getCanonicalName());
+  private Operator<? extends OperatorDesc> getFinalOp(Operator<? extends OperatorDesc> mergeMapOp) {
     for (Operator<? extends OperatorDesc> childOp : mergeMapOp.getChildOperators()) {
       if ((childOp.getChildOperators() == null) || (childOp.getChildOperators().isEmpty())) {
-        return (DummyStoreOperator) childOp;
+        return childOp;
       } else {
-        return getJoinParentOp(childOp);
+        return getFinalOp(childOp);
       }
     }
     return null;
