@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Collection;
 
+import org.apache.hadoop.hive.llap.daemon.rpc.LlapDaemonProtocolProtos;
+import org.apache.hadoop.hive.llap.tezplugins.LlapTezUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -172,7 +174,8 @@ public class LlapServiceDriver {
     }
 
     if (options.getCache() != -1) {
-      conf.setLong(HiveConf.ConfVars.LLAP_IO_MEMORY_MAX_SIZE.varname, options.getCache());
+      conf.set(HiveConf.ConfVars.LLAP_IO_MEMORY_MAX_SIZE.varname,
+          Long.toString(options.getCache()));
     }
 
     if (options.getXmx() != -1) {
@@ -216,7 +219,13 @@ public class LlapServiceDriver {
     CompressionUtils.unTar(new Path(libDir, "tez.tar.gz").toString(), libDir.toString(), true);
     lfs.delete(new Path(libDir, "tez.tar.gz"), false);
 
+    // llap-common
+    lfs.copyFromLocalFile(new Path(Utilities.jarFinderGetJar(LlapDaemonProtocolProtos.class)), libDir);
+    // llap-tez
+    lfs.copyFromLocalFile(new Path(Utilities.jarFinderGetJar(LlapTezUtils.class)), libDir);
+    // llap-server
     lfs.copyFromLocalFile(new Path(Utilities.jarFinderGetJar(LlapInputFormat.class)), libDir);
+    // hive-exec
     lfs.copyFromLocalFile(new Path(Utilities.jarFinderGetJar(HiveInputFormat.class)), libDir);
 
     // copy default aux classes (json/hbase)
@@ -271,14 +280,25 @@ public class LlapServiceDriver {
 
     lfs.copyFromLocalFile(new Path(logger.toString()), confPath);
 
+    String java_home = System.getenv("JAVA_HOME");
+    String jre_home = System.getProperty("java.home");
+    if (java_home == null) {
+      java_home = jre_home;
+    } else if (!java_home.equals(jre_home)) {
+      LOG.warn("Java versions might not match : JAVA_HOME=%s,process jre=%s", 
+          java_home, jre_home);
+    }
+
     // extract configs for processing by the python fragments in Slider
     JSONObject configs = new JSONObject();
+
+    configs.put("java.home", java_home);
 
     configs.put(ConfVars.LLAP_DAEMON_YARN_CONTAINER_MB.varname, HiveConf.getIntVar(conf,
         ConfVars.LLAP_DAEMON_YARN_CONTAINER_MB));
 
     configs.put(HiveConf.ConfVars.LLAP_IO_MEMORY_MAX_SIZE.varname,
-        HiveConf.getLongVar(conf, HiveConf.ConfVars.LLAP_IO_MEMORY_MAX_SIZE));
+        HiveConf.getSizeVar(conf, HiveConf.ConfVars.LLAP_IO_MEMORY_MAX_SIZE));
 
     configs.put(HiveConf.ConfVars.LLAP_ALLOCATOR_DIRECT.varname,
         HiveConf.getBoolVar(conf, HiveConf.ConfVars.LLAP_ALLOCATOR_DIRECT));

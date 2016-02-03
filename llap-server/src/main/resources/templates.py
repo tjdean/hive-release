@@ -88,7 +88,10 @@ appConfig = """
   },
   "components": {
     "slider-appmaster": {
-      "jvm.heapsize": "1024M"
+      "jvm.heapsize": "1024M",
+      "slider.hdfs.keytab.dir": "%(slider_keytab_dir)s",
+      "slider.am.login.keytab.name": "%(slider_keytab)s",
+      "slider.keytab.principal.name": "%(slider_principal)s"
     }
   }
 }
@@ -107,18 +110,21 @@ resources = """
     "LLAP": {
       "yarn.role.priority": "1",
       "yarn.component.instances": "%(instances)d",
-      "yarn.memory": "%(container.mb)d"
+      "yarn.memory": "%(container.mb)d",
+      "yarn.component.placement.policy" : "4"
     }
   }
 }
 """
+# placement policy "4" is a bit-mask
+# only bit set is Slider PlacementPolicy.ANTI_AFFINITY_REQUIRED(4)
 
 runner = """
 #!/bin/bash -e
 
 BASEDIR=$(dirname $0)
 slider stop %(name)s
-slider destroy %(name)s --force
+slider destroy %(name)s --force || slider destroy %(name)s
 slider install-package --name LLAP --package  $BASEDIR/llap-%(version)s.zip --replacepkg
 slider create %(name)s --resources $BASEDIR/resources.json --template $BASEDIR/appConfig.json
 """

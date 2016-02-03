@@ -59,6 +59,7 @@ import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.yarn.api.records.ApplicationReport;
 import org.apache.hadoop.yarn.api.records.LocalResource;
 import org.apache.hadoop.yarn.api.records.LocalResourceType;
+import org.apache.tez.client.CallerContext;
 import org.apache.tez.client.TezClient;
 import org.apache.tez.common.counters.CounterGroup;
 import org.apache.tez.common.counters.TezCounter;
@@ -172,6 +173,14 @@ public class TezTask extends Task<TezWork> {
 
       // next we translate the TezWork to a Tez DAG
       DAG dag = build(jobConf, work, scratchDir, appJarLr, additionalLr, ctx);
+
+      if (driverContext.getCtx() == null) {
+        boolean a = false;
+      }
+      CallerContext callerContext = CallerContext.create(
+          "HIVE", queryPlan.getQueryId(),
+          "HIVE_QUERY_ID", queryPlan.getQueryStr());
+      dag.setCallerContext(callerContext);
 
       // Add the extra resources to the dag
       addExtraResourcesToDag(session, dag, inputOutputJars, inputOutputLocalResources);
@@ -311,7 +320,10 @@ public class TezTask extends Task<TezWork> {
     FileSystem fs = scratchDir.getFileSystem(conf);
 
     // the name of the dag is what is displayed in the AM/Job UI
-    DAG dag = DAG.create(work.getName());
+    String dagName = utils.createDagName(conf, queryPlan);
+
+    LOG.info("Dag name: " + dagName);
+    DAG dag = DAG.create(dagName);
 
     // set some info for the query
     JSONObject json = new JSONObject(new LinkedHashMap()).put("context", "Hive")

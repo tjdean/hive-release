@@ -21,7 +21,7 @@
   </parent>
   <groupId>org.apache.hive</groupId>
   <artifactId>hive</artifactId>
-  <version>2.0.0-SNAPSHOT</version>
+  <version>2.0.0</version>
   <packaging>pom</packaging>
 
   <name>Hive</name>
@@ -48,8 +48,10 @@
     <module>ql</module>
     <module>serde</module>
     <module>service</module>
-    <module>llap-server</module>
+    <module>llap-common</module>
     <module>llap-client</module>
+    <module>llap-tez</module>
+    <module>llap-server</module>
     <module>shims</module>
     <module>spark-client</module>
     <module>storage-api</module>
@@ -138,6 +140,7 @@
     <jackson.new.version>2.4.2</jackson.new.version>
     <jasper.version>5.5.23</jasper.version>
     <javaewah.version>0.3.2</javaewah.version>
+    <javax-servlet.version>3.0.0.v201112011016</javax-servlet.version>
     <javolution.version>5.5.1</javolution.version>
     <jdo-api.version>3.0.1</jdo-api.version>
     <jetty.version>7.6.0.v20120127</jetty.version>
@@ -162,7 +165,7 @@
     <stax.version>1.0.1</stax.version>
     <slf4j.version>1.7.5</slf4j.version>
     <ST4.version>4.0.4</ST4.version>
-    <tez.version>0.8.2-SNAPSHOT</tez.version>
+    <tez.version>0.8.2</tez.version>
     <super-csv.version>2.2.0</super-csv.version>
     <spark.version>1.5.0</spark.version>
     <scala.binary.version>2.10</scala.binary.version>

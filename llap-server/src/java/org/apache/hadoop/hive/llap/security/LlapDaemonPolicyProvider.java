@@ -18,17 +18,17 @@
 package org.apache.hadoop.hive.llap.security;
 
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.llap.daemon.LlapDaemonProtocolBlockingPB;
-import org.apache.hadoop.hive.llap.daemon.LlapManagementProtocolBlockingPB;
+import org.apache.hadoop.hive.llap.protocol.LlapProtocolBlockingPB;
+import org.apache.hadoop.hive.llap.protocol.LlapManagementProtocolPB;
 import org.apache.hadoop.security.authorize.PolicyProvider;
 import org.apache.hadoop.security.authorize.Service;
 
 public class LlapDaemonPolicyProvider extends PolicyProvider {
   private static final Service[] services = new Service[] {
     new Service(HiveConf.ConfVars.LLAP_SECURITY_ACL.varname,
-        LlapDaemonProtocolBlockingPB.class),
+        LlapProtocolBlockingPB.class),
     new Service(HiveConf.ConfVars.LLAP_MANAGEMENT_ACL.varname,
-        LlapManagementProtocolBlockingPB.class)
+        LlapManagementProtocolPB.class)
   };
 
   @Override

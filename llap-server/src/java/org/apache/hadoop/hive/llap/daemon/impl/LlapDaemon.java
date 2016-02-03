@@ -65,7 +65,7 @@ public class LlapDaemon extends CompositeService implements ContainerRunner, Lla
   private static final Logger LOG = LoggerFactory.getLogger(LlapDaemon.class);
 
   private final Configuration shuffleHandlerConf;
-  private final LlapDaemonProtocolServerImpl server;
+  private final LlapProtocolServerImpl server;
   private final ContainerRunnerImpl containerRunner;
   private final AMReporter amReporter;
   private final LlapRegistryService registry;
@@ -164,7 +164,7 @@ public class LlapDaemon extends CompositeService implements ContainerRunner, Lla
 
     this.amReporter = new AMReporter(srvAddress, new QueryFailedHandlerProxy(), daemonConf);
 
-    this.server = new LlapDaemonProtocolServerImpl(
+    this.server = new LlapProtocolServerImpl(
         numHandlers, this, srvAddress, mngAddress, srvPort, mngPort);
 
     this.containerRunner = new ContainerRunnerImpl(daemonConf,
@@ -298,7 +298,7 @@ public class LlapDaemon extends CompositeService implements ContainerRunner, Lla
       long executorMemoryBytes = HiveConf.getIntVar(
           daemonConf, ConfVars.LLAP_DAEMON_MEMORY_PER_INSTANCE_MB) * 1024l * 1024l;
 
-      long ioMemoryBytes = HiveConf.getLongVar(daemonConf, ConfVars.LLAP_IO_MEMORY_MAX_SIZE);
+      long ioMemoryBytes = HiveConf.getSizeVar(daemonConf, ConfVars.LLAP_IO_MEMORY_MAX_SIZE);
       boolean isDirectCache = HiveConf.getBoolVar(daemonConf, ConfVars.LLAP_ALLOCATOR_DIRECT);
       boolean llapIoEnabled = HiveConf.getBoolVar(daemonConf, HiveConf.ConfVars.LLAP_IO_ENABLED);
       llapDaemon = new LlapDaemon(daemonConf, numExecutors, executorMemoryBytes, llapIoEnabled,
@@ -435,8 +435,8 @@ public class LlapDaemon extends CompositeService implements ContainerRunner, Lla
   private class QueryFailedHandlerProxy implements QueryFailedHandler {
 
     @Override
-    public void queryFailed(String queryId, String dagName) {
-      containerRunner.queryFailed(queryId, dagName);
+    public void queryFailed(QueryIdentifier queryIdentifier) {
+      containerRunner.queryFailed(queryIdentifier);
     }
   }
 }

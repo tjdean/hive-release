@@ -38,7 +38,7 @@ import org.apache.hadoop.hive.llap.daemon.rpc.LlapDaemonProtocolProtos.IOSpecPro
 import org.apache.hadoop.hive.llap.daemon.rpc.LlapDaemonProtocolProtos.SubmitWorkRequestProto;
 import org.apache.hadoop.hive.llap.metrics.LlapDaemonExecutorMetrics;
 import org.apache.hadoop.hive.llap.protocol.LlapTaskUmbilicalProtocol;
-import org.apache.hadoop.hive.llap.tezplugins.Converters;
+import org.apache.hadoop.hive.llap.tez.Converters;
 import org.apache.hadoop.hive.ql.io.IOContextMap;
 import org.apache.hadoop.ipc.RPC;
 import org.apache.hadoop.net.NetUtils;
@@ -134,7 +134,7 @@ public class TaskRunnerCallable extends CallableWithNdc<TaskRunner2Result> {
     // Register with the AMReporter when the callable is setup. Unregister once it starts running.
     if (jobToken != null) {
     this.amReporter.registerTask(request.getAmHost(), request.getAmPort(),
-        request.getUser(), jobToken, null, request.getFragmentSpec().getDagName());
+        request.getUser(), jobToken, fragmentInfo.getQueryInfo().getQueryIdentifier());
     }
     this.metrics = metrics;
     this.requestId = request.getFragmentSpec().getFragmentIdentifierString();
@@ -301,9 +301,8 @@ public class TaskRunnerCallable extends CallableWithNdc<TaskRunner2Result> {
    */
   public void reportTaskKilled() {
     killedTaskHandler
-        .taskKilled(request.getAmHost(), request.getAmPort(), request.getUser(), jobToken, null,
-            taskSpec.getDAGName(),
-            taskSpec.getTaskAttemptID());
+        .taskKilled(request.getAmHost(), request.getAmPort(), request.getUser(), jobToken,
+            fragmentInfo.getQueryInfo().getQueryIdentifier(), taskSpec.getTaskAttemptID());
   }
 
   public boolean canFinish() {
@@ -432,6 +431,7 @@ public class TaskRunnerCallable extends CallableWithNdc<TaskRunner2Result> {
       HistoryLogger
           .logFragmentEnd(request.getApplicationIdString(), request.getContainerIdString(),
               executionContext.getHostName(), request.getFragmentSpec().getDagName(),
+              fragmentInfo.getQueryInfo().getDagIdentifier(),
               request.getFragmentSpec().getVertexName(),
               request.getFragmentSpec().getFragmentNumber(),
               request.getFragmentSpec().getAttemptNumber(), taskRunnerCallable.threadName,
@@ -449,6 +449,7 @@ public class TaskRunnerCallable extends CallableWithNdc<TaskRunner2Result> {
       HistoryLogger
           .logFragmentEnd(request.getApplicationIdString(), request.getContainerIdString(),
               executionContext.getHostName(), request.getFragmentSpec().getDagName(),
+              fragmentInfo.getQueryInfo().getDagIdentifier(),
               request.getFragmentSpec().getVertexName(),
               request.getFragmentSpec().getFragmentNumber(),
               request.getFragmentSpec().getAttemptNumber(), taskRunnerCallable.threadName,
