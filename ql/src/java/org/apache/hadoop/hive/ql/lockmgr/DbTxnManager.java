@@ -332,6 +332,11 @@ public class DbTxnManager extends HiveTxnManagerImpl {
   }
 
   @Override
+  public String getTxnManagerName() {
+    return CLASS_NAME;
+  }
+
+  @Override
   public boolean supportsExplicitLock() {
     return false;
   }
