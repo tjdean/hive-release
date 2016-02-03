@@ -375,6 +375,7 @@ public class Driver implements CommandProcessor {
     PerfLogger perfLogger = PerfLogger.getPerfLogger();
     perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.COMPILE);
 
+    String queryStr = null;
     //holder for parent command type/string when executing reentrant queries
     QueryState queryState = new QueryState();
 
@@ -475,7 +476,7 @@ public class Driver implements CommandProcessor {
 
       // Command should be redacted before passing it to the QueryPlan in order
       // to avoid returning sensitive data
-      String queryStr = HookUtils.redactLogString(conf, command);
+      queryStr = HookUtils.redactLogString(conf, command);
 
       plan = new QueryPlan(queryStr, sem, perfLogger.getStartTime(PerfLogger.DRIVER_RUN), queryId,
           SessionState.get().getCommandType(), SessionState.get().getSessionId(), Thread.currentThread().getName(),
@@ -532,6 +533,10 @@ public class Driver implements CommandProcessor {
         errorMessage += " " + e.getCause().getMessage();
       } else {
         errorMessage += " " + e.getMessage();
+      }
+
+      if (error == ErrorMsg.TXNMGR_NOT_ACID) {
+        errorMessage += ". Failed command: " + queryStr;
       }
 
       SQLState = error.getSQLState();

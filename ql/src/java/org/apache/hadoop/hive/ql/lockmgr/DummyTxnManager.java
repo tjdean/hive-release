@@ -197,6 +197,11 @@ class DummyTxnManager extends HiveTxnManagerImpl {
   }
 
   @Override
+  public String getTxnManagerName() {
+    return DummyTxnManager.class.getName();
+  }
+
+  @Override
   public boolean supportsExplicitLock() {
     return true;
   }
