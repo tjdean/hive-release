@@ -1,6 +1,8 @@
-PREHOOK: query: DROP TABLE IF EXISTS lineitem_ix
+PREHOOK: query: -- EXCLUDE_OS_WINDOWS
+DROP TABLE IF EXISTS lineitem_ix
 PREHOOK: type: DROPTABLE
-POSTHOOK: query: DROP TABLE IF EXISTS lineitem_ix
+POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
+DROP TABLE IF EXISTS lineitem_ix
 POSTHOOK: type: DROPTABLE
 PREHOOK: query: CREATE TABLE lineitem_ix (L_ORDERKEY      INT,
                                 L_PARTKEY       INT,

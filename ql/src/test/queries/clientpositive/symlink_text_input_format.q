@@ -1,3 +1,4 @@
+-- EXCLUDE_OS_WINDOWS
 DROP TABLE IF EXISTS symlink_text_input_format;
 
 EXPLAIN

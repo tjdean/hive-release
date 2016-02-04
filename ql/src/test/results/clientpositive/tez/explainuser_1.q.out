@@ -1,6 +1,8 @@
-PREHOOK: query: explain create table src_orc_merge_test_part(key int, value string) partitioned by (ds string, ts string) stored as orc
+PREHOOK: query: -- EXCLUDE_OS_WINDOWS
+explain create table src_orc_merge_test_part(key int, value string) partitioned by (ds string, ts string) stored as orc
 PREHOOK: type: CREATETABLE
-POSTHOOK: query: explain create table src_orc_merge_test_part(key int, value string) partitioned by (ds string, ts string) stored as orc
+POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
+explain create table src_orc_merge_test_part(key int, value string) partitioned by (ds string, ts string) stored as orc
 POSTHOOK: type: CREATETABLE
 Stage-0
    Create Table Operator:

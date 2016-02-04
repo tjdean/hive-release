@@ -4,6 +4,8 @@ set hive.exec.dynamic.partition=true;
 set hive.exec.dynamic.partition.mode=nonstrict;
 set hive.metastore.aggregate.stats.cache.enabled=false;
 
+-- EXCLUDE_OS_WINDOWS
+
 create table if not exists loc_staging (
   state string,
   locid int,

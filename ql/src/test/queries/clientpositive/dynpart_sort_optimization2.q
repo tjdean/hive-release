@@ -10,6 +10,7 @@ set hive.exec.submitviachild=true;
 set hive.exec.submit.local.task.via.child=true;
 
 -- SORT_QUERY_RESULTS
+-- EXCLUDE_OS_WINDOWS
 
 drop table ss;
 drop table ss_orc;

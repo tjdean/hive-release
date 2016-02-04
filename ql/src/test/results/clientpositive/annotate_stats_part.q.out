@@ -1,4 +1,6 @@
-PREHOOK: query: create table if not exists loc_staging (
+PREHOOK: query: -- EXCLUDE_OS_WINDOWS
+
+create table if not exists loc_staging (
   state string,
   locid int,
   zip bigint,
@@ -7,7 +9,9 @@ PREHOOK: query: create table if not exists loc_staging (
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
 PREHOOK: Output: default@loc_staging
-POSTHOOK: query: create table if not exists loc_staging (
+POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
+
+create table if not exists loc_staging (
   state string,
   locid int,
   zip bigint,

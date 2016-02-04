@@ -1,4 +1,5 @@
-PREHOOK: query: create table service_request_clean(
+PREHOOK: query: -- EXCLUDE_OS_WINDOWS
+create table service_request_clean(
 cnctevn_id          	string              ,
 svcrqst_id          	string              ,
 svcrqst_crt_dts     	string              ,
@@ -32,7 +33,8 @@ STORED AS TEXTFILE
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
 PREHOOK: Output: default@service_request_clean
-POSTHOOK: query: create table service_request_clean(
+POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
+create table service_request_clean(
 cnctevn_id          	string              ,
 svcrqst_id          	string              ,
 svcrqst_crt_dts     	string              ,

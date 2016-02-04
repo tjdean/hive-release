@@ -1,3 +1,4 @@
+-- EXCLUDE_OS_WINDOWS
 drop table x;
 drop table y;
 drop table z;

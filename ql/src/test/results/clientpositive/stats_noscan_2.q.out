@@ -1,11 +1,13 @@
-PREHOOK: query: -- test analyze table compute statistiscs [noscan] on external table 
+PREHOOK: query: -- EXCLUDE_OS_WINDOWS
+-- test analyze table compute statistiscs [noscan] on external table 
 -- 1 test table
 #### A masked pattern was here ####
 PREHOOK: type: CREATETABLE
 #### A masked pattern was here ####
 PREHOOK: Output: database:default
 PREHOOK: Output: default@anaylyze_external
-POSTHOOK: query: -- test analyze table compute statistiscs [noscan] on external table 
+POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
+-- test analyze table compute statistiscs [noscan] on external table 
 -- 1 test table
 #### A masked pattern was here ####
 POSTHOOK: type: CREATETABLE

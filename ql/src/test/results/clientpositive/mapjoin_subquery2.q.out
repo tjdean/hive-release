@@ -1,6 +1,8 @@
-PREHOOK: query: drop table x
+PREHOOK: query: -- EXCLUDE_OS_WINDOWS
+drop table x
 PREHOOK: type: DROPTABLE
-POSTHOOK: query: drop table x
+POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
+drop table x
 POSTHOOK: type: DROPTABLE
 PREHOOK: query: drop table y
 PREHOOK: type: DROPTABLE

@@ -1,3 +1,4 @@
+-- EXCLUDE_OS_WINDOWS
 DROP TABLE if exists parquet_mixed_fileformat;
 
 CREATE TABLE parquet_mixed_fileformat (

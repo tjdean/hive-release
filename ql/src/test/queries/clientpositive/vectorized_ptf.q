@@ -1,5 +1,6 @@
 SET hive.vectorized.execution.enabled=true;
 
+-- EXCLUDE_OS_WINDOWS
 -- SORT_QUERY_RESULTS
 
 DROP TABLE part_staging;

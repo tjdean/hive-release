@@ -1,6 +1,8 @@
 set hive.stats.fetch.column.stats=true;
 set hive.stats.autogather=false;
 
+-- EXCLUDE_OS_WINDOWS
+
 create table if not exists emp_staging (
   lastname string,
   deptid int

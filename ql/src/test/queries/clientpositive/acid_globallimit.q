@@ -3,6 +3,7 @@ set hive.txn.manager=org.apache.hadoop.hive.ql.lockmgr.DbTxnManager;
 set hive.fetch.task.conversion=none;
 set hive.limit.optimize.enable=true;
 
+-- EXCLUDE_OS_WINDOWS
 -- Global Limit optimization does not work with ACID table. Make sure to skip it for ACID table.
 CREATE TABLE acidtest1(c1 INT, c2 STRING)
 CLUSTERED BY (c1) INTO 3 BUCKETS

@@ -1,6 +1,8 @@
-PREHOOK: query: DROP TABLE IF EXISTS symlink_text_input_format
+PREHOOK: query: -- EXCLUDE_OS_WINDOWS
+DROP TABLE IF EXISTS symlink_text_input_format
 PREHOOK: type: DROPTABLE
-POSTHOOK: query: DROP TABLE IF EXISTS symlink_text_input_format
+POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
+DROP TABLE IF EXISTS symlink_text_input_format
 POSTHOOK: type: DROPTABLE
 PREHOOK: query: EXPLAIN
 CREATE TABLE symlink_text_input_format (key STRING, value STRING) STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.SymlinkTextInputFormat' OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.IgnoreKeyTextOutputFormat'

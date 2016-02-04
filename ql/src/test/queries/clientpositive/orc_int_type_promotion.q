@@ -1,4 +1,5 @@
 set hive.metastore.disallow.incompatible.col.type.changes=false;
+-- EXCLUDE_OS_WINDOWS
 create table if not exists alltypes (
  bo boolean,
  ti tinyint,
