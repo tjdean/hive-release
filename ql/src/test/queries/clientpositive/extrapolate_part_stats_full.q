@@ -2,6 +2,7 @@ set hive.stats.fetch.column.stats=true;
 set hive.exec.dynamic.partition=true;
 set hive.exec.dynamic.partition.mode=nonstrict;
 
+-- EXCLUDE_OS_WINDOWS
 create table if not exists ext_loc (
   state string,
   locid int,

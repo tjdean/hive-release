@@ -2,6 +2,7 @@ set hive.stats.dbclass=fs;
 set hive.stats.autogather=true;
 set hive.cbo.enable=false;
 
+-- EXCLUDE_OS_WINDOWS
 DROP TABLE IF EXISTS lineitem_ix;
 CREATE TABLE lineitem_ix (L_ORDERKEY      INT,
                                 L_PARTKEY       INT,

@@ -1,5 +1,6 @@
 set hive.explain.user=true;
 
+-- EXCLUDE_OS_WINDOWS
 explain create table src_orc_merge_test_part(key int, value string) partitioned by (ds string, ts string) stored as orc;
 create table src_orc_merge_test_part(key int, value string) partitioned by (ds string, ts string) stored as orc;
 

@@ -1,6 +1,7 @@
 set hive.exec.submitviachild=true;
 set hive.exec.submit.local.task.via.child=true;
 
+-- EXCLUDE_OS_WINDOWS
 CREATE TABLE orc_create_people_staging (
   id int,
   first_name string,

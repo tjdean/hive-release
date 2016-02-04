@@ -1,6 +1,8 @@
-PREHOOK: query: drop table if exists ext_loc
+PREHOOK: query: -- EXCLUDE_OS_WINDOWS
+drop table if exists ext_loc
 PREHOOK: type: DROPTABLE
-POSTHOOK: query: drop table if exists ext_loc
+POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
+drop table if exists ext_loc
 POSTHOOK: type: DROPTABLE
 PREHOOK: query: create table ext_loc (
   state string,

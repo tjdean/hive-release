@@ -1,5 +1,6 @@
 dfs -cp ${system:hive.root}/data/files/ext_test ${system:test.tmp.dir}/analyze_external;
 
+-- EXCLUDE_OS_WINDOWS
 -- test analyze table compute statistiscs [noscan] on external table 
 -- 1 test table
 CREATE EXTERNAL TABLE anaylyze_external (a INT) LOCATION '${system:test.tmp.dir}/analyze_external';

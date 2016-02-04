@@ -3,6 +3,7 @@ set hive.stats.autogather=true;
 set hive.cbo.enable=true;
 set hive.optimize.index.groupby=true;
 
+-- EXCLUDE_OS_WINDOWS
 DROP TABLE IF EXISTS lineitem_ix;
 DROP INDEX IF EXISTS lineitem_ix_L_ORDERKEY_idx on lineitem_ix;
 DROP INDEX IF EXISTS lineitem_ix_L_PARTKEY_idx on lineitem_ix;

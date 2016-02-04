@@ -2,6 +2,7 @@ set hive.merge.mapfiles = false;
 set hive.merge.mapredfiles = false;
 
 -- SORT_QUERY_RESULTS
+-- EXCLUDE_OS_WINDOWS
 
 -- Set merging to false above to make the explain more readable
 

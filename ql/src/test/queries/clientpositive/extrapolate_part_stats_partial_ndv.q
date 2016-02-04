@@ -5,6 +5,7 @@ set hive.exec.dynamic.partition.mode=nonstrict;
 set hive.metastore.aggregate.stats.cache.enabled=false;
 
 
+-- EXCLUDE_OS_WINDOWS
 drop table if exists ext_loc;
 
 create table ext_loc (

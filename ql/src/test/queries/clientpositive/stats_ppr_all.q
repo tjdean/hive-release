@@ -1,5 +1,6 @@
 set hive.stats.fetch.column.stats=true;
 
+-- EXCLUDE_OS_WINDOWS
 drop table ss;
 
 CREATE TABLE ss (

@@ -1,6 +1,8 @@
-PREHOOK: query: drop table ss
+PREHOOK: query: -- EXCLUDE_OS_WINDOWS
+drop table ss
 PREHOOK: type: DROPTABLE
-POSTHOOK: query: drop table ss
+POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
+drop table ss
 POSTHOOK: type: DROPTABLE
 PREHOOK: query: CREATE TABLE ss (
     sales_order_id  BIGINT,

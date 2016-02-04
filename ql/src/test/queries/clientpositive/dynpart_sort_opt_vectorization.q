@@ -10,6 +10,7 @@ set hive.enforce.sorting=false;
 set hive.exec.submitviachild=true;
 set hive.exec.submit.local.task.via.child=true;
 
+-- EXCLUDE_OS_WINDOWS
 create table over1k(
            t tinyint,
            si smallint,
