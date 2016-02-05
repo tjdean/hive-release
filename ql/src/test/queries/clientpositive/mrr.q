@@ -18,6 +18,7 @@ set hive.auto.convert.join=true;
 EXPLAIN SELECT s2.key, count(distinct s2.value) as cnt FROM src s1 join src s2 on (s1.key = s2.key) GROUP BY s2.key ORDER BY cnt,s2.key;
 SELECT s2.key, count(distinct s2.value) as cnt FROM src s1 join src s2 on (s1.key = s2.key) GROUP BY s2.key ORDER BY cnt,s2.key;
 
+set hive.log.trace.id=mrrTest;
 set hive.auto.convert.join=false;
 -- query with multiple branches in the task dag
 EXPLAIN
@@ -51,6 +52,7 @@ WHERE
   s1.cnt > 1
 ORDER BY s1.key;
 
+set hive.log.trace.id=Test2;
 set hive.auto.convert.join=true;
 -- query with broadcast join in the reduce stage
 EXPLAIN

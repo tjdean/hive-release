@@ -71,6 +71,7 @@ import org.apache.hadoop.hdfs.protocol.HdfsConstants;
 import org.apache.hadoop.hdfs.protocol.HdfsLocatedFileStatus;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
+import org.apache.hadoop.ipc.CallerContext;
 import org.apache.hadoop.mapred.ClusterStatus;
 import org.apache.hadoop.mapred.InputSplit;
 import org.apache.hadoop.mapred.JobConf;
@@ -1215,7 +1216,6 @@ public class Hadoop23Shims extends HadoopShimsSecure {
     }
   }
 
-
   public static class StoragePolicyShim implements HadoopShims.StoragePolicyShim {
 
     private final DistributedFileSystem dfs;
@@ -1501,4 +1501,26 @@ public class Hadoop23Shims extends HadoopShimsSecure {
     return new FastTextReaderShim(in);
   }
 
+  @Override
+  public void setHadoopCallerContext(String callerContext) {
+    CallerContext.setCurrent(new CallerContext.Builder(callerContext).build());
+  }
+
+  @Override
+  public void setHadoopQueryContext(String callerContext) {
+    setHadoopCallerContext("HIVE_QUERY_ID:" + callerContext);
+  }
+
+  @Override
+  public void setHadoopSessionContext(String sessionId) {
+    setHadoopCallerContext("HIVE_SSN_ID:" + sessionId);
+  }
+
+  @Override
+  public String getHadoopCallerContext() {
+    if (CallerContext.getCurrent() == null) {
+      return "";
+    }
+    return CallerContext.getCurrent().getContext();
+  }
 }

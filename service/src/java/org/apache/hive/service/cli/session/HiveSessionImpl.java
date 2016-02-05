@@ -278,6 +278,14 @@ public class HiveSessionImpl implements HiveSession {
     if (isOperationLogEnabled) {
       LOG.info("Operation log session directory is created: " + sessionLogDir.getAbsolutePath());
     }
+
+    HiveConf conf = getHiveConf();
+    String queryId = conf.getVar(HiveConf.ConfVars.HIVEQUERYID);
+    if ((queryId == null) || (queryId.isEmpty())) {
+      ShimLoader.getHadoopShims().setHadoopSessionContext(SessionState.get().getSessionId());
+    } else {
+      ShimLoader.getHadoopShims().setHadoopQueryContext(queryId);
+    }
   }
 
   @Override
@@ -315,12 +323,17 @@ public class HiveSessionImpl implements HiveSession {
   }
 
   protected synchronized void acquire(boolean userAccess) {
-    // Need to make sure that the this HiveServer2's session's SessionState is
+    // Need to make sure that this HiveServer2's session's SessionState is
     // stored in the thread local for the handler thread.
     SessionState.setCurrentSessionState(sessionState);
     if (userAccess) {
       lastAccessTime = System.currentTimeMillis();
     }
+    // set the log context for debugging
+    LOG.info("We are setting the hadoop caller context to " + sessionState.getSessionId()
+        + " for thread " + Thread.currentThread().getName());
+    ShimLoader.getHadoopShims().setHadoopSessionContext(sessionState.getSessionId());
+
     Hive.set(sessionHive);
   }
 
@@ -332,6 +345,11 @@ public class HiveSessionImpl implements HiveSession {
    * @see org.apache.hive.service.server.ThreadWithGarbageCleanup#finalize()
    */
   protected synchronized void release(boolean userAccess) {
+    // reset the HDFS caller context.
+    LOG.info("We are resetting the hadoop caller context for thread "
+        + Thread.currentThread().getName());
+    ShimLoader.getHadoopShims().setHadoopCallerContext("");
+
     SessionState.detachSession();
     if (ThreadWithGarbageCleanup.currentThread() instanceof ThreadWithGarbageCleanup) {
       ThreadWithGarbageCleanup currentThread =

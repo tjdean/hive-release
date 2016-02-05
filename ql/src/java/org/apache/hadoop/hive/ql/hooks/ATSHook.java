@@ -57,7 +57,7 @@ public class ATSHook implements ExecuteWithHookContext {
   private enum EventTypes { QUERY_SUBMITTED, QUERY_COMPLETED };
 
   private enum OtherInfoTypes {
-    QUERY, STATUS, TEZ, MAPRED, INVOKER_INFO, THREAD_NAME, VERSION
+    QUERY, STATUS, TEZ, MAPRED, SESSION_ID, THREAD_NAME, VERSION, LOG_TRACE_ID
   };
 
   private enum PrimaryFilterTypes { user, requestuser, operationid };
@@ -111,7 +111,7 @@ public class ATSHook implements ExecuteWithHookContext {
             String user = hookContext.getUgi().getUserName();
             String requestuser = hookContext.getUserName();
             if (hookContext.getUserName() == null ){
-            	requestuser = hookContext.getUgi().getUserName() ; 
+              requestuser = hookContext.getUgi().getUserName() ;
             }
             int numMrJobs = Utilities.getMRTasks(plan.getRootTasks()).size();
             int numTezJobs = Utilities.getTezTasks(plan.getRootTasks()).size();
@@ -140,9 +140,9 @@ public class ATSHook implements ExecuteWithHookContext {
               explain.initialize(conf, plan, null, null);
               String query = plan.getQueryStr();
               JSONObject explainPlan = explain.getJSONPlan(null, work);
-              String logID = conf.getLogIdVar(SessionState.get().getSessionId());
               fireAndForget(conf, createPreHookEvent(queryId, query, explainPlan, queryStartTime,
-                user, requestuser, numMrJobs, numTezJobs, opId, logID));
+                user, requestuser, numMrJobs, numTezJobs, opId, plan.getSessionId(), 
+                plan.getThreadName(), plan.getUserProvidedContext()));
               break;
             case POST_EXEC_HOOK:
               fireAndForget(conf, createPostHookEvent(queryId, currentTime, user, requestuser, true, opId));
@@ -163,7 +163,7 @@ public class ATSHook implements ExecuteWithHookContext {
 
   TimelineEntity createPreHookEvent(String queryId, String query, JSONObject explainPlan,
       long startTime, String user, String requestuser, int numMrJobs, int numTezJobs, String opId,
-      String logID) throws Exception {
+      String sessionId, String threadName, String logTraceId) throws Exception {
 
     JSONObject queryObj = new JSONObject(new LinkedHashMap<>());
     queryObj.put("queryText", query);
@@ -180,7 +180,7 @@ public class ATSHook implements ExecuteWithHookContext {
     atsEntity.setEntityType(EntityTypes.HIVE_QUERY_ID.name());
     atsEntity.addPrimaryFilter(PrimaryFilterTypes.user.name(), user);
     atsEntity.addPrimaryFilter(PrimaryFilterTypes.requestuser.name(), requestuser);
-    
+
     if (opId != null) {
       atsEntity.addPrimaryFilter(PrimaryFilterTypes.operationid.name(), opId);
     }
@@ -193,8 +193,11 @@ public class ATSHook implements ExecuteWithHookContext {
     atsEntity.addOtherInfo(OtherInfoTypes.QUERY.name(), queryObj.toString());
     atsEntity.addOtherInfo(OtherInfoTypes.TEZ.name(), numTezJobs > 0);
     atsEntity.addOtherInfo(OtherInfoTypes.MAPRED.name(), numMrJobs > 0);
-    atsEntity.addOtherInfo(OtherInfoTypes.INVOKER_INFO.name(), logID);
-    atsEntity.addOtherInfo(OtherInfoTypes.THREAD_NAME.name(), Thread.currentThread().getName());
+    atsEntity.addOtherInfo(OtherInfoTypes.SESSION_ID.name(), sessionId);
+    atsEntity.addOtherInfo(OtherInfoTypes.THREAD_NAME.name(), threadName);
+    if ((logTraceId != null) && (logTraceId.equals("") == false)) {
+      atsEntity.addOtherInfo(OtherInfoTypes.LOG_TRACE_ID.name(), logTraceId);
+    }
     atsEntity.addOtherInfo(OtherInfoTypes.VERSION.name(), VERSION);
     return atsEntity;
   }

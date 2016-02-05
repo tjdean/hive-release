@@ -746,4 +746,24 @@ public interface HadoopShims {
    * which are required for TextReaderShim.read() input.
    */
   public TextReaderShim getTextReaderShim(InputStream input) throws IOException;
+
+  /*
+   * Set up the caller context for HDFS and Yarn.
+   */
+  public void setHadoopCallerContext(String callerContext);
+
+  /*
+   * Set up context specific caller context with query prefix.
+   */
+  void setHadoopQueryContext(String queryId);
+
+  /*
+   * Set up context specific caller context with session prefix.
+   */
+  void setHadoopSessionContext(String sessionId);
+
+  /*
+   * get current caller context of HDFS and Yarn.
+   */
+  public String getHadoopCallerContext();
 }

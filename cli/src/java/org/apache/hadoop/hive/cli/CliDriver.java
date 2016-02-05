@@ -115,6 +115,7 @@ public class CliDriver {
   public int processCmd(String cmd) {
     CliSessionState ss = (CliSessionState) SessionState.get();
     ss.setLastCommand(cmd);
+
     // Flush the print stream, so it doesn't include output from the last command
     ss.err.flush();
     String cmd_trimmed = cmd.trim();

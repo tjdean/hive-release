@@ -61,6 +61,7 @@ import org.apache.hadoop.hive.llap.tezplugins.LlapTaskSchedulerService;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.ql.session.SessionState.LogHelper;
+import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.hive.shims.Utils;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
@@ -217,6 +218,17 @@ public class TezSessionState {
   protected void openInternal(final HiveConf conf, Collection<String> additionalFiles,
       boolean isAsync, LogHelper console, Path scratchDir) throws IOException, LoginException,
         IllegalArgumentException, URISyntaxException, TezException {
+
+    LOG.info("Opening the session with id " + sessionId + " for thread "
+        + Thread.currentThread().getName() + " log trace id - " + conf.getLogIdVar()
+        + " query id - " + conf.getVar(HiveConf.ConfVars.HIVEQUERYID));
+    String queryId = conf.getVar(HiveConf.ConfVars.HIVEQUERYID);
+    if ((queryId == null) || (queryId.isEmpty())) {
+      ShimLoader.getHadoopShims().setHadoopSessionContext(sessionId);
+    } else {
+      ShimLoader.getHadoopShims().setHadoopQueryContext(queryId);
+    }
+
     this.conf = conf;
     this.queueName = conf.get("tez.queue.name");
     this.doAsEnabled = conf.getBoolVar(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS);
@@ -336,6 +348,8 @@ public class TezSessionState {
       this.console = console;
       this.sessionFuture = sessionFuture;
     }
+    // reset caller context
+    ShimLoader.getHadoopShims().setHadoopCallerContext("");
   }
 
   private TezClient startSessionAndContainers(TezClient session, HiveConf conf,

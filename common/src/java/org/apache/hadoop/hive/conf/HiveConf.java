@@ -3167,6 +3167,17 @@ public class HiveConf extends Configuration {
     return conf.get(var.varname, defaultVal);
   }
 
+  public String getLogIdVar() {
+    String retval = getVar(ConfVars.HIVE_LOG_TRACE_ID);
+
+    if (retval.length() > LOG_PREFIX_LENGTH) {
+      l4j.warn("The original log id prefix is " + retval + " has been truncated to "
+          + retval.substring(0, LOG_PREFIX_LENGTH - 1));
+      retval = retval.substring(0, LOG_PREFIX_LENGTH - 1);
+    }
+    return retval;
+  }
+
   public String getLogIdVar(String defaultValue) {
     String retval = getVar(ConfVars.HIVE_LOG_TRACE_ID);
     if (retval.equals("")) {
