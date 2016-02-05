@@ -1,6 +1,8 @@
-PREHOOK: query: drop table if exists char_part_tbl1
+PREHOOK: query: -- EXCLUDE_OS_WINDOWS
+drop table if exists char_part_tbl1
 PREHOOK: type: DROPTABLE
-POSTHOOK: query: drop table if exists char_part_tbl1
+POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
+drop table if exists char_part_tbl1
 POSTHOOK: type: DROPTABLE
 PREHOOK: query: drop table if exists char_part_tbl2
 PREHOOK: type: DROPTABLE

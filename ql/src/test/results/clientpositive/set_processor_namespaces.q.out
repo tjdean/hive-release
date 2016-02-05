@@ -3,9 +3,11 @@ system:xxx=5
 system:yyy=5
 go=5
 raw=${hiveconf:zzz}
-PREHOOK: query: EXPLAIN SELECT * FROM src where key=5
+PREHOOK: query: -- EXCLUDE_OS_WINDOWS
+EXPLAIN SELECT * FROM src where key=5
 PREHOOK: type: QUERY
-POSTHOOK: query: EXPLAIN SELECT * FROM src where key=5
+POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
+EXPLAIN SELECT * FROM src where key=5
 POSTHOOK: type: QUERY
 STAGE DEPENDENCIES:
   Stage-1 is a root stage

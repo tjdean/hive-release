@@ -1,4 +1,5 @@
-PREHOOK: query: -- Tests exception in ScriptOperator.close() by passing to the operator a small amount of data
+PREHOOK: query: -- EXCLUDE_OS_WINDOWS
+-- Tests exception in ScriptOperator.close() by passing to the operator a small amount of data
 SELECT TRANSFORM(*) USING 'true' AS a, b FROM (SELECT TRANSFORM(*) USING 'echo' AS a, b FROM src LIMIT 1) tmp
 PREHOOK: type: QUERY
 PREHOOK: Input: default@src
