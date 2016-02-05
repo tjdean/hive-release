@@ -97,6 +97,8 @@ import org.slf4j.LoggerFactory;
 
 public class TestStreaming {
   private static final Logger LOG = LoggerFactory.getLogger(TestStreaming.class);
+  private static final boolean WINDOWS
+          = System.getProperty("os.name").startsWith("Windows");
 
   public static class RawFileSystem extends RawLocalFileSystem {
     private static final URI NAME;
@@ -1297,6 +1299,9 @@ public class TestStreaming {
 
   @Test
   public void testFileDumpCorruptDataFiles() throws Exception {
+    if (WINDOWS) {
+      return;
+    }
     dropDB(msClient, dbName3);
 
     // 1) Create two bucketed tables
@@ -1423,6 +1428,9 @@ public class TestStreaming {
 
   @Test
   public void testFileDumpCorruptSideFiles() throws Exception {
+    if (WINDOWS) {
+      return;
+    }
     dropDB(msClient, dbName3);
 
     // 1) Create two bucketed tables

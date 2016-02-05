@@ -117,6 +117,8 @@ public class TestInputOutputFormat {
   private static final SimpleDateFormat TIME_FORMAT =
       new SimpleDateFormat("yyyy/MM/dd HH:mm:ss.SSS");
   private static final TimeZone LOCAL_TIMEZONE = TimeZone.getDefault();
+  private static final boolean WINDOWS
+          = System.getProperty("os.name").startsWith("Windows");
 
   static {
     TimeZone gmt = TimeZone.getTimeZone("GMT+0");
@@ -1678,6 +1680,9 @@ public class TestInputOutputFormat {
   // test non-vectorized, acid, combine
   @Test
   public void testCombinationInputFormatWithAcid() throws Exception {
+    if (WINDOWS) {
+      return;
+    }
     // get the object inspector for MyRow
     StructObjectInspector inspector;
     final int PARTITIONS = 2;
