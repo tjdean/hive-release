@@ -16,6 +16,7 @@ set raw;
 
 set hive.variable.substitute=true;
 
+-- EXCLUDE_OS_WINDOWS
 EXPLAIN SELECT * FROM src where key=${hiveconf:zzz};
 SELECT * FROM src where key=${hiveconf:zzz};
 

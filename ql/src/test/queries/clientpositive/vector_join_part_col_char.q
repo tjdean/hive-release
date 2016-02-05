@@ -3,6 +3,7 @@ set hive.support.concurrency=true;
 set hive.txn.manager=org.apache.hadoop.hive.ql.lockmgr.DbTxnManager;
 set hive.vectorized.execution.enabled=true;
 
+-- EXCLUDE_OS_WINDOWS
 drop table if exists char_part_tbl1 ;
 drop table if exists char_part_tbl2;
 
