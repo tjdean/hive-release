@@ -54,6 +54,8 @@ public class TestFileDump {
   Configuration conf;
   FileSystem fs;
   Path testFilePath;
+  private static final boolean WINDOWS
+          = System.getProperty("os.name").startsWith("Windows");
 
   @Before
   public void openFileSystem () throws Exception {
@@ -147,6 +149,9 @@ public class TestFileDump {
 
   @Test
   public void testDump() throws Exception {
+    if (WINDOWS) {
+      return;
+    }
     ObjectInspector inspector;
     synchronized (TestOrcFile.class) {
       inspector = ObjectInspectorFactory.getReflectionObjectInspector
@@ -255,6 +260,9 @@ public class TestFileDump {
   // of the dictionary stream for the column will be 0 in the ORC file dump.
   @Test
   public void testDictionaryThreshold() throws Exception {
+    if (WINDOWS) {
+      return;
+    }
     ObjectInspector inspector;
     synchronized (TestOrcFile.class) {
       inspector = ObjectInspectorFactory.getReflectionObjectInspector
@@ -306,6 +314,9 @@ public class TestFileDump {
 
   @Test
   public void testBloomFilter() throws Exception {
+    if (WINDOWS) {
+      return;
+    }
     ObjectInspector inspector;
     synchronized (TestOrcFile.class) {
       inspector = ObjectInspectorFactory.getReflectionObjectInspector
@@ -354,6 +365,9 @@ public class TestFileDump {
 
   @Test
   public void testBloomFilter2() throws Exception {
+    if (WINDOWS) {
+      return;
+    }
     ObjectInspector inspector;
     synchronized (TestOrcFile.class) {
       inspector = ObjectInspectorFactory.getReflectionObjectInspector

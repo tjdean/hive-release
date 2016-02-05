@@ -10,6 +10,8 @@ dfs -ls hdfs:///tmp/temp_table_external/day=Foo;
 
 dfs -ls hdfs:///tmp/temp_table_external;
 
+-- EXCLUDE_OS_WINDOWS
+
 create external table table_external (c1 int, c2 int)
 partitioned by (day string)
 location 'hdfs:///tmp/temp_table_external';

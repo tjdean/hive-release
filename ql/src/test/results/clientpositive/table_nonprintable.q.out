@@ -4,14 +4,18 @@ Found 1 items
 #### A masked pattern was here ####
 Found 2 items
 #### A masked pattern was here ####
-PREHOOK: query: create external table table_external (c1 int, c2 int)
+PREHOOK: query: -- EXCLUDE_OS_WINDOWS
+
+create external table table_external (c1 int, c2 int)
 partitioned by (day string)
 #### A masked pattern was here ####
 PREHOOK: type: CREATETABLE
 #### A masked pattern was here ####
 PREHOOK: Output: database:default
 PREHOOK: Output: default@table_external
-POSTHOOK: query: create external table table_external (c1 int, c2 int)
+POSTHOOK: query: -- EXCLUDE_OS_WINDOWS
+
+create external table table_external (c1 int, c2 int)
 partitioned by (day string)
 #### A masked pattern was here ####
 POSTHOOK: type: CREATETABLE

@@ -43,6 +43,8 @@ import java.util.Map;
 public class TestWorker extends CompactorTest {
   static final private String CLASS_NAME = TestWorker.class.getName();
   static final private Log LOG = LogFactory.getLog(CLASS_NAME);
+  private static final boolean WINDOWS
+          = System.getProperty("os.name").startsWith("Windows");
 
   public TestWorker() throws Exception {
     super();
@@ -256,6 +258,9 @@ public class TestWorker extends CompactorTest {
 
   @Test
   public void minorTableWithBase() throws Exception {
+    if (WINDOWS) {
+      return;
+    }
     LOG.debug("Starting minorTableWithBase");
     Table t = newTable("default", "mtwb", false);
 
