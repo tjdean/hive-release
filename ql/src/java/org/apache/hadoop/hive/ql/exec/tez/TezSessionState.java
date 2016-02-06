@@ -279,7 +279,9 @@ public class TezSessionState {
       if (UserGroupInformation.isSecurityEnabled()) {
         LlapTokenProvider tp = LlapProxy.getOrInitTokenProvider(conf);
         Token<LlapTokenIdentifier> token = tp.getDelegationToken();
-        LOG.info("Obtained a token: " + token);
+        if (LOG.isInfoEnabled()) {
+          LOG.info("Obtained a token: " + token);
+        }
         llapCredentials = new Credentials();
         llapCredentials.addToken(LlapTokenIdentifier.KIND_NAME, token);
       }

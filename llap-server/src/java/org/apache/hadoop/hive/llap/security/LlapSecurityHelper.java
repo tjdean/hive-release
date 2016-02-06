@@ -120,6 +120,9 @@ public class LlapSecurityHelper implements LlapTokenProvider {
     DataInputByteBuffer in = new DataInputByteBuffer();
     in.reset(tokenBytes.asReadOnlyByteBuffer());
     token.readFields(in);
+    if (LOG.isInfoEnabled()) {
+      LOG.info("Obtained a LLAP delegation token from " + someLlap + ": " + token);
+    }
     return token;
   }
 
