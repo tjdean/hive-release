@@ -17,18 +17,25 @@ import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.security.PrivilegedAction;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.llap.security.LlapTokenIdentifier;
+import org.apache.hadoop.ipc.RetriableException;
+import org.apache.hadoop.ipc.StandbyException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
+import org.apache.hadoop.security.token.delegation.DelegationKey;
 import org.apache.hadoop.security.token.delegation.ZKDelegationTokenSecretManager;
 import org.apache.hadoop.security.token.delegation.web.DelegationTokenManager;
 
 public class SecretManager extends ZKDelegationTokenSecretManager<LlapTokenIdentifier> {
+  private static final Log LOG = LogFactory.getLog(SecretManager.class);
   public SecretManager(Configuration conf) {
     super(conf);
   }
@@ -88,4 +95,184 @@ public class SecretManager extends ZKDelegationTokenSecretManager<LlapTokenIdent
     if (zkConf.get(name) != null) return;
     zkConf.set(name, value);
   }
+
+  @Override
+  protected DelegationKey getDelegationKey(int keyId) {
+    LOG.info("getDelegationKey " + keyId);
+    DelegationKey result = super.getDelegationKey(keyId);
+    LOG.info("getDelegationKey " + toString(result));
+    return result;
+  }
+
+  @Override
+  protected DelegationTokenInformation getTokenInfo(LlapTokenIdentifier ident) {
+    LOG.info("getTokenInfo " + ident);
+    DelegationTokenInformation result = super.getTokenInfo(ident);
+    LOG.info("getTokenInfo " + ident + ": " + toString(result));
+    return result;
+  }
+
+  private static String toString(DelegationTokenInformation i) {
+    // TODO: retrieve password via reflection?
+    return i == null ? "null" : (i.getTrackingId()
+        + " (object " + System.identityHashCode(i) + ")");
+  }
+
+  private static String toString(DelegationKey key) {
+    return key == null ? "null" : (key.getKeyId() + ": " + Arrays.toString(key.getEncodedKey()));
+  }
+
+  @Override
+  protected void storeDelegationKey(DelegationKey key) throws IOException {
+    LOG.info("storeDelegationKey " + toString(key));
+    super.storeDelegationKey(key);
+  }
+
+  @Override
+  protected void updateDelegationKey(DelegationKey key) throws IOException {
+    LOG.info("updateDelegationKey " + toString(key));
+    super.updateDelegationKey(key);
+  }
+
+  @Override
+  protected void removeStoredMasterKey(DelegationKey key) {
+    LOG.info("removeStoredMasterKey " + toString(key));
+    super.removeStoredMasterKey(key);
+  }
+
+  @Override
+  protected void storeToken(LlapTokenIdentifier ident, DelegationTokenInformation tokenInfo)
+      throws IOException {
+    LOG.info("storeToken " + ident + ": " + toString(tokenInfo));
+    super.storeToken(ident, tokenInfo);
+  }
+
+  @Override
+  protected void updateToken(LlapTokenIdentifier ident, DelegationTokenInformation tokenInfo)
+      throws IOException {
+    LOG.info("updateToken " + ident + ": " + toString(tokenInfo));
+    super.updateToken(ident, tokenInfo);
+  }
+
+  @Override
+  protected void removeStoredToken(LlapTokenIdentifier ident) throws IOException {
+    LOG.info("removeStoredToken " + ident);
+    super.removeStoredToken(ident);
+  }
+
+
+  @Override
+  public synchronized void addKey(DelegationKey key) throws IOException {
+    LOG.info("addKey " + toString(key));
+    super.addKey(key);
+  }
+
+  @Override
+  protected void storeNewMasterKey(DelegationKey key) throws IOException {
+    LOG.info("storeNewMasterKey " + toString(key));
+    super.storeNewMasterKey(key);
+  }
+
+  @Override
+  protected void storeNewToken(LlapTokenIdentifier ident, long renewDate)
+      throws IOException {
+    LOG.info("storeNewToken " + ident + ": " + renewDate);
+    super.storeNewToken(ident, renewDate);
+  }
+
+  @Override
+  protected void updateStoredToken(LlapTokenIdentifier ident, long renewDate)
+      throws IOException {
+    LOG.info("updateStoredToken " + ident + ": " + renewDate);
+    super.updateStoredToken(ident, renewDate);
+  }
+
+  @Override
+  public synchronized void addPersistedDelegationToken(
+      LlapTokenIdentifier identifier, long renewDate) throws IOException {
+    LOG.info("addPersistedDelegationToken " + identifier + ": " + renewDate);
+    super.addPersistedDelegationToken(identifier, renewDate);
+  }
+
+  @Override
+  protected synchronized byte[] createPassword(LlapTokenIdentifier identifier) {
+    LOG.info("createPassword " + identifier);
+    byte[] result = super.createPassword(identifier);
+    LOG.info("createPassword " + identifier + ": " + Arrays.toString(result)); // TADA!
+    return result;
+  }
+
+  @Override
+  protected DelegationTokenInformation checkToken(
+      LlapTokenIdentifier identifier) throws InvalidToken {
+    LOG.info("checkToken " + identifier);
+    try {
+      DelegationTokenInformation result = super.checkToken(identifier);
+      LOG.info("checkToken " + identifier + ": " + toString(result));
+      return result;
+    } catch (InvalidToken it) {
+      LOG.info("checkToken " + identifier + ": failed", it);
+      throw it;
+    }
+  }
+
+  @Override
+  public synchronized byte[] retrievePassword(LlapTokenIdentifier identifier)
+      throws InvalidToken {
+    LOG.info("retrievePassword " + identifier);
+    try {
+      byte[] result = super.retrievePassword(identifier);
+      LOG.info("retrievePassword " + identifier + ": " + Arrays.toString(result)); // TADA!
+      return result;
+    } catch (InvalidToken it) {
+      LOG.info("retrievePassword " + identifier + ": failed", it);
+      throw it;
+    }
+  }
+
+  @Override
+  public synchronized void verifyToken(LlapTokenIdentifier identifier,
+      byte[] password) throws InvalidToken {
+    LOG.info("verifyToken " + identifier + ": " + Arrays.toString(password)); // TADA!
+    try {
+      super.verifyToken(identifier, password);
+    } catch (InvalidToken it) {
+      LOG.info("verifyToken " + identifier + ": failed", it);
+      throw it;
+    }
+  }
+
+  @Override
+  public synchronized long renewToken(Token<LlapTokenIdentifier> token, String renewer)
+      throws InvalidToken, IOException {
+    LOG.info("renewToken " + token + ", " + renewer);
+    long result = super.renewToken(token, renewer);
+    LOG.info("renewToken " + token + ": " + result);
+    return result;
+  }
+
+  @Override
+  public synchronized LlapTokenIdentifier cancelToken(
+      Token<LlapTokenIdentifier> token, String canceller) throws IOException {
+    LOG.info("cancelToken " + token + ", " + canceller);
+    LlapTokenIdentifier result = super.cancelToken(token, canceller);
+    LOG.info("cancelToken " + token + ": " + result);
+    return result;
+  }
+
+  @Override
+  public byte[] retriableRetrievePassword(LlapTokenIdentifier identifier)
+      throws InvalidToken, StandbyException, RetriableException, IOException {
+    LOG.info("retriableRetrievePassword " + identifier);
+    try {
+      byte[] result = super.retriableRetrievePassword(identifier);
+      LOG.info("retriableRetrievePassword " + identifier + ": " + Arrays.toString(result)); // TADA!
+      return result;
+    } catch (IOException it) {
+      LOG.info("retriableRetrievePassword " + identifier + ": failed", it);
+      throw it;
+    }
+  }
+  
+  
 }
