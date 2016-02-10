@@ -652,12 +652,14 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     public List<OrcSplit> getSplits() throws IOException {
       List<OrcSplit> splits = Lists.newArrayList();
       for (FileStatus fileStatus : fileStatuses) {
-        TreeMap<Long, BlockLocation> blockOffsets = SHIMS.getLocationsWithOffset(fs, fileStatus);
-        for (Map.Entry<Long, BlockLocation> entry : blockOffsets.entrySet()) {
-          OrcSplit orcSplit = new OrcSplit(fileStatus.getPath(), entry.getKey(),
+        if (fileStatus.getLen() != 0) {
+          TreeMap<Long, BlockLocation> blockOffsets = SHIMS.getLocationsWithOffset(fs, fileStatus);
+          for (Map.Entry<Long, BlockLocation> entry : blockOffsets.entrySet()) {
+            OrcSplit orcSplit = new OrcSplit(fileStatus.getPath(), entry.getKey(),
                   entry.getValue().getLength(), entry.getValue().getHosts(), null, isOriginal, true,
                   deltas, -1);
-          splits.add(orcSplit);
+            splits.add(orcSplit);
+          }
         }
       }
 
@@ -747,7 +749,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     private SplitStrategy callInternal() throws IOException {
         final SplitStrategy splitStrategy;
       AcidUtils.Directory dirInfo = AcidUtils.getAcidState(dir,
-          context.conf, context.transactionList);
+          context.conf, context.transactionList, true);
       List<Long> deltas = AcidUtils.serializeDeltas(dirInfo.getCurrentDirectories());
       Path base = dirInfo.getBaseDirectory();
       List<FileStatus> original = dirInfo.getOriginalFiles();

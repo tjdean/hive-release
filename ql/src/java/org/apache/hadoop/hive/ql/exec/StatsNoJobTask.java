@@ -124,7 +124,7 @@ public class StatsNoJobTask extends Task<StatsNoJobWork> implements Serializable
 
   class StatsCollection implements Runnable {
 
-    private Partition partn;
+    private final Partition partn;
 
     public StatsCollection(Partition part) {
       this.partn = part;
@@ -150,7 +150,7 @@ public class StatsNoJobTask extends Task<StatsNoJobWork> implements Serializable
         boolean statsAvailable = false;
         for(FileStatus file: fileList) {
           if (!file.isDir()) {
-            InputFormat<?, ?> inputFormat = (InputFormat<?, ?>) ReflectionUtil.newInstance(
+            InputFormat<?, ?> inputFormat = ReflectionUtil.newInstance(
                 partn.getInputFormatClass(), jc);
             InputSplit dummySplit = new FileSplit(file.getPath(), 0, 0,
                 new String[] { partn.getLocation() });
@@ -196,7 +196,7 @@ public class StatsNoJobTask extends Task<StatsNoJobWork> implements Serializable
             "Failed with exception " + e.getMessage() + "\n" + StringUtils.stringifyException(e));
 
         // Before updating the partition params, if any partition params is null
-        // and if statsReliable is true then updatePartition() function  will fail 
+        // and if statsReliable is true then updatePartition() function  will fail
         // the task by returning 1
         if (work.isStatsReliable()) {
           partUpdates.put(tPart.getSd().getLocation(), null);
@@ -248,22 +248,27 @@ public class StatsNoJobTask extends Task<StatsNoJobWork> implements Serializable
           boolean statsAvailable = false;
           for(FileStatus file: fileList) {
             if (!file.isDir()) {
-              InputFormat<?, ?> inputFormat = (InputFormat<?, ?>) ReflectionUtil.newInstance(
+              InputFormat<?, ?> inputFormat = ReflectionUtil.newInstance(
                   table.getInputFormatClass(), jc);
               InputSplit dummySplit = new FileSplit(file.getPath(), 0, 0, new String[] { table
                   .getDataLocation().toString() });
-              org.apache.hadoop.mapred.RecordReader<?, ?> recordReader = (org.apache.hadoop.mapred.RecordReader<?, ?>) inputFormat
-                  .getRecordReader(dummySplit, jc, Reporter.NULL);
-              StatsProvidingRecordReader statsRR;
-              if (recordReader instanceof StatsProvidingRecordReader) {
-                statsRR = (StatsProvidingRecordReader) recordReader;
-                numRows += statsRR.getStats().getRowCount();
-                rawDataSize += statsRR.getStats().getRawDataSize();
-                fileSize += file.getLen();
+              if (file.getLen() == 0) {
                 numFiles += 1;
                 statsAvailable = true;
+              } else {
+                org.apache.hadoop.mapred.RecordReader<?, ?> recordReader =
+                    inputFormat.getRecordReader(dummySplit, jc, Reporter.NULL);
+                StatsProvidingRecordReader statsRR;
+                if (recordReader instanceof StatsProvidingRecordReader) {
+                  statsRR = (StatsProvidingRecordReader) recordReader;
+                  numRows += statsRR.getStats().getRowCount();
+                  rawDataSize += statsRR.getStats().getRawDataSize();
+                  fileSize += file.getLen();
+                  numFiles += 1;
+                  statsAvailable = true;
+                }
+                recordReader.close();
               }
-              recordReader.close();
             }
           }
 

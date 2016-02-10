@@ -93,6 +93,7 @@ public class AcidUtils {
       Pattern.compile("[0-9]+_[0-9]+");
 
   public static final PathFilter hiddenFileFilter = new PathFilter(){
+    @Override
     public boolean accept(Path p){
       String name = p.getName();
       return !name.startsWith("_") && !name.startsWith(".");
@@ -372,7 +373,14 @@ public class AcidUtils {
     return false;
   }
 
-  /**
+  public static Directory getAcidState(Path directory,
+      Configuration conf,
+      ValidTxnList txnList
+      ) throws IOException {
+    return getAcidState(directory, conf, txnList, false);
+  }
+
+ /**
    * Get the ACID state of the given directory. It finds the minimal set of
    * base and diff directories. Note that because major compactions don't
    * preserve the history, we can't use a base directory that includes a
@@ -385,7 +393,8 @@ public class AcidUtils {
    */
   public static Directory getAcidState(Path directory,
                                        Configuration conf,
-                                       ValidTxnList txnList
+                                       ValidTxnList txnList,
+                                       boolean ignoreEmptyFiles
                                        ) throws IOException {
     FileSystem fs = directory.getFileSystem(conf);
     FileStatus bestBase = null;
@@ -425,7 +434,7 @@ public class AcidUtils {
         // it is possible that the cleaner is running and removing these original files,
         // in which case recursing through them could cause us to get an error.
         originalDirectories.add(child);
-      } else {
+      } else  if (!ignoreEmptyFiles || child.getLen() != 0) {
         original.add(child);
       }
     }
@@ -493,7 +502,7 @@ public class AcidUtils {
       }
     };
   }
-
+ 
   /**
    * Find the original files (non-ACID layout) recursively under the partition
    * directory.
