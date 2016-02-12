@@ -806,7 +806,9 @@
                   <include>org.apache.hive:spark-client</include>
                   <include>org.apache.hive:hive-storage-api</include>
                   <include>org.apache.hive:hive-orc</include>
-                  <include>joda-time:joda-time</include>
+		  <include>joda-time:joda-time</include>
+		  <include>org.apache.logging.log4j:log4j-slf4j-impl</include>
+		  <include>org.apache.logging.log4j:log4j-1.2-api</include>
                 </includes>
               </artifactSet>
               <relocations>
