@@ -3,3 +3,4 @@ CHANGES in the branch which are not yet committed to Apache
   HIVE-12447 (BUG-49894). Fix LlapTaskReporter post TEZ-808 changes.
   HIVE-12692 (BUG-49970). Make use of the Tez HadoopShim in TaskRunner usage.
   HIVE-12470 (BUG-49586). Allow splits to provide custom consistent locations, instead of being tied to data locality.
+  HIVE-12558 (BUG-49593). Publish some of the LLAP cache counters via Tez.
