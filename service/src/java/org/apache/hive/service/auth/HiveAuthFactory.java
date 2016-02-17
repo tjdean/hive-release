@@ -97,35 +97,32 @@ public class HiveAuthFactory {
     authTypeStr = conf.getVar(HiveConf.ConfVars.HIVE_SERVER2_AUTHENTICATION);
 
     // In http mode we use NOSASL as the default auth type
-    if ("http".equalsIgnoreCase(transportMode)) {
-      if (authTypeStr == null) {
+    if (authTypeStr == null) {
+      if ("http".equalsIgnoreCase(transportMode)) {
         authTypeStr = AuthTypes.NOSASL.getAuthName();
-      }
-    } else {
-      if (authTypeStr == null) {
+      } else {
         authTypeStr = AuthTypes.NONE.getAuthName();
       }
-      if (authTypeStr.equalsIgnoreCase(AuthTypes.KERBEROS.getAuthName())) {
-        saslServer = ShimLoader.getHadoopThriftAuthBridge()
+    } else if (authTypeStr.equalsIgnoreCase(AuthTypes.KERBEROS.getAuthName())) {
+      saslServer = ShimLoader.getHadoopThriftAuthBridge()
           .createServer(conf.getVar(ConfVars.HIVE_SERVER2_KERBEROS_KEYTAB),
-                        conf.getVar(ConfVars.HIVE_SERVER2_KERBEROS_PRINCIPAL));
-        // start delegation token manager
-        try {
-          // rawStore is only necessary for DBTokenStore
-          Object rawStore = null;
-          String tokenStoreClass = conf.getVar(HiveConf.ConfVars.METASTORE_CLUSTER_DELEGATION_TOKEN_STORE_CLS);
+              conf.getVar(ConfVars.HIVE_SERVER2_KERBEROS_PRINCIPAL));
+      // start delegation token manager
+      try {
+        // rawStore is only necessary for DBTokenStore
+        Object rawStore = null;
+        String tokenStoreClass = conf.getVar(HiveConf.ConfVars.METASTORE_CLUSTER_DELEGATION_TOKEN_STORE_CLS);
 
-          if (tokenStoreClass.equals(DBTokenStore.class.getName())) {
-            HMSHandler baseHandler = new HiveMetaStore.HMSHandler(
-                "new db based metaserver", conf, true);
-            rawStore = baseHandler.getMS();
-          }
+        if (tokenStoreClass.equals(DBTokenStore.class.getName())) {
+          HMSHandler baseHandler = new HiveMetaStore.HMSHandler(
+              "new db based metaserver", conf, true);
+          rawStore = baseHandler.getMS();
+        }
 
-          saslServer.startDelegationTokenSecretManager(conf, rawStore, ServerMode.HIVESERVER2);
-        }
-        catch (MetaException|IOException e) {
-          throw new TTransportException("Failed to start token manager", e);
-        }
+        saslServer.startDelegationTokenSecretManager(conf, rawStore, ServerMode.HIVESERVER2);
+      }
+      catch (MetaException|IOException e) {
+        throw new TTransportException("Failed to start token manager", e);
       }
     }
   }
