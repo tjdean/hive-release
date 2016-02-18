@@ -840,6 +840,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     private void create_database_core(RawStore ms, final Database db)
         throws AlreadyExistsException, InvalidObjectException, MetaException {
+      LOG.info("create_database_core " + db.getName());
       if (!validateName(db.getName())) {
         throw new InvalidObjectException(db.getName() + " is not a valid database name");
       }
@@ -853,9 +854,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       boolean madeDir = false;
 
       try {
-
+        LOG.info("create_database_core preEvent " + db.getName());
         firePreEvent(new PreCreateDatabaseEvent(db, this));
 
+        LOG.info("create_database_core filesystem " + db.getName());
         if (!wh.isDir(dbPath)) {
           if (!wh.mkdirs(dbPath, true)) {
             throw new MetaException("Unable to create database path " + dbPath +
@@ -864,9 +866,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           madeDir = true;
         }
 
+        LOG.info("create_database_core rdbms " + db.getName());
         ms.openTransaction();
         ms.createDatabase(db);
         success = ms.commitTransaction();
+        LOG.info("create_database_core rdbms committed " + db.getName());
       } finally {
         if (!success) {
           ms.rollbackTransaction();
@@ -874,9 +878,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
             wh.deleteDir(dbPath, true);
           }
         }
+        LOG.info("create_database_core listeners " + db.getName());
         for (MetaStoreEventListener listener : listeners) {
           listener.onCreateDatabase(new CreateDatabaseEvent(db, success, this));
         }
+        LOG.info("create_database_core listeners done " + db.getName());
       }
     }
 
@@ -1326,6 +1332,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         throws AlreadyExistsException, MetaException,
         InvalidObjectException, NoSuchObjectException {
 
+      String logName = tbl.getDbName() + "." + tbl.getTableName();
+      LOG.info("create_table_core " + logName);
       if (!MetaStoreUtils.validateName(tbl.getTableName())) {
         throw new InvalidObjectException(tbl.getTableName()
             + " is not a valid object name");
@@ -1356,8 +1364,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       Path tblPath = null;
       boolean success = false, madeDir = false;
       try {
+        LOG.info("create_table_core preEvent " + logName);
         firePreEvent(new PreCreateTableEvent(tbl, this));
 
+        LOG.info("create_table_core rdbms checks " + logName);
         ms.openTransaction();
 
         Database db = ms.getDatabase(tbl.getDbName());
@@ -1371,6 +1381,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
               + " already exists");
         }
 
+        LOG.info("create_table_core filesystem " + logName);
         if (!TableType.VIRTUAL_VIEW.toString().equals(tbl.getTableType())) {
           if (tbl.getSd().getLocation() == null
               || tbl.getSd().getLocation().isEmpty()) {
@@ -1395,6 +1406,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
             madeDir = true;
           }
         }
+        LOG.info("create_table_core stats " + logName);
         if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVESTATSAUTOGATHER) &&
             !MetaStoreUtils.isView(tbl)) {
           if (tbl.getPartitionKeysSize() == 0)  { // Unpartitioned table
@@ -1405,6 +1417,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         }
 
         // set create time
+        LOG.info("create_table_core rdbms create " + logName);
         long time = System.currentTimeMillis() / 1000;
         tbl.setCreateTime((int) time);
         if (tbl.getParameters() == null ||
@@ -1413,6 +1426,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         }
         ms.createTable(tbl);
         success = ms.commitTransaction();
+        LOG.info("create_table_core rdbms committed " + logName);
 
       } finally {
         if (!success) {
@@ -1421,12 +1435,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
             wh.deleteDir(tblPath, true);
           }
         }
+        LOG.info("create_table_core rdbms listeners " + logName);
         for (MetaStoreEventListener listener : listeners) {
           CreateTableEvent createTableEvent =
               new CreateTableEvent(tbl, success, this);
           createTableEvent.setEnvironmentContext(envContext);
           listener.onCreateTable(createTableEvent);
         }
+        LOG.info("create_table_core rdbms listeners done " + logName);
       }
     }
 
