@@ -6152,7 +6152,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         }
       }
     };
-
+    t.setDaemon(true);
+    t.setName("Metastore threads starter thread");
     t.start();
   }
 
