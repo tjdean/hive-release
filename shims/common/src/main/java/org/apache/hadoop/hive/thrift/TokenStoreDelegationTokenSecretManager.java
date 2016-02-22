@@ -320,7 +320,6 @@ public class TokenStoreDelegationTokenSecretManager extends DelegationTokenSecre
       } catch (Throwable t) {
         LOGGER.error("ExpiredTokenRemover thread received unexpected exception. "
             + t, t);
-        Runtime.getRuntime().exit(-1);
       }
     }
   }
