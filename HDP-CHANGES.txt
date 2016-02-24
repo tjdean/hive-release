@@ -1,5 +1,6 @@
 
 BUG Fixes:
+    HIVE-12563: NullPointerException with 3-way Tez merge join
     HIVE-8295 Add batch retrieve partition objects for metastore direct sql
     HIVE-9445 Revert HIVE-5700 - enforce single date format for partition column storage
     HIVE-9509 Restore partition spec validation removed by HIVE-9445
