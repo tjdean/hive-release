@@ -189,7 +189,7 @@ public class HiveSessionImplwithUGI extends HiveSessionImpl {
   @Override
   public String getDelegationToken(HiveAuthFactory authFactory, String owner,
       String renewer) throws HiveSQLException {
-    return authFactory.getDelegationToken(owner, renewer);
+    return authFactory.getDelegationToken(owner, renewer, getIpAddress());
   }
 
   @Override
