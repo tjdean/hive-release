@@ -87,6 +87,7 @@ import org.apache.hadoop.hive.ql.metadata.formatting.MetaDataFormatter;
 import org.apache.hadoop.hive.ql.optimizer.ppr.PartitionPruner;
 import org.apache.hadoop.hive.ql.parse.ASTNode;
 import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer;
+import org.apache.hadoop.hive.ql.parse.CalcitePlanner;
 import org.apache.hadoop.hive.ql.parse.ColumnAccessInfo;
 import org.apache.hadoop.hive.ql.parse.HiveSemanticAnalyzerHook;
 import org.apache.hadoop.hive.ql.parse.HiveSemanticAnalyzerHookContext;
@@ -721,6 +722,10 @@ public class Driver implements CommandProcessor {
           continue;
         }
         Table tbl = read.getTable();
+        if (tbl.isView() && sem instanceof SemanticAnalyzer) {
+          tab2Cols.put(tbl,
+              sem.getColumnAccessInfo().getTableToColumnAccessMap().get(tbl.getTableName()));
+        }
         if (read.getPartition() != null) {
           Partition partition = read.getPartition();
           tbl = partition.getTable();
