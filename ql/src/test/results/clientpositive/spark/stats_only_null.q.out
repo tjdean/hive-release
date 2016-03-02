@@ -232,7 +232,11 @@ Table:              	stats_null_part
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
+<<<<<<< HEAD
 	COLUMN_STATS_ACCURATE	true                
+=======
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"a\":\"true\",\"b\":\"true\",\"c\":\"true\",\"d\":\"true\"}}
+>>>>>>> 8657e300... HIVE-12749: Constant propagate returns string values in incorrect format (Aleksey Vovchenko, reviewed by Jesus Camacho Rodriguez, Sergey Shelukhin)
 	numFiles            	1                   
 	numRows             	6                   
 	rawDataSize         	71                  
@@ -275,7 +279,11 @@ Table:              	stats_null_part
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
+<<<<<<< HEAD
 	COLUMN_STATS_ACCURATE	true                
+=======
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"a\":\"true\",\"b\":\"true\",\"c\":\"true\",\"d\":\"true\"}}
+>>>>>>> 8657e300... HIVE-12749: Constant propagate returns string values in incorrect format (Aleksey Vovchenko, reviewed by Jesus Camacho Rodriguez, Sergey Shelukhin)
 	numFiles            	1                   
 	numRows             	4                   
 	rawDataSize         	49                  

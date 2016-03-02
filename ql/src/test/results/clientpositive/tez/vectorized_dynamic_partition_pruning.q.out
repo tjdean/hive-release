@@ -2485,6 +2485,7 @@ STAGE PLANS:
                     sort order: +
                     Map-reduce partition columns: ds (type: string)
                     Statistics: Num rows: 1000 Data size: 10624 Basic stats: COMPLETE Column stats: NONE
+                    value expressions: hr (type: string)
         Map 5 
             Map Operator Tree:
                 TableScan
@@ -2525,12 +2526,12 @@ STAGE PLANS:
                     predicate: ((hr is not null and (hour = 11)) and (hr = 11)) (type: boolean)
                     Statistics: Num rows: 1 Data size: 172 Basic stats: COMPLETE Column stats: NONE
                     Reduce Output Operator
-                      key expressions: '11' (type: string)
+                      key expressions: hr (type: string)
                       sort order: +
-                      Map-reduce partition columns: '11' (type: string)
+                      Map-reduce partition columns: hr (type: string)
                       Statistics: Num rows: 1 Data size: 172 Basic stats: COMPLETE Column stats: NONE
                     Select Operator
-                      expressions: '11' (type: string)
+                      expressions: hr (type: string)
                       outputColumnNames: _col0
                       Statistics: Num rows: 1 Data size: 172 Basic stats: COMPLETE Column stats: NONE
                       Group By Operator
@@ -2553,11 +2554,12 @@ STAGE PLANS:
                 keys:
                   0 ds (type: string)
                   1 ds (type: string)
+                outputColumnNames: _col3
                 Statistics: Num rows: 1100 Data size: 11686 Basic stats: COMPLETE Column stats: NONE
                 Reduce Output Operator
-                  key expressions: '11' (type: string)
+                  key expressions: _col3 (type: string)
                   sort order: +
-                  Map-reduce partition columns: '11' (type: string)
+                  Map-reduce partition columns: _col3 (type: string)
                   Statistics: Num rows: 1100 Data size: 11686 Basic stats: COMPLETE Column stats: NONE
         Reducer 3 
             Reduce Operator Tree:
@@ -2565,8 +2567,8 @@ STAGE PLANS:
                 condition map:
                      Inner Join 0 to 1
                 keys:
-                  0 '11' (type: string)
-                  1 '11' (type: string)
+                  0 _col3 (type: string)
+                  1 hr (type: string)
                 Statistics: Num rows: 1210 Data size: 12854 Basic stats: COMPLETE Column stats: NONE
                 Group By Operator
                   aggregations: count()
@@ -2652,6 +2654,7 @@ STAGE PLANS:
                       sort order: +
                       Map-reduce partition columns: ds (type: string)
                       Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
+                      value expressions: hr (type: string)
             Execution mode: vectorized
         Map 5 
             Map Operator Tree:
@@ -2678,9 +2681,9 @@ STAGE PLANS:
                     predicate: (hr = 13) (type: boolean)
                     Statistics: Num rows: 1 Data size: 172 Basic stats: COMPLETE Column stats: NONE
                     Reduce Output Operator
-                      key expressions: '13' (type: string)
+                      key expressions: hr (type: string)
                       sort order: +
-                      Map-reduce partition columns: '13' (type: string)
+                      Map-reduce partition columns: hr (type: string)
                       Statistics: Num rows: 1 Data size: 172 Basic stats: COMPLETE Column stats: NONE
             Execution mode: vectorized
         Reducer 2 
@@ -2691,11 +2694,12 @@ STAGE PLANS:
                 keys:
                   0 ds (type: string)
                   1 ds (type: string)
+                outputColumnNames: _col3
                 Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
                 Reduce Output Operator
-                  key expressions: '13' (type: string)
+                  key expressions: _col3 (type: string)
                   sort order: +
-                  Map-reduce partition columns: '13' (type: string)
+                  Map-reduce partition columns: _col3 (type: string)
                   Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
         Reducer 3 
             Reduce Operator Tree:
@@ -2703,8 +2707,8 @@ STAGE PLANS:
                 condition map:
                      Inner Join 0 to 1
                 keys:
-                  0 '13' (type: string)
-                  1 '13' (type: string)
+                  0 _col3 (type: string)
+                  1 hr (type: string)
                 Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
                 Group By Operator
                   aggregations: count()
@@ -4610,6 +4614,7 @@ STAGE PLANS:
                     keys:
                       0 ds (type: string)
                       1 ds (type: string)
+                    outputColumnNames: _col3
                     input vertices:
                       1 Map 3
                     Statistics: Num rows: 1100 Data size: 11686 Basic stats: COMPLETE Column stats: NONE
@@ -4618,8 +4623,8 @@ STAGE PLANS:
                       condition map:
                            Inner Join 0 to 1
                       keys:
-                        0 '11' (type: string)
-                        1 '11' (type: string)
+                        0 _col3 (type: string)
+                        1 hr (type: string)
                       input vertices:
                         1 Map 4
                       Statistics: Num rows: 1210 Data size: 12854 Basic stats: COMPLETE Column stats: NONE
@@ -4673,12 +4678,12 @@ STAGE PLANS:
                     predicate: ((hr is not null and (hour = 11)) and (hr = 11)) (type: boolean)
                     Statistics: Num rows: 1 Data size: 172 Basic stats: COMPLETE Column stats: NONE
                     Reduce Output Operator
-                      key expressions: '11' (type: string)
+                      key expressions: hr (type: string)
                       sort order: +
-                      Map-reduce partition columns: '11' (type: string)
+                      Map-reduce partition columns: hr (type: string)
                       Statistics: Num rows: 1 Data size: 172 Basic stats: COMPLETE Column stats: NONE
                     Select Operator
-                      expressions: '11' (type: string)
+                      expressions: hr (type: string)
                       outputColumnNames: _col0
                       Statistics: Num rows: 1 Data size: 172 Basic stats: COMPLETE Column stats: NONE
                       Group By Operator
@@ -4768,6 +4773,7 @@ STAGE PLANS:
                       sort order: +
                       Map-reduce partition columns: ds (type: string)
                       Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
+                      value expressions: hr (type: string)
             Execution mode: vectorized
         Map 2 
             Map Operator Tree:
@@ -4784,14 +4790,15 @@ STAGE PLANS:
                       keys:
                         0 ds (type: string)
                         1 ds (type: string)
+                      outputColumnNames: _col3
                       input vertices:
                         0 Map 1
                       Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
                       HybridGraceHashJoin: true
                       Reduce Output Operator
-                        key expressions: '13' (type: string)
+                        key expressions: _col3 (type: string)
                         sort order: +
-                        Map-reduce partition columns: '13' (type: string)
+                        Map-reduce partition columns: _col3 (type: string)
                         Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
             Execution mode: vectorized
         Map 3 
@@ -4807,8 +4814,8 @@ STAGE PLANS:
                       condition map:
                            Inner Join 0 to 1
                       keys:
-                        0 '13' (type: string)
-                        1 '13' (type: string)
+                        0 _col3 (type: string)
+                        1 hr (type: string)
                       input vertices:
                         0 Map 2
                       Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
