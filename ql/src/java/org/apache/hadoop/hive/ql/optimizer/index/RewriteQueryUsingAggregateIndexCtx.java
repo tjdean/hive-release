@@ -83,6 +83,7 @@ public final class RewriteQueryUsingAggregateIndexCtx  implements NodeProcessorC
         parseContext, hiveDb, canApplyCtx);
   }
 
+  // Assumes one instance of this + single-threaded compilation for each query.
   private final Hive hiveDb;
   private final ParseContext parseContext;
   private RewriteCanApplyCtx canApplyCtx;

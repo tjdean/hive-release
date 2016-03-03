@@ -57,6 +57,7 @@ import org.apache.hadoop.hive.ql.exec.spark.status.SparkJobRef;
 import org.apache.hadoop.hive.ql.exec.spark.status.SparkJobStatus;
 import org.apache.hadoop.hive.ql.history.HiveHistory.Keys;
 import org.apache.hadoop.hive.ql.log.PerfLogger;
+import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
@@ -299,7 +300,7 @@ public class SparkTask extends Task<SparkWork> {
       }
     Table table;
     try {
-      table = db.getTable(tableName);
+      table = Hive.get(conf).getTable(tableName);
     } catch (HiveException e) {
       LOG.warn("Failed to get table:" + tableName);
       // For CTAS query, table does not exist in this period, just use table name as prefix.
@@ -356,7 +357,7 @@ public class SparkTask extends Task<SparkWork> {
 
       // INSERT OVERWRITE command
       LoadTableDesc tbd = work.getLoadTableDesc();
-      table = db.getTable(tbd.getTable().getTableName());
+      table = Hive.get(conf).getTable(tbd.getTable().getTableName());
       if (!table.isPartitioned()) {
         return null;
       }

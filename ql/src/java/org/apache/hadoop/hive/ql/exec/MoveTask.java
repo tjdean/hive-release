@@ -227,6 +227,7 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
   public int execute(DriverContext driverContext) {
 
     try {
+      Hive db = getHive();
 
       // Do any hive related operations like moving tables and files
       // to appropriate locations
@@ -437,7 +438,8 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
               Partition partn = entry.getValue();
 
               if (bucketCols != null || sortCols != null) {
-                updatePartitionBucketSortColumns(table, partn, bucketCols, numBuckets, sortCols);
+                updatePartitionBucketSortColumns(
+                    db, table, partn, bucketCols, numBuckets, sortCols);
               }
 
               WriteEntity enty = new WriteEntity(partn,
@@ -482,7 +484,7 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
             Partition partn = db.getPartition(table, tbd.getPartitionSpec(), false);
 
             if (bucketCols != null || sortCols != null) {
-              updatePartitionBucketSortColumns(table, partn, bucketCols,
+              updatePartitionBucketSortColumns(db, table, partn, bucketCols,
                   numBuckets, sortCols);
             }
 
@@ -544,7 +546,7 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
    * @throws InvalidOperationException
    * @throws HiveException
    */
-  private void updatePartitionBucketSortColumns(Table table, Partition partn,
+  private void updatePartitionBucketSortColumns(Hive db, Table table, Partition partn,
       List<BucketCol> bucketCols, int numBuckets, List<SortCol> sortCols)
           throws IOException, InvalidOperationException, HiveException {
 

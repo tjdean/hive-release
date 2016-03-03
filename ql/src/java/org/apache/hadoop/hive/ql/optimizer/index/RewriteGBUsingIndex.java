@@ -91,6 +91,7 @@ import org.apache.hadoop.hive.ql.plan.OperatorDesc;
 
 public class RewriteGBUsingIndex extends Transform {
   private ParseContext parseContext;
+  // Assumes one instance of this + single-threaded compilation for each query.
   private Hive hiveDb;
   private HiveConf hiveConf;
   private static final Logger LOG = LoggerFactory.getLogger(RewriteGBUsingIndex.class.getName());
