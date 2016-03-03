@@ -30,6 +30,7 @@ import org.apache.hadoop.hive.ql.parse.SemanticAnalyzer;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.parse.TableSample;
 import org.apache.hadoop.hive.ql.plan.Explain.Level;
+import org.apache.hadoop.hive.serde.serdeConstants;
 
 
 /**
@@ -287,5 +288,20 @@ public class TableScanDesc extends AbstractOperatorDesc {
 
   public void setTableSample(TableSample tableSample) {
     this.tableSample = tableSample;
+  }
+
+  public boolean isNeedSkipHeaderFooters() {
+    boolean rtn = false;
+    if (tableMetadata != null && tableMetadata.getTTable() != null) {
+      Map<String, String> params = tableMetadata.getTTable().getParameters();
+      if (params != null) {
+        String skipHVal = params.get(serdeConstants.HEADER_COUNT);
+        int hcount = skipHVal == null? 0 : Integer.parseInt(skipHVal);
+        String skipFVal = params.get(serdeConstants.FOOTER_COUNT);
+        int fcount = skipFVal == null? 0 : Integer.parseInt(skipFVal);
+        rtn = (hcount != 0 || fcount !=0 );
+      }
+    }
+    return rtn;
   }
 }
