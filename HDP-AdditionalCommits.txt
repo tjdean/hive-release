@@ -1,6 +1,5 @@
 CHANGES in the branch which are not yet committed to Apache
 
-  HIVE-12558 (BUG-49593). Publish some of the LLAP cache counters via Tez.
-  HIVE-12558 (BUG-49593). HIVE-12558 Publish some of the LLAP cache counters via Tez.
-  HIVE-13134 (BUG-53263). Remove JDBC Standalone drivers from bin/hive classpath
-  HIVE-13135 (BUG-53262). LLAP: SSL configuration fixes for secure clusters.
+  HIVE-12447 (BUG-49894). Fix LlapTaskReporter post TEZ-808 changes.
+  HIVE-12692 (BUG-49970). Make use of the Tez HadoopShim in TaskRunner usage.
+  HIVE-12470 (BUG-49586). Allow splits to provide custom consistent locations, instead of being tied to data locality.

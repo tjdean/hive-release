@@ -27,15 +27,15 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.llap.ConsumerFeedback;
 import org.apache.hadoop.hive.llap.DebugUtils;
-import org.apache.hadoop.hive.llap.counters.FragmentCountersMap;
-import org.apache.hadoop.hive.llap.counters.LlapIOCounters;
 import org.apache.hadoop.hive.llap.counters.QueryFragmentCounters;
+import org.apache.hadoop.hive.llap.counters.QueryFragmentCounters.Counter;
 import org.apache.hadoop.hive.llap.io.decode.ColumnVectorProducer;
 import org.apache.hadoop.hive.llap.io.decode.ReadPipeline;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedInputFormatInterface;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatchCtx;
+import org.apache.hadoop.hive.ql.io.CombineHiveInputFormat;
 import org.apache.hadoop.hive.ql.io.CombineHiveInputFormat.AvoidSplitCombination;
 import org.apache.hadoop.hive.ql.io.LlapAwareSplit;
 import org.apache.hadoop.hive.ql.io.SelfDescribingInputFormatInterface;
@@ -53,12 +53,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.RecordReader;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hive.common.util.HiveStringUtils;
-import org.apache.tez.common.counters.TezCounters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -125,7 +120,6 @@ public class LlapInputFormat implements InputFormat<NullWritable, VectorizedRowB
 
   private class LlapRecordReader
       implements RecordReader<NullWritable, VectorizedRowBatch>, Consumer<ColumnVectorBatch> {
-    private final Logger LOG = LoggerFactory.getLogger(LlapRecordReader.class);
     private final FileSplit split;
     private final List<Integer> columnIds;
     private final SearchArgument sarg;
@@ -153,18 +147,7 @@ public class LlapInputFormat implements InputFormat<NullWritable, VectorizedRowB
       this.columnIds = includedCols;
       this.sarg = ConvertAstToSearchArg.createFromConf(job);
       this.columnNames = ColumnProjectionUtils.getReadColumnNames(job);
-      String dagId = job.get("tez.mapreduce.dag.index");
-      String vertexId = job.get("tez.mapreduce.vertex.index");
-      String taskId = job.get("tez.mapreduce.task.index");
-      String taskAttemptId = job.get("tez.mapreduce.task.attempt.index");
-      Preconditions.checkNotNull(dagId, "DAG index is not set");
-      Preconditions.checkNotNull(vertexId, "Vertex index is not set");
-      Preconditions.checkNotNull(taskId, "Task index is not set");
-      Preconditions.checkNotNull(taskAttemptId, "Task attempt index is not set");
-      String fullId = Joiner.on('_').join(dagId, vertexId, taskId, taskAttemptId);
-      TezCounters taskCounters = FragmentCountersMap.getCountersForFragment(fullId);
-      LOG.info("Received dagid_vertexid_taskid_attempid: {}", fullId);
-      this.counters = new QueryFragmentCounters(job, taskCounters);
+      this.counters = new QueryFragmentCounters(job);
       this.counters.setDesc(QueryFragmentCounters.Desc.MACHINE, hostName);
 
       MapWork mapWork = Utilities.getMapWork(job);
@@ -209,7 +192,7 @@ public class LlapInputFormat implements InputFormat<NullWritable, VectorizedRowB
         if (wasFirst) {
           firstReturnTime = counters.startTimeCounter();
         }
-        counters.incrTimeCounter(LlapIOCounters.CONSUMER_TIME_US, firstReturnTime);
+        counters.incrTimeCounter(Counter.CONSUMER_TIME_US, firstReturnTime);
         return false;
       }
       if (columnIds.size() != cvb.cols.length) {
@@ -347,7 +330,7 @@ public class LlapInputFormat implements InputFormat<NullWritable, VectorizedRowB
 
     @Override
     public void setError(Throwable t) {
-      counters.incrCounter(LlapIOCounters.NUM_ERRORS);
+      counters.incrCounter(QueryFragmentCounters.Counter.NUM_ERRORS);
       LlapIoImpl.LOG.info("setError called; closed " + isClosed
         + ", done " + isDone + ", err " + pendingError + ", pending " + pendingData.size());
       assert t != null;

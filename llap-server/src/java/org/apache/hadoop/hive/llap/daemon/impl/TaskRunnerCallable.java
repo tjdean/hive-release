@@ -51,10 +51,6 @@ import org.apache.tez.common.TezCommonUtils;
 import org.apache.tez.common.security.JobTokenIdentifier;
 import org.apache.tez.common.security.TokenCache;
 import org.apache.tez.dag.api.TezConstants;
-import org.apache.tez.dag.records.TezDAGID;
-import org.apache.tez.dag.records.TezTaskAttemptID;
-import org.apache.tez.dag.records.TezTaskID;
-import org.apache.tez.dag.records.TezVertexID;
 import org.apache.tez.hadoop.shim.HadoopShim;
 import org.apache.tez.runtime.api.ExecutionContext;
 import org.apache.tez.runtime.api.impl.TaskSpec;
@@ -68,7 +64,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -206,20 +201,13 @@ public class TaskRunnerCallable extends CallableWithNdc<TaskRunner2Result> {
       }
     });
 
-    TezTaskAttemptID taskAttemptID = taskSpec.getTaskAttemptID();
-    TezTaskID taskId = taskAttemptID.getTaskID();
-    TezVertexID tezVertexID = taskId.getVertexID();
-    TezDAGID tezDAGID = tezVertexID.getDAGId();
-    String fragFullId = Joiner.on('_').join(tezDAGID.getId(), tezVertexID.getId(), taskId.getId(),
-        taskAttemptID.getId());
     taskReporter = new LlapTaskReporter(
         umbilical,
         confParams.amHeartbeatIntervalMsMax,
         confParams.amCounterHeartbeatInterval,
         confParams.amMaxEventsPerHeartbeat,
         new AtomicLong(0),
-        request.getContainerIdString(),
-        fragFullId);
+        request.getContainerIdString());
 
     String attemptId = fragmentInfo.getFragmentIdentifierString();
     IOContextMap.setThreadAttemptId(attemptId);
