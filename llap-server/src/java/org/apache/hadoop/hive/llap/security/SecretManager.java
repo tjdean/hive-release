@@ -62,8 +62,10 @@ public class SecretManager extends ZKDelegationTokenSecretManager<LlapTokenIdent
     // Override the default delegation token lifetime for LLAP.
     // Also set all the necessary ZK settings to defaults and LLAP configs, if not set.
     final Configuration zkConf = new Configuration(conf);
-    zkConf.setLong(DelegationTokenManager.MAX_LIFETIME,
-        HiveConf.getTimeVar(conf, ConfVars.LLAP_DELEGATION_TOKEN_LIFETIME, TimeUnit.SECONDS));
+    long tokenLifetime = HiveConf.getTimeVar(
+        conf, ConfVars.LLAP_DELEGATION_TOKEN_LIFETIME, TimeUnit.SECONDS);
+    zkConf.setLong(DelegationTokenManager.MAX_LIFETIME, tokenLifetime);
+    zkConf.setLong(DelegationTokenManager.RENEW_INTERVAL, tokenLifetime);
     zkConf.set(SecretManager.ZK_DTSM_ZK_KERBEROS_PRINCIPAL, principal);
     zkConf.set(SecretManager.ZK_DTSM_ZK_KERBEROS_KEYTAB, keyTab);
     setZkConfIfNotSet(zkConf, SecretManager.ZK_DTSM_ZNODE_WORKING_PATH, "llapzkdtsm");
