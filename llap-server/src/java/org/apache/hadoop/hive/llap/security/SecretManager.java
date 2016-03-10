@@ -27,10 +27,42 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.token.Token;
 import org.apache.hadoop.security.token.delegation.ZKDelegationTokenSecretManager;
 import org.apache.hadoop.security.token.delegation.web.DelegationTokenManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SecretManager extends ZKDelegationTokenSecretManager<LlapTokenIdentifier> {
+  private static final Logger LOG = LoggerFactory.getLogger(SecretManager.class);
   public SecretManager(Configuration conf) {
     super(conf);
+    checkForZKDTSMBug(conf);
+  }
+
+  private void checkForZKDTSMBug(Configuration conf) {
+    // There's a bug in ZKDelegationTokenSecretManager ctor where seconds are not converted to ms.
+    long expectedRenewTimeSec = conf.getLong(DelegationTokenManager.RENEW_INTERVAL, -1);
+    LOG.info("Checking for tokenRenewInterval bug: " + expectedRenewTimeSec);
+    if (expectedRenewTimeSec == -1) return; // The default works, no bug.
+    java.lang.reflect.Field f = null;
+    try {
+     Class<?> c = org.apache.hadoop.security.token.delegation.AbstractDelegationTokenSecretManager.class;
+     f = c.getDeclaredField("tokenRenewInterval");
+     f.setAccessible(true);
+    } catch (Throwable t) {
+      // Maybe someone removed the field; probably ok to ignore.
+      LOG.error("Failed to check for tokenRenewInterval bug, hoping for the best", t);
+      return;
+    }
+    try {
+      long realValue = f.getLong(this);
+      long expectedValue = expectedRenewTimeSec * 1000;
+      LOG.info("tokenRenewInterval is: " + realValue + "(expected " + expectedValue + ")");
+      if (realValue == expectedRenewTimeSec) {
+        // Bug - the field has to be in ms, not sec. Override only if set precisely to sec.
+        f.setLong(this, expectedValue);
+      }
+    } catch (Exception ex) {
+      throw new RuntimeException("Failed to address tokenRenewInterval bug", ex);
+    }
   }
 
   @Override
