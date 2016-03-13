@@ -3225,7 +3225,7 @@ Stage-0
                            predicate:((value > 'val_9') and key is not null) (type: boolean)
                            Statistics:Num rows: 166 Data size: 29548 Basic stats: COMPLETE Column stats: COMPLETE
                            TableScan [TS_3]
-                              alias:b
+                              alias:a
                               Statistics:Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: COMPLETE
 
 PREHOOK: query: explain select * 

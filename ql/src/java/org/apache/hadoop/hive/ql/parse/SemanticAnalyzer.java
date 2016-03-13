@@ -423,11 +423,17 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
   @SuppressWarnings("nls")
   public void doPhase1QBExpr(ASTNode ast, QBExpr qbexpr, String id, String alias)
       throws SemanticException {
+    doPhase1QBExpr(ast, qbexpr, id, alias, false);
+  }
+  @SuppressWarnings("nls")
+  public void doPhase1QBExpr(ASTNode ast, QBExpr qbexpr, String id, String alias, boolean insideView)
+      throws SemanticException {
 
     assert (ast.getToken() != null);
     switch (ast.getToken().getType()) {
     case HiveParser.TOK_QUERY: {
       QB qb = new QB(id, alias, true);
+      qb.setInsideView(insideView);
       Phase1Ctx ctx_1 = initPhase1Ctx();
       doPhase1(ast, qb, ctx_1, null);
 
@@ -441,14 +447,14 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       assert (ast.getChild(0) != null);
       QBExpr qbexpr1 = new QBExpr(alias + SUBQUERY_TAG_1);
       doPhase1QBExpr((ASTNode) ast.getChild(0), qbexpr1, id + SUBQUERY_TAG_1,
-          alias + SUBQUERY_TAG_1);
+          alias + SUBQUERY_TAG_1, insideView);
       qbexpr.setQBExpr1(qbexpr1);
 
       // query 2
       assert (ast.getChild(1) != null);
       QBExpr qbexpr2 = new QBExpr(alias + SUBQUERY_TAG_2);
       doPhase1QBExpr((ASTNode) ast.getChild(1), qbexpr2, id + SUBQUERY_TAG_2,
-          alias + SUBQUERY_TAG_2);
+          alias + SUBQUERY_TAG_2, insideView);
       qbexpr.setQBExpr2(qbexpr2);
     }
       break;
@@ -637,6 +643,10 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     if (propsIndex >= 0) {
       Tree propsAST = tabref.getChild(propsIndex);
       Map<String, String> props = DDLSemanticAnalyzer.getProps((ASTNode) propsAST.getChild(0));
+      // We get the information from Calcite.
+      if ("TRUE".equals(props.get("insideView"))) {
+        qb.getAliasInsideView().add(alias.toLowerCase());
+      }
       qb.setTabProps(alias, props);
     }
 
@@ -711,6 +721,9 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     }
     // Insert this map into the stats
     qb.setTabAlias(alias, tabIdName);
+    if (qb.isInsideView()) {
+      qb.getAliasInsideView().add(alias.toLowerCase());
+    }
     qb.addAlias(alias);
 
     qb.getParseInfo().setSrcForAlias(alias, tableTree);
@@ -1617,26 +1630,26 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
               getMsg("Table " + getUnescapedName(qb.getParseInfo().getSrcForAlias(alias))));
         }
 
-        if (tab.isView()) {
-          if (qb.getParseInfo().isAnalyzeCommand()) {
-            throw new SemanticException(ErrorMsg.ANALYZE_VIEW.getMsg());
-          }
-          String fullViewName = tab.getDbName() + "." + tab.getTableName();
-          // Prevent view cycles
-          if (viewsExpanded.contains(fullViewName)) {
-            throw new SemanticException("Recursive view " + fullViewName +
-                " detected (cycle: " + StringUtils.join(viewsExpanded, " -> ") +
-                " -> " + fullViewName + ").");
-          }
-          replaceViewReferenceWithDefinition(qb, tab, tab_name, alias);
-          // This is the last time we'll see the Table objects for views, so add it to the inputs
-          // now
-          ReadEntity viewInput = new ReadEntity(tab, parentInput);
-          viewInput = PlanUtils.addInput(inputs, viewInput);
-          aliasToViewInfo.put(alias, new ObjectPair<String, ReadEntity>(fullViewName, viewInput));
-          viewAliasToInput.put(getAliasId(alias, qb), viewInput);
-          continue;
+     if (tab.isView()) {
+        if (qb.getParseInfo().isAnalyzeCommand()) {
+          throw new SemanticException(ErrorMsg.ANALYZE_VIEW.getMsg());
         }
+        String fullViewName = tab.getDbName() + "." + tab.getTableName();
+        // Prevent view cycles
+        if (viewsExpanded.contains(fullViewName)) {
+          throw new SemanticException("Recursive view " + fullViewName +
+              " detected (cycle: " + StringUtils.join(viewsExpanded, " -> ") +
+              " -> " + fullViewName + ").");
+        }
+        replaceViewReferenceWithDefinition(qb, tab, tab_name, alias);
+        // This is the last time we'll see the Table objects for views, so add it to the inputs
+        // now. isInsideView will tell if this view is embedded in another view.
+        ReadEntity viewInput = new ReadEntity(tab, parentInput, !qb.isInsideView());
+        viewInput = PlanUtils.addInput(inputs, viewInput);
+        aliasToViewInfo.put(alias, new ObjectPair<String, ReadEntity>(fullViewName, viewInput));
+        viewAliasToInput.put(getAliasId(alias, qb), viewInput);
+        continue;
+      }
 
         if (!InputFormat.class.isAssignableFrom(tab.getInputFormatClass())) {
           throw new SemanticException(generateErrorMessage(
@@ -2040,8 +2053,11 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       throw new SemanticException(sb.toString(), e);
     }
     QBExpr qbexpr = new QBExpr(alias);
-    doPhase1QBExpr(viewTree, qbexpr, qb.getId(), alias);
-    if (!this.skipAuthorization()
+    doPhase1QBExpr(viewTree, qbexpr, qb.getId(), alias, true);
+    // if skip authorization, skip checking;
+    // if it is inside a view, skip checking;
+    // if authorization flag is not enabled, skip checking.
+    if (!this.skipAuthorization() && !qb.isInsideView()
         && HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_AUTHORIZATION_ENABLED)) {
       qb.rewriteViewToSubq(alias, tab_name, qbexpr, tab);
     }
@@ -9391,6 +9407,10 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
 
       top = putOpInsertMap(OperatorFactory.get(tsDesc,
           new RowSchema(rwsch.getColumnInfos())), rwsch);
+
+      // Set insiderView so that we can skip the column authorization for this.
+      ((TableScanOperator) top).setInsideView(qb.isInsideView()
+          || qb.getAliasInsideView().contains(alias.toLowerCase()));
 
       // Add this to the list of top operators - we always start from a table
       // scan

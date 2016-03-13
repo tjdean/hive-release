@@ -31,6 +31,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 
@@ -707,14 +708,14 @@ public class Driver implements CommandProcessor {
         }
       }
 
+      // column authorization is checked through table scan operators.
       getTablePartitionUsedColumns(op, sem, tab2Cols, part2Cols, tableUsePartLevelAuth);
-
-
 
       // cache the results for table authorization
       Set<String> tableAuthChecked = new HashSet<String>();
       for (ReadEntity read : inputs) {
-        if (read.isDummy() || read.isPathType()) {
+        // if read is not direct, we do not need to check its autho.
+        if (read.isDummy() || read.isPathType() || !read.isDirect()) {
           continue;
         }
         if (read.getType() == Entity.Type.DATABASE) {
@@ -770,16 +771,14 @@ public class Driver implements CommandProcessor {
     // for a select or create-as-select query, populate the partition to column
     // (par2Cols) or
     // table to columns mapping (tab2Cols)
-    if (op.equals(HiveOperation.CREATETABLE_AS_SELECT)
-        || op.equals(HiveOperation.QUERY)) {
+    if (op.equals(HiveOperation.CREATETABLE_AS_SELECT) || op.equals(HiveOperation.QUERY)) {
       SemanticAnalyzer querySem = (SemanticAnalyzer) sem;
       ParseContext parseCtx = querySem.getParseContext();
 
-      for (Map.Entry<String, Operator<? extends OperatorDesc>> topOpMap : querySem
-          .getParseContext().getTopOps().entrySet()) {
-        Operator<? extends OperatorDesc> topOp = topOpMap.getValue();
-        if (topOp instanceof TableScanOperator) {
-          TableScanOperator tableScanOp = (TableScanOperator) topOp;
+      for (Entry<String, Operator<? extends OperatorDesc>> topOpMap : querySem.getParseContext().getTopOps()
+          .entrySet()) {
+        TableScanOperator tableScanOp = (TableScanOperator) topOpMap.getValue();
+        if (!tableScanOp.isInsideView()) {
           Table tbl = tableScanOp.getConf().getTableMetadata();
           List<Integer> neededColumnIds = tableScanOp.getNeededColumnIDs();
           List<FieldSchema> columns = tbl.getCols();
