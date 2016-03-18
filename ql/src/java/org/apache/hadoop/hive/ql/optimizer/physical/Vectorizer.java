@@ -131,6 +131,8 @@ import org.apache.hadoop.hive.ql.udf.UDFMonth;
 import org.apache.hadoop.hive.ql.udf.UDFRadians;
 import org.apache.hadoop.hive.ql.udf.UDFRand;
 import org.apache.hadoop.hive.ql.udf.UDFRegExp;
+import org.apache.hadoop.hive.ql.udf.UDFRegExpExtract;
+import org.apache.hadoop.hive.ql.udf.UDFRegExpReplace;
 import org.apache.hadoop.hive.ql.udf.UDFSecond;
 import org.apache.hadoop.hive.ql.udf.UDFSign;
 import org.apache.hadoop.hive.ql.udf.UDFSin;
@@ -244,6 +246,8 @@ public class Vectorizer implements PhysicalPlanResolver {
 
     supportedGenericUDFs.add(UDFLike.class);
     supportedGenericUDFs.add(UDFRegExp.class);
+    supportedGenericUDFs.add(UDFRegExpExtract.class);
+    supportedGenericUDFs.add(UDFRegExpReplace.class);
     supportedGenericUDFs.add(UDFSubstr.class);
     supportedGenericUDFs.add(GenericUDFLTrim.class);
     supportedGenericUDFs.add(GenericUDFRTrim.class);
