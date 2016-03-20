@@ -31,8 +31,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
@@ -218,6 +220,8 @@ import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.OutputFormat;
 import org.apache.hadoop.security.UserGroupInformation;
 
+import com.google.common.collect.Sets;
+
 /**
  * Implementation of the semantic analyzer. It generates the query plan.
  * There are other specific semantic analyzers for some hive operations such as
@@ -297,13 +301,23 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
   /*
    * Used to check recursive CTE invocations. Similar to viewsExpanded
    */
-  private ArrayList<String> ctesExpanded;
+  ArrayList<String> ctesExpanded;
+
+  private final TableMask tableMask;
 
   /** Not thread-safe. */
   final ASTSearcher astSearcher = new ASTSearcher();
 
   protected AnalyzeRewriteContext analyzeRewrite;
   private CreateTableDesc tableDesc;
+
+  // A mapping from a tableName to a table object in metastore.
+  Map<String, Table> tableNameToMetaDataTableObject;
+
+  // The tokens we should ignore when we are trying to do table masking.
+  private final Set<Integer> ignoredTokens = Sets.newHashSet(HiveParser.TOK_GROUPBY,
+      HiveParser.TOK_ORDERBY, HiveParser.TOK_WINDOWSPEC, HiveParser.TOK_CLUSTERBY,
+      HiveParser.TOK_DISTRIBUTEBY, HiveParser.TOK_SORTBY);
 
   static class Phase1Ctx {
     String dest;
@@ -345,6 +359,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     globalLimitCtx = new GlobalLimitCtx();
     viewAliasToInput = new HashMap<String, ReadEntity>();
     noscan = partialscan = false;
+    tableMask = new TableMask(this, conf);
+    tableNameToMetaDataTableObject = new HashMap<>();
   }
 
   @Override
@@ -10061,6 +10077,145 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     }
   }
 
+  private Table getMetaDataTableObjectByName(String tableName) throws HiveException {
+    if (!tableNameToMetaDataTableObject.containsKey(tableName)) {
+      Table table = db.getTable(tableName);
+      tableNameToMetaDataTableObject.put(tableName, table);
+      return table;
+    } else {
+      return tableNameToMetaDataTableObject.get(tableName);
+    }
+  }
+
+  private void walkASTMarkTABREF(ASTNode ast, Set<String> cteAlias)
+      throws SemanticException {
+    Queue<Node> queue = new LinkedList<>();
+    queue.add(ast);
+    while (!queue.isEmpty()) {
+      ASTNode astNode = (ASTNode) queue.poll();
+      if (astNode.getToken().getType() == HiveParser.TOK_TABREF) {
+        int aliasIndex = 0;
+        StringBuffer additionalTabInfo = new StringBuffer();
+        for (int index = 1; index < astNode.getChildCount(); index++) {
+          ASTNode ct = (ASTNode) astNode.getChild(index);
+          // TODO: support TOK_TABLEBUCKETSAMPLE, TOK_TABLESPLITSAMPLE, and
+          // TOK_TABLEPROPERTIES
+          if (ct.getToken().getType() == HiveParser.TOK_TABLEBUCKETSAMPLE
+              || ct.getToken().getType() == HiveParser.TOK_TABLESPLITSAMPLE
+              || ct.getToken().getType() == HiveParser.TOK_TABLEPROPERTIES) {
+            additionalTabInfo.append(ctx.getTokenRewriteStream().toString(ct.getTokenStartIndex(),
+                ct.getTokenStopIndex()));
+          } else {
+            aliasIndex = index;
+          }
+        }
+
+        ASTNode tableTree = (ASTNode) (astNode.getChild(0));
+
+        String tabIdName = getUnescapedName(tableTree);
+
+        String alias;
+        if (aliasIndex != 0) {
+          alias = unescapeIdentifier(astNode.getChild(aliasIndex).getText());
+        } else {
+          alias = getUnescapedUnqualifiedTableName(tableTree);
+        }
+
+        // We need to know if it is CTE or not.
+        // A CTE may have the same name as a table.
+        // For example,
+        // with select TAB1 [masking] as TAB2
+        // select * from TAB2 [no masking]
+        if (cteAlias.contains(tabIdName)) {
+          continue;
+        }
+
+        String replacementText = null;
+        Table table = null;
+        try {
+          table = getMetaDataTableObjectByName(tabIdName);
+        } catch (HiveException e) {
+          throw new SemanticException("Table " + tabIdName + " is not found.");
+        }
+
+        if (tableMask.needTransform(table.getDbName(), table.getTableName())) {
+          replacementText = tableMask.create(table, additionalTabInfo.toString(), alias);
+        }
+        if (replacementText != null) {
+          tableMask.setNeedsRewrite(true);
+          // we replace the tabref with replacementText here.
+          tableMask.addTableMasking(astNode, replacementText);
+        }
+      }
+      if (astNode.getChildCount() > 0 && !ignoredTokens.contains(astNode.getToken().getType())) {
+        for (Node child : astNode.getChildren()) {
+          queue.offer(child);
+        }
+      }
+    }
+  }
+
+  // We walk through the AST.
+  // We replace all the TOK_TABREF by adding additional masking and filter if
+  // the table needs to be masked or filtered.
+  // For the replacement, we leverage the methods that are used for
+  // unparseTranslator.
+  public ASTNode rewriteASTWithMaskAndFilter(ASTNode ast) throws SemanticException {
+    // 1. collect information about CTE if there is any.
+    // The base table of CTE should be masked.
+    // The CTE itself should not be masked in the references in the following main query.
+    Set<String> cteAlias = new HashSet<>();
+    if (ast.getChildCount() > 0
+        && HiveParser.TOK_CTE == ((ASTNode) ast.getChild(0)).getToken().getType()) {
+      // the structure inside CTE is like this
+      // TOK_CTE
+      // TOK_SUBQUERY
+      // sq1 (may refer to sq2)
+      // ...
+      // TOK_SUBQUERY
+      // sq2
+      ASTNode cte = (ASTNode) ast.getChild(0);
+      // we start from sq2, end up with sq1.
+      for (int index = cte.getChildCount() - 1; index >= 0; index--) {
+        ASTNode subq = (ASTNode) cte.getChild(index);
+        String alias = unescapeIdentifier(subq.getChild(1).getText());
+        if (cteAlias.contains(alias)) {
+          throw new SemanticException("Duplicate definition of " + alias);
+        } else {
+          cteAlias.add(alias);
+          walkASTMarkTABREF(subq, cteAlias);
+        }
+      }
+      // walk the other part of ast
+      for (int index = 1; index < ast.getChildCount(); index++) {
+        walkASTMarkTABREF((ASTNode) ast.getChild(index), cteAlias);
+      }
+    }
+    // there is no CTE, walk the whole AST
+    else {
+      walkASTMarkTABREF(ast, cteAlias);
+    }
+    // 2. rewrite the AST, replace TABREF with masking/filtering
+    if (tableMask.needsRewrite()) {
+      tableMask.applyTableMasking(ctx.getTokenRewriteStream());
+      String rewrittenQuery = ctx.getTokenRewriteStream().toString(ast.getTokenStartIndex(),
+          ast.getTokenStopIndex());
+      ASTNode rewrittenTree;
+      // Parse the rewritten query string
+      // check if we need to ctx.setCmd(rewrittenQuery);
+      ParseDriver pd = new ParseDriver();
+      try {
+        rewrittenTree = pd.parse(rewrittenQuery);
+      } catch (ParseException e) {
+        throw new SemanticException(e);
+      }
+      rewrittenTree = ParseUtils.findRootNonNullToken(rewrittenTree);
+      return rewrittenTree;
+    } else {
+      return ast;
+    }
+  }
+
   boolean genResolvedParseTree(ASTNode ast, PlannerContext plannerCtx) throws SemanticException {
     ASTNode child = ast;
     this.ast = ast;
@@ -10091,6 +10246,12 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       viewSelect = child;
       // prevent view from referencing itself
       viewsExpanded.add(createVwDesc.getViewName());
+    }
+
+    // masking and filtering should be done here
+    // the basic idea is similar to unparseTranslator.
+    if (!unparseTranslator.isEnabled() && tableMask.isEnabled()) {
+      child = rewriteASTWithMaskAndFilter(ast);
     }
 
     // 4. continue analyzing from the child ASTNode.
