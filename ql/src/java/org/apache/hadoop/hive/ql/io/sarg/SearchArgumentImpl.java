@@ -144,7 +144,7 @@ final class SearchArgumentImpl implements SearchArgument {
       } else if (literalList != null) {
         for(Object lit: literalList) {
           buffer.append(' ');
-          buffer.append(lit.toString());
+          buffer.append(lit == null ? "null" : lit.toString());
         }
       }
       buffer.append(')');
