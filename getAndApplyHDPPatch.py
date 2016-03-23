@@ -44,7 +44,7 @@ if ("modified" in statusOut):
 #### done with check for uncommitted changes
 
 #### apply the patch
-patchApplyResponse = subprocess.check_output(["git", "apply", patchFile])
+patchApplyResponse = subprocess.check_output(["git", "apply", "--reject", patchFile])
 #### done applying the patch file
 
 #### Maven command line
