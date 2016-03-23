@@ -92,6 +92,7 @@ public class StatsRulesProcFactory {
   private static final Log LOG = LogFactory.getLog(StatsRulesProcFactory.class.getName());
   private static final boolean isDebugEnabled = LOG.isDebugEnabled();
 
+
   /**
    * Collect basic statistics like number of rows, data size and column level statistics from the
    * table. Also sets the state of the available statistics. Basic and column statistics can have
