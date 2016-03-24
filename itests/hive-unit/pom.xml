@@ -141,7 +141,9 @@
     <profile>
       <id>spark-test</id>
       <activation>
-        <activeByDefault>false</activeByDefault>
+        <property>
+          <name>runSparkTests</name>
+        </property>
       </activation>
       <dependencies>
         <dependency>
