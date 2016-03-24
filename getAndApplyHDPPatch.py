@@ -25,7 +25,7 @@ except OSError:
 #### done removing the old patch file
 
 #### fetch the patch file
-url = 'http://dev.hortonworks.com.s3.amazonaws.com/HDP/centos6/2.x/PATCH_FILES/2.4.1.0/patch_files/hive-source.patch'
+url = 'http://dev.hortonworks.com.s3.amazonaws.com/HDP/centos6/2.x/PATCH_FILES/2.4.2.0/patch_files/hive-source.patch'
 response = urllib2.urlopen(url)
 downloadPatch = response.read()
 #### end of fetch of patch file
