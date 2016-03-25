@@ -1,5 +1,7 @@
 set hive.fetch.task.conversion=more;
 
+-- EXCLUDE_OS_WINDOWS
+-- Exclude on windows due to stats/file size differences dur to CR
 DROP TABLE IF EXISTS DECIMAL_UDF;
 
 CREATE TABLE DECIMAL_UDF (key decimal(20,10), value int)
