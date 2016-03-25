@@ -19,12 +19,15 @@
 package org.apache.hadoop.hive.ql;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.txn.TxnDbUtil;
 import org.apache.hadoop.hive.ql.io.HiveInputFormat;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.hive.ql.txn.compactor.Cleaner;
 import org.apache.hadoop.hive.ql.txn.compactor.Worker;
 import org.junit.After;
 import org.junit.Assert;
@@ -35,10 +38,13 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -309,6 +315,68 @@ public class TestTxnCommands2 {
     Assert.assertEquals("Insert overwrite partition failed", stringifyValues(updatedData), rs2);
     //insert overwrite not supported for ACID tables
   }
+
+  public static void runWorker(HiveConf hiveConf) throws MetaException {
+    AtomicBoolean stop = new AtomicBoolean(true);
+    Worker t = new Worker();
+    t.setThreadId((int) t.getId());
+    t.setHiveConf(hiveConf);
+    AtomicBoolean looped = new AtomicBoolean();
+    t.init(stop, looped);
+    t.run();
+  }
+  public static void runCleaner(HiveConf hiveConf) throws MetaException {
+    AtomicBoolean stop = new AtomicBoolean(true);
+    Cleaner t = new Cleaner();
+    t.setThreadId((int) t.getId());
+    t.setHiveConf(hiveConf);
+    AtomicBoolean looped = new AtomicBoolean();
+    t.init(stop, looped);
+    t.run();
+  }
+
+  /**
+   * Make sure there's no FileSystem$Cache$Key leak due to UGI use
+   * @throws Exception
+   */
+  @Test
+  public void testFileSystemUnCaching() throws Exception {
+    int cacheSizeBefore;
+    int cacheSizeAfter;
+
+    // get the size of cache BEFORE
+    cacheSizeBefore = getFileSystemCacheSize();
+
+    // Insert a row to ACID table
+    runStatementOnDriver("insert into " + Table.ACIDTBL + "(a,b) values(1,2)");
+
+    // Perform a major compaction
+    runStatementOnDriver("alter table " + Table.ACIDTBL + " compact 'major'");
+    runWorker(hiveConf);
+    runCleaner(hiveConf);
+
+    // get the size of cache AFTER
+    cacheSizeAfter = getFileSystemCacheSize();
+
+    Assert.assertEquals(cacheSizeBefore, cacheSizeAfter);
+  }
+  private int getFileSystemCacheSize() throws Exception {
+    try {
+      Field cache = FileSystem.class.getDeclaredField("CACHE");
+      cache.setAccessible(true);
+      Object o = cache.get(null); // FileSystem.CACHE
+
+      Field mapField = o.getClass().getDeclaredField("map");
+      mapField.setAccessible(true);
+      Map map = (HashMap)mapField.get(o); // FileSystem.CACHE.map
+
+      return map.size();
+    } catch (NoSuchFieldException e) {
+      System.out.println(e);
+    }
+    return 0;
+  }
+
   /**
    * takes raw data and turns it into a string as if from Driver.getResults()
    * sorts rows in dictionary order
