@@ -15,7 +15,37 @@ IMPROVEMENTS
     HIVE-11037 : HiveOnTez: make explain user level = true as default
 
 BUG FIXES
+  HDP-2.4.2:
+    HIVE-13325: Excessive logging when ORC PPD fails type conversions
+    HIVE-13298: nested join support causes undecipherable errors in SemanticAnalyzer
+    HIVE-13285: Orc concatenation may drop old files from moving to final path
+    HIVE-13263: Vectorization: Unable to vectorize regexp_extract/regexp_replace " Udf: GenericUDFBridge, is not supported"
+    HIVE-13233: Use min and max values to estimate better stats for comparison operators
+    HIVE-13232: Aggressively drop compression buffers in ORC OutStreams
+    HIVE-13174: Remove Vectorizer noise in logs
+    HIVE-13151: Clean up UGI objects in FileSystem cache for transactions
+    HIVE-13144: HS2 can leak ZK ACL objects when curator retries to create the persistent ephemeral node
+    HIVE-13129: CliService leaks HMS connection
+    HIVE-13092: Vectorized java.lang.ClassCastException: org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo cannot be cast to org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo
+    HIVE-13016: ORC FileDump recovery utility fails in Windows
+    HIVE-12947: SMB join in tez has ClassCastException when container reuse is on
+    HIVE-12879: RowResolver of Semijoin not updated in CalcitePlanner
+    HIVE-12784: Group by SemanticException: Invalid column reference
+    HIVE-12749: Constant propagate returns string values in incorrect format
+    HIVE-12742: NULL table comparison within CASE does not work as previous hive versions
+    HIVE-12684: NPE in stats annotation when all values in decimal column are NULLs
+    HIVE-12352: CompactionTxnHandler.markCleaned() may delete too much
+    HIVE-12189: The list in pushdownPreds of ppd.ExprWalkerInfo should not be allowed to grow very large
+    HIVE-12165: wrong result when hive.optimize.sampling.orderby=true with some aggregate functions
+    HIVE-12064: prevent transactional=false
+    HIVE-12022: NPE in SARG with timestamp cast
+    HIVE-11841: KeyValuesInputMerger creates huge logs
+    HIVE-11816: Upgrade groovy to 2.4.4
+    HIVE-11470: NPE in DynamicPartFileRecordWriterContainer on null part-keys.
+    HIVE-11333: ColumnPruner prunes columns of UnionOperator that should be kept
+    HIVE-11097: HiveInputFormat uses String.startsWith to compare splitPath and PathToAliases
 
+  Pre-HDP-2.4.2:
     HIVE-11727 : (BUG-44285). Hive on Tez through Oozie: Some queries fail with fnf exception
     HIVE-11147 : MetaTool doesn't update FS root location for partitions with space in name
     HIVE-11104 : Select operator doesn't propagate constants appearing in expressions
@@ -284,9 +314,23 @@ BUG FIXES
     HIVE-12625: Backport to branch-1 HIVE-11981 ORC Schema Evolution Issues (Vectorized, ACID, and Non-Vectorized)
     HIVE-11981: ORC Schema Evolution Issues (Vectorized, ACID, and Non-Vectorized)
     HIVE-12706: Incorrect output from from_utc_timestamp()/to_utc_timestamp when local timezone has DST
+    HIVE-13209: metastore get_delegation_token fails with null ip address
+    HIVE-13169: HiveServer2: Support delegation token based connection when using http transport
+    HIVE-13126: Clean up MapJoinOperator properly to avoid object cache reuse with unintentional states
+    HIVE-13093: hive metastore does not exit on start failure
+    HIVE-13090: Hive metastore crashes on NPE with ZooKeeperTokenStore
+    HIVE-13056: delegation tokens do not work with HS2 when used with http transport and kerberos
+    HIVE-13018: On branch-1 "RuntimeException: Vectorization is not supported for datatype:LIST"
+    HIVE-13017: Child process of HiveServer2 fails to get delegation token from non default FileSystem
+    HIVE-13008: WebHcat DDL commands in secure mode NPE when default FileSystem doesn't support delegation tokens
+    HIVE-12894: Detect whether ORC is reading from ACID table correctly for Schema Evolution
+    HIVE-12887: Handle ORC schema on read with fewer columns than file schema (after Schema Evolution changes)
 
 
 INTERNAL FIXES (NO APACHE JIRA)
+
+  Pre-HDP-2.4.2
+    MHIVE-753: azure db upgrade failure
     MHIVE-629: Hive schema initialization failed for azuredb
     MHIVE-661 - fix NOTIFICATION_SEQUENCE table creation in azuredb.sql
     BUG-45882 : Hive query fails with java.util.NoSuchElementException
