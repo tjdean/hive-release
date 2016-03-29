@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.List;
+
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -44,6 +45,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.primitive.WritableHiveVarch
 import org.apache.hadoop.hive.serde2.typeinfo.CharTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.DecimalTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.VarcharTypeInfo;
 import org.apache.hadoop.io.BytesWritable;
@@ -675,9 +677,16 @@ public abstract class VectorExtractRow {
     for (StructField field : fields) {
       int columnIndex = projectedColumns.get(i);
       ObjectInspector fieldInspector = field.getFieldObjectInspector();
-      PrimitiveTypeInfo primitiveTypeInfo = (PrimitiveTypeInfo) TypeInfoUtils.getTypeInfoFromTypeString(
+      TypeInfo typeInfo = TypeInfoUtils.getTypeInfoFromTypeString(
           fieldInspector.getTypeName());
-      extracters[i] = createExtractor(primitiveTypeInfo, columnIndex);
+      if (typeInfo.getCategory() == ObjectInspector.Category.PRIMITIVE) {
+        PrimitiveTypeInfo primitiveTypeInfo = (PrimitiveTypeInfo) typeInfo;
+        extracters[i] = createExtractor(primitiveTypeInfo, columnIndex);
+      } else {
+        // Ignore COMPLEX types .. the Vectorization class will not vectorize this query unless
+        // those types are not actually accessed.
+        extracters[i] = new VoidExtractor(columnIndex);;
+      }
       i++;
     }
   }
