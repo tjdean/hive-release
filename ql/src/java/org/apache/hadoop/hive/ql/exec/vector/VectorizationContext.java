@@ -374,7 +374,7 @@ public class VectorizationContext {
 
     private final Set<Integer> usedOutputColumns = new HashSet<Integer>();
 
-    int allocateOutputColumn(String hiveTypeName) {
+    int allocateOutputColumn(String hiveTypeName) throws HiveException {
         if (initialOutputCol < 0) {
           // This is a test
           return 0;
@@ -435,7 +435,7 @@ public class VectorizationContext {
     }
   }
 
-  public int allocateScratchColumn(String hiveTypeName) {
+  public int allocateScratchColumn(String hiveTypeName) throws HiveException {
     return ocm.allocateOutputColumn(hiveTypeName);
   }
 
@@ -2293,7 +2293,7 @@ public class VectorizationContext {
     }
   }
 
-  static String getNormalizedName(String hiveTypeName) {
+  static String getNormalizedName(String hiveTypeName) throws HiveException {
     VectorExpressionDescriptor.ArgumentType argType = VectorExpressionDescriptor.ArgumentType.fromHiveTypeName(hiveTypeName);
     switch (argType) {
     case INT_FAMILY:
@@ -2319,11 +2319,11 @@ public class VectorizationContext {
     case INTERVAL_DAY_TIME:
       return hiveTypeName;
     default:
-      return "None";
+      throw new HiveException("Unexpected hive type name " + hiveTypeName);
     }
   }
 
-  static String getUndecoratedName(String hiveTypeName) {
+  static String getUndecoratedName(String hiveTypeName) throws HiveException {
     VectorExpressionDescriptor.ArgumentType argType = VectorExpressionDescriptor.ArgumentType.fromHiveTypeName(hiveTypeName);
     switch (argType) {
     case INT_FAMILY:
@@ -2346,7 +2346,7 @@ public class VectorizationContext {
     case INTERVAL_DAY_TIME:
       return hiveTypeName;
     default:
-      return "None";
+      throw new HiveException("Unexpected hive type name " + hiveTypeName);
     }
   }
 
@@ -2545,7 +2545,7 @@ public class VectorizationContext {
     }
     sb.append("sorted projectionColumnMap ").append(sortedColumnMap).append(", ");
 
-    sb.append("scratchColumnTypeNames ").append(getScratchColumnTypeNames().toString());
+    sb.append("scratchColumnTypeNames ").append(Arrays.toString(getScratchColumnTypeNames()));
 
     return sb.toString();
   }
