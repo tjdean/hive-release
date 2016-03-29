@@ -1197,7 +1197,11 @@ STAGE PLANS:
                   alias: alltypesorc
                   Statistics: Num rows: 12288 Data size: 377237 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
+<<<<<<< HEAD
                     predicate: (((((197.0 > ctinyint) and (cint = cbigint)) or (cbigint = 359)) or (cboolean1 < 0)) or ((cstring1 like '%ss') and (cfloat <= ctinyint))) (type: boolean)
+=======
+                    predicate: (((197 > UDFToInteger(ctinyint)) and (UDFToLong(cint) = cbigint)) or (cbigint = 359) or (cboolean1 < 0) or ((cstring1 like '%ss') and (cfloat <= UDFToFloat(ctinyint)))) (type: boolean)
+>>>>>>> 83a1f92... HIVE-13373 : Use most specific type for numerical constants (Ashutosh Chauhan via Jason Dere)
                     Statistics: Num rows: 12288 Data size: 377237 Basic stats: COMPLETE Column stats: NONE
                     Select Operator
                       expressions: cint (type: int), cbigint (type: bigint), (cint / cbigint) (type: double), (cbigint % 79.553) (type: double), (- (cint / cbigint)) (type: double), (10.175 % cfloat) (type: double), (- cfloat) (type: float), (cfloat - (- cfloat)) (type: float), ((cfloat - (- cfloat)) % -6432) (type: float), (cdouble * csmallint) (type: double), (- cdouble) (type: double), (- cbigint) (type: bigint), cstring1 (type: string), (cfloat - (cint / cbigint)) (type: double), (- csmallint) (type: smallint), (3569 % cbigint) (type: bigint), (359 - cdouble) (type: double), cboolean1 (type: boolean), cfloat (type: float), cdouble (type: double), ctimestamp2 (type: timestamp), csmallint (type: smallint), cstring2 (type: string), cboolean2 (type: boolean)
