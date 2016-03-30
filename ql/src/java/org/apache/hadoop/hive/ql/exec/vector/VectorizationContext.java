@@ -155,7 +155,7 @@ public class VectorizationContext {
 
   VectorExpressionDescriptor vMap;
 
-  private List<String> initialColumnNames;
+  private final List<String> initialColumnNames;
 
   private List<Integer> projectedColumns;
   private List<String> projectionColumnNames;
@@ -718,7 +718,7 @@ public class VectorizationContext {
         genericUdf = new GenericUDFToDate();
         break;
       case TIMESTAMP:
-        genericUdf = new GenericUDFToUnixTimeStamp();
+        genericUdf = new GenericUDFTimestamp();
         break;
       case INTERVAL_YEAR_MONTH:
         genericUdf = new GenericUDFToIntervalYearMonth();
