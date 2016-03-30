@@ -372,11 +372,7 @@ class MetaStoreDirectSql {
     // Derby and Oracle do not interpret filters ANSI-properly in some cases and need a workaround.
     boolean dbHasJoinCastBug = (dbType == DB.DERBY || dbType == DB.ORACLE);
     String sqlFilter = PartitionFilterGenerator.generateSqlFilter(
-<<<<<<< HEAD
-        table, tree, params, joins, dbHasJoinCastBug);
-=======
-        table, tree, params, joins, dbHasJoinCastBug, defaultPartName, dbType);
->>>>>>> e3ca81e... HIVE-13302 : direct SQL: cast to date doesn't work on Oracle (Sergey Shelukhin, reviewed by Sushanth Sowmyan)
+        table, tree, params, joins, dbHasJoinCastBug, dbType);
     if (sqlFilter == null) {
       return null; // Cannot make SQL filter to push down.
     }
@@ -385,23 +381,6 @@ class MetaStoreDirectSql {
         isViewTable, sqlFilter, params, joins, max);
   }
 
-<<<<<<< HEAD
-=======
-  public int getNumPartitionsViaSqlFilter(Table table, ExpressionTree tree) throws MetaException {
-    List<Object> params = new ArrayList<Object>();
-    List<String>joins = new ArrayList<String>();
-    // Derby and Oracle do not interpret filters ANSI-properly in some cases and need a workaround.
-    boolean dbHasJoinCastBug = (dbType == DB.DERBY || dbType == DB.ORACLE);
-    String sqlFilter = PartitionFilterGenerator.generateSqlFilter(
-        table, tree, params, joins, dbHasJoinCastBug, defaultPartName, dbType);
-    if (sqlFilter == null) {
-      return 0; // Cannot make SQL filter to push down.
-    }
-    return getNumPartitionsViaSqlFilterInternal(table.getDbName(), table.getTableName(), sqlFilter, params, joins);
-  }
-
-
->>>>>>> e3ca81e... HIVE-13302 : direct SQL: cast to date doesn't work on Oracle (Sergey Shelukhin, reviewed by Sushanth Sowmyan)
   /**
    * Gets all partitions of a table by using direct SQL queries.
    * @param dbName Metastore db name.
