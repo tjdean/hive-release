@@ -966,4 +966,18 @@ public class Hadoop20Shims implements HadoopShims {
     return null;
   }
 
+  @Override
+  public void setHadoopQueryContext(String callerContext) {
+    /*
+     * do nothing. This is not supported in hadoop-0.20
+     */
+  }
+
+  @Override
+  public void setHadoopSessionContext(String sessionId) {
+    /*
+     * do nothing. This is not supported in hadoop-0.20
+     */
+  }
+
 }

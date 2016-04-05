@@ -631,7 +631,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
     DriverContext driverCxt = new DriverContext();
     Task task = null;
     if (conf.getVar(ConfVars.HIVE_EXECUTION_ENGINE).equals("tez")) {
-      TezWork tezWork = new TezWork(conf.getVar(HiveConf.ConfVars.HIVEQUERYID), conf);
+      TezWork tezWork = new TezWork(conf.getVar(HiveConf.ConfVars.HIVEQUERYID));
       mergeWork.setName("File Merge");
       tezWork.add(mergeWork);
       task = new TezTask();

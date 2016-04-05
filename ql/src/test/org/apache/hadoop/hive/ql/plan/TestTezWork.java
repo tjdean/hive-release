@@ -39,7 +39,7 @@ public class TestTezWork {
   @Before
   public void setup() throws Exception {
     nodes = new LinkedList<BaseWork>();
-    work = new TezWork("", null);
+    work = new TezWork("");
     addWork(5);
   }
 
