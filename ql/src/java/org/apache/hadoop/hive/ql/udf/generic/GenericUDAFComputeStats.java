@@ -535,7 +535,7 @@ public class GenericUDAFComputeStats extends AbstractGenericUDAFResolver {
         if (myagg.numDV == null) {
           Object partialValue = soi.getStructFieldData(partial, numBitVectorsField);
           int numVectors = numBitVectorsFieldOI.get(partialValue);
-          if (numVectors == 0) {
+          if (numVectors <= 0) {
             return;
           }
           myagg.initNDVEstimator(numVectors);
