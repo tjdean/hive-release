@@ -62,7 +62,7 @@ import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
-import parquet.io.api.Binary;
+import org.apache.parquet.io.api.Binary;
 
 /**
  *

@@ -26,15 +26,15 @@ import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.util.StringUtils;
 
-import parquet.column.ColumnDescriptor;
-import parquet.hadoop.api.ReadSupport;
-import parquet.io.api.RecordMaterializer;
-import parquet.schema.MessageType;
-import parquet.schema.MessageTypeParser;
-import parquet.schema.PrimitiveType;
-import parquet.schema.PrimitiveType.PrimitiveTypeName;
-import parquet.schema.Type;
-import parquet.schema.Type.Repetition;
+import org.apache.parquet.column.ColumnDescriptor;
+import org.apache.parquet.hadoop.api.ReadSupport;
+import org.apache.parquet.io.api.RecordMaterializer;
+import org.apache.parquet.schema.MessageType;
+import org.apache.parquet.schema.MessageTypeParser;
+import org.apache.parquet.schema.PrimitiveType;
+import org.apache.parquet.schema.PrimitiveType.PrimitiveTypeName;
+import org.apache.parquet.schema.Type;
+import org.apache.parquet.schema.Type.Repetition;
 
 /**
  *
@@ -71,7 +71,7 @@ public class DataWritableReadSupport extends ReadSupport<ArrayWritable> {
    * @return the parquet ReadContext
    */
   @Override
-  public parquet.hadoop.api.ReadSupport.ReadContext init(final Configuration configuration,
+  public org.apache.parquet.hadoop.api.ReadSupport.ReadContext init(final Configuration configuration,
       final Map<String, String> keyValueMetaData, final MessageType fileSchema) {
     final String columns = configuration.get(IOConstants.COLUMNS);
     final Map<String, String> contextMetadata = new HashMap<String, String>();
@@ -147,7 +147,7 @@ public class DataWritableReadSupport extends ReadSupport<ArrayWritable> {
   @Override
   public RecordMaterializer<ArrayWritable> prepareForRead(final Configuration configuration,
       final Map<String, String> keyValueMetaData, final MessageType fileSchema,
-          final parquet.hadoop.api.ReadSupport.ReadContext readContext) {
+          final org.apache.parquet.hadoop.api.ReadSupport.ReadContext readContext) {
     final Map<String, String> metadata = readContext.getReadSupportMetadata();
     if (metadata == null) {
       throw new IllegalStateException("ReadContext not initialized properly. " +
