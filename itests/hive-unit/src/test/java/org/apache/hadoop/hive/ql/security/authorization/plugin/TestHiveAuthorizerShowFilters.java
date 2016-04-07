@@ -73,7 +73,23 @@ public class TestHiveAuthorizerShowFilters {
    * HiveAuthorizer.filterListCmdObjects, and stores the list argument in
    * filterArguments
    */
-  static class MockedHiveAuthorizerFactory implements HiveAuthorizerFactory {
+  protected static class MockedHiveAuthorizerFactory implements HiveAuthorizerFactory {
+    protected abstract class AuthorizerWithFilterCmdImpl implements HiveAuthorizer {
+      @Override
+      public List<HivePrivilegeObject> filterListCmdObjects(List<HivePrivilegeObject> listObjs,
+          QueryContext context) throws HiveAuthzPluginException, HiveAccessControlException {
+        // capture arguments in static
+        filterArguments = listObjs;
+        // return static variable with results, if it is set to some set of
+        // values
+        // otherwise return the arguments
+        if (filteredResults.size() == 0) {
+          return filterArguments;
+        }
+        return filteredResults;
+      }
+    }
+    
     @Override
     public HiveAuthorizer createHiveAuthorizer(HiveMetastoreClientFactory metastoreClientFactory,
         HiveConf conf, HiveAuthenticationProvider authenticator, HiveAuthzSessionContext ctx) {
@@ -82,7 +98,7 @@ public class TestHiveAuthorizerShowFilters {
       abstract class AuthorizerWithFilterCmdImpl implements HiveAuthorizer {
         @Override
         public List<HivePrivilegeObject> filterListCmdObjects(List<HivePrivilegeObject> listObjs,
-            HiveAuthzContext context) throws HiveAuthzPluginException, HiveAccessControlException {
+            QueryContext context) throws HiveAuthzPluginException, HiveAccessControlException {
           // capture arguments in static
           filterArguments = listObjs;
           // return static variable with results, if it is set to some set of
@@ -101,7 +117,7 @@ public class TestHiveAuthorizerShowFilters {
       try {
         Mockito.when(
             mockedAuthorizer.filterListCmdObjects((List<HivePrivilegeObject>) any(),
-                (HiveAuthzContext) any())).thenCallRealMethod();
+                (QueryContext) any())).thenCallRealMethod();
       } catch (Exception e) {
         org.junit.Assert.fail("Caught exception " + e);
       }
