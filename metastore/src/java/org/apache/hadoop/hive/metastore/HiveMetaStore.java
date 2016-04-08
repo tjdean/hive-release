@@ -43,6 +43,7 @@ import org.apache.hadoop.hive.common.cli.CommonCliOptions;
 import org.apache.hadoop.hive.common.metrics.common.Metrics;
 import org.apache.hadoop.hive.common.metrics.common.MetricsConstant;
 import org.apache.hadoop.hive.common.metrics.common.MetricsFactory;
+import org.apache.hadoop.hive.common.metrics.common.MetricsVariable;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.api.AbortTxnRequest;
@@ -300,6 +301,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     private static String currentUrl;
 
+    //For Metrics
+    private int initDatabaseCount, initTableCount, initPartCount;
+
     private Warehouse wh; // hdfs warehouse
     private static final ThreadLocal<RawStore> threadLocalMS =
         new ThreadLocal<RawStore>() {
@@ -488,6 +492,32 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         }
       }
 
+      Metrics metrics = MetricsFactory.getInstance();
+      if (metrics != null) {
+        LOG.info("Begin calculating metadata count metrics.");
+        updateMetrics();
+        LOG.info("Finished metadata count metrics: " + initDatabaseCount + " databases, " + initTableCount +
+          " tables, " + initPartCount + " partitions.");
+        metrics.addGauge(MetricsConstant.INIT_TOTAL_DATABASES, new MetricsVariable() {
+          @Override
+          public Object getValue() {
+            return initDatabaseCount;
+          }
+        });
+        metrics.addGauge(MetricsConstant.INIT_TOTAL_TABLES, new MetricsVariable() {
+          @Override
+          public Object getValue() {
+            return initTableCount;
+          }
+        });
+        metrics.addGauge(MetricsConstant.INIT_TOTAL_PARTITIONS, new MetricsVariable() {
+          @Override
+          public Object getValue() {
+            return initPartCount;
+          }
+        });
+      }
+
       preListeners = MetaStoreUtils.getMetaStoreListeners(MetaStorePreEventListener.class,
           hiveConf,
           hiveConf.getVar(HiveConf.ConfVars.METASTORE_PRE_EVENT_LISTENERS));
@@ -496,6 +526,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           hiveConf.getVar(HiveConf.ConfVars.METASTORE_EVENT_LISTENERS));
       listeners.add(new SessionPropertiesListener(hiveConf));
       listeners.add(new AcidEventListener(hiveConf));
+
+      if (metrics != null) {
+        listeners.add(new HMSMetricsListener(hiveConf, metrics));
+      }
+
       endFunctionListeners = MetaStoreUtils.getMetaStoreListeners(
           MetaStoreEndFunctionListener.class, hiveConf,
           hiveConf.getVar(HiveConf.ConfVars.METASTORE_END_FUNCTION_LISTENERS));
@@ -1744,6 +1779,15 @@ public class HiveMetaStore extends ThriftHiveMetastore {
             }
           }
           partNames.add(Warehouse.makePartName(tbl.getPartitionKeys(), part.getValues()));
+        }
+        for (MetaStoreEventListener listener : listeners) {
+          //No drop part listener events fired for public listeners historically, for drop table case.
+          //Limiting to internal listeners for now, to avoid unexpected calls for public listeners.
+          if (listener instanceof HMSMetricsListener) {
+            for (Partition part : partsToDelete) {
+              listener.onDropPartition(null);
+            }
+          }
         }
         ms.dropPartitions(dbName, tableName, partNames);
       }
@@ -5803,6 +5847,13 @@ public class HiveMetaStore extends ThriftHiveMetastore {
               " not currently supported.");
       }
 
+    }
+
+    @VisibleForTesting
+    public void updateMetrics() throws MetaException {
+      initTableCount = getMS().getTableCount();
+      initPartCount = getMS().getPartitionCount();
+      initDatabaseCount = getMS().getDatabaseCount();
     }
   }
 
