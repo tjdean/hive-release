@@ -118,6 +118,11 @@
       <artifactId>jackson-databind</artifactId>
       <version>${jackson.new.version}</version>
     </dependency>
+    <dependency>
+      <groupId>com.github.joshelser</groupId>
+      <artifactId>dropwizard-metrics-hadoop-metrics2-reporter</artifactId>
+      <version>0.1.0</version>
+    </dependency>
   </dependencies>
 
   <profiles>
