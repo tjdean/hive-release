@@ -897,25 +897,6 @@
     <description>Whether there is skew in data to optimize group by queries</description>
   </property>
   <property>
-    <name>hive.optimize.multigroupby.common.distincts</name>
-    <value>true</value>
-    <description>
-      Whether to optimize a multi-groupby query with the same distinct.
-      Consider a query like:
-      
-        from src
-          insert overwrite table dest1 select col1, count(distinct colx) group by col1
-          insert overwrite table dest2 select col2, count(distinct colx) group by col2;
-      
-      With this parameter set to true, first we spray by the distinct value (colx), and then
-      perform the 2 groups bys. This makes sense if map-side aggregation is turned off. However,
-      with maps-side aggregation, it might be useful in some cases to treat the 2 inserts independently, 
-      thereby performing the query above in 2MR jobs instead of 3 (due to spraying by distinct key first).
-      If this parameter is turned off, we don't consider the fact that the distinct key is the same across
-      different MR jobs.
-    </description>
-  </property>
-  <property>
     <name>hive.join.emit.interval</name>
     <value>1000</value>
     <description>How many rows in the right-most join operand Hive should buffer before emitting the join result.</description>
@@ -941,23 +922,6 @@
     <description>
       Whether Hive should use memory-optimized hash table for MapJoin. Only works on Tez,
       because memory-optimized hashtable cannot be serialized.
-    </description>
-  </property>
-  <property>
-    <name>hive.mapjoin.optimized.keys</name>
-    <value>true</value>
-    <description>
-      Whether MapJoin hashtable should use optimized (size-wise), keys, allowing the table to take less
-      memory. Depending on key, the memory savings for entire table can be 5-15% or so.
-    </description>
-  </property>
-  <property>
-    <name>hive.mapjoin.lazy.hashtable</name>
-    <value>true</value>
-    <description>
-      Whether MapJoin hashtable should deserialize values on demand. Depending on how many values in
-      the table the join will actually touch, it can save a lot of memory by not creating objects for
-      rows that are not needed. If all rows are needed obviously there's no gain.
     </description>
   </property>
   <property>
@@ -2639,16 +2603,6 @@
     <description>Path component of URL endpoint when in HTTP mode.</description>
   </property>
   <property>
-    <name>hive.server2.thrift.http.min.worker.threads</name>
-    <value>5</value>
-    <description>Minimum number of worker threads when in HTTP mode.</description>
-  </property>
-  <property>
-    <name>hive.server2.thrift.http.max.worker.threads</name>
-    <value>100</value>
-    <description>Maximum number of worker threads when in HTTP mode.</description>
-  </property>
-  <property>
     <name>hive.server2.thrift.http.max.idle.time</name>
     <value>1800s</value>
     <description>
@@ -3174,11 +3128,6 @@
   </property>
   
   <!-- missing from HiveConf -->
-	<property>
-        <name>hive.heapsize</name>
-        <value>1024</value>
-        <description>Hive Java heap size</description>
-    </property>
     
     <property>
         <name>ambari.hive.db.schema.name</name>
@@ -3197,24 +3146,9 @@
         <name>fs.file.impl.disable.cache</name>
         <value>false</value>
         <deleted>true</deleted>
-        <description>Disable local filesystem cache.</description>
+       <description>Disable local filesystem cache.</description>
     </property>    
 
-    <property>
-        <name>hive.auto.convert.sortmerge.join.noconditionaltask</name>
-        <value>true</value>
-        <description>Required to Enable the conversion of an SMB (Sort-Merge-Bucket) to a map-join SMB.</description>
-    </property>
-    
-    <property>
-        <name>hive.optimize.mapjoin.mapreduce</name>
-        <value>true</value>
-        <description>If hive.auto.convert.join is off, this parameter does not take
-            affect. If it is on, and if there are map-join jobs followed by a map-reduce
-            job (for e.g a group by), each map-only job is merged with the following
-            map-reduce job.
-        </description>
-    </property>
     <!-- missing from HiveConf -->
 
 	<!-- performance -->
