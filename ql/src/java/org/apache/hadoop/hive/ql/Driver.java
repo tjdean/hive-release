@@ -1356,6 +1356,7 @@ public class Driver implements CommandProcessor {
   }
 
   private CommandProcessorResponse createProcessorResponse(int ret) {
+    SessionState.getPerfLogger().cleanupPerfLogMetrics();
     return new CommandProcessorResponse(ret, errorMessage, SQLState, downstreamError);
   }
 
