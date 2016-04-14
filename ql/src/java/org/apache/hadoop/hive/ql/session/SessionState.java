@@ -560,7 +560,6 @@ public class SessionState {
       hdfsSessionPathLockFile = fs.create(new Path(hdfsSessionPath, LOCK_FILE_NAME), true);
       hdfsSessionPathLockFile.writeUTF("hostname: " + InetAddress.getLocalHost().getHostName() + "\n");
       hdfsSessionPathLockFile.writeUTF("process: " + ManagementFactory.getRuntimeMXBean().getName() + "\n");
-      hdfsSessionPathLockFile.hsync();
     }
     // 6. Local session path
     localSessionPath = new Path(HiveConf.getVar(conf, HiveConf.ConfVars.LOCALSCRATCHDIR), sessionId);
