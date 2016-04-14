@@ -102,6 +102,7 @@
     <activemq.version>5.5.0</activemq.version>
     <ant.version>1.9.1</ant.version>
     <antlr.version>3.4</antlr.version>
+    <avatica.version>1.7.2-SNAPSHOT</avatica.version>
     <avro.version>1.7.5</avro.version>
     <bonecp.version>0.8.0.RELEASE</bonecp.version>
     <calcite.version>1.2.0-incubating</calcite.version>
