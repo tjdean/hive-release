@@ -1113,8 +1113,8 @@ public class TestTxnHandler {
     for (int i = 0; i < saw.length; i++) assertTrue("Didn't see lock id " + i, saw[i]);
   }
 
-  @Ignore("Disable this test in an attempt to avoid other failures in TestTxnHandler/TestStreaming")
   @Test
+  @Ignore("Wedges Derby")
   public void deadlockDetected() throws Exception {
     LOG.debug("Starting deadlock test");
     if (txnHandler instanceof TxnHandler) {
@@ -1232,8 +1232,8 @@ public class TestTxnHandler {
    * 3. Remove TxnDbUtil.prepDb(); in TxnHandler.checkQFileTestHack()
    *      
    */
-  @Ignore("multiple threads wedge Derby")
   @Test
+  @Ignore("Wedges Derby")
   public void testMutexAPI() throws Exception {
     final TxnStore.MutexAPI api =  txnHandler.getMutexAPI();
     final AtomicInteger stepTracker = new AtomicInteger(0);
