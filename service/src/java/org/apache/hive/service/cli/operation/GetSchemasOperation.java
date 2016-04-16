@@ -21,6 +21,9 @@ package org.apache.hive.service.cli.operation;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAccessControlException;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAuthzPluginException;
@@ -84,7 +87,7 @@ public class GetSchemasOperation extends MetadataOperation {
    */
   @Override
   public TableSchema getResultSetSchema() throws HiveSQLException {
-    assertState(OperationState.FINISHED);
+    assertState(new ArrayList<OperationState>(Arrays.asList(OperationState.FINISHED)));
     return RESULT_SET_SCHEMA;
   }
 
@@ -93,7 +96,7 @@ public class GetSchemasOperation extends MetadataOperation {
    */
   @Override
   public RowSet getNextRowSet(FetchOrientation orientation, long maxRows) throws HiveSQLException {
-    assertState(OperationState.FINISHED);
+    assertState(new ArrayList<OperationState>(Arrays.asList(OperationState.FINISHED)));
     validateDefaultFetchOrientation(orientation);
     if (orientation.equals(FetchOrientation.FETCH_FIRST)) {
       rowSet.setStartOffset(0);

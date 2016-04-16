@@ -91,6 +91,7 @@ public class TestJdbcDriver2 {
   private final HiveConf conf;
   public static String dataFileDir;
   private final Path dataFilePath;
+  private final int dataFileRowCount;
   private final Path dataTypeDataFilePath;
   private Connection con;
   private static boolean standAloneServer = false;
@@ -101,6 +102,7 @@ public class TestJdbcDriver2 {
     dataFileDir = conf.get("test.data.files").replace('\\', '/')
         .replace("c:", "");
     dataFilePath = new Path(dataFileDir, "kv1.txt");
+    dataFileRowCount = 500;
     dataTypeDataFilePath = new Path(dataFileDir, "datatypes.txt");
     standAloneServer = "true".equals(System
         .getProperty("test.service.standalone.server"));
@@ -1892,7 +1894,89 @@ public void testParseUrlHttpMode() throws SQLException, JdbcUriParseException,
       res.getInt("zzzz");
     } catch (SQLException e) {
     }
+  }
 
+  /**
+   * Test {@link HiveStatement#executeAsync(String)} for a select query
+   * @throws Exception
+   */
+  @Test
+  public void testSelectExecAsync() throws Exception {
+    HiveStatement stmt = (HiveStatement) con.createStatement();
+    ResultSet rs;
+    // Expected row count of the join query we'll run
+    int expectedCount = 1028;
+    int rowCount = 0;
+    boolean isResulSet =
+        stmt.executeAsync("select t1.value as v11, " + "t2.value as v12 from " + tableName
+            + " t1 join " + tableName + " t2 on t1.under_col = t2.under_col");
+    assertTrue(isResulSet);
+    rs = stmt.getResultSet();
+    assertNotNull(rs);
+    // ResultSet#next blocks until the async query is complete
+    while (rs.next()) {
+      String value = rs.getString(2);
+      rowCount++;
+      assertNotNull(value);
+    }
+    assertEquals(rowCount, expectedCount);
+    stmt.close();
+  }
+
+  /**
+   * Test {@link HiveStatement#executeAsync(String)} for a create table
+   * @throws Exception
+   */
+  @Test
+  public void testCreateTableExecAsync() throws Exception {
+    HiveStatement stmt = (HiveStatement) con.createStatement();
+    String tblName = "testCreateTableExecAsync";
+    boolean isResulSet = stmt.executeAsync("create table " + tblName + " (col1 int , col2 string)");
+    assertFalse(isResulSet);
+    // HiveStatement#getUpdateCount blocks until the async query is complete
+    stmt.getUpdateCount();
+    DatabaseMetaData metadata = con.getMetaData();
+    ResultSet tablesMetadata = metadata.getTables(null, null, "%", null);
+    boolean tblFound = false;
+    while (tablesMetadata.next()) {
+      String tableName = tablesMetadata.getString(3);
+      if (tableName.equalsIgnoreCase(tblName)) {
+        tblFound = true;
+      }
+    }
+    if (!tblFound) {
+      fail("Unable to create table using executeAsync");
+    }
+    stmt.execute("drop table " + tblName);
+    stmt.close();
+  }
+
+  /**
+   * Test {@link HiveStatement#executeAsync(String)} for an insert overwrite into a table
+   * @throws Exception
+   */
+  @Test
+  public void testInsertOverwriteExecAsync() throws Exception {
+    HiveStatement stmt = (HiveStatement) con.createStatement();
+    String tblName = "testInsertOverwriteExecAsync";
+    int rowCount = 0;
+    stmt.execute("create table " + tblName + " (col1 int , col2 string)");
+    boolean isResulSet =
+        stmt.executeAsync("insert overwrite table " + tblName + " select * from " + tableName);
+    assertFalse(isResulSet);
+    // HiveStatement#getUpdateCount blocks until the async query is complete
+    stmt.getUpdateCount();
+    // Read from the new table
+    ResultSet rs = stmt.executeQuery("select * from " + tblName);
+    assertNotNull(rs);
+    while (rs.next()) {
+      String value = rs.getString(2);
+      rowCount++;
+      assertNotNull(value);
+    }
+    assertEquals(rowCount, dataFileRowCount);
+    stmt.execute("drop table " + tblName);
+    stmt.close();
   }
 
   /**
