@@ -25,6 +25,7 @@ import static junit.framework.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.sql.Date;
@@ -91,6 +92,14 @@ import com.google.common.collect.Lists;
  */
 @RunWith(value = Parameterized.class)
 public class TestOrcFile {
+
+  public static class DecimalStruct {
+    HiveDecimalWritable dec;
+
+    DecimalStruct(HiveDecimalWritable hdw) {
+      this.dec = hdw;
+    }
+  }
 
   public static class SimpleStruct {
     BytesWritable bytes1;
@@ -516,7 +525,10 @@ public class TestOrcFile {
     int idx = 0;
     while (rows.hasNext()) {
       Object row = rows.next(null);
-      assertEquals(tslist.get(idx++).getNanos(), ((TimestampWritable) row).getNanos());
+      Timestamp tlistTimestamp = tslist.get(idx++);
+      if (tlistTimestamp.getNanos() != ((TimestampWritable) row).getNanos()) {
+        assertTrue(false);
+      }
     }
     assertEquals(1, OrcUtils.getFlattenedColumnsCount(inspector));
     boolean[] expected = new boolean[] {false};
