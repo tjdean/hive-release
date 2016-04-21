@@ -1780,7 +1780,7 @@ public class HiveConf extends Configuration {
             "org.apache.hadoop.hive.common.metrics.metrics2.CodahaleMetrics",
             "org.apache.hadoop.hive.common.metrics.LegacyMetrics"),
         "Hive metrics subsystem implementation class."),
-    HIVE_METRICS_REPORTER("hive.service.metrics.reporter", "JSON_FILE, JMX, HADOOP2",
+    HIVE_METRICS_REPORTER("hive.service.metrics.reporter", "JSON_FILE, JMX",
         "Reporter type for metric class org.apache.hadoop.hive.common.metrics.metrics2.CodahaleMetrics, comma separated list of JMX, CONSOLE, JSON_FILE"),
     HIVE_METRICS_JSON_FILE_LOCATION("hive.service.metrics.file.location", "/tmp/report.json",
         "For metric class org.apache.hadoop.hive.common.metrics.metrics2.CodahaleMetrics JSON_FILE reporter, the location of local JSON metrics file.  " +
