@@ -448,6 +448,14 @@ public final class FunctionRegistry {
     system.registerTableFunction(NOOP_STREAMING_TABLE_FUNCTION, NoopStreamingResolver.class);
     system.registerTableFunction(NOOP_STREAMING_MAP_TABLE_FUNCTION, NoopWithMapStreamingResolver.class);
     system.registerTableFunction(WINDOWING_TABLE_FUNCTION, WindowingTableFunctionResolver.class);
+
+    // mask UDFs
+    system.registerGenericUDF(GenericUDFMask.UDF_NAME, GenericUDFMask.class);
+    system.registerGenericUDF(GenericUDFMaskFirstN.UDF_NAME, GenericUDFMaskFirstN.class);
+    system.registerGenericUDF(GenericUDFMaskLastN.UDF_NAME, GenericUDFMaskLastN.class);
+    system.registerGenericUDF(GenericUDFMaskShowFirstN.UDF_NAME, GenericUDFMaskShowFirstN.class);
+    system.registerGenericUDF(GenericUDFMaskShowLastN.UDF_NAME, GenericUDFMaskShowLastN.class);
+    system.registerGenericUDF(GenericUDFMaskHash.UDF_NAME, GenericUDFMaskHash.class);
   }
 
   public static String getNormalizedFunctionName(String fn) throws SemanticException {
