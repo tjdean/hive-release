@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import junit.framework.TestCase;
+import org.junit.Ignore;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -228,6 +229,7 @@ public class TestHadoop20SAuthBridge extends TestCase {
         anotherManager.reloadKeys().containsKey(expiredKey.getKeyId()));
   }
 
+  @Ignore("flaky test")
   public void testSaslWithHiveMetaStore() throws Exception {
     setup();
     UserGroupInformation clientUgi = UserGroupInformation.getCurrentUser();

@@ -47,6 +47,7 @@ import org.apache.hive.hcatalog.common.HCatConstants;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.Ignore;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -517,6 +518,7 @@ public class TestDbNotificationListener {
     assertEquals(HCatConstants.HCAT_DROP_DATABASE_EVENT, event.getEventType());
   }
 
+  @Ignore("flaky test")
   @Test
   public void sqlInsertPartition() throws Exception {
 
@@ -568,6 +570,7 @@ public class TestDbNotificationListener {
     assertEquals(HCatConstants.HCAT_DROP_PARTITION_EVENT, event.getEventType());
   }
 
+  @Ignore("flaky test")
   @Test
   public void cleanupNotifs() throws Exception {
     Database db = new Database("cleanup1","no description","file:/tmp", emptyParameters);

@@ -30,6 +30,7 @@ import org.apache.hadoop.hive.shims.HadoopShims.MiniDFSShim;
 import org.apache.hadoop.hive.shims.Utils;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.Ignore;
 
 /**
  * Test cases focusing on drop table permission checks
@@ -166,6 +167,7 @@ public class TestStorageBasedMetastoreAuthorizationDrops extends StorageBasedMet
     Assert.assertEquals(0, resp.getResponseCode());
   }
 
+  @Ignore("flaky test")
   @Test
   public void testDropPartition() throws Exception {
     dropPartitionByOtherUser("-rwxrwxrwx", 0);
