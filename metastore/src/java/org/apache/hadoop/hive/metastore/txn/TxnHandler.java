@@ -51,6 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Pattern;
 
 /**
  * A handler to answer transaction related calls that come into the metastore
@@ -1560,7 +1561,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
         } else {
           LOG.error("Too many repeated deadlocks in " + caller + ", giving up.");
         }
-      } else if (isRetryable(e, dbProduct)) {
+      } else if (isRetryable(conf, e, dbProduct)) {
         if (retryNum++ < retryLimit) {
           LOG.warn("Retryable error detected in " + caller + ".  Will wait " + retryInterval +
             "ms and retry up to " + (retryLimit - retryNum + 1) + " times.  Error: " + getMessage(e));
@@ -2659,7 +2660,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
   /**
    * Returns true if {@code ex} should be retried
    */
-  private static boolean isRetryable(Exception ex, DatabaseProduct dbType) {
+  static boolean isRetryable(HiveConf conf, Exception ex, DatabaseProduct dbType) {
     if(ex instanceof SQLException) {
       SQLException sqlException = (SQLException)ex;
       if("08S01".equalsIgnoreCase(sqlException.getSQLState())) {
@@ -2669,6 +2670,17 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
       if("ORA-08176".equalsIgnoreCase(sqlException.getSQLState()) ||
         sqlException.getMessage().contains("consistent read failure; rollback data not available")) {
         return true;
+      }
+
+      String regex = HiveConf.getVar(conf, HiveConf.ConfVars.HIVE_TXN_RETRYABLE_SQLEX_REGEX);
+      if (regex != null && !regex.isEmpty()) {
+        String[] patterns = regex.split(",(?=\\S)");
+        String message = getMessage((SQLException)ex);
+        for (String p : patterns) {
+          if (Pattern.matches(p, message)) {
+            return true;
+          }
+        }
       }
       //see also https://issues.apache.org/jira/browse/HIVE-9938
     }
@@ -2709,7 +2721,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
     return false;
   }
   private static String getMessage(SQLException ex) {
-    return ex.getMessage() + "(SQLState=" + ex.getSQLState() + ",ErrorCode=" + ex.getErrorCode() + ")";
+    return ex.getMessage() + " (SQLState=" + ex.getSQLState() + ", ErrorCode=" + ex.getErrorCode() + ")";
   }
   /**
    * Given a {@code selectStatement}, decorated it with FOR UPDATE or semantically equivalent
