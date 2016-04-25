@@ -468,7 +468,6 @@ public class HiveSchemaTool {
           !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_MYSQL) &&
           !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_POSTGRES) && 
           !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_ORACLE) &&
-          !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_SQLANYWHERE) &&
           !dbType.equalsIgnoreCase(HiveSchemaHelper.DB_AZURE))) {
         System.err.println("Unsupported dbType " + dbType);
         printAndExit(cmdLineOptions);

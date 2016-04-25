@@ -40,7 +40,6 @@ public class HiveSchemaHelper {
   public static final String DB_MYSQL = "mysql";
   public static final String DB_POSTGRES = "postgres";
   public static final String DB_ORACLE = "oracle";
-  public static final String DB_SQLANYWHERE = "sqlanywhere";
   public static final String DB_AZURE = "azuredb";
 
   /***
@@ -476,30 +475,6 @@ public class HiveSchemaHelper {
     }
   }
 
-  //SQLAnywhere specific parser
-  public static class SqlAnywhereDBCommandParser extends AbstractCommandParser {
-    private static String SQLANYWHERE_NESTING_TOKEN = "READ";
-
-    public SqlAnywhereDBCommandParser(String dbOpts, String msUsername, String msPassword,
-        HiveConf hiveConf) {
-      super(dbOpts, msUsername, msPassword, hiveConf);
-    }
-
-    @Override
-    public String getScriptName(String dbCommand) throws IllegalArgumentException {
-      String[] tokens = dbCommand.split(" ");
-      if (tokens.length != 2) {
-        throw new IllegalArgumentException("Couldn't parse line " + dbCommand);
-      }
-      return tokens[1];
-    }
-
-    @Override
-    public boolean isNestedScript(String dbCommand) {
-      return dbCommand.startsWith(SQLANYWHERE_NESTING_TOKEN);
-    }
-  }
-
   public static class AzureDBCommandParser extends MSSQLCommandParser {
 
     public AzureDBCommandParser(String dbOpts, String msUsername, String msPassword,
@@ -554,8 +529,6 @@ public class HiveSchemaHelper {
       return new PostgresCommandParser(dbOpts, msUsername, msPassword, hiveConf);
     } else if (dbName.equalsIgnoreCase(DB_ORACLE)) {
       return new OracleCommandParser(dbOpts, msUsername, msPassword, hiveConf);
-    } else if (dbName.equalsIgnoreCase(DB_SQLANYWHERE)) {
-      return new SqlAnywhereDBCommandParser(dbOpts, msUsername, msPassword, hiveConf);
     } else if (dbName.equalsIgnoreCase(DB_AZURE)) {
       return new AzureDBCommandParser(dbOpts, msUsername, msPassword, hiveConf);
     } else {

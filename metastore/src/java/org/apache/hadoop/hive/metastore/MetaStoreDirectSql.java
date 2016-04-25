@@ -90,7 +90,6 @@ class MetaStoreDirectSql {
     ORACLE,
     MSSQL,
     DERBY,
-    SQLANYWHERE,
     OTHER
   }
 
@@ -160,8 +159,6 @@ class MetaStoreDirectSql {
         dbType = DB.MSSQL;
       } else if (productName.contains("derby")) {
         dbType = DB.DERBY;
-      } else if (productName.matches("(?s).*sql\\s+anywhere.*")) {
-        dbType = DB.SQLANYWHERE;
       }
     }
     return dbType;

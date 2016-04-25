@@ -1529,8 +1529,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
 
     // If you change this function, remove the @Ignore from TestTxnHandler.deadlockIsDetected()
     // to test these changes.
-    // MySQL, SQLAnywhere and MSSQL use 40001 as the state code for rollback.
-    // Postgres uses 40001 and 40P01.
+    // MySQL and MSSQL use 40001 as the state code for rollback. Postgres uses 40001 and 40P01.
     // Oracle seems to return different SQLStates and messages each time,
     // so I've tried to capture the different error messages (there appear to be fewer different
     // error messages than SQL states).
@@ -1542,7 +1541,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
       }
       if (e instanceof SQLTransactionRollbackException ||
         ((dbProduct == DatabaseProduct.MYSQL || dbProduct == DatabaseProduct.POSTGRES ||
-            dbProduct == DatabaseProduct.SQLSERVER || dbProduct == DatabaseProduct.SQLANYWHERE)
+            dbProduct == DatabaseProduct.SQLSERVER)
             && e.getSQLState().equals("40001")) ||
         (dbProduct == DatabaseProduct.POSTGRES && e.getSQLState().equals("40P01")) ||
         (dbProduct == DatabaseProduct.ORACLE && (e.getMessage().contains("deadlock detected")
@@ -1612,7 +1611,6 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
         case MYSQL:
         case POSTGRES:
         case SQLSERVER:
-        case SQLANYWHERE:
           s = "select current_timestamp";
           break;
 
@@ -1651,7 +1649,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
     return identifierQuoteString;
   }
 
-  protected enum DatabaseProduct { DERBY, MYSQL, POSTGRES, ORACLE, SQLSERVER, SQLANYWHERE }
+  protected enum DatabaseProduct { DERBY, MYSQL, POSTGRES, ORACLE, SQLSERVER }
   // TODO : we have multiple sources of this info - one in DirectSQL, one in SchemaTool, and one here - we should consolidate.
 
   /**
@@ -1677,8 +1675,6 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
           dbProduct = DatabaseProduct.ORACLE;
         } else if (s.equals("PostgreSQL")) {
           dbProduct = DatabaseProduct.POSTGRES;
-        } else if (s.equals("SQL Anywhere")){
-          dbProduct = DatabaseProduct.SQLANYWHERE;
         } else {
           String msg = "Unrecognized database product name <" + s + ">";
           LOG.error(msg);
@@ -2427,9 +2423,6 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
         //newer versions (2012 and later) support OFFSET/FETCH
         //https://msdn.microsoft.com/en-us/library/ms189463.aspx
         return "select TOP(" + numRows + ") " + noSelectsqlQuery;
-      case SQLANYWHERE:
-        //http://dcx.sybase.com/1101/en/dbusage_en11/first-order-formatting.html
-        return "select TOP " + numRows + noSelectsqlQuery;
       default:
         String msg = "Unrecognized database product name <" + dbProduct + ">";
         LOG.error(msg);
@@ -2668,17 +2661,10 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
    */
   private static boolean isRetryable(Exception ex, DatabaseProduct dbType) {
     if(ex instanceof SQLException) {
-      //in MSSQL, 08S01 means Communication Link Failure, in others, it's a more generic communications failure
-      //in SQLAnywhere, 08W12 is "Communication error"
       SQLException sqlException = (SQLException)ex;
       if("08S01".equalsIgnoreCase(sqlException.getSQLState())) {
-        //in MSSQL this means Communication Link Failure
+        //in MSSQL, 08S01 means Communication Link Failure, in others, it's a more generic communications failure
         return true;
-      }
-      if("08W12".equalsIgnoreCase(sqlException.getSQLState())) {
-        if(dbType == DatabaseProduct.SQLANYWHERE) {
-          return true;
-        }
       }
       if("ORA-08176".equalsIgnoreCase(sqlException.getSQLState()) ||
         sqlException.getMessage().contains("consistent read failure; rollback data not available")) {
