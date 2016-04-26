@@ -41,12 +41,14 @@ public class ColumnAccessAnalyzer {
     pGraphContext = pactx;
   }
 
-  public ColumnAccessInfo analyzeColumnAccess() throws SemanticException {
-    ColumnAccessInfo columnAccessInfo = new ColumnAccessInfo();
-    Collection<Operator<? extends OperatorDesc>> topOps = pGraphContext.getTopOps().values();
-    for (Operator<? extends OperatorDesc> op : topOps) {
-      if (op instanceof TableScanOperator) {
-        TableScanOperator top = (TableScanOperator) op;
+  public ColumnAccessInfo analyzeColumnAccess(ColumnAccessInfo columnAccessInfo) throws SemanticException {
+    if (columnAccessInfo == null) {
+      columnAccessInfo = new ColumnAccessInfo();
+    }
+    Collection<TableScanOperator> topOps = pGraphContext.getTopOps().values();
+    for (TableScanOperator top : topOps) {
+      // if a table is inside view, we do not care about its authorization.
+      if (!top.isInsideView()) {
         Table table = top.getConf().getTableMetadata();
         String tableName = table.getCompleteName();
         List<String> referenced = top.getReferencedColumns();
