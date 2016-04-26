@@ -63,6 +63,7 @@ public class ReaderImpl implements Reader {
   protected final int bufferSize;
   private OrcProto.Metadata metadata = null;
   private final int metadataSize;
+  private final TypeDescription schema;
   protected final OrcProto.Footer footer;
   private final ObjectInspector inspector;
   private long deserializedSize = -1;
@@ -218,6 +219,11 @@ public class ReaderImpl implements Reader {
     return result;
   }
 
+  @Override
+  public TypeDescription getSchema() {
+    return schema;
+  }
+
   /**
    * Ensure this is an ORC file to prevent users from trying to read text
    * files or RC files as ORC files.
@@ -333,6 +339,7 @@ public class ReaderImpl implements Reader {
     this.inspector = rInfo.inspector;
     this.versionList = footerMetaData.versionList;
     this.writerVersion = footerMetaData.writerVersion;
+    this.schema = OrcUtils.convertTypeFromProtobuf(rInfo.footer.getTypesList(), 0);
   }
 
   /**
@@ -595,9 +602,7 @@ public class ReaderImpl implements Reader {
       Arrays.fill(include, true);
       options.include(include);
     }
-    return new RecordReaderImpl(this.getStripes(), fileSystem, path,
-        options, footer.getTypesList(), codec, bufferSize,
-        footer.getRowIndexStride(), conf);
+    return new RecordReaderImpl(this, options);
   }
 
 

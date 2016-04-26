@@ -130,6 +130,12 @@ public interface Reader {
   Metadata getMetadata() throws IOException;
 
   /**
+   * Get the schema for the file.
+   * @return a description of the types in the file.
+   */
+  TypeDescription getSchema();
+
+  /**
    * Get the list of types contained in the file. The root type is the first
    * type in the list.
    * @return the list of flattened types

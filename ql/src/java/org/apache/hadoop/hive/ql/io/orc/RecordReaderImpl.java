@@ -30,12 +30,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.DiskRange;
 import org.apache.hadoop.hive.common.DiskRangeList;
@@ -47,8 +45,6 @@ import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.hive.ql.io.filters.BloomFilterIO;
 import org.apache.hadoop.hive.ql.io.orc.RecordReaderUtils.ByteBufferAllocatorPool;
 import org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory.TreeReader;
-import org.apache.hadoop.hive.ql.io.orc.OrcProto.Type;
-import org.apache.hadoop.hive.ql.io.orc.TreeReaderFactory.TreeReaderSchema;
 import org.apache.hadoop.hive.ql.io.sarg.PredicateLeaf;
 import org.apache.hadoop.hive.ql.io.sarg.SearchArgument;
 import org.apache.hadoop.hive.ql.io.sarg.SearchArgument.TruthValue;
@@ -154,44 +150,34 @@ class RecordReaderImpl implements RecordReader {
     return result;
   }
 
-  protected RecordReaderImpl(List<StripeInformation> stripes,
-                             FileSystem fileSystem,
-                             Path path,
-                             Reader.Options options,
-                             List<OrcProto.Type> types,
-                             CompressionCodec codec,
-                             int bufferSize,
-                             long strideRate,
-                             Configuration conf
-                             ) throws IOException {
+  protected RecordReaderImpl(ReaderImpl fileReader,
+                             Reader.Options options) throws IOException {
 
-    TreeReaderSchema treeReaderSchema;
+    SchemaEvolution treeReaderSchema;
+    this.included = options.getInclude();
+    this.included[0] = true;
     if (options.getSchema() == null) {
        if (LOG.isInfoEnabled()) {
-         LOG.info("Schema on read not provided -- using file schema " + types.toString());
+         LOG.info("Schema on read not provided -- using file schema " + fileReader);
        }
-      treeReaderSchema = new TreeReaderSchema().fileTypes(types).schemaTypes(types);
+      treeReaderSchema = new SchemaEvolution(fileReader.getSchema(), included);
     } else {
 
-      // Now that we are creating a record reader for a file, validate that the schema to read
-      // is compatible with the file schema.
-      //
-      List<Type> schemaTypes = OrcUtils.getOrcTypes(options.getSchema());
-      treeReaderSchema = SchemaEvolution.validateAndCreate(types, schemaTypes);
+      treeReaderSchema = new SchemaEvolution(fileReader.getSchema(),
+          options.getSchema(), included);
     }
-    this.path = path;
-    this.file = fileSystem.open(path);
-    this.codec = codec;
-    this.types = types;
-    this.bufferSize = bufferSize;
-    this.included = options.getInclude();
-    this.conf = conf;
-    this.rowIndexStride = strideRate;
+    this.path = fileReader.path;
+    this.file = fileReader.fileSystem.open(path);
+    this.codec = fileReader.codec;
+    this.types = fileReader.getTypes();
+    this.bufferSize = fileReader.bufferSize;
+    this.conf = fileReader.conf;
+    this.rowIndexStride = fileReader.getRowIndexStride();
     this.metadata = new MetadataReader(file, codec, bufferSize, types.size());
     SearchArgument sarg = options.getSearchArgument();
-    if (sarg != null && strideRate != 0) {
+    if (sarg != null && rowIndexStride != 0) {
       sargApp = new SargApplier(
-          sarg, options.getColumnNames(), strideRate, types, included.length);
+          sarg, options.getColumnNames(), rowIndexStride, types, included.length);
     } else {
       sargApp = null;
     }
@@ -199,7 +185,7 @@ class RecordReaderImpl implements RecordReader {
     long skippedRows = 0;
     long offset = options.getOffset();
     long maxOffset = options.getMaxOffset();
-    for(StripeInformation stripe: stripes) {
+    for(StripeInformation stripe: fileReader.getStripes()) {
       long stripeStart = stripe.getOffset();
       if (offset > stripeStart) {
         skippedRows += stripe.getNumberOfRows();
@@ -216,7 +202,7 @@ class RecordReaderImpl implements RecordReader {
     firstRow = skippedRows;
     totalRowCount = rows;
     boolean skipCorrupt = HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_ORC_SKIP_CORRUPT_DATA);
-    reader = TreeReaderFactory.createTreeReader(0, treeReaderSchema, included, skipCorrupt);
+    reader = TreeReaderFactory.createTreeReader(treeReaderSchema.getReaderSchema(), treeReaderSchema, included, skipCorrupt);
     indexes = new OrcProto.RowIndex[types.size()];
     bloomFilterIndices = new OrcProto.BloomFilterIndex[types.size()];
     advanceToNextRow(reader, 0L, true);
