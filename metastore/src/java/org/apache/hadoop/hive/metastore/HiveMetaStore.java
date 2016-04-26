@@ -611,7 +611,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       if (confVar == null) {
         throw new MetaException("Invalid configuration key " + key);
       }
-      return getConf().get(key);
+      return getConf().get(key, confVar.getDefaultValue());
     }
 
     /**
