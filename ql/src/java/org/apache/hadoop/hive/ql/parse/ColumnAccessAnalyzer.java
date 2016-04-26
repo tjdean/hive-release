@@ -18,9 +18,7 @@
 package org.apache.hadoop.hive.ql.parse;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,12 +39,14 @@ public class ColumnAccessAnalyzer {
     pGraphContext = pactx;
   }
 
-  public ColumnAccessInfo analyzeColumnAccess(ColumnAccessInfo columnAccessInfo) throws SemanticException {
+  public ColumnAccessInfo analyzeColumnAccess(ColumnAccessInfo columnAccessInfo)
+      throws SemanticException {
     if (columnAccessInfo == null) {
       columnAccessInfo = new ColumnAccessInfo();
     }
-    Collection<TableScanOperator> topOps = pGraphContext.getTopOps().values();
-    for (TableScanOperator top : topOps) {
+    Collection<Operator<? extends OperatorDesc>> topOps = pGraphContext.getTopOps().values();
+    for (Operator<? extends OperatorDesc> op : topOps) {
+      TableScanOperator top = (TableScanOperator) op;
       // if a table is inside view, we do not care about its authorization.
       if (!top.isInsideView()) {
         Table table = top.getConf().getTableMetadata();
