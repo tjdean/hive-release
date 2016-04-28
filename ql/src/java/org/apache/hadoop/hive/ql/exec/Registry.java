@@ -22,8 +22,12 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.Sets;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
+import org.apache.hadoop.hive.metastore.api.Function;
 import org.apache.hadoop.hive.ql.exec.FunctionInfo.FunctionResource;
 import org.apache.hadoop.hive.ql.ErrorMsg;
+import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.plan.ExprNodeDesc;
@@ -50,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -68,13 +73,15 @@ public class Registry {
   private final Set<Class<?>> builtIns = Collections.synchronizedSet(new HashSet<Class<?>>());
 
   private final boolean isNative;
+  /**
+   * The epic lock for the registry. This was added to replace the synchronized methods with
+   * minimum disruption; the locking should really be made more granular here.
+   */
+  private final ReentrantLock lock = new ReentrantLock();
 
-  Registry(boolean isNative) {
+
+  public Registry(boolean isNative) {
     this.isNative = isNative;
-  }
-
-  public Registry() {
-    this(false);
   }
 
   /**
@@ -233,23 +240,29 @@ public class Registry {
    * @param functionName
    * @return
    */
-  public synchronized FunctionInfo getFunctionInfo(String functionName) throws SemanticException {
-    functionName = functionName.toLowerCase();
-    if (FunctionUtils.isQualifiedFunctionName(functionName)) {
-      return getQualifiedFunctionInfo(functionName);
-    }
-    // First try without qualifiers - would resolve builtin/temp functions.
-    // Otherwise try qualifying with current db name.
-    FunctionInfo functionInfo = mFunctions.get(functionName);
-    if (functionInfo != null && functionInfo.isBlockedFunction()) {
-      throw new SemanticException ("UDF " + functionName + " is not allowed");
-    }
-    if (functionInfo == null) {
-      String qualifiedName = FunctionUtils.qualifyFunctionName(
-          functionName, SessionState.get().getCurrentDatabase().toLowerCase());
-      functionInfo = getQualifiedFunctionInfo(qualifiedName);
-    }
+  public FunctionInfo getFunctionInfo(String functionName) throws SemanticException {
+    lock.lock();
+    try {
+      functionName = functionName.toLowerCase();
+      if (FunctionUtils.isQualifiedFunctionName(functionName)) {
+        return getQualifiedFunctionInfoUnderLock(functionName);
+      }
+      // First try without qualifiers - would resolve builtin/temp functions.
+      // Otherwise try qualifying with current db name.
+      FunctionInfo functionInfo = mFunctions.get(functionName);
+      if (functionInfo != null && functionInfo.isBlockedFunction()) {
+        throw new SemanticException ("UDF " + functionName + " is not allowed");
+      }
+      if (functionInfo == null) {
+        String qualifiedName = FunctionUtils.qualifyFunctionName(
+            functionName, SessionState.get().getCurrentDatabase().toLowerCase());
+        functionInfo = getQualifiedFunctionInfoUnderLock(qualifiedName);
+      }
     return functionInfo;
+    } finally {
+      lock.unlock();
+    }
+
   }
 
   public WindowFunctionInfo getWindowFunctionInfo(String functionName) throws SemanticException {
@@ -268,15 +281,23 @@ public class Registry {
     return udfClass != null && builtIns.contains(udfClass);
   }
 
-  public synchronized Set<String> getCurrentFunctionNames() {
-    return getFunctionNames((Pattern)null);
+  public Set<String> getCurrentFunctionNames() {
+    lock.lock();
+    try {
+      return getFunctionNames((Pattern)null);
+    } finally {
+      lock.unlock();
+    }
   }
 
-  public synchronized Set<String> getFunctionNames(String funcPatternStr) {
+  public Set<String> getFunctionNames(String funcPatternStr) {
+    lock.lock();
     try {
       return getFunctionNames(Pattern.compile(funcPatternStr));
     } catch (PatternSyntaxException e) {
       return Collections.emptySet();
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -288,17 +309,22 @@ public class Registry {
    * @param funcPattern regular expression of the interested function names
    * @return set of strings contains function names
    */
-  public synchronized Set<String> getFunctionNames(Pattern funcPattern) {
-    Set<String> funcNames = new TreeSet<String>();
-    for (String funcName : mFunctions.keySet()) {
-      if (funcName.contains(WINDOW_FUNC_PREFIX)) {
-        continue;
+  public Set<String> getFunctionNames(Pattern funcPattern) {
+    lock.lock();
+    try {
+      Set<String> funcNames = new TreeSet<String>();
+      for (String funcName : mFunctions.keySet()) {
+        if (funcName.contains(WINDOW_FUNC_PREFIX)) {
+          continue;
+        }
+        if (funcPattern == null || funcPattern.matcher(funcName).matches()) {
+          funcNames.add(funcName);
+        }
       }
-      if (funcPattern == null || funcPattern.matcher(funcName).matches()) {
-        funcNames.add(funcName);
-      }
+      return funcNames;
+    } finally {
+      lock.unlock();
     }
-    return funcNames;
   }
 
   /**
@@ -307,18 +333,23 @@ public class Registry {
    * @param funcInfo
    * @param synonyms
    */
-  public synchronized void getFunctionSynonyms(
+  public void getFunctionSynonyms(
       String funcName, FunctionInfo funcInfo, Set<String> synonyms) throws SemanticException {
-    Class<?> funcClass = funcInfo.getFunctionClass();
-    for (Map.Entry<String, FunctionInfo> entry : mFunctions.entrySet()) {
-      String name = entry.getKey();
-      if (name.contains(WINDOW_FUNC_PREFIX) || name.equals(funcName)) {
-        continue;
+    lock.lock();
+    try {
+      Class<?> funcClass = funcInfo.getFunctionClass();
+      for (Map.Entry<String, FunctionInfo> entry : mFunctions.entrySet()) {
+        String name = entry.getKey();
+        if (name.contains(WINDOW_FUNC_PREFIX) || name.equals(funcName)) {
+          continue;
+        }
+        FunctionInfo function = entry.getValue();
+        if (function.getFunctionClass() == funcClass) {
+          synonyms.add(name);
+        }
       }
-      FunctionInfo function = entry.getValue();
-      if (function.getFunctionClass() == funcClass) {
-        synonyms.add(name);
-      }
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -382,8 +413,10 @@ public class Registry {
     return ((GenericUDAFResolver2) udafResolver).getEvaluator(paramInfo);
   }
 
-  private synchronized void addFunction(String functionName, FunctionInfo function) {
-    if (isNative ^ function.isNative()) {
+  private void addFunction(String functionName, FunctionInfo function) {
+    lock.lock();
+    try {
+    if (isNative != function.isNative()) {
       throw new RuntimeException("Function " + functionName + " is not for this registry");
     }
     functionName = functionName.toLowerCase();
@@ -399,9 +432,14 @@ public class Registry {
     if (function.isBuiltIn()) {
       builtIns.add(function.getFunctionClass());
     }
+    } finally {
+      lock.unlock();
+    }
   }
 
-  public synchronized void unregisterFunction(String functionName) throws HiveException {
+  public void unregisterFunction(String functionName) throws HiveException {
+    lock.lock();
+    try {
     functionName = functionName.toLowerCase();
     FunctionInfo fi = mFunctions.get(functionName);
     if (fi != null) {
@@ -410,6 +448,9 @@ public class Registry {
       }
       mFunctions.remove(functionName);
       fi.discarded();
+    }
+    } finally {
+      lock.unlock();
     }
   }
 
@@ -421,7 +462,7 @@ public class Registry {
     return null;
   }
 
-  private FunctionInfo getQualifiedFunctionInfo(String qualifiedName) throws SemanticException {
+  private FunctionInfo getQualifiedFunctionInfoUnderLock(String qualifiedName) throws SemanticException {
     FunctionInfo info = mFunctions.get(qualifiedName);
     if (info != null && info.isBlockedFunction()) {
       throw new SemanticException ("UDF " + qualifiedName + " is not allowed");
@@ -437,7 +478,24 @@ public class Registry {
     if (isNative && info != null && info.isPersistent()) {
       return registerToSessionRegistry(qualifiedName, info);
     }
-    return info;
+    if (info != null || !isNative) {
+      return info; // We have the UDF, or we are in the session registry (or both).
+    }
+    // If we are in the system registry and this feature is enabled, try to get it from metastore.
+    SessionState ss = SessionState.get();
+    HiveConf conf = (ss == null) ? null : ss.getConf();
+    if (conf == null || !HiveConf.getBoolVar(conf, ConfVars.HIVE_ALLOW_UDF_LOAD_ON_DEMAND)) {
+      return null;
+    }
+    // This is a little bit weird. We'll do the MS call outside of the lock. Our caller calls us
+    // under lock, so we'd preserve the lock state for them; their finally block will release the
+    // lock correctly. See the comment on the lock field - the locking needs to be reworked.
+    lock.unlock();
+    try {
+      return getFunctionInfoFromMetastoreNoLock(qualifiedName, conf);
+    } finally {
+      lock.lock();
+    }
   }
 
   // should be called after session registry is checked
@@ -481,12 +539,17 @@ public class Registry {
     Class.forName(udfClass.getName(), true, Utilities.getSessionSpecifiedClassLoader());
   }
 
-  public synchronized void clear() {
+  public void clear() {
+    lock.lock();
+    try {
     if (isNative) {
       throw new IllegalStateException("System function registry cannot be cleared");
     }
     mFunctions.clear();
     builtIns.clear();
+   } finally {
+     lock.unlock();
+   }
   }
 
   /**
@@ -518,5 +581,30 @@ public class Registry {
     functionName = functionName.toLowerCase();
     return blackList.contains(functionName) ||
         (!whiteList.isEmpty() && !whiteList.contains(functionName));
+  }
+
+  /**
+   * This is called outside of the lock. Some of the methods that are called transitively by
+   * this (e.g. addFunction) will take the lock again and then release it, which is ok.
+   */
+  private FunctionInfo getFunctionInfoFromMetastoreNoLock(String functionName, HiveConf conf) {
+    try {
+      String[] parts = FunctionUtils.getQualifiedFunctionNameParts(functionName);
+      Function func = Hive.get(conf).getFunction(parts[0].toLowerCase(), parts[1]);
+      if (func == null) {
+        return null;
+      }
+      // Found UDF in metastore - now add it to the function registry.
+      FunctionInfo fi = registerPermanentFunction(functionName, func.getClassName(), true,
+          FunctionTask.toFunctionResource(func.getResourceUris()));
+      if (fi == null) {
+        LOG.error(func.getClassName() + " is not a valid UDF class and was not registered");
+        return null;
+      }
+      return fi;
+    } catch (Throwable e) {
+      LOG.info("Unable to look up " + functionName + " in metastore", e);
+    }
+    return null;
   }
 }
