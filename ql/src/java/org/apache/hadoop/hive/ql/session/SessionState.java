@@ -258,7 +258,7 @@ public class SessionState {
    */
   private final Set<String> preReloadableAuxJars = new HashSet<String>();
 
-  private final Registry registry = new Registry();
+  private final Registry registry;
 
   /**
    * CURRENT_TIMESTAMP value for query
@@ -331,6 +331,7 @@ public class SessionState {
   public SessionState(HiveConf conf, String userName) {
     this.conf = conf;
     this.userName = userName;
+    this.registry = new Registry(false);
     if (LOG.isDebugEnabled()) {
       LOG.debug("SessionState user: " + userName);
     }
