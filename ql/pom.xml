@@ -29,6 +29,7 @@
 
   <properties>
     <hive.path.to.root>..</hive.path.to.root>
+    <calcite.version>0.9.1</calcite.version>
   </properties>
 
   <dependencies>
