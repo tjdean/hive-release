@@ -21,6 +21,7 @@
     <artifactId>hive</artifactId>
     <version>0.14.0</version>
     <relativePath>../pom.xml</relativePath>
+    <calcite.version>0.9.1</calcite.version>
   </parent>
 
   <artifactId>hive-exec</artifactId>
