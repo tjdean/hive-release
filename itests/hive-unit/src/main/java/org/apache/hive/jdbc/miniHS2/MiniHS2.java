@@ -163,6 +163,8 @@ public class MiniHS2 extends AbstractHiveService {
 
   private MiniHS2(HiveConf hiveConf, MiniClusterType miniClusterType, boolean useMiniKdc,
       String serverPrincipal, String serverKeytab, boolean isMetastoreRemote) throws Exception {
+    // Always use localhost for hostname as some tests like SSL CN validation ones
+    // are tied to localhost being present in the certificate name
     super(hiveConf, "localhost", MetaStoreUtils.findFreePort(), MetaStoreUtils.findFreePort());
     this.miniClusterType = miniClusterType;
     this.useMiniKdc = useMiniKdc;
@@ -334,14 +336,18 @@ public class MiniHS2 extends AbstractHiveService {
   public String getJdbcURL(String dbName, String sessionConfExt, String hiveConfExt) {
     sessionConfExt = (sessionConfExt == null ? "" : sessionConfExt);
     hiveConfExt = (hiveConfExt == null ? "" : hiveConfExt);
-    String krbConfig = "";
+    // Strip the leading ";" if provided
+    // (this is the assumption with which we're going to start configuring sessionConfExt)
+    if (sessionConfExt.startsWith(";")) {
+      sessionConfExt = sessionConfExt.substring(1);
+    }
     if (isUseMiniKdc()) {
-      krbConfig = "principal=" + serverPrincipal;
+      sessionConfExt = "principal=" + serverPrincipal + ";" + sessionConfExt;
     }
     if (isHttpTransportMode()) {
-      sessionConfExt = "transportMode=http;httpPath=cliservice;" + sessionConfExt;
+      sessionConfExt = "transportMode=http;httpPath=cliservice" + ";" + sessionConfExt;
     }
-    String baseJdbcURL = getBaseJdbcURL() + dbName + ";" + krbConfig + ";" + sessionConfExt;
+    String baseJdbcURL = getBaseJdbcURL() + dbName + ";" + sessionConfExt;
     if (!hiveConfExt.trim().equals("")) {
       baseJdbcURL = "?" + hiveConfExt;
     }
