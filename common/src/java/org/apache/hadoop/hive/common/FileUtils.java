@@ -525,7 +525,7 @@ public final class FileUtils {
         HdfsFileStatus fullFileStatus = shim.getFullFileStatus(conf, fs, lastExistingParent);
         try {
           //set on the entire subtree
-          shim.setFullFileStatus(conf, fullFileStatus, fs, firstNonExistentParent);
+          shim.setFullFileStatus(conf, fullFileStatus, fs, firstNonExistentParent, true);
         } catch (Exception e) {
           LOG.warn("Error setting permissions of " + firstNonExistentParent, e);
         }
@@ -563,7 +563,7 @@ public final class FileUtils {
     if (copied && inheritPerms) {
       HdfsFileStatus fullFileStatus = shims.getFullFileStatus(conf, dstFS, dst);
       try {
-        shims.setFullFileStatus(conf, fullFileStatus, dstFS, dst);
+        shims.setFullFileStatus(conf, fullFileStatus, dstFS, dst, true);
       } catch (Exception e) {
         LOG.warn("Error setting permissions or group of " + dst, e);
       }
@@ -677,7 +677,7 @@ public final class FileUtils {
         HadoopShims shims = ShimLoader.getHadoopShims();
         HdfsFileStatus fullFileStatus = shims.getFullFileStatus(conf, fs, destPath.getParent());
         try {
-          shims.setFullFileStatus(conf, fullFileStatus, fs, destPath);
+          shims.setFullFileStatus(conf, fullFileStatus, fs, destPath, true);
         } catch (Exception e) {
           LOG.warn("Error setting permissions or group of " + destPath, e);
         }
