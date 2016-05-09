@@ -40,10 +40,6 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: default@table1
 #### A masked pattern was here ####
 a	b
-1	original
-2	original
-3	original
-4	original
 PREHOOK: query: -- ADD COLUMNS
 alter table table1 add columns(c int, d string)
 PREHOOK: type: ALTERTABLE_ADDCOLS
@@ -76,14 +72,6 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: default@table1
 #### A masked pattern was here ####
 a	b	c	d
-1	new	10	ten
-1	original	NULL	NULL
-2	new	20	twenty
-2	original	NULL	NULL
-3	new	30	thirty
-3	original	NULL	NULL
-4	new	40	forty
-4	original	NULL	NULL
 PREHOOK: query: -- ADD COLUMNS
 alter table table1 add columns(e string)
 PREHOOK: type: ALTERTABLE_ADDCOLS
@@ -117,16 +105,6 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: default@table1
 #### A masked pattern was here ####
 a	b	c	d	e
-1	new	10	ten	NULL
-1	original	NULL	NULL	NULL
-2	new	20	twenty	NULL
-2	original	NULL	NULL	NULL
-3	new	30	thirty	NULL
-3	original	NULL	NULL	NULL
-4	new	40	forty	NULL
-4	original	NULL	NULL	NULL
-5	new	100	hundred	another1
-6	new	200	two hundred	another2
 PREHOOK: query: --
 -- SECTION VARIATION: ALTER TABLE CHANGE COLUMN
 -- smallint = (2-byte signed integer, from -32,768 to 32,767)
@@ -163,10 +141,6 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: default@table3
 #### A masked pattern was here ####
 a	b
-1000	original
-3	original
-4	original
-6737	original
 PREHOOK: query: -- ADD COLUMNS ... RESTRICT
 alter table table3 change column a a int
 PREHOOK: type: ALTERTABLE_RENAMECOL
@@ -197,14 +171,6 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: default@table3
 #### A masked pattern was here ####
 a	b
-1000	original
-200	new
-3	original
-32768	new
-4	original
-40000	new
-6737	original
-72909	new
 PREHOOK: query: -- ADD COLUMNS ... RESTRICT
 alter table table3 add columns(e string)
 PREHOOK: type: ALTERTABLE_ADDCOLS
@@ -236,16 +202,6 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: default@table3
 #### A masked pattern was here ####
 a	b
-1000	original
-200	new
-3	original
-32768	new
-4	original
-40000	new
-5000	new
-6737	original
-72909	new
-90000	new
 PREHOOK: query: -- ADD COLUMNS ... RESTRICT
 alter table table3 change column a a int
 PREHOOK: type: ALTERTABLE_RENAMECOL
@@ -265,16 +221,6 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: default@table3
 #### A masked pattern was here ####
 a	b
-1000	original
-200	new
-3	original
-32768	new
-4	original
-40000	new
-5000	new
-6737	original
-72909	new
-90000	new
 PREHOOK: query: DROP TABLE table1
 PREHOOK: type: DROPTABLE
 PREHOOK: Input: default@table1

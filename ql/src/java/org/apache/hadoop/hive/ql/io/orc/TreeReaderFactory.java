@@ -158,6 +158,12 @@ public class TreeReaderFactory {
 
     abstract void skipRows(long rows) throws IOException;
 
+    void readValuePresent() throws IOException {
+      if (present != null) {
+        valuePresent = present.next() == 1;
+      }
+    }
+
     Object next(Object previous) throws IOException {
       if (present != null) {
         valuePresent = present.next() == 1;
@@ -2415,7 +2421,17 @@ public class TreeReaderFactory {
       }
       return new NullTreeReader(0, cls);
     }
-    switch (readerType.getCategory()) {
+    TypeDescription.Category readerTypeCategory = readerType.getCategory();
+    if (!fileType.getCategory().equals(readerTypeCategory) &&
+        (readerTypeCategory != TypeDescription.Category.STRUCT &&
+         readerTypeCategory != TypeDescription.Category.MAP &&
+         readerTypeCategory != TypeDescription.Category.LIST &&
+         readerTypeCategory != TypeDescription.Category.UNION)) {
+      // We only convert complex children.
+      return ConvertTreeReaderFactory.createConvertTreeReader(readerType, evolution,
+          included, skipCorrupt);
+    }
+    switch (readerTypeCategory) {
       case BOOLEAN:
         return new BooleanTreeReader(fileType.getId());
       case BYTE:

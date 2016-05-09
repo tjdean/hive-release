@@ -259,16 +259,16 @@ POSTHOOK: Input: default@src_part_orc
 POSTHOOK: Input: default@src_part_orc@ds=2008-04-08
 POSTHOOK: Input: default@src_part_orc@ds=2008-04-09
 #### A masked pattern was here ####
-238	val_238	2008-04-08
-86	val_86	2008-04-08
-311	val_311	2008-04-08
-27	val_27	2008-04-08
-165	val_165	2008-04-08
-409	val_409	2008-04-08
-255	val_255	2008-04-08
-278	val_278	2008-04-08
-98	val_98	2008-04-08
-484	val_484	2008-04-08
+238	val_238	NULL
+86	val_86	NULL
+311	val_311	NULL
+27	val_27	NULL
+165	val_165	NULL
+409	val_409	NULL
+255	val_255	NULL
+278	val_278	NULL
+98	val_98	NULL
+484	val_484	NULL
 PREHOOK: query: alter table src_part_orc change key key bigint
 PREHOOK: type: ALTERTABLE_RENAMECOL
 PREHOOK: Input: default@src_part_orc
@@ -289,13 +289,13 @@ POSTHOOK: Input: default@src_part_orc
 POSTHOOK: Input: default@src_part_orc@ds=2008-04-08
 POSTHOOK: Input: default@src_part_orc@ds=2008-04-09
 #### A masked pattern was here ####
-238	val_238	2008-04-08
-86	val_86	2008-04-08
-311	val_311	2008-04-08
-27	val_27	2008-04-08
-165	val_165	2008-04-08
-409	val_409	2008-04-08
-255	val_255	2008-04-08
-278	val_278	2008-04-08
-98	val_98	2008-04-08
-484	val_484	2008-04-08
+238	val_238	NULL
+86	val_86	NULL
+311	val_311	NULL
+27	val_27	NULL
+165	val_165	NULL
+409	val_409	NULL
+255	val_255	NULL
+278	val_278	NULL
+98	val_98	NULL
+484	val_484	NULL

@@ -71,6 +71,7 @@ part                	int
 # Detailed Table Information	 	 
 Database:           	default             	 
 #### A masked pattern was here ####
+Protect Mode:       	None                	 
 Retention:          	0                   	 
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
@@ -108,8 +109,10 @@ Partition Value:    	[1]
 Database:           	default             	 
 Table:              	partitioned1        	 
 #### A masked pattern was here ####
+Protect Mode:       	None                	 
+#### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"COLUMN_STATS\":{\"a\":\"true\",\"b\":\"true\",\"c\":\"true\",\"d\":\"true\"},\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	4                   
 	rawDataSize         	40                  
@@ -149,8 +152,10 @@ Partition Value:    	[2]
 Database:           	default             	 
 Table:              	partitioned1        	 
 #### A masked pattern was here ####
+Protect Mode:       	None                	 
+#### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"COLUMN_STATS\":{\"a\":\"true\",\"b\":\"true\",\"c\":\"true\",\"d\":\"true\"},\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	4                   
 	rawDataSize         	56                  
@@ -174,8 +179,8 @@ POSTHOOK: type: QUERY
 Plan optimized by CBO.
 
 Stage-0
-  Fetch Operator
-    limit:1
+   Fetch Operator
+      limit:1
 
 PREHOOK: query: select count(c) from partitioned1
 PREHOOK: type: QUERY
@@ -267,6 +272,7 @@ part                	int
 # Detailed Table Information	 	 
 Database:           	default             	 
 #### A masked pattern was here ####
+Protect Mode:       	None                	 
 Retention:          	0                   	 
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
@@ -304,12 +310,14 @@ Partition Value:    	[1]
 Database:           	default             	 
 Table:              	partitioned1        	 
 #### A masked pattern was here ####
+Protect Mode:       	None                	 
+#### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"COLUMN_STATS\":{\"a\":\"true\",\"b\":\"true\",\"c\":\"true\",\"d\":\"true\"},\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	4                   
 	rawDataSize         	384                 
-	totalSize           	313                 
+	totalSize           	333                 
 #### A masked pattern was here ####
 	 	 
 # Storage Information	 	 
@@ -345,12 +353,14 @@ Partition Value:    	[2]
 Database:           	default             	 
 Table:              	partitioned1        	 
 #### A masked pattern was here ####
+Protect Mode:       	None                	 
+#### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"COLUMN_STATS\":{\"a\":\"true\",\"b\":\"true\",\"c\":\"true\",\"d\":\"true\"},\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	4                   
 	rawDataSize         	732                 
-	totalSize           	506                 
+	totalSize           	526                 
 #### A masked pattern was here ####
 	 	 
 # Storage Information	 	 
@@ -370,8 +380,8 @@ POSTHOOK: type: QUERY
 Plan optimized by CBO.
 
 Stage-0
-  Fetch Operator
-    limit:1
+   Fetch Operator
+      limit:1
 
 PREHOOK: query: select count(c) from partitioned1
 PREHOOK: type: QUERY

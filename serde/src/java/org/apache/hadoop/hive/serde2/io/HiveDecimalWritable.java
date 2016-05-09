@@ -58,6 +58,10 @@ public class HiveDecimalWritable implements WritableComparable<HiveDecimalWritab
     set(value);
   }
 
+  public HiveDecimalWritable(long value) {
+    set((HiveDecimal.create(value)));
+  }
+
   public void set(HiveDecimal value) {
     set(value.unscaledValue().toByteArray(), value.scale());
   }

@@ -49,6 +49,11 @@ public class DecimalColumnVector extends ColumnVector {
     }
   }
 
+  // Needed for NullTreeReader.
+  public DecimalColumnVector() {
+    this(VectorizedRowBatch.DEFAULT_SIZE, HiveDecimal.SYSTEM_DEFAULT_PRECISION, HiveDecimal.SYSTEM_DEFAULT_SCALE);
+  }
+
   // Fill the all the vector entries with provided value
   public void fill(HiveDecimal value) {
     noNulls = true;

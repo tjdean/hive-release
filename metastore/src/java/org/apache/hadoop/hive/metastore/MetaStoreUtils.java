@@ -605,6 +605,21 @@ public class MetaStoreUtils {
     return true;
   }
 
+  static private String undecoratedTypeName(String typeName) {
+    typeName = typeName.toLowerCase();
+    int length = typeName.length();
+    if (length >= 4 && typeName.startsWith("char")) {
+      return "char";
+    }
+    if (length >= 7 && typeName.startsWith("varchar")) {
+      return "varchar";
+    }
+    if (length >= 7 && typeName.startsWith("decimal")) {
+      return "decimal";
+    }
+    return typeName;
+  }
+
   /**
    * @return true if oldType and newType are compatible.
    * Two types are compatible if we have internal functions to cast one to another.
@@ -623,8 +638,8 @@ public class MetaStoreUtils {
      * Primitive types like INT, STRING, BIGINT, etc are compatible with each other and are
      * not blocked.
      */
-    if(serdeConstants.PrimitiveTypes.contains(oldType.toLowerCase()) &&
-        serdeConstants.PrimitiveTypes.contains(newType.toLowerCase())) {
+    if(serdeConstants.PrimitiveTypes.contains(undecoratedTypeName(oldType)) &&
+        serdeConstants.PrimitiveTypes.contains(undecoratedTypeName(newType))) {
       return true;
     }
 
