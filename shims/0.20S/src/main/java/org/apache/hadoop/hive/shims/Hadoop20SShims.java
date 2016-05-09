@@ -485,7 +485,7 @@ public class Hadoop20SShims extends HadoopShimsSecure {
 
   @Override
   public void setFullFileStatus(Configuration conf, HdfsFileStatus sourceStatus,
-    FileSystem fs, Path target) throws IOException {
+    FileSystem fs, Path target, boolean recursive) throws IOException {
     String group = sourceStatus.getFileStatus().getGroup();
     String permission = Integer.toString(sourceStatus.getFileStatus().getPermission().toShort(), 8);
     //use FsShell to change group and permissions recursively

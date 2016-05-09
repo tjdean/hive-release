@@ -303,10 +303,11 @@ public interface HadoopShims {
    * @param sourceStatus
    * @param fs
    * @param target
+   * @param recursive
    * @throws IOException
    */
   public void setFullFileStatus(Configuration conf, HdfsFileStatus sourceStatus,
-    FileSystem fs, Path target) throws IOException;
+    FileSystem fs, Path target, boolean recursive) throws IOException;
 
   /**
    * Includes the vanilla FileStatus, and AclStatus if it applies to this version of hadoop.
