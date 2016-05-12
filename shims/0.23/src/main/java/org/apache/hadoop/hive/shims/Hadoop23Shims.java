@@ -1255,7 +1255,12 @@ public class Hadoop23Shims extends HadoopShimsSecure {
       if(!"hdfs".equalsIgnoreCase(path.toUri().getScheme())) {
         return false;
       }
-      return (hdfsAdmin.getEncryptionZoneForPath(fullPath) != null);
+      try {
+        return (hdfsAdmin.getEncryptionZoneForPath(fullPath) != null);
+      } catch (FileNotFoundException fnfe) {
+        LOG.debug("Failed to get EZ for non-existent path: "+ fullPath, fnfe);
+        return false;
+      }
     }
 
     @Override
