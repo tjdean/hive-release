@@ -287,6 +287,11 @@ public class BeeLine implements Closeable {
         .withDescription("the JDBC URL to connect to")
         .create('u'));
 
+    // -r
+    options.addOption(OptionBuilder
+        .withLongOpt("reconnect")
+        .withDescription("Reconnect to last saved connect url (in conjunction with !save)")
+        .create('r'));
     // -n <username>
     options.addOption(OptionBuilder
         .hasArg()
@@ -681,6 +686,10 @@ public class BeeLine implements Closeable {
       pass = cl.getOptionValue("p");
     }
     url = cl.getOptionValue("u");
+    if ((url == null) && cl.hasOption("reconnect")){
+      // If url was not specified with -u, but -r was present, use that.
+      url = getOpts().getLastConnectedUrl();
+    }
     getOpts().setInitFile(cl.getOptionValue("i"));
     getOpts().setScriptFile(cl.getOptionValue("f"));
     if (cl.getOptionValues('e') != null) {

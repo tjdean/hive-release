@@ -22,6 +22,7 @@
  */
 package org.apache.hive.beeline;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.io.IOUtils;
 
 import java.io.BufferedReader;
@@ -32,7 +33,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Method;
-import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.sql.CallableStatement;
@@ -47,6 +49,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
@@ -303,7 +306,19 @@ public class Commands {
 
   public boolean reconnect(String line) {
     if (beeLine.getDatabaseConnection() == null || beeLine.getDatabaseConnection().getUrl() == null) {
-      return beeLine.error(beeLine.loc("no-current-connection"));
+      // First, let's try connecting using the last successful url - if that fails, then we error out.
+      String lastConnectedUrl = beeLine.getOpts().getLastConnectedUrl();
+      if (lastConnectedUrl != null){
+        Properties props = new Properties();
+        props.setProperty("url",lastConnectedUrl);
+        try {
+          return connect(props);
+        } catch (IOException e) {
+          return beeLine.error(e);
+        }
+      } else {
+        return beeLine.error(beeLine.loc("no-current-connection"));
+      }
     }
     beeLine.info(beeLine.loc("reconnecting", beeLine.getDatabaseConnection().getUrl()));
     try {
@@ -1055,7 +1070,8 @@ public class Commands {
 
     Properties props = new Properties();
     if (url != null) {
-      props.setProperty("url", url);
+      String saveUrl = getUrlToUse(url);
+      props.setProperty("url", saveUrl);
     }
     if (driver != null) {
       props.setProperty("driver", driver);
@@ -1070,6 +1086,31 @@ public class Commands {
     return connect(props);
   }
 
+  private String getUrlToUse(String urlParam) {
+    boolean useIndirectUrl = false;
+    // If the url passed to us is a valid url with a protocol, we use it as-is
+    // Otherwise, we assume it is a name of parameter that we have to get the url from
+    try {
+      URI tryParse = new URI(urlParam);
+      if (tryParse.getScheme() == null){
+        // param had no scheme, so not a URL
+        useIndirectUrl = true;
+      }
+    } catch (URISyntaxException e){
+      // param did not parse as a URL, so not a URL
+      useIndirectUrl = true;
+    }
+    if (useIndirectUrl){
+      // Use url param indirectly - as the name of an env var that contains the url
+      // If the urlParam is "default", we would look for a BEELINE_URL_DEFAULT url
+      String envUrl = beeLine.getOpts().getEnv().get(
+          BeeLineOpts.URL_ENV_PREFIX + urlParam.toUpperCase());
+      if (envUrl != null){
+        return envUrl;
+      }
+    }
+    return urlParam; // default return the urlParam passed in as-is.
+  }
 
   private String getProperty(Properties props, String[] keys) {
     for (int i = 0; i < keys.length; i++) {
@@ -1150,6 +1191,7 @@ public class Commands {
       beeLine.runInit();
 
       beeLine.setCompletions();
+      beeLine.getOpts().setLastConnectedUrl(url);
       return true;
     } catch (SQLException sqle) {
       return beeLine.error(sqle);
