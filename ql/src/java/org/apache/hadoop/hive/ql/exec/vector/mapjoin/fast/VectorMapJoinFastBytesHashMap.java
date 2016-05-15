@@ -25,8 +25,12 @@ import org.apache.hadoop.hive.ql.exec.vector.mapjoin.hashtable.VectorMapJoinByte
 import org.apache.hadoop.hive.ql.exec.vector.mapjoin.hashtable.VectorMapJoinHashMapResult;
 import org.apache.hadoop.io.BytesWritable;
 
+import com.google.common.annotations.VisibleForTesting;
+
 /*
- * An single byte array value hash map optimized for vector map join.
+ * An bytes key hash map optimized for vector map join.
+ *
+ * This is the abstract base for the multi-key and string bytes key hash map implementations.
  */
 public abstract class VectorMapJoinFastBytesHashMap
         extends VectorMapJoinFastBytesHashTable
@@ -35,6 +39,8 @@ public abstract class VectorMapJoinFastBytesHashMap
   private static final Log LOG = LogFactory.getLog(VectorMapJoinFastBytesHashMap.class);
 
   private VectorMapJoinFastValueStore valueStore;
+
+  protected BytesWritable testValueBytesWritable;
 
   @Override
   public VectorMapJoinHashMapResult createHashMapResult() {
@@ -55,7 +61,6 @@ public abstract class VectorMapJoinFastBytesHashMap
       slotTriples[tripleIndex + 1] = hashCode;
       slotTriples[tripleIndex + 2] = valueStore.addFirst(valueBytes, 0, valueLength);
       // LOG.debug("VectorMapJoinFastBytesHashMap add first keyRefWord " + Long.toHexString(slotTriples[tripleIndex]) + " hashCode " + Long.toHexString(slotTriples[tripleIndex + 1]) + " valueRefWord " + Long.toHexString(slotTriples[tripleIndex + 2]));
-      keysAssigned++;
     } else {
       // Add another value.
       // LOG.debug("VectorMapJoinFastBytesHashMap add more keyRefWord " + Long.toHexString(slotTriples[tripleIndex]) + " hashCode " + Long.toHexString(slotTriples[tripleIndex + 1]) + " valueRefWord " + Long.toHexString(slotTriples[tripleIndex + 2]));

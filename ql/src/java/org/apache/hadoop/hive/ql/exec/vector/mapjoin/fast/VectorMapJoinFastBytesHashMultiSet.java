@@ -25,6 +25,8 @@ import org.apache.hadoop.hive.ql.exec.vector.mapjoin.hashtable.VectorMapJoinByte
 import org.apache.hadoop.hive.ql.exec.vector.mapjoin.hashtable.VectorMapJoinHashMultiSetResult;
 import org.apache.hadoop.io.BytesWritable;
 
+import com.google.common.annotations.VisibleForTesting;
+
 /*
  * An single byte array value hash multi-set optimized for vector map join.
  */
@@ -50,7 +52,6 @@ public abstract class VectorMapJoinFastBytesHashMultiSet
       slotTriples[tripleIndex + 1] = hashCode;
       slotTriples[tripleIndex + 2] = 1;    // Count.
       // LOG.debug("VectorMapJoinFastBytesHashMap add first keyRefWord " + Long.toHexString(slotTriples[tripleIndex]) + " hashCode " + Long.toHexString(slotTriples[tripleIndex + 1]) + " valueRefWord " + Long.toHexString(slotTriples[tripleIndex + 2]));
-      keysAssigned++;
     } else {
       // Add another value.
       // LOG.debug("VectorMapJoinFastBytesHashMap add more keyRefWord " + Long.toHexString(slotTriples[tripleIndex]) + " hashCode " + Long.toHexString(slotTriples[tripleIndex + 1]) + " valueRefWord " + Long.toHexString(slotTriples[tripleIndex + 2]));
