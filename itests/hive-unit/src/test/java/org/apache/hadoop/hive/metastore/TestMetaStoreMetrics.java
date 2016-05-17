@@ -61,10 +61,13 @@ public class TestMetaStoreMetrics {
 
   @Test
   public void testMethodCounts() throws Exception {
+    String preJson = metrics.dumpJson();
+    String preCountStr = MetricsTestUtils.getMetricsJson(preJson, MetricsTestUtils.TIMER, "api_get_all_databases");
+    Integer preCount = Integer.valueOf(preCountStr);
     driver.run("show databases");
-    String json = metrics.dumpJson();
-    MetricsTestUtils.verifyMetricsJson(json, MetricsTestUtils.TIMER, "api_get_all_databases", 1);
-
+    String postJson = metrics.dumpJson();
+    MetricsTestUtils.verifyMetricsJson(
+        postJson, MetricsTestUtils.TIMER, "api_get_all_databases", preCount + 1);
   }
 
   @Test

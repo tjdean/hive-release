@@ -50,6 +50,12 @@ public class MetricsTestUtils {
     Assert.assertEquals(expectedValue.toString(), jsonNode.asText());
   }
 
+  public static String getMetricsJson(String json,
+      MetricsCategory category, String metricsName) throws Exception {
+    JsonNode jsonNode = getJsonNode(json, category, metricsName);
+    return jsonNode.asText();
+  }
+
   private static JsonNode getJsonNode(String json, MetricsCategory category, String metricsName) throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode rootNode = objectMapper.readTree(json);
