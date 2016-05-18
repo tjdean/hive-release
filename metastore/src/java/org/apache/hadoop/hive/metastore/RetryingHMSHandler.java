@@ -41,6 +41,17 @@ import org.datanucleus.exceptions.NucleusException;
 public class RetryingHMSHandler implements InvocationHandler {
 
   private static final Log LOG = LogFactory.getLog(RetryingHMSHandler.class);
+  private static final boolean IS_DEBUG_ENABLED = LOG.isDebugEnabled();
+
+  private static class Result {
+    private final Object result;
+    private final int numRetries;
+
+    public Result(Object result, int numRetries) {
+      this.result = result;
+      this.numRetries = numRetries;
+    }
+  }
 
   private final IHMSHandler baseHandler;
   private final MetaStoreInit.MetaStoreInitData metaStoreInitData =
@@ -78,6 +89,25 @@ public class RetryingHMSHandler implements InvocationHandler {
 
   @Override
   public Object invoke(final Object proxy, final Method method, final Object[] args) throws Throwable {
+    int retryCount = -1;
+    long startTime = System.currentTimeMillis();
+    int threadId = HiveMetaStore.HMSHandler.get();
+    boolean error = true;
+    try {
+      Result result = invokeInternal(proxy, method, args);
+      retryCount = result.numRetries;
+      error = false;
+      return result.result;
+    } finally {
+      if (IS_DEBUG_ENABLED) {
+        long elapsedTime = System.currentTimeMillis() - startTime;
+        LOG.debug("PERFLOG " + threadId + ": function=" + method.getName() + ", elapsedTime=" + elapsedTime +
+          "ms, retryCount=" + retryCount + ", error=" + error);
+      }
+    }
+  }
+
+  private Result invokeInternal(final Object proxy, final Method method, final Object[] args) throws Throwable {
 
     boolean gotNewConnectUrl = false;
     boolean reloadConf = HiveConf.getBoolVar(origConf,
@@ -106,7 +136,7 @@ public class RetryingHMSHandler implements InvocationHandler {
         Deadline.startTimer(method.getName());
         Object object = method.invoke(baseHandler, args);
         Deadline.stopTimer();
-        return object;
+        return new Result(object, retryCount);
 
       } catch (javax.jdo.JDOException e) {
         caughtException = e;
