@@ -1525,10 +1525,16 @@ public class Vectorizer implements PhysicalPlanResolver {
         return false;
       }
     } catch (Exception e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Failed to vectorize", e);
+      if (e instanceof HiveException) {
+        LOG.info(e.getMessage());
+      } else {
+        if (LOG.isDebugEnabled()) {
+          // Show stack trace.
+          LOG.debug("Failed to vectorize", e);
+        } else {
+          LOG.info("Failed to vectorize\n" + e.getMessage());
+        }
       }
-
       return false;
     }
     return true;
