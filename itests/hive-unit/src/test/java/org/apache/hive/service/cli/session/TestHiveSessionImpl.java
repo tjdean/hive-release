@@ -26,6 +26,7 @@ import org.apache.hive.service.cli.operation.OperationManager;
 import org.apache.hive.service.cli.thrift.TProtocolVersion;
 import org.junit.Assert;
 import org.junit.Test;
+import org.junit.Ignore;
 import org.mockito.Mockito;
 
 import java.util.HashMap;
@@ -39,6 +40,7 @@ public class TestHiveSessionImpl {
    * get HiveSQLException during sync query
    * @throws HiveSQLException
    */
+  @Ignore
   @Test
   public void testLeakOperationHandle() throws HiveSQLException {
     //create HiveSessionImpl object
