@@ -230,7 +230,7 @@ public class TestHadoop20SAuthBridge extends TestCase {
   }
 
   @Ignore("flaky test")
-  public void testSaslWithHiveMetaStore() throws Exception {
+  public void ignoretestSaslWithHiveMetaStore() throws Exception {
     setup();
     UserGroupInformation clientUgi = UserGroupInformation.getCurrentUser();
     obtainTokenAndAddIntoUGI(clientUgi, null);
