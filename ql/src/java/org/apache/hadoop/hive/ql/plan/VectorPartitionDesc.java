@@ -48,35 +48,28 @@ public class VectorPartitionDesc  {
 
   private final VectorMapOperatorReadType vectorMapOperatorReadType;
 
-  private final boolean needsDataTypeConversionCheck;
+  boolean isInputFileFormatSelfDescribing;
 
-  private boolean[] conversionFlags;
+  private TypeInfo[] dataTypeInfos;
 
-  private TypeInfo[] typeInfos;
-
-  private VectorPartitionDesc(VectorMapOperatorReadType vectorMapOperatorReadType,
-      boolean needsDataTypeConversionCheck) {
+  private VectorPartitionDesc(boolean isInputFileFormatSelfDescribing,
+      VectorMapOperatorReadType vectorMapOperatorReadType) {
     this.vectorMapOperatorReadType = vectorMapOperatorReadType;
-    this.needsDataTypeConversionCheck = needsDataTypeConversionCheck;
 
-    conversionFlags = null;
-    typeInfos = null;
+    this.isInputFileFormatSelfDescribing = isInputFileFormatSelfDescribing;
+    dataTypeInfos = null;
   }
 
   public static VectorPartitionDesc createVectorizedInputFileFormat() {
-    return new VectorPartitionDesc(VectorMapOperatorReadType.VECTORIZED_INPUT_FILE_FORMAT, true);
+    return new VectorPartitionDesc(true, VectorMapOperatorReadType.VECTORIZED_INPUT_FILE_FORMAT);
   }
 
 
   @Override
   public VectorPartitionDesc clone() {
     VectorPartitionDesc result =
-        new VectorPartitionDesc(vectorMapOperatorReadType,
-            needsDataTypeConversionCheck);
-    result.conversionFlags =
-        (conversionFlags == null ? null :
-          Arrays.copyOf(conversionFlags, conversionFlags.length));
-    result.typeInfos = Arrays.copyOf(typeInfos, typeInfos.length);
+        new VectorPartitionDesc(isInputFileFormatSelfDescribing, vectorMapOperatorReadType);
+    result.dataTypeInfos = Arrays.copyOf(dataTypeInfos, dataTypeInfos.length);
     return result;
   }
 
@@ -84,27 +77,19 @@ public class VectorPartitionDesc  {
     return vectorMapOperatorReadType;
   }
 
-  public boolean getNeedsDataTypeConversionCheck() {
-    return needsDataTypeConversionCheck;
+  public boolean getIsInputFileFormatSelfDescribing() {
+    return isInputFileFormatSelfDescribing;
   }
 
-  public void setConversionFlags(boolean[] conversionFlags) {
-    this.conversionFlags = conversionFlags;
+  public TypeInfo[] getDataTypeInfos() {
+    return dataTypeInfos;
   }
 
-  public boolean[] getConversionFlags() {
-    return conversionFlags;
-  }
-
-  public TypeInfo[] getTypeInfos() {
-    return typeInfos;
-  }
-
-  public void setTypeInfos(List<TypeInfo> typeInfoList) {
-    typeInfos = typeInfoList.toArray(new TypeInfo[0]);
+  public void setDataTypeInfos(List<TypeInfo> dataTypeInfoList) {
+    dataTypeInfos = dataTypeInfoList.toArray(new TypeInfo[0]);
   }
 
   public int getNonPartColumnCount() {
-    return typeInfos.length;
+    return dataTypeInfos.length;
   }
 }

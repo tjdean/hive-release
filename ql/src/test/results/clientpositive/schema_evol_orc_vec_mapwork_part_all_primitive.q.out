@@ -152,6 +152,7 @@ STAGE PLANS:
                 sort order: +
                 Statistics: Num rows: 6 Data size: 1710 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: boolean), _col3 (type: boolean), _col4 (type: boolean), _col5 (type: boolean), _col6 (type: boolean), _col7 (type: boolean), _col8 (type: boolean), _col9 (type: boolean), _col10 (type: boolean), _col11 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: boolean), VALUE._col2 (type: boolean), VALUE._col3 (type: boolean), VALUE._col4 (type: boolean), VALUE._col5 (type: boolean), VALUE._col6 (type: boolean), VALUE._col7 (type: boolean), VALUE._col8 (type: boolean), VALUE._col9 (type: boolean), VALUE._col10 (type: string)
@@ -342,6 +343,7 @@ STAGE PLANS:
                 sort order: +
                 Statistics: Num rows: 6 Data size: 2482 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: tinyint), _col3 (type: tinyint), _col4 (type: tinyint), _col5 (type: tinyint), _col6 (type: tinyint), _col7 (type: tinyint), _col8 (type: tinyint), _col9 (type: tinyint), _col10 (type: tinyint), _col11 (type: tinyint), _col12 (type: tinyint), _col13 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: tinyint), VALUE._col2 (type: tinyint), VALUE._col3 (type: tinyint), VALUE._col4 (type: tinyint), VALUE._col5 (type: tinyint), VALUE._col6 (type: tinyint), VALUE._col7 (type: tinyint), VALUE._col8 (type: tinyint), VALUE._col9 (type: tinyint), VALUE._col10 (type: tinyint), VALUE._col11 (type: tinyint), VALUE._col12 (type: string)
@@ -532,6 +534,7 @@ STAGE PLANS:
                 sort order: +
                 Statistics: Num rows: 6 Data size: 2498 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: smallint), _col3 (type: smallint), _col4 (type: smallint), _col5 (type: smallint), _col6 (type: smallint), _col7 (type: smallint), _col8 (type: smallint), _col9 (type: smallint), _col10 (type: smallint), _col11 (type: smallint), _col12 (type: smallint), _col13 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: smallint), VALUE._col2 (type: smallint), VALUE._col3 (type: smallint), VALUE._col4 (type: smallint), VALUE._col5 (type: smallint), VALUE._col6 (type: smallint), VALUE._col7 (type: smallint), VALUE._col8 (type: smallint), VALUE._col9 (type: smallint), VALUE._col10 (type: smallint), VALUE._col11 (type: smallint), VALUE._col12 (type: string)
@@ -722,6 +725,7 @@ STAGE PLANS:
                 sort order: +
                 Statistics: Num rows: 6 Data size: 2494 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: int), _col3 (type: int), _col4 (type: int), _col5 (type: int), _col6 (type: int), _col7 (type: int), _col8 (type: int), _col9 (type: int), _col10 (type: int), _col11 (type: int), _col12 (type: int), _col13 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: int), VALUE._col2 (type: int), VALUE._col3 (type: int), VALUE._col4 (type: int), VALUE._col5 (type: int), VALUE._col6 (type: int), VALUE._col7 (type: int), VALUE._col8 (type: int), VALUE._col9 (type: int), VALUE._col10 (type: int), VALUE._col11 (type: int), VALUE._col12 (type: string)
@@ -912,6 +916,7 @@ STAGE PLANS:
                 sort order: +
                 Statistics: Num rows: 6 Data size: 2578 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: bigint), _col3 (type: bigint), _col4 (type: bigint), _col5 (type: bigint), _col6 (type: bigint), _col7 (type: bigint), _col8 (type: bigint), _col9 (type: bigint), _col10 (type: bigint), _col11 (type: bigint), _col12 (type: bigint), _col13 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: bigint), VALUE._col2 (type: bigint), VALUE._col3 (type: bigint), VALUE._col4 (type: bigint), VALUE._col5 (type: bigint), VALUE._col6 (type: bigint), VALUE._col7 (type: bigint), VALUE._col8 (type: bigint), VALUE._col9 (type: bigint), VALUE._col10 (type: bigint), VALUE._col11 (type: bigint), VALUE._col12 (type: string)
@@ -1102,6 +1107,7 @@ STAGE PLANS:
                 sort order: +
                 Statistics: Num rows: 6 Data size: 2498 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: float), _col3 (type: float), _col4 (type: float), _col5 (type: float), _col6 (type: float), _col7 (type: float), _col8 (type: float), _col9 (type: float), _col10 (type: float), _col11 (type: float), _col12 (type: float), _col13 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: float), VALUE._col2 (type: float), VALUE._col3 (type: float), VALUE._col4 (type: float), VALUE._col5 (type: float), VALUE._col6 (type: float), VALUE._col7 (type: float), VALUE._col8 (type: float), VALUE._col9 (type: float), VALUE._col10 (type: float), VALUE._col11 (type: float), VALUE._col12 (type: string)
@@ -1292,6 +1298,7 @@ STAGE PLANS:
                 sort order: +
                 Statistics: Num rows: 6 Data size: 2578 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: double), _col3 (type: double), _col4 (type: double), _col5 (type: double), _col6 (type: double), _col7 (type: double), _col8 (type: double), _col9 (type: double), _col10 (type: double), _col11 (type: double), _col12 (type: double), _col13 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: double), VALUE._col2 (type: double), VALUE._col3 (type: double), VALUE._col4 (type: double), VALUE._col5 (type: double), VALUE._col6 (type: double), VALUE._col7 (type: double), VALUE._col8 (type: double), VALUE._col9 (type: double), VALUE._col10 (type: double), VALUE._col11 (type: double), VALUE._col12 (type: string)
@@ -1482,6 +1489,7 @@ STAGE PLANS:
                 sort order: +
                 Statistics: Num rows: 6 Data size: 4458 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: decimal(38,18)), _col3 (type: decimal(38,18)), _col4 (type: decimal(38,18)), _col5 (type: decimal(38,18)), _col6 (type: decimal(38,18)), _col7 (type: decimal(38,18)), _col8 (type: decimal(38,18)), _col9 (type: decimal(38,18)), _col10 (type: decimal(38,18)), _col11 (type: decimal(38,18)), _col12 (type: decimal(38,18)), _col13 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: decimal(38,18)), VALUE._col2 (type: decimal(38,18)), VALUE._col3 (type: decimal(38,18)), VALUE._col4 (type: decimal(38,18)), VALUE._col5 (type: decimal(38,18)), VALUE._col6 (type: decimal(38,18)), VALUE._col7 (type: decimal(38,18)), VALUE._col8 (type: decimal(38,18)), VALUE._col9 (type: decimal(38,18)), VALUE._col10 (type: decimal(38,18)), VALUE._col11 (type: decimal(38,18)), VALUE._col12 (type: string)
@@ -1678,6 +1686,7 @@ STAGE PLANS:
                 sort order: +
                 Statistics: Num rows: 6 Data size: 4729 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: string), _col3 (type: string), _col4 (type: string), _col5 (type: string), _col6 (type: string), _col7 (type: string), _col8 (type: string), _col9 (type: string), _col10 (type: string), _col11 (type: string), _col12 (type: string), _col13 (type: string), _col14 (type: string), _col15 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: string), VALUE._col2 (type: string), VALUE._col3 (type: string), VALUE._col4 (type: string), VALUE._col5 (type: string), VALUE._col6 (type: string), VALUE._col7 (type: string), VALUE._col8 (type: string), VALUE._col9 (type: string), VALUE._col10 (type: string), VALUE._col11 (type: string), VALUE._col12 (type: string), VALUE._col13 (type: string), VALUE._col14 (type: string)
@@ -1710,10 +1719,10 @@ POSTHOOK: Input: default@part_change_various_various_string@part=1
 POSTHOOK: Input: default@part_change_various_various_string@part=2
 #### A masked pattern was here ####
 insert_num	part	c1	c2	c3	c4	c5	c6	c7	c8	c9	c10	c11	c12	c13	b
-1	1	TRUE	NULL	NULL	3244222	-99999999999	-29.0764	4.70614135E8	470614135	dynamic reptile	dynamic reptile  	0004-09-22 18:26:29.519542222	2007-02-09	62 69 6e 61 72 79	original
-2	1	TRUE	100	NULL	14	-23866739993	-3651.672	46114.284799488	46114.284799488	  baffling	  baffling    	2007-02-09 05:17:29.368756876	0004-09-22	62 69 6e 61 72 79	original
-3	1	FALSE	72	NULL	-93222	30	-66475.56	-66475.561431	0.561431	1	1	6229-06-28 02:54:28.970117179	5966-07-09	62 69 6e 61 72 79	original
-4	1	TRUE	-90	NULL	3289094	46114	9250341.0	9250340.75	9250340.75	junkyard	junkyard	2002-05-10 05:29:48.990818073	1815-05-06	62 69 6e 61 72 79	original
+1	1	TRUE	NULL	NULL	3244222	-99999999999	-29.0764	4.70614135E8	470614135	dynamic reptile	dynamic reptile  	0004-09-22 18:26:29.519542222	2007-02-09	binary	original
+2	1	TRUE	100	NULL	14	-23866739993	-3651.672	46114.284799488	46114.284799488	  baffling	  baffling    	2007-02-09 05:17:29.368756876	0004-09-22	binary	original
+3	1	FALSE	72	NULL	-93222	30	-66475.56	-66475.561431	0.561431	1	1	6229-06-28 02:54:28.970117179	5966-07-09	binary	original
+4	1	TRUE	-90	NULL	3289094	46114	9250341.0	9250340.75	9250340.75	junkyard	junkyard	2002-05-10 05:29:48.990818073	1815-05-06	binary	original
 5	2	true	400	44388	-100	953967041.	62.079153	718.78	1	verdict	verdict	timestamp	date	binary	new
 6	1	-false	-67	833	63993	 1255178165.77663	905070.974	-4314.7918	-1240033819	trial	trial	2016-03-07 03:02:22.0	2016-03-07	binary	new
 PREHOOK: query: drop table part_change_various_various_string
@@ -1874,6 +1883,7 @@ STAGE PLANS:
                 sort order: +
                 Statistics: Num rows: 6 Data size: 5132 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: char(25)), _col3 (type: char(25)), _col4 (type: char(25)), _col5 (type: char(25)), _col6 (type: char(25)), _col7 (type: char(25)), _col8 (type: char(25)), _col9 (type: char(25)), _col10 (type: char(25)), _col11 (type: char(25)), _col12 (type: char(25)), _col13 (type: char(25)), _col14 (type: char(25)), _col15 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: char(25)), VALUE._col2 (type: char(25)), VALUE._col3 (type: char(25)), VALUE._col4 (type: char(25)), VALUE._col5 (type: char(25)), VALUE._col6 (type: char(25)), VALUE._col7 (type: char(25)), VALUE._col8 (type: char(25)), VALUE._col9 (type: char(25)), VALUE._col10 (type: char(25)), VALUE._col11 (type: char(25)), VALUE._col12 (type: char(25)), VALUE._col13 (type: char(25)), VALUE._col14 (type: string)
@@ -1906,10 +1916,10 @@ POSTHOOK: Input: default@part_change_various_various_char@part=1
 POSTHOOK: Input: default@part_change_various_various_char@part=2
 #### A masked pattern was here ####
 insert_num	part	c1	c2	c3	c4	c5	c6	c7	c8	c9	c10	c11	c12	c13	b
-1	1	TRUE                     	NULL	NULL	3244222                  	-99999999999             	-29.0764                 	4.70614135E8             	470614135                	dynamic reptile          	dynamic reptile          	0004-09-22 18:26:29.51954	2007-02-09               	62 69 6e 61 72 79        	original
-2	1	TRUE                     	100                      	NULL	14                       	-23866739993             	-3651.672                	46114.284799488          	46114.284799488          	  baffling               	  baffling               	2007-02-09 05:17:29.36875	0004-09-22               	62 69 6e 61 72 79        	original
-3	1	FALSE                    	72                       	NULL	-93222                   	30                       	-66475.56                	-66475.561431            	0.561431                 	1                        	1                        	6229-06-28 02:54:28.97011	5966-07-09               	62 69 6e 61 72 79        	original
-4	1	TRUE                     	-90                      	NULL	3289094                  	46114                    	9250341.0                	9250340.75               	9250340.75               	junkyard                 	junkyard                 	2002-05-10 05:29:48.99081	1815-05-06               	62 69 6e 61 72 79        	original
+1	1	TRUE                     	NULL	NULL	3244222                  	-99999999999             	-29.0764                 	4.70614135E8             	470614135                	dynamic reptile          	dynamic reptile          	0004-09-22 18:26:29.51954	2007-02-09               	binary                   	original
+2	1	TRUE                     	100                      	NULL	14                       	-23866739993             	-3651.672                	46114.284799488          	46114.284799488          	  baffling               	  baffling               	2007-02-09 05:17:29.36875	0004-09-22               	binary                   	original
+3	1	FALSE                    	72                       	NULL	-93222                   	30                       	-66475.56                	-66475.561431            	0.561431                 	1                        	1                        	6229-06-28 02:54:28.97011	5966-07-09               	binary                   	original
+4	1	TRUE                     	-90                      	NULL	3289094                  	46114                    	9250341.0                	9250340.75               	9250340.75               	junkyard                 	junkyard                 	2002-05-10 05:29:48.99081	1815-05-06               	binary                   	original
 5	2	true                     	400                      	44388                    	-100                     	953967041.               	62.079153                	718.78                   	1                        	verdict                  	verdict                  	timestamp                	date                     	binary                   	new
 6	1	-false                   	-67                      	833                      	63993                    	 1255178165.77663        	905070.974               	-4314.7918               	-1240033819              	trial                    	trial                    	2016-03-07 03:02:22.0    	2016-03-07               	binary                   	new
 PREHOOK: query: drop table part_change_various_various_char
@@ -2070,6 +2080,7 @@ STAGE PLANS:
                 sort order: +
                 Statistics: Num rows: 6 Data size: 4674 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: char(8)), _col3 (type: char(8)), _col4 (type: char(8)), _col5 (type: char(8)), _col6 (type: char(8)), _col7 (type: char(8)), _col8 (type: char(8)), _col9 (type: char(8)), _col10 (type: char(8)), _col11 (type: char(8)), _col12 (type: char(8)), _col13 (type: char(8)), _col14 (type: char(8)), _col15 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: char(8)), VALUE._col2 (type: char(8)), VALUE._col3 (type: char(8)), VALUE._col4 (type: char(8)), VALUE._col5 (type: char(8)), VALUE._col6 (type: char(8)), VALUE._col7 (type: char(8)), VALUE._col8 (type: char(8)), VALUE._col9 (type: char(8)), VALUE._col10 (type: char(8)), VALUE._col11 (type: char(8)), VALUE._col12 (type: char(8)), VALUE._col13 (type: char(8)), VALUE._col14 (type: string)
@@ -2102,10 +2113,10 @@ POSTHOOK: Input: default@part_change_various_various_char_trunc@part=1
 POSTHOOK: Input: default@part_change_various_various_char_trunc@part=2
 #### A masked pattern was here ####
 insert_num	part	c1	c2	c3	c4	c5	c6	c7	c8	c9	c10	c11	c12	c13	b
-1	1	TRUE    	NULL	NULL	3244222 	-9999999	-29.0764	4.706141	47061413	dynamic 	dynamic 	0004-09-	2007-02-	62 69 6e	original
-2	1	TRUE    	100     	NULL	14      	-2386673	-3651.67	46114.28	46114.28	  baffli	  baffli	2007-02-	0004-09-	62 69 6e	original
-3	1	FALSE   	72      	NULL	-93222  	30      	-66475.5	-66475.5	0.561431	1       	1       	6229-06-	5966-07-	62 69 6e	original
-4	1	TRUE    	-90     	NULL	3289094 	46114   	9250341.	9250340.	9250340.	junkyard	junkyard	2002-05-	1815-05-	62 69 6e	original
+1	1	TRUE    	NULL	NULL	3244222 	-9999999	-29.0764	4.706141	47061413	dynamic 	dynamic 	0004-09-	2007-02-	binary  	original
+2	1	TRUE    	100     	NULL	14      	-2386673	-3651.67	46114.28	46114.28	  baffli	  baffli	2007-02-	0004-09-	binary  	original
+3	1	FALSE   	72      	NULL	-93222  	30      	-66475.5	-66475.5	0.561431	1       	1       	6229-06-	5966-07-	binary  	original
+4	1	TRUE    	-90     	NULL	3289094 	46114   	9250341.	9250340.	9250340.	junkyard	junkyard	2002-05-	1815-05-	binary  	original
 5	2	true    	400     	44388   	-100    	95396704	62.07915	718.78  	1       	verdict 	verdict 	timestam	date    	binary  	new
 6	1	-false  	-67     	833     	63993   	 1255178	905070.9	-4314.79	-1240033	trial   	trial   	2016-03-	2016-03-	binary  	new
 PREHOOK: query: drop table part_change_various_various_char_trunc
@@ -2266,6 +2277,7 @@ STAGE PLANS:
                 sort order: +
                 Statistics: Num rows: 6 Data size: 4729 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: varchar(25)), _col3 (type: varchar(25)), _col4 (type: varchar(25)), _col5 (type: varchar(25)), _col6 (type: varchar(25)), _col7 (type: varchar(25)), _col8 (type: varchar(25)), _col9 (type: varchar(25)), _col10 (type: varchar(25)), _col11 (type: varchar(25)), _col12 (type: varchar(25)), _col13 (type: varchar(25)), _col14 (type: varchar(25)), _col15 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: varchar(25)), VALUE._col2 (type: varchar(25)), VALUE._col3 (type: varchar(25)), VALUE._col4 (type: varchar(25)), VALUE._col5 (type: varchar(25)), VALUE._col6 (type: varchar(25)), VALUE._col7 (type: varchar(25)), VALUE._col8 (type: varchar(25)), VALUE._col9 (type: varchar(25)), VALUE._col10 (type: varchar(25)), VALUE._col11 (type: varchar(25)), VALUE._col12 (type: varchar(25)), VALUE._col13 (type: varchar(25)), VALUE._col14 (type: string)
@@ -2298,10 +2310,10 @@ POSTHOOK: Input: default@part_change_various_various_varchar@part=1
 POSTHOOK: Input: default@part_change_various_various_varchar@part=2
 #### A masked pattern was here ####
 insert_num	part	c1	c2	c3	c4	c5	c6	c7	c8	c9	c10	c11	c12	c13	b
-1	1	TRUE	NULL	NULL	3244222	-99999999999	-29.0764	4.70614135E8	470614135	dynamic reptile  	dynamic reptile	0004-09-22 18:26:29.51954	2007-02-09	62 69 6e 61 72 79	original
-2	1	TRUE	100	NULL	14	-23866739993	-3651.672	46114.284799488	46114.284799488	  baffling    	  baffling	2007-02-09 05:17:29.36875	0004-09-22	62 69 6e 61 72 79	original
-3	1	FALSE	72	NULL	-93222	30	-66475.56	-66475.561431	0.561431	1	1	6229-06-28 02:54:28.97011	5966-07-09	62 69 6e 61 72 79	original
-4	1	TRUE	-90	NULL	3289094	46114	9250341.0	9250340.75	9250340.75	junkyard	junkyard	2002-05-10 05:29:48.99081	1815-05-06	62 69 6e 61 72 79	original
+1	1	TRUE	NULL	NULL	3244222	-99999999999	-29.0764	4.70614135E8	470614135	dynamic reptile  	dynamic reptile	0004-09-22 18:26:29.51954	2007-02-09	binary	original
+2	1	TRUE	100	NULL	14	-23866739993	-3651.672	46114.284799488	46114.284799488	  baffling    	  baffling	2007-02-09 05:17:29.36875	0004-09-22	binary	original
+3	1	FALSE	72	NULL	-93222	30	-66475.56	-66475.561431	0.561431	1	1	6229-06-28 02:54:28.97011	5966-07-09	binary	original
+4	1	TRUE	-90	NULL	3289094	46114	9250341.0	9250340.75	9250340.75	junkyard	junkyard	2002-05-10 05:29:48.99081	1815-05-06	binary	original
 5	2	true	400	44388	-100	953967041.	62.079153	718.78	1	verdict	verdict	timestamp	date	binary	new
 6	1	-false	-67	833	63993	 1255178165.77663	905070.974	-4314.7918	-1240033819	trial	trial	2016-03-07 03:02:22.0	2016-03-07	binary	new
 PREHOOK: query: drop table part_change_various_various_varchar
@@ -2462,6 +2474,7 @@ STAGE PLANS:
                 sort order: +
                 Statistics: Num rows: 6 Data size: 4694 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: varchar(8)), _col3 (type: varchar(8)), _col4 (type: varchar(8)), _col5 (type: varchar(8)), _col6 (type: varchar(8)), _col7 (type: varchar(8)), _col8 (type: varchar(8)), _col9 (type: varchar(8)), _col10 (type: varchar(8)), _col11 (type: varchar(8)), _col12 (type: varchar(8)), _col13 (type: varchar(8)), _col14 (type: varchar(8)), _col15 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: varchar(8)), VALUE._col2 (type: varchar(8)), VALUE._col3 (type: varchar(8)), VALUE._col4 (type: varchar(8)), VALUE._col5 (type: varchar(8)), VALUE._col6 (type: varchar(8)), VALUE._col7 (type: varchar(8)), VALUE._col8 (type: varchar(8)), VALUE._col9 (type: varchar(8)), VALUE._col10 (type: varchar(8)), VALUE._col11 (type: varchar(8)), VALUE._col12 (type: varchar(8)), VALUE._col13 (type: varchar(8)), VALUE._col14 (type: string)
@@ -2494,10 +2507,10 @@ POSTHOOK: Input: default@part_change_various_various_varchar_trunc@part=1
 POSTHOOK: Input: default@part_change_various_various_varchar_trunc@part=2
 #### A masked pattern was here ####
 insert_num	part	c1	c2	c3	c4	c5	c6	c7	c8	c9	c10	c11	c12	c13	b
-1	1	TRUE	NULL	NULL	3244222	-9999999	-29.0764	4.706141	47061413	dynamic 	dynamic 	0004-09-	2007-02-	62 69 6e	original
-2	1	TRUE	100	NULL	14	-2386673	-3651.67	46114.28	46114.28	  baffli	  baffli	2007-02-	0004-09-	62 69 6e	original
-3	1	FALSE	72	NULL	-93222	30	-66475.5	-66475.5	0.561431	1	1	6229-06-	5966-07-	62 69 6e	original
-4	1	TRUE	-90	NULL	3289094	46114	9250341.	9250340.	9250340.	junkyard	junkyard	2002-05-	1815-05-	62 69 6e	original
+1	1	TRUE	NULL	NULL	3244222	-9999999	-29.0764	4.706141	47061413	dynamic 	dynamic 	0004-09-	2007-02-	binary	original
+2	1	TRUE	100	NULL	14	-2386673	-3651.67	46114.28	46114.28	  baffli	  baffli	2007-02-	0004-09-	binary	original
+3	1	FALSE	72	NULL	-93222	30	-66475.5	-66475.5	0.561431	1	1	6229-06-	5966-07-	binary	original
+4	1	TRUE	-90	NULL	3289094	46114	9250341.	9250340.	9250340.	junkyard	junkyard	2002-05-	1815-05-	binary	original
 5	2	true	400	44388	-100	95396704	62.07915	718.78	1	verdict	verdict	timestam	date	binary	new
 6	1	-false	-67	833	63993	 1255178	905070.9	-4314.79	-1240033	trial	trial	2016-03-	2016-03-	binary	new
 PREHOOK: query: drop table part_change_various_various_varchar_trunc
@@ -2655,6 +2668,7 @@ STAGE PLANS:
                 sort order: +
                 Statistics: Num rows: 6 Data size: 2806 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: timestamp), _col3 (type: timestamp), _col4 (type: timestamp), _col5 (type: timestamp), _col6 (type: timestamp), _col7 (type: timestamp), _col8 (type: timestamp), _col9 (type: timestamp), _col10 (type: timestamp), _col11 (type: timestamp), _col12 (type: timestamp), _col13 (type: timestamp), _col14 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: timestamp), VALUE._col2 (type: timestamp), VALUE._col3 (type: timestamp), VALUE._col4 (type: timestamp), VALUE._col5 (type: timestamp), VALUE._col6 (type: timestamp), VALUE._col7 (type: timestamp), VALUE._col8 (type: timestamp), VALUE._col9 (type: timestamp), VALUE._col10 (type: timestamp), VALUE._col11 (type: timestamp), VALUE._col12 (type: timestamp), VALUE._col13 (type: string)
@@ -2824,6 +2838,7 @@ STAGE PLANS:
                 sort order: +
                 Statistics: Num rows: 6 Data size: 2442 Basic stats: COMPLETE Column stats: NONE
                 value expressions: _col1 (type: int), _col2 (type: date), _col3 (type: date), _col4 (type: date), _col5 (type: date), _col6 (type: string)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Select Operator
           expressions: KEY.reducesinkkey0 (type: int), VALUE._col0 (type: int), VALUE._col1 (type: date), VALUE._col2 (type: date), VALUE._col3 (type: date), VALUE._col4 (type: date), VALUE._col5 (type: string)

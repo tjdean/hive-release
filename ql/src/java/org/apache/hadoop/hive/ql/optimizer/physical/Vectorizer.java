@@ -151,8 +151,11 @@ import org.apache.hadoop.hive.ql.udf.UDFWeekOfYear;
 import org.apache.hadoop.hive.ql.udf.UDFYear;
 import org.apache.hadoop.hive.ql.udf.generic.*;
 import org.apache.hadoop.hive.serde.serdeConstants;
+import org.apache.hadoop.hive.serde2.Deserializer;
+import org.apache.hadoop.hive.serde2.NullStructSerDe;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector.Category;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
@@ -480,7 +483,7 @@ public class Vectorizer implements PhysicalPlanResolver {
       return TypeInfoUtils.getTypesString(typeInfos.subList(start, start + length));
     }
 
-    private boolean verifyAndSetVectorPartDesc(PartitionDesc pd) {
+    private boolean verifyAndSetVectorPartDesc(PartitionDesc pd, String path) {
 
       // Look for Pass-Thru case where InputFileFormat has VectorizedInputFormatInterface
       // and reads VectorizedRowBatch as a "row".
@@ -492,14 +495,16 @@ public class Vectorizer implements PhysicalPlanResolver {
         return true;
       }
 
-      LOG.info("Input format: " + pd.getInputFileFormatClassName()
-          + ", doesn't provide vectorized input");
+      LOG.info("The input format " + pd.getInputFileFormatClassName() +
+          " of path " + path +
+          " doesn't provide vectorized input");
 
       return false;
     }
 
     private boolean validateInputFormatAndSchemaEvolution(MapWork mapWork, String alias,
-        TableScanOperator tableScanOperator, VectorTaskColumnInfo vectorTaskColumnInfo) {
+        TableScanOperator tableScanOperator, VectorTaskColumnInfo vectorTaskColumnInfo)
+            throws SemanticException {
 
       // These names/types are the data columns plus partition columns.
       final List<String> allColumnNameList = new ArrayList<String>();
@@ -508,20 +513,15 @@ public class Vectorizer implements PhysicalPlanResolver {
       getTableScanOperatorSchemaInfo(tableScanOperator, allColumnNameList, allTypeInfoList);
       final int allColumnCount = allColumnNameList.size();
 
-      // Validate input format and schema evolution capability.
-
-      // For the table, enter a null value in the multi-key map indicating no conversion necessary
-      // if the schema matches the table.
-
-      HashMap<ImmutablePair, boolean[]> conversionMap = new HashMap<ImmutablePair, boolean[]>();
-
+      /*
+       * Validate input formats of all the partitions can be vectorized.
+       */
       boolean isFirst = true;
       int dataColumnCount = 0;
       int partitionColumnCount = 0;
 
-      List<String> dataColumnList = null;
-      String dataColumnsString = "";
-      List<TypeInfo> dataTypeInfoList = null;
+      List<String> tableDataColumnList = null;
+      List<TypeInfo> tableDataTypeInfoList = null;
 
       // Validate the input format
       VectorPartitionConversion partitionConversion = new VectorPartitionConversion();
@@ -540,31 +540,18 @@ public class Vectorizer implements PhysicalPlanResolver {
           // We seen this already.
           continue;
         }
-        if (!verifyAndSetVectorPartDesc(partDesc)) {
+        if (!verifyAndSetVectorPartDesc(partDesc, path)) {
           return false;
         }
         VectorPartitionDesc vectorPartDesc = partDesc.getVectorPartitionDesc();
-        LOG.info("Vectorizer path: " + path + ", read type " +
-            vectorPartDesc.getVectorMapOperatorReadType().name() + ", aliases " + aliases);
-
-        Properties partProps = partDesc.getProperties();
-
-        String nextDataColumnsString =
-            partProps.getProperty(hive_metastoreConstants.META_TABLE_COLUMNS);
-        String[] nextDataColumns = nextDataColumnsString.split(",");
-
-        String nextDataTypesString =
-            partProps.getProperty(hive_metastoreConstants.META_TABLE_COLUMN_TYPES);
-
-        // We convert to an array of TypeInfo using a library routine since it parses the information
-        // and can handle use of different separators, etc.  We cannot use the raw type string
-        // for comparison in the map because of the different separators used.
-        List<TypeInfo> nextDataTypeInfoList =
-            TypeInfoUtils.getTypeInfosFromTypeString(nextDataTypesString);
+        if (LOG.isInfoEnabled()) {
+          LOG.info("Vectorizer path: " + path + ", " + vectorPartDesc.toString() +
+              ", aliases " + aliases);
+        }
 
         if (isFirst) {
 
-          // We establish with the first one whether the table is partitioned or not.
+          // Determine the data and partition columns using the first partition descriptor.
 
           LinkedHashMap<String, String> partSpec = partDesc.getPartSpec();
           if (partSpec != null && partSpec.size() > 0) {
@@ -575,80 +562,77 @@ public class Vectorizer implements PhysicalPlanResolver {
             dataColumnCount = allColumnCount;
           }
 
-          dataColumnList = allColumnNameList.subList(0, dataColumnCount);
-          dataColumnsString = getColumns(allColumnNameList, 0, dataColumnCount, ',');
-          dataTypeInfoList = allTypeInfoList.subList(0, dataColumnCount);
-
-          // Add the table (non-partitioned) columns and types into the map as not needing
-          // conversion (i.e. null).
-          conversionMap.put(
-              new ImmutablePair(dataColumnsString, dataTypeInfoList), null);
+          tableDataColumnList = allColumnNameList.subList(0, dataColumnCount);
+          tableDataTypeInfoList = allTypeInfoList.subList(0, dataColumnCount);
 
           isFirst = false;
         }
 
-        ImmutablePair columnNamesAndTypesCombination =
-            new ImmutablePair(nextDataColumnsString, nextDataTypeInfoList);
+        // We need to get the partition's column names from the partition serde.
+        // (e.g. Avro provides the table schema and ignores the partition schema..).
+        //
+        Deserializer deserializer;
+        StructObjectInspector partObjectInspector;
+        try {
+          deserializer = partDesc.getDeserializer(hiveConf);
+          partObjectInspector = (StructObjectInspector) deserializer.getObjectInspector();
+        } catch (Exception e) {
+          throw new SemanticException(e);
+        }
+        String nextDataColumnsString = ObjectInspectorUtils.getFieldNames(partObjectInspector);
+        String[] nextDataColumns = nextDataColumnsString.split(",");
+        List<String> nextDataColumnList = Arrays.asList(nextDataColumns);
 
-        boolean[] conversionFlags;
-        if (conversionMap.containsKey(columnNamesAndTypesCombination)) {
+        /*
+         * Validate the column names that are present are the same.  Missing columns will be
+         * implicitly defaulted to null.
+         */
+        if (nextDataColumnList.size() > tableDataColumnList.size()) {
+          LOG.info(
+              String.format(
+                  "Could not vectorize partition %s " +
+                  "(deserializer " + deserializer.getClass().getName() + ")" +
+                  "The partition column names %d is greater than the number of table columns %d",
+                  path, nextDataColumnList.size(), tableDataColumnList.size()));
+          return false;
+        }
+        if (!(deserializer instanceof NullStructSerDe)) {
 
-          conversionFlags = conversionMap.get(columnNamesAndTypesCombination);
-
-        } else {
-
-          List<String> nextDataColumnList = Arrays.asList(nextDataColumns);
-
-          // Validate the column names that are present are the same.  Missing columns will be
-          // implicitly defaulted to null.
-
-          if (nextDataColumnList.size() > dataColumnList.size()) {
-            LOG.info(
-                String.format("Could not vectorize partition %s.  The partition column names %d is greater than the number of table columns %d",
-                    path, nextDataColumnList.size(), dataColumnList.size()));
-            return false;
-          }
+          // (Don't insist NullStructSerDe produce correct column names).
           for (int i = 0; i < nextDataColumnList.size(); i++) {
             String nextColumnName = nextDataColumnList.get(i);
-            String tableColumnName = dataColumnList.get(i);
+            String tableColumnName = tableDataColumnList.get(i);
             if (!nextColumnName.equals(tableColumnName)) {
               LOG.info(
-                  String.format("Could not vectorize partition %s.  The partition column name %s is does not match table column name %s",
+                  String.format(
+                      "Could not vectorize partition %s " +
+                      "(deserializer " + deserializer.getClass().getName() + ")" +
+                      "The partition column name %s is does not match table column name %s",
                       path, nextColumnName, tableColumnName));
               return false;
             }
           }
-
-          // The table column types might have been changed with ALTER.  There are restrictions
-          // here for vectorization.
-
-          // Some readers / deserializers take responsibility for conversion themselves.
-
-          // If we need to check for conversion, the conversion object may come back null
-          // indicating from a vectorization point of view the conversion is implicit.  That is,
-          // all implicit integer upgrades.
-
-          if (vectorPartDesc.getNeedsDataTypeConversionCheck() &&
-             !nextDataTypeInfoList.equals(dataTypeInfoList)) {
-
-             // The results will be in 2 members: validConversion and conversionFlags
-            partitionConversion.validateConversion(nextDataTypeInfoList, dataTypeInfoList);
-             if (!partitionConversion.getValidConversion()) {
-               return false;
-             }
-             conversionFlags = partitionConversion.getResultConversionFlags();
-           } else {
-            conversionFlags = null;
-          }
-
-          // We enter this in our map so we don't have to check again for subsequent partitions.
-
-          conversionMap.put(columnNamesAndTypesCombination, conversionFlags);
         }
 
-        vectorPartDesc.setConversionFlags(conversionFlags);
+        List<TypeInfo> nextDataTypeInfoList;
+        if (vectorPartDesc.getIsInputFileFormatSelfDescribing()) {
 
-        vectorPartDesc.setTypeInfos(nextDataTypeInfoList);
+          /*
+           * Self-Describing Input Format will convert its data to the table schema.
+           */
+          nextDataTypeInfoList = tableDataTypeInfoList;
+
+        } else {
+          String nextDataTypesString = ObjectInspectorUtils.getFieldTypes(partObjectInspector);
+
+          // We convert to an array of TypeInfo using a library routine since it parses the information
+          // and can handle use of different separators, etc.  We cannot use the raw type string
+          // for comparison in the map because of the different separators used.
+          nextDataTypeInfoList =
+              TypeInfoUtils.getTypeInfosFromTypeString(nextDataTypesString);
+        }
+
+        vectorPartDesc.setDataTypeInfos(nextDataTypeInfoList);
       }
 
       vectorTaskColumnInfo.setColumnNames(allColumnNameList);
