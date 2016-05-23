@@ -141,7 +141,7 @@ public class Optimizer {
       transformations.add(new SortedMergeBucketMapJoinOptimizer());
     }
 
-    if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVEOPTIMIZEBUCKETINGSORTING)) {
+    if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVEOPTIMIZEBUCKETINGSORTING) || pctx.hasAcidWrite()) {
       transformations.add(new BucketingSortingReduceSinkOptimizer());
     }
 
