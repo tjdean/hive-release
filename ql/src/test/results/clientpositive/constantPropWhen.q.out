@@ -36,7 +36,7 @@ STAGE PLANS:
             alias: test_1
             Statistics: Num rows: 4 Data size: 24 Basic stats: COMPLETE Column stats: NONE
             Select Operator
-              expressions: (not NVL((id = id2),false)) (type: boolean)
+              expressions: (not if (id = id2) is null returnsfalse) (type: boolean)
               outputColumnNames: _col0
               Statistics: Num rows: 4 Data size: 24 Basic stats: COMPLETE Column stats: NONE
               File Output Operator
@@ -81,7 +81,7 @@ STAGE PLANS:
             alias: test_1
             Statistics: Num rows: 4 Data size: 24 Basic stats: COMPLETE Column stats: NONE
             Select Operator
-              expressions: (not NVL((id = id2),false)) (type: boolean)
+              expressions: (not if (id = id2) is null returnsfalse) (type: boolean)
               outputColumnNames: _col0
               Statistics: Num rows: 4 Data size: 24 Basic stats: COMPLETE Column stats: NONE
               File Output Operator
@@ -126,7 +126,7 @@ STAGE PLANS:
             alias: test_1
             Statistics: Num rows: 4 Data size: 24 Basic stats: COMPLETE Column stats: NONE
             Select Operator
-              expressions: NVL((id = id2),false) (type: boolean)
+              expressions: if (id = id2) is null returnsfalse (type: boolean)
               outputColumnNames: _col0
               Statistics: Num rows: 4 Data size: 24 Basic stats: COMPLETE Column stats: NONE
               File Output Operator
@@ -171,7 +171,7 @@ STAGE PLANS:
             alias: test_1
             Statistics: Num rows: 4 Data size: 24 Basic stats: COMPLETE Column stats: NONE
             Select Operator
-              expressions: NVL((id = id2),false) (type: boolean)
+              expressions: if (id = id2) is null returnsfalse (type: boolean)
               outputColumnNames: _col0
               Statistics: Num rows: 4 Data size: 24 Basic stats: COMPLETE Column stats: NONE
               File Output Operator
@@ -216,7 +216,7 @@ STAGE PLANS:
             alias: test_1
             Statistics: Num rows: 4 Data size: 24 Basic stats: COMPLETE Column stats: NONE
             Select Operator
-              expressions: (not NVL((id = id2),false)) (type: boolean)
+              expressions: (not if (id = id2) is null returnsfalse) (type: boolean)
               outputColumnNames: _col0
               Statistics: Num rows: 4 Data size: 24 Basic stats: COMPLETE Column stats: NONE
               File Output Operator
@@ -261,7 +261,7 @@ STAGE PLANS:
             alias: test_1
             Statistics: Num rows: 4 Data size: 24 Basic stats: COMPLETE Column stats: NONE
             Select Operator
-              expressions: (not NVL((id = id2),false)) (type: boolean)
+              expressions: (not if (id = id2) is null returnsfalse) (type: boolean)
               outputColumnNames: _col0
               Statistics: Num rows: 4 Data size: 24 Basic stats: COMPLETE Column stats: NONE
               File Output Operator
@@ -306,7 +306,7 @@ STAGE PLANS:
             alias: test_1
             Statistics: Num rows: 4 Data size: 24 Basic stats: COMPLETE Column stats: NONE
             Select Operator
-              expressions: NVL((id = id2),false) (type: boolean)
+              expressions: if (id = id2) is null returnsfalse (type: boolean)
               outputColumnNames: _col0
               Statistics: Num rows: 4 Data size: 24 Basic stats: COMPLETE Column stats: NONE
               File Output Operator
@@ -351,7 +351,7 @@ STAGE PLANS:
             alias: test_1
             Statistics: Num rows: 4 Data size: 24 Basic stats: COMPLETE Column stats: NONE
             Select Operator
-              expressions: NVL((id = id2),false) (type: boolean)
+              expressions: if (id = id2) is null returnsfalse (type: boolean)
               outputColumnNames: _col0
               Statistics: Num rows: 4 Data size: 24 Basic stats: COMPLETE Column stats: NONE
               File Output Operator
