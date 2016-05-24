@@ -35,12 +35,7 @@ import org.apache.hadoop.util.Shell;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hive.jdbc.miniHS2.MiniHS2;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,6 +105,7 @@ public class TestSSL {
    * Tests to ensure SSLv2 and SSLv3 are disabled
    */
   @Test
+  @Ignore("Ignored until HIVE-13253 is fixed")
   public void testSSLVersion() throws Exception {
     Assume.assumeTrue(execCommand("which openssl") == 0); // we need openssl
     Assume.assumeTrue(System.getProperty("os.name").toLowerCase()
