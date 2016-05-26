@@ -441,7 +441,6 @@ public class Driver implements CommandProcessor {
       // we want to record it at this point so that users see data valid at the point that they
       // submit the query.
       SessionState.get().initTxnMgr(conf);
-      recordValidTxns();
 
       perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.ANALYZE);
       BaseSemanticAnalyzer sem = SemanticAnalyzerFactory.get(conf, tree);
@@ -999,13 +998,11 @@ public class Driver implements CommandProcessor {
   // Write the current set of valid transactions into the conf file so that it can be read by
   // the input format.
   private void recordValidTxns() throws LockException {
-    ValidTxnList txns = SessionState.get().getTxnMgr().getValidTxns();
+    HiveTxnManager txnMgr = SessionState.get().getTxnMgr();
+    ValidTxnList txns = txnMgr.getValidTxns();
     String txnStr = txns.toString();
     conf.set(ValidTxnList.VALID_TXNS_KEY, txnStr);
-    LOG.debug("Encoding valid txns info " + txnStr);
-    // TODO I think when we switch to cross query transactions we need to keep this list in
-    // session state rather than agressively encoding it in the conf like this.  We can let the
-    // TableScanOperators then encode it in the conf before calling the input formats.
+    LOG.debug("Encoding valid txns info " + txnStr + " txnid:" + txnMgr.getCurrentTxnId());
   }
 
   /**
@@ -1056,6 +1053,7 @@ public class Driver implements CommandProcessor {
       }
 
       txnMgr.acquireLocks(plan, ctx, userFromUGI);
+      recordValidTxns();
 
       return 0;
     } catch (LockException e) {
