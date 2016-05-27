@@ -168,6 +168,32 @@ class GrantRevokeType:
     "REVOKE": 2,
   }
 
+class DataOperationType:
+  SELECT = 1
+  INSERT = 2
+  UPDATE = 3
+  DELETE = 4
+  UNSET = 5
+  NO_TXN = 6
+
+  _VALUES_TO_NAMES = {
+    1: "SELECT",
+    2: "INSERT",
+    3: "UPDATE",
+    4: "DELETE",
+    5: "UNSET",
+    6: "NO_TXN",
+  }
+
+  _NAMES_TO_VALUES = {
+    "SELECT": 1,
+    "INSERT": 2,
+    "UPDATE": 3,
+    "DELETE": 4,
+    "UNSET": 5,
+    "NO_TXN": 6,
+  }
+
 class EventRequestType:
   INSERT = 1
   UPDATE = 2
@@ -7558,6 +7584,8 @@ class LockComponent:
    - dbname
    - tablename
    - partitionname
+   - operationType
+   - isAcid
   """
 
   thrift_spec = (
@@ -7567,14 +7595,18 @@ class LockComponent:
     (3, TType.STRING, 'dbname', None, None, ), # 3
     (4, TType.STRING, 'tablename', None, None, ), # 4
     (5, TType.STRING, 'partitionname', None, None, ), # 5
+    (6, TType.I32, 'operationType', None,     5, ), # 6
+    (7, TType.BOOL, 'isAcid', None, False, ), # 7
   )
 
-  def __init__(self, type=None, level=None, dbname=None, tablename=None, partitionname=None,):
+  def __init__(self, type=None, level=None, dbname=None, tablename=None, partitionname=None, operationType=thrift_spec[6][4], isAcid=thrift_spec[7][4],):
     self.type = type
     self.level = level
     self.dbname = dbname
     self.tablename = tablename
     self.partitionname = partitionname
+    self.operationType = operationType
+    self.isAcid = isAcid
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -7610,6 +7642,16 @@ class LockComponent:
           self.partitionname = iprot.readString()
         else:
           iprot.skip(ftype)
+      elif fid == 6:
+        if ftype == TType.I32:
+          self.operationType = iprot.readI32()
+        else:
+          iprot.skip(ftype)
+      elif fid == 7:
+        if ftype == TType.BOOL:
+          self.isAcid = iprot.readBool()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -7640,6 +7682,14 @@ class LockComponent:
       oprot.writeFieldBegin('partitionname', TType.STRING, 5)
       oprot.writeString(self.partitionname)
       oprot.writeFieldEnd()
+    if self.operationType is not None:
+      oprot.writeFieldBegin('operationType', TType.I32, 6)
+      oprot.writeI32(self.operationType)
+      oprot.writeFieldEnd()
+    if self.isAcid is not None:
+      oprot.writeFieldBegin('isAcid', TType.BOOL, 7)
+      oprot.writeBool(self.isAcid)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -7660,6 +7710,8 @@ class LockComponent:
     value = (value * 31) ^ hash(self.dbname)
     value = (value * 31) ^ hash(self.tablename)
     value = (value * 31) ^ hash(self.partitionname)
+    value = (value * 31) ^ hash(self.operationType)
+    value = (value * 31) ^ hash(self.isAcid)
     return value
 
   def __repr__(self):
@@ -9225,6 +9277,7 @@ class AddDynamicPartitions:
    - dbname
    - tablename
    - partitionnames
+   - operationType
   """
 
   thrift_spec = (
@@ -9233,13 +9286,15 @@ class AddDynamicPartitions:
     (2, TType.STRING, 'dbname', None, None, ), # 2
     (3, TType.STRING, 'tablename', None, None, ), # 3
     (4, TType.LIST, 'partitionnames', (TType.STRING,None), None, ), # 4
+    (5, TType.I32, 'operationType', None,     5, ), # 5
   )
 
-  def __init__(self, txnid=None, dbname=None, tablename=None, partitionnames=None,):
+  def __init__(self, txnid=None, dbname=None, tablename=None, partitionnames=None, operationType=thrift_spec[5][4],):
     self.txnid = txnid
     self.dbname = dbname
     self.tablename = tablename
     self.partitionnames = partitionnames
+    self.operationType = operationType
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -9275,6 +9330,11 @@ class AddDynamicPartitions:
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.I32:
+          self.operationType = iprot.readI32()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -9304,6 +9364,10 @@ class AddDynamicPartitions:
         oprot.writeString(iter440)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
+    if self.operationType is not None:
+      oprot.writeFieldBegin('operationType', TType.I32, 5)
+      oprot.writeI32(self.operationType)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -9325,6 +9389,7 @@ class AddDynamicPartitions:
     value = (value * 31) ^ hash(self.dbname)
     value = (value * 31) ^ hash(self.tablename)
     value = (value * 31) ^ hash(self.partitionnames)
+    value = (value * 31) ^ hash(self.operationType)
     return value
 
   def __repr__(self):
