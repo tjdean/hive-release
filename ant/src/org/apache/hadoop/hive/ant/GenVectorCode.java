@@ -761,6 +761,7 @@ public class GenVectorCode extends Task {
         "", "", "timestamp"},
       {"ColumnUnaryFunc", "CastTimestampToDoubleVia", "double", "long",
           "MathExpr.fromTimestampToDouble", "", "", "", "timestamp"},
+      {"ColumnUnaryFunc", "CastLongToFloatVia", "double", "long", "", "", "(float)", "", ""},
       {"ColumnUnaryFunc", "CastDoubleToBooleanVia", "long", "double", "MathExpr.toBool", "",
         "", "", ""},
       {"ColumnUnaryFunc", "CastLongToBooleanVia", "long", "long", "MathExpr.toBool", "",

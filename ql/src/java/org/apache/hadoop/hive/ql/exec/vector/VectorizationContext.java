@@ -81,23 +81,7 @@ import org.apache.hadoop.hive.ql.exec.vector.expressions.aggregates.gen.VectorUD
 import org.apache.hadoop.hive.ql.exec.vector.expressions.aggregates.gen.VectorUDAFVarSampDecimal;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.aggregates.gen.VectorUDAFVarSampDouble;
 import org.apache.hadoop.hive.ql.exec.vector.expressions.aggregates.gen.VectorUDAFVarSampLong;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.CastLongToBooleanViaLongToLong;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.CastLongToDouble;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.CastLongToTimestampViaLongToLong;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.CastMillisecondsLongToTimestampViaLongToLong;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.CastTimestampToDoubleViaLongToDouble;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.FilterCharColumnBetween;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.FilterCharColumnNotBetween;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.FilterDecimalColumnBetween;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.FilterDecimalColumnNotBetween;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.FilterDoubleColumnBetween;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.FilterDoubleColumnNotBetween;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.FilterLongColumnBetween;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.FilterLongColumnNotBetween;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.FilterStringColumnBetween;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.FilterStringColumnNotBetween;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.FilterVarCharColumnBetween;
-import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.FilterVarCharColumnNotBetween;
+import org.apache.hadoop.hive.ql.exec.vector.expressions.gen.*;
 import org.apache.hadoop.hive.ql.exec.vector.udf.VectorUDFAdaptor;
 import org.apache.hadoop.hive.ql.exec.vector.udf.VectorUDFArgDesc;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -1880,7 +1864,12 @@ public class VectorizationContext {
         return getConstantVectorExpression(doubleValue, returnType, Mode.PROJECTION);
     }
     if (isIntFamily(inputType)) {
-      return createVectorExpression(CastLongToDouble.class, childExpr, Mode.PROJECTION, returnType);
+      if (udf.equals(UDFToFloat.class)) {
+        // In order to convert from integer to float correctly, we need to apply the float cast not the double cast (HIVE-13338).
+        return createVectorExpression(CastLongToFloatViaLongToDouble.class, childExpr, Mode.PROJECTION, returnType);
+      } else {
+        return createVectorExpression(CastLongToDouble.class, childExpr, Mode.PROJECTION, returnType);
+      }
     } else if (inputType.equals("timestamp")) {
       return createVectorExpression(CastTimestampToDoubleViaLongToDouble.class, childExpr, Mode.PROJECTION,
           returnType);
