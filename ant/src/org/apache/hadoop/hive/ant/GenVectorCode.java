@@ -949,6 +949,7 @@ public class GenVectorCode extends Task {
       // Casts
       {"ColumnUnaryFunc", "Cast", "long", "double", "", "", "(long)", "", ""},
       {"ColumnUnaryFunc", "Cast", "double", "long", "", "", "(double)", "", ""},
+      {"ColumnUnaryFunc", "CastLongToFloatVia", "double", "long", "", "", "(float)", "", ""},
       {"ColumnUnaryFunc", "CastDoubleToBooleanVia", "long", "double", "MathExpr.toBool", "",
         "", "", ""},
       {"ColumnUnaryFunc", "CastLongToBooleanVia", "long", "long", "MathExpr.toBool", "",
