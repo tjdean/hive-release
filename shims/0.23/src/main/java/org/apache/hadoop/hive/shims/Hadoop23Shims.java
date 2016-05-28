@@ -731,6 +731,12 @@ public class Hadoop23Shims extends HadoopShimsSecure {
   @Override
   public void setFullFileStatus(Configuration conf, HdfsFileStatus sourceStatus,
     FileSystem fs, Path target, boolean recursion) throws IOException {
+    setFullFileStatus(conf, sourceStatus, null, fs, target, recursion);
+  }
+ 
+  @Override
+  public void setFullFileStatus(Configuration conf, HdfsFileStatus sourceStatus, String targetGroup,
+    FileSystem fs, Path target, boolean recursion) throws IOException {
   FileStatus fStatus= sourceStatus.getFileStatus();
   String group = fStatus.getGroup();
   boolean aclEnabled = Objects.equal(conf.get("dfs.namenode.acls.enabled"), "true");
@@ -784,7 +790,10 @@ public class Hadoop23Shims extends HadoopShimsSecure {
     }
   } else {
     if (group != null && !group.isEmpty()) {
-      fs.setOwner(target, null, group);
+      if (targetGroup == null ||
+            !group.equals(targetGroup)) {
+         fs.setOwner(target, null, group);
+      }
     }
     if (aclEnabled) {
       if (null != aclEntries) {
