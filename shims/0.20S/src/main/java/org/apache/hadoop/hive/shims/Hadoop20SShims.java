@@ -488,8 +488,14 @@ public class Hadoop20SShims extends HadoopShimsSecure {
     return new Hadoop20SFileStatus(fs.getFileStatus(file));
   }
 
-  @Override
+ @Override
   public void setFullFileStatus(Configuration conf, HdfsFileStatus sourceStatus,
+    FileSystem fs, Path target, boolean recursion) throws IOException {
+    setFullFileStatus(conf, sourceStatus, null, fs, target, recursion);
+  }
+ 
+  @Override
+  public void setFullFileStatus(Configuration conf, HdfsFileStatus sourceStatus, String targetGroup,
     FileSystem fs, Path target, boolean recursive) throws IOException {
     String group = sourceStatus.getFileStatus().getGroup();
     String permission = Integer.toString(sourceStatus.getFileStatus().getPermission().toShort(), 8);
