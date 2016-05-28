@@ -47,6 +47,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.fs.permission.FsAction;
 import org.apache.hadoop.fs.permission.FsPermission;
+import org.apache.hadoop.hive.shims.HadoopShims.HdfsFileStatus;
 import org.apache.hadoop.hive.shims.HadoopShims.StoragePolicyValue;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapred.ClusterStatus;
@@ -299,6 +300,9 @@ public interface HadoopShims {
    */
   public HdfsFileStatus getFullFileStatus(Configuration conf, FileSystem fs, Path file) throws IOException;
 
+  public void setFullFileStatus(Configuration conf, HdfsFileStatus sourceStatus,
+      String targetGroup, FileSystem fs, Path target, boolean recursion)
+      throws IOException;
   /**
    * For a given file, set a given file status.
    * @param conf

@@ -4498,12 +4498,13 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
       HadoopShims shim = ShimLoader.getHadoopShims();
       for (Path location : getLocations(db, table, partSpec)) {
         FileSystem fs = location.getFileSystem(conf);
-        
         HdfsFileStatus fullFileStatus = shim.getFullFileStatus(conf, fs, location);
+        FileStatus targetStatus = fs.getFileStatus(location);
+        String targetGroup = targetStatus == null ? null : targetStatus.getGroup();
         fs.delete(location, true);
         fs.mkdirs(location);
         try {
-          shim.setFullFileStatus(conf, fullFileStatus, fs, location, true);
+          shim.setFullFileStatus(conf, fullFileStatus, targetGroup, fs, location, true);
         } catch (Exception e) {
           LOG.warn("Error setting permissions of " + location, e);
         }
