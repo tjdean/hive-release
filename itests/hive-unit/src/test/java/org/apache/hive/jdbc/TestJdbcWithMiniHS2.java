@@ -56,6 +56,7 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.ObjectStore;
 import org.apache.hadoop.hive.ql.exec.FunctionRegistry;
+import org.apache.hive.common.util.ReflectionUtil;
 import org.apache.hive.jdbc.miniHS2.MiniHS2;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.NucleusContext;
@@ -63,13 +64,14 @@ import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
 import org.apache.hive.service.Service;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.operation.OperationManager;
-import org.apache.hive.service.server.HiveServer2;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.google.common.cache.Cache;
 
 public class TestJdbcWithMiniHS2 {
   private static MiniHS2 miniHS2 = null;
@@ -887,5 +889,101 @@ public class TestJdbcWithMiniHS2 {
     } catch (Exception e) {
       fail("Not expecting exception: " + e);
     }
+  }
+
+  /**
+   * Tests ADD JAR uses Hives ReflectionUtil.CONSTRUCTOR_CACHE
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testAddJarConstructorUnCaching() throws Exception {
+    // This test assumes the hive-contrib JAR has been built as part of the Hive build.
+    // Also dependent on the UDFExampleAdd class within that JAR.
+    String udfClassName = "org.apache.hadoop.hive.contrib.udf.example.UDFExampleAdd";
+    String mvnRepo = System.getProperty("maven.local.repository");
+    String hiveVersion = System.getProperty("hive.version");
+    String jarFileName = "hive-contrib-" + hiveVersion + ".jar";
+    String[] pathParts = {
+        "org", "apache", "hive",
+        "hive-contrib", hiveVersion, jarFileName
+    };
+
+    // Create path to hive-contrib JAR on local filesystem
+    Path jarFilePath = new Path(mvnRepo);
+    for (String pathPart : pathParts) {
+      jarFilePath = new Path(jarFilePath, pathPart);
+    }
+
+    Connection conn = getConnection(miniHS2.getJdbcURL(), "foo", "bar");
+    String tableName = "testAddJar";
+    Statement stmt = conn.createStatement();
+    stmt.execute("SET hive.support.concurrency = false");
+    // Create table
+    stmt.execute("DROP TABLE IF EXISTS " + tableName);
+    stmt.execute("CREATE TABLE " + tableName + " (key INT, value STRING)");
+    // Load data
+    stmt.execute("LOAD DATA LOCAL INPATH '" + kvDataFilePath.toString() + "' INTO TABLE "
+        + tableName);
+    ResultSet res = stmt.executeQuery("SELECT * FROM " + tableName);
+    // Ensure table is populated
+    assertTrue(res.next());
+
+    long cacheBeforeAddJar;
+    long cacheAfterAddJar;
+    // Force the cache clear so we know its empty
+    invalidateReflectionUtlCache();
+    cacheBeforeAddJar = getReflectionUtilCacheSize();
+    Assert.assertTrue(cacheBeforeAddJar == 0);
+
+    // Add the jar file
+    stmt.execute("ADD JAR " + jarFilePath.toString());
+    // Create a temporary function using the jar
+    stmt.execute("CREATE TEMPORARY FUNCTION func AS '" + udfClassName + "'");
+    // Execute the UDF
+    res = stmt.executeQuery("SELECT func(value) from " + tableName);
+    assertTrue(res.next());
+
+    // Check to make sure the cache is now being used
+    cacheAfterAddJar = getReflectionUtilCacheSize();
+    Assert.assertTrue(cacheAfterAddJar > 0);
+    conn.close();
+  }
+
+  private Cache getReflectionUtilCache() {
+    Field constructorCacheField;
+    try {
+      constructorCacheField = ReflectionUtil.class.getDeclaredField("CONSTRUCTOR_CACHE");
+      if (constructorCacheField != null) {
+        constructorCacheField.setAccessible(true);
+        return (Cache) constructorCacheField.get(null);
+      }
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+    return null;
+  }
+
+  private void invalidateReflectionUtlCache() {
+    try {
+        Cache constructorCache = getReflectionUtilCache();
+        if ( constructorCache != null ) {
+          constructorCache.invalidateAll();
+        }
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+  }
+
+  private long getReflectionUtilCacheSize() {
+    try {
+        Cache constructorCache = getReflectionUtilCache();
+        if ( constructorCache != null ) {
+          return constructorCache.size();
+        }
+    } catch (Exception e) {
+      System.out.println(e);
+    }
+    return -1;
   }
 }
