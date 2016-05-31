@@ -54,6 +54,7 @@ import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.exec.mr.ExecMapper;
+import org.apache.hadoop.hive.ql.exec.tez.ColumnarSplitSizeEstimator;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DecimalColumnVector;
 import org.apache.hadoop.hive.ql.exec.vector.DoubleColumnVector;
@@ -457,6 +458,28 @@ public class TestInputOutputFormat {
     splitStrategy = gen.call();
     assertEquals(true, splitStrategy instanceof OrcInputFormat.ETLSplitStrategy);
 
+  }
+
+  @Test
+  public void testACIDSplitStrategy() throws Exception {
+    conf.set("bucket_count", "2");
+    OrcInputFormat.Context context = new OrcInputFormat.Context(conf);
+    MockFileSystem fs = new MockFileSystem(conf,
+        new MockFile("mock:/a/delta_000_001/part-00", 1000, new byte[1], new MockBlock("host1")),
+        new MockFile("mock:/a/delta_000_001/part-01", 1000, new byte[1], new MockBlock("host1")),
+        new MockFile("mock:/a/delta_001_002/part-02", 1000, new byte[1], new MockBlock("host1")),
+        new MockFile("mock:/a/delta_001_002/part-03", 1000, new byte[1], new MockBlock("host1")));
+    OrcInputFormat.FileGenerator gen =
+        new OrcInputFormat.FileGenerator(context, fs,
+            new MockPath(fs, "mock:/a"), null);
+    OrcInputFormat.SplitStrategy splitStrategy = gen.call();
+    assertEquals(true, splitStrategy instanceof OrcInputFormat.ACIDSplitStrategy);
+    List<OrcSplit> splits = splitStrategy.getSplits();
+    ColumnarSplitSizeEstimator splitSizeEstimator = new ColumnarSplitSizeEstimator();
+    for (OrcSplit split: splits) {
+      assertEquals(Integer.MAX_VALUE, splitSizeEstimator.getEstimatedSize(split));
+    }
+    assertEquals(2, splits.size());
   }
 
   @Test
