@@ -148,7 +148,7 @@ public class AccumuloPredicateHandler {
       return clz.newInstance();
     } catch (ClassCastException e) {
       throw new SerDeException("Column type mismatch in WHERE clause "
-          + sc.getComparisonExpr().getExprString() + " found type "
+          + sc.getIndexExpr().getExprString() + " found type "
           + sc.getConstantDesc().getTypeString() + " instead of "
           + sc.getColumnDesc().getTypeString());
     } catch (IllegalAccessException e) {
@@ -180,7 +180,7 @@ public class AccumuloPredicateHandler {
       return clz.newInstance();
     } catch (ClassCastException e) {
       throw new SerDeException("Column type mismatch in WHERE clause "
-          + sc.getComparisonExpr().getExprString() + " found type "
+          + sc.getIndexExpr().getExprString() + " found type "
           + sc.getConstantDesc().getTypeString() + " instead of "
           + sc.getColumnDesc().getTypeString());
     } catch (IllegalAccessException e) {
