@@ -356,6 +356,7 @@ TOK_ANONYMOUS;
 TOK_COL_NAME;
 TOK_URI_TYPE;
 TOK_SERVER_TYPE;
+TOK_ABORT_TRANSACTIONS;
 }
 
 
@@ -501,6 +502,8 @@ import org.apache.commons.logging.LogFactory;
     xlateMap.put("KW_UPDATE", "UPDATE");
     xlateMap.put("KW_VALUES", "VALUES");
     xlateMap.put("KW_PURGE", "PURGE");
+    xlateMap.put("KW_ABORT", "ABORT");
+    xlateMap.put("KW_TRANSACTIONS", "TRANSACTIONS");
 
 
     // Operators
@@ -775,6 +778,7 @@ ddlStatement
     | revokeRole
     | setRole
     | showCurrentRole
+    | abortTransactionStatement
     ;
 
 ifExists
@@ -2400,3 +2404,10 @@ updateStatement
    :
    KW_UPDATE tableName setColumnsClause whereClause? -> ^(TOK_UPDATE_TABLE tableName setColumnsClause whereClause?)
    ;
+
+abortTransactionStatement
+@init { pushMsg("abort transactions statement", state); }
+@after { popMsg(state); }
+  :
+  KW_ABORT KW_TRANSACTIONS ( Number )+ -> ^(TOK_ABORT_TRANSACTIONS ( Number )+)
+  ;

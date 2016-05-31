@@ -306,6 +306,7 @@ KW_DAY: 'DAY';
 KW_HOUR: 'HOUR';
 KW_MINUTE: 'MINUTE';
 KW_SECOND: 'SECOND';
+KW_ABORT: 'ABORT';
 
 // Operators
 // NOTE: if you add a new function/operator, add it to sysFuncNames so that describe function _FUNC_ will work.

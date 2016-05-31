@@ -407,7 +407,8 @@ public class Operation2Privilege {
     op2Priv.put(HiveOperationType.GET_TYPEINFO, PrivRequirement.newIOPrivRequirement(null, null));
     op2Priv.put(HiveOperationType.GET_COLUMNS,
         PrivRequirement.newIOPrivRequirement(SEL_NOGRANT_AR, null));
-
+    op2Priv.put(HiveOperationType.ABORT_TRANSACTIONS, PrivRequirement.newIOPrivRequirement
+        (null, null));
   }
 
   /**

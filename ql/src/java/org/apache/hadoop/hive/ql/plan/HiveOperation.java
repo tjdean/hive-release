@@ -117,8 +117,8 @@ public enum HiveOperation {
   ALTERVIEW_AS("ALTERVIEW_AS", new Privilege[] {Privilege.ALTER_METADATA}, null),
   ALTERTABLE_COMPACT("ALTERTABLE_COMPACT", new Privilege[]{Privilege.SELECT}, new Privilege[]{Privilege.ALTER_DATA}),
   SHOW_COMPACTIONS("SHOW COMPACTIONS", null, null),
-  SHOW_TRANSACTIONS("SHOW TRANSACTIONS", null, null);
-  ;
+  SHOW_TRANSACTIONS("SHOW TRANSACTIONS", null, null),
+  ABORT_TRANSACTIONS("ABORT TRANSACTIONS", null, null);
 
   private String operationName;
 

@@ -111,6 +111,7 @@ public final class SemanticAnalyzerFactory {
     commandType.put(HiveParser.TOK_ALTERTABLE_PARTCOLTYPE, HiveOperation.ALTERTABLE_PARTCOLTYPE);
     commandType.put(HiveParser.TOK_SHOW_COMPACTIONS, HiveOperation.SHOW_COMPACTIONS);
     commandType.put(HiveParser.TOK_SHOW_TRANSACTIONS, HiveOperation.SHOW_TRANSACTIONS);
+    commandType.put(HiveParser.TOK_ABORT_TRANSACTIONS, HiveOperation.ABORT_TRANSACTIONS);
   }
 
   static {
@@ -234,6 +235,7 @@ public final class SemanticAnalyzerFactory {
       case HiveParser.TOK_SHOWDBLOCKS:
       case HiveParser.TOK_SHOW_COMPACTIONS:
       case HiveParser.TOK_SHOW_TRANSACTIONS:
+      case HiveParser.TOK_ABORT_TRANSACTIONS:
       case HiveParser.TOK_SHOWCONF:
       case HiveParser.TOK_CREATEINDEX:
       case HiveParser.TOK_DROPINDEX:
