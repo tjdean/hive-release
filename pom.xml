@@ -1283,6 +1283,12 @@
         <skip.spark.file3>**/TestJdbcWithLocalClusterSpark.java</skip.spark.file3>
       </properties>
     </profile>
+    <profile>
+      <id>itests</id>
+      <modules>
+        <module>itests</module>
+      </modules>
+    </profile>
   </profiles>
   <distributionManagement>
     <repository>
