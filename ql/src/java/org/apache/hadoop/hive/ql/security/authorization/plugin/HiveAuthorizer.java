@@ -152,7 +152,7 @@ public interface HiveAuthorizer {
    * @throws HiveAccessControlException
    */
   void checkPrivileges(HiveOperationType hiveOpType, List<HivePrivilegeObject> inputsHObjs,
-      List<HivePrivilegeObject> outputHObjs, QueryContext context)
+      List<HivePrivilegeObject> outputHObjs, HiveAuthzContext context)
       throws HiveAuthzPluginException, HiveAccessControlException;
 
 
@@ -166,7 +166,7 @@ public interface HiveAuthorizer {
    * @throws HiveAccessControlException
    */
   List<HivePrivilegeObject> filterListCmdObjects(List<HivePrivilegeObject> listObjs,
-      QueryContext context)
+      HiveAuthzContext context)
           throws HiveAuthzPluginException, HiveAccessControlException;
 
 
@@ -238,7 +238,7 @@ public interface HiveAuthorizer {
    *
    * @throws SemanticException
    */
-  public List<HivePrivilegeObject> applyRowFilterAndColumnMasking(QueryContext context,
+  public List<HivePrivilegeObject> applyRowFilterAndColumnMasking(HiveAuthzContext context,
       List<HivePrivilegeObject> privObjs) throws SemanticException;
 
   /**

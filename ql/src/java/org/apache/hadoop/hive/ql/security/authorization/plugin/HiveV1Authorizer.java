@@ -61,7 +61,7 @@ public class HiveV1Authorizer implements HiveAuthorizer {
 
   @Override
   public void checkPrivileges(HiveOperationType hiveOpType, List<HivePrivilegeObject> inputsHObjs,
-      List<HivePrivilegeObject> outputHObjs, QueryContext context)
+      List<HivePrivilegeObject> outputHObjs, HiveAuthzContext context)
       throws HiveAuthzPluginException, HiveAccessControlException {
     throw new UnsupportedOperationException("Should not be called for v1 authorizer");
   }
@@ -376,7 +376,7 @@ public class HiveV1Authorizer implements HiveAuthorizer {
 
   @Override
   public List<HivePrivilegeObject> filterListCmdObjects(List<HivePrivilegeObject> listObjs,
-      QueryContext context) throws HiveAuthzPluginException, HiveAccessControlException {
+      HiveAuthzContext context) throws HiveAuthzPluginException, HiveAccessControlException {
     // do no filtering in old authorizer
     return listObjs;
   }
@@ -387,7 +387,7 @@ public class HiveV1Authorizer implements HiveAuthorizer {
   }
 
   @Override
-  public List<HivePrivilegeObject> applyRowFilterAndColumnMasking(QueryContext context,
+  public List<HivePrivilegeObject> applyRowFilterAndColumnMasking(HiveAuthzContext context,
       List<HivePrivilegeObject> privObjs) throws SemanticException {
     return null;
   }

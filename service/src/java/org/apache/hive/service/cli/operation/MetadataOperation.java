@@ -23,7 +23,7 @@ import java.util.List;
 
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAccessControlException;
-import org.apache.hadoop.hive.ql.security.authorization.plugin.QueryContext;
+import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAuthzContext;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAuthzPluginException;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveOperationType;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeObject;
@@ -121,7 +121,8 @@ public abstract class MetadataOperation extends Operation {
   protected void authorizeMetaGets(HiveOperationType opType, List<HivePrivilegeObject> inpObjs,
       String cmdString) throws HiveSQLException {
     SessionState ss = SessionState.get();
-    QueryContext.Builder ctxBuilder = new QueryContext.Builder();
+    HiveAuthzContext.Builder ctxBuilder = new HiveAuthzContext.Builder();
+    ctxBuilder.setUserIpAddress(ss.getUserIpAddress());
     ctxBuilder.setForwardedAddresses(ss.getForwardedAddresses());
     ctxBuilder.setCommandString(cmdString);
     try {

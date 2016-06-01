@@ -424,7 +424,7 @@ public class TestHiveAuthorizerCheckInvocation {
 
     verify(mockedAuthorizer).checkPrivileges(any(HiveOperationType.class),
         inputsCapturer.capture(), outputsCapturer.capture(),
-        any(QueryContext.class));
+        any(HiveAuthzContext.class));
 
     return new ImmutablePair(inputsCapturer.getValue(), outputsCapturer.getValue());
   }
