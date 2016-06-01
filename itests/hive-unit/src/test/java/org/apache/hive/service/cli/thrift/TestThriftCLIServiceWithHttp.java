@@ -19,25 +19,50 @@
 package org.apache.hive.service.cli.thrift;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
+import org.apache.hive.jdbc.HttpBasicAuthInterceptor;
+import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.hive.service.auth.HiveAuthFactory.AuthTypes;
+import org.apache.hive.service.rpc.thrift.TCLIService;
+import org.apache.hive.service.rpc.thrift.TOpenSessionReq;
+import org.apache.http.Header;
+import org.apache.http.HttpException;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpRequestInterceptor;
+import org.apache.http.client.CookieStore;
+import org.apache.http.client.protocol.RequestDefaultHeaders;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.protocol.HttpContext;
+import org.apache.thrift.protocol.TBinaryProtocol;
+import org.apache.thrift.protocol.TProtocol;
+import org.apache.thrift.transport.THttpClient;
+import org.apache.thrift.transport.TTransport;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-
+import org.junit.Test;
 
 /**
  *
- * TestThriftBinaryCLIService.
- * This tests ThriftCLIService started in binary mode.
+ * TestThriftHttpCLIService.
+ * This tests ThriftCLIService started in http mode.
  *
  */
 
-public class TestThriftBinaryCLIService extends ThriftCLIServiceTest {
+public class TestThriftCLIServiceWithHttp extends ThriftCLIServiceTest {
 
-  private static String transportMode = "binary";
+  private static String transportMode = "http";
+  private static String thriftHttpPath = "cliservice";
 
   /**
    * @throws java.lang.Exception
@@ -53,9 +78,10 @@ public class TestThriftBinaryCLIService extends ThriftCLIServiceTest {
 
     hiveConf.setBoolVar(ConfVars.HIVE_SERVER2_ENABLE_DOAS, false);
     hiveConf.setVar(ConfVars.HIVE_SERVER2_THRIFT_BIND_HOST, host);
-    hiveConf.setIntVar(ConfVars.HIVE_SERVER2_THRIFT_PORT, port);
-    hiveConf.setVar(ConfVars.HIVE_SERVER2_AUTHENTICATION, AuthTypes.NONE.toString());
+    hiveConf.setIntVar(ConfVars.HIVE_SERVER2_THRIFT_HTTP_PORT, port);
+    hiveConf.setVar(ConfVars.HIVE_SERVER2_AUTHENTICATION, AuthTypes.NOSASL.toString());
     hiveConf.setVar(ConfVars.HIVE_SERVER2_TRANSPORT_MODE, transportMode);
+    hiveConf.setVar(ConfVars.HIVE_SERVER2_THRIFT_HTTP_PATH, thriftHttpPath);
 
     startHiveServer2WithConf(hiveConf);
 
@@ -70,23 +96,5 @@ public class TestThriftBinaryCLIService extends ThriftCLIServiceTest {
     ThriftCLIServiceTest.tearDownAfterClass();
   }
 
-  /**
-   * @throws java.lang.Exception
-   */
-  @Override
-  @Before
-  public void setUp() throws Exception {
-
-  }
-
-  /**
-   * @throws java.lang.Exception
-   */
-  @Override
-  @After
-  public void tearDown() throws Exception {
-
-  }
-
-
+  
 }

@@ -259,6 +259,9 @@ public class SessionState {
   private ResourceMaps resourceMaps;
 
   private DependencyResolver dependencyResolver;
+
+  private List<String> forwardedAddresses;
+
   /**
    * Get the lineage state stored in this session.
    *
@@ -1597,6 +1600,15 @@ public class SessionState {
   public Timestamp getQueryCurrentTimestamp() {
     return queryCurrentTimestamp;
   }
+
+  public void setForwardedAddresses(List<String> forwardedAddresses) {
+    this.forwardedAddresses = forwardedAddresses;
+  }
+
+  public List<String> getForwardedAddresses() {
+    return forwardedAddresses;
+  }
+
 }
 
 class ResourceMaps {
