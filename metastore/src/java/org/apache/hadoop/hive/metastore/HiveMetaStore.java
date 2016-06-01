@@ -51,6 +51,7 @@ import java.util.regex.Pattern;
 
 import javax.jdo.JDOException;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -156,6 +157,7 @@ import org.apache.hadoop.hive.metastore.api.UnknownPartitionException;
 import org.apache.hadoop.hive.metastore.api.UnknownTableException;
 import org.apache.hadoop.hive.metastore.api.UnlockRequest;
 import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.events.AddIndexEvent;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterIndexEvent;
@@ -226,6 +228,11 @@ import org.apache.thrift.transport.TTransportFactory;
 import com.facebook.fb303.FacebookBase;
 import com.facebook.fb303.fb_status;
 import com.google.common.annotations.VisibleForTesting;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
@@ -331,6 +338,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           }
         };
 
+    private static ExecutorService threadPool;
+
     public static final String AUDIT_FORMAT =
         "ugi=%s\t" + // ugi
             "ip=%s\t" + // remote IP
@@ -424,6 +433,15 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     public HMSHandler(String name, HiveConf conf, boolean init) throws MetaException {
       super(name);
       hiveConf = conf;
+      synchronized (HMSHandler.class) {
+        if (threadPool == null) {
+          int numThreads = HiveConf.getIntVar(conf,
+              ConfVars.METASTORE_FS_HANDLER_THREADS_COUNT);
+          threadPool = Executors.newFixedThreadPool(numThreads,
+              new ThreadFactoryBuilder().setDaemon(true)
+                  .setNameFormat("HMSHandler #%d").build());
+        }
+      }
       if (init) {
         init();
       }
@@ -2137,15 +2155,16 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
     }
 
-    private List<Partition> add_partitions_core(
-        RawStore ms, String dbName, String tblName, List<Partition> parts, boolean ifNotExists)
+    private List<Partition> add_partitions_core(final RawStore ms,
+        String dbName, String tblName, List<Partition> parts, final boolean ifNotExists)
             throws MetaException, InvalidObjectException, AlreadyExistsException, TException {
       logInfo("add_partitions");
       boolean success = false;
       // Ensures that the list doesn't have dups, and keeps track of directories we have created.
-      Map<PartValEqWrapper, Boolean> addedPartitions = new HashMap<PartValEqWrapper, Boolean>();
-      List<Partition> result = new ArrayList<Partition>();
-      List<Partition> existingParts = null;
+      final Map<PartValEqWrapper, Boolean> addedPartitions =
+          Collections.synchronizedMap(new HashMap<PartValEqWrapper, Boolean>());
+      final List<Partition> result = new ArrayList<Partition>();
+      final List<Partition> existingParts = new ArrayList<Partition>();;
       Table tbl = null;
       try {
         ms.openTransaction();
@@ -2159,29 +2178,51 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           firePreEvent(new PreAddPartitionEvent(tbl, parts, this));
         }
 
-        for (Partition part : parts) {
+        List<Future<Partition>> partFutures = Lists.newArrayList();
+
+        final Table table = tbl;
+        for (final Partition part : parts) {
           if (!part.getTableName().equals(tblName) || !part.getDbName().equals(dbName)) {
             throw new MetaException("Partition does not belong to target table "
                 + dbName + "." + tblName + ": " + part);
           }
+
           boolean shouldAdd = startAddPartition(ms, part, ifNotExists);
           if (!shouldAdd) {
-            if (existingParts == null) {
-              existingParts = new ArrayList<Partition>();
-            }
             existingParts.add(part);
             LOG.info("Not adding partition " + part + " as it already exists");
             continue;
           }
-          boolean madeDir = createLocationForAddedPartition(tbl, part);
-          if (addedPartitions.put(new PartValEqWrapper(part), madeDir) != null) {
-            // Technically, for ifNotExists case, we could insert one and discard the other
-            // because the first one now "exists", but it seems better to report the problem
-            // upstream as such a command doesn't make sense.
-            throw new MetaException("Duplicate partitions in the list: " + part);
+
+
+          partFutures.add(threadPool.submit(new Callable() {
+            @Override
+            public Partition call() throws Exception {
+              boolean madeDir = createLocationForAddedPartition(table, part);
+              if (addedPartitions.put(new PartValEqWrapper(part), madeDir) != null) {
+                // Technically, for ifNotExists case, we could insert one and discard the other
+                // because the first one now "exists", but it seems better to report the problem
+                // upstream as such a command doesn't make sense.
+                throw new MetaException("Duplicate partitions in the list: " + part);
+              }
+              initializeAddedPartition(table, part, madeDir);
+              return part;
+            }
+          }));
+        }
+        try {
+          for (Future<Partition> partFuture : partFutures) {
+            Partition part = partFuture.get();
+            if (part != null) {
+              result.add(part);
+            }
           }
-          initializeAddedPartition(tbl, part, madeDir);
-          result.add(part);
+        } catch (InterruptedException | ExecutionException e) {
+          // cancel other tasks
+          for (Future<Partition> partFuture : partFutures) {
+            partFuture.cancel(true);
+          }
+          throw new MetaException(e.getMessage());
         }
         if (!result.isEmpty()) {
           success = ms.addPartitions(dbName, tblName, result);
@@ -2192,10 +2233,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       } finally {
         if (!success) {
           ms.rollbackTransaction();
-          for (Entry<PartValEqWrapper, Boolean> e : addedPartitions.entrySet()) {
+          for (Map.Entry<PartValEqWrapper, Boolean> e : addedPartitions.entrySet()) {
             if (e.getValue()) {
+              // we just created this directory - it's not a case of pre-creation, so we nuke.
               wh.deleteDir(new Path(e.getKey().partition.getSd().getLocation()), true);
-              // we just created this directory - it's not a case of pre-creation, so we nuke
             }
           }
           fireMetaStoreAddPartitionEvent(tbl, parts, null, false);
@@ -2284,9 +2325,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         throws TException {
       boolean success = false;
       // Ensures that the list doesn't have dups, and keeps track of directories we have created.
-      Map<PartValEqWrapperLite, Boolean> addedPartitions = new HashMap<PartValEqWrapperLite, Boolean>();
+      final Map<PartValEqWrapperLite, Boolean> addedPartitions =
+          Collections.synchronizedMap(new HashMap<PartValEqWrapperLite, Boolean>());
       PartitionSpecProxy partitionSpecProxy = PartitionSpecProxy.Factory.get(partSpecs);
-      PartitionSpecProxy.PartitionIterator partitionIterator = partitionSpecProxy.getPartitionIterator();
+      final PartitionSpecProxy.PartitionIterator partitionIterator = partitionSpecProxy
+          .getPartitionIterator();
       Table tbl = null;
       try {
         ms.openTransaction();
@@ -2298,10 +2341,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         firePreEvent(new PreAddPartitionEvent(tbl, partitionSpecProxy, this));
 
-        int nPartitions = 0;
+        List<Future<Partition>> partFutures = Lists.newArrayList();
+        final Table table = tbl;
+
         while(partitionIterator.hasNext()) {
 
-          Partition part = partitionIterator.getCurrent();
+          final Partition part = partitionIterator.getCurrent();
 
           if (!part.getTableName().equals(tblName) || !part.getDbName().equals(dbName)) {
             throw new MetaException("Partition does not belong to target table "
@@ -2312,30 +2357,45 @@ public class HiveMetaStore extends ThriftHiveMetastore {
             LOG.info("Not adding partition " + part + " as it already exists");
             continue;
           }
-          boolean madeDir = createLocationForAddedPartition(tbl, part);
-          if (addedPartitions.put(new PartValEqWrapperLite(part), madeDir) != null) {
-            // Technically, for ifNotExists case, we could insert one and discard the other
-            // because the first one now "exists", but it seems better to report the problem
-            // upstream as such a command doesn't make sense.
-            throw new MetaException("Duplicate partitions in the list: " + part);
-          }
-          initializeAddedPartition(tbl, partitionIterator, madeDir);
-
-          ++nPartitions;
+          partFutures.add(threadPool.submit(new Callable() {
+            @Override public Object call() throws Exception {
+              boolean madeDir = createLocationForAddedPartition(table, part);
+              if (addedPartitions.put(new PartValEqWrapperLite(part), madeDir) != null) {
+                // Technically, for ifNotExists case, we could insert one and discard the other
+                // because the first one now "exists", but it seems better to report the problem
+                // upstream as such a command doesn't make sense.
+                throw new MetaException("Duplicate partitions in the list: " + part);
+              }
+              initializeAddedPartition(table, part, madeDir);
+              return part;
+            }
+          }));
           partitionIterator.next();
         }
 
-        success = ms.addPartitions(dbName, tblName, partitionSpecProxy, ifNotExists)
-               && ms.commitTransaction();
+        try {
+          for (Future<Partition> partFuture : partFutures) {
+            Partition part = partFuture.get();
+          }
+        } catch (InterruptedException | ExecutionException e) {
+          // cancel other tasks
+          for (Future<Partition> partFuture : partFutures) {
+            partFuture.cancel(true);
+          }
+          throw new MetaException(e.getMessage());
+        }
 
-        return nPartitions;
+        success = ms.addPartitions(dbName, tblName, partitionSpecProxy, ifNotExists)
+            && ms.commitTransaction();
+
+        return addedPartitions.size();
       } finally {
         if (!success) {
           ms.rollbackTransaction();
-          for (Entry<PartValEqWrapperLite, Boolean> e : addedPartitions.entrySet()) {
+          for (Map.Entry<PartValEqWrapperLite, Boolean> e : addedPartitions.entrySet()) {
             if (e.getValue()) {
+              // we just created this directory - it's not a case of pre-creation, so we nuke.
               wh.deleteDir(new Path(e.getKey().location), true);
-              // we just created this directory - it's not a case of pre-creation, so we nuke
             }
           }
         }
