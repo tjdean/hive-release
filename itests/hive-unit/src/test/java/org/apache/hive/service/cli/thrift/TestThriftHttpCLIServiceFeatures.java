@@ -41,14 +41,14 @@ import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAuthzSessionC
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveMetastoreClientFactory;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveOperationType;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeObject;
-import org.apache.hadoop.hive.ql.security.authorization.plugin.QueryContext;
+import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveAuthzContext;
 import org.apache.hive.jdbc.HttpBasicAuthInterceptor;
 import org.apache.hive.service.auth.HiveAuthFactory;
 import org.apache.hive.service.auth.HiveAuthFactory.AuthTypes;
-import org.apache.hive.service.rpc.thrift.TCLIService;
-import org.apache.hive.service.rpc.thrift.TExecuteStatementReq;
-import org.apache.hive.service.rpc.thrift.TOpenSessionReq;
-import org.apache.hive.service.rpc.thrift.TOpenSessionResp;
+import org.apache.hive.service.cli.thrift.TCLIService;
+import org.apache.hive.service.cli.thrift.TExecuteStatementReq;
+import org.apache.hive.service.cli.thrift.TOpenSessionReq;
+import org.apache.hive.service.cli.thrift.TOpenSessionResp;
 import org.apache.http.Header;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
@@ -313,14 +313,14 @@ public class TestThriftHttpCLIServiceFeatures  {
     httpClient.ExecuteStatement(execReq);
 
     // capture arguments to authorizer impl call and verify ip addresses passed
-    ArgumentCaptor<QueryContext> contextCapturer = ArgumentCaptor
-        .forClass(QueryContext.class);
+    ArgumentCaptor<HiveAuthzContext> contextCapturer = ArgumentCaptor
+        .forClass(HiveAuthzContext.class);
 
     verify(mockedAuthorizer).checkPrivileges(any(HiveOperationType.class),
         Matchers.anyListOf(HivePrivilegeObject.class),
         Matchers.anyListOf(HivePrivilegeObject.class), contextCapturer.capture());
 
-    QueryContext context = contextCapturer.getValue();
+    HiveAuthzContext context = contextCapturer.getValue();
     System.err.println("Forwarded IP Addresses " + context.getForwardedAddresses());
 
     List<String> auditIPAddresses = new ArrayList<String>(context.getForwardedAddresses());

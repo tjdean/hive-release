@@ -98,7 +98,7 @@ public class TestHiveAuthorizerShowFilters {
       abstract class AuthorizerWithFilterCmdImpl implements HiveAuthorizer {
         @Override
         public List<HivePrivilegeObject> filterListCmdObjects(List<HivePrivilegeObject> listObjs,
-            QueryContext context) throws HiveAuthzPluginException, HiveAccessControlException {
+            HiveAuthzContext context) throws HiveAuthzPluginException, HiveAccessControlException {
           // capture arguments in static
           filterArguments = listObjs;
           // return static variable with results, if it is set to some set of
