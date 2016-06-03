@@ -63,7 +63,7 @@ public class DbTxnManager extends HiveTxnManagerImpl {
   static final private Log LOG = LogFactory.getLog(CLASS_NAME);
 
   private DbLockManager lockMgr = null;
-  private IMetaStoreClient client = null;
+  private SynchronizedMetaStoreClient client = null;
   private long txnId = 0;
 
   // QueryId for the query in current transaction
@@ -523,7 +523,7 @@ public class DbTxnManager extends HiveTxnManagerImpl {
       }
       try {
         Hive db = Hive.get(conf);
-        client = db.getMSC();
+        client = new SynchronizedMetaStoreClient(db.getMSC());
         initHeartbeatExecutorService();
       } catch (MetaException e) {
         throw new LockException(ErrorMsg.METASTORE_COULD_NOT_INITIATE.getMsg(), e);
@@ -613,6 +613,52 @@ public class DbTxnManager extends HiveTxnManagerImpl {
         LOG.error("Failed trying to heartbeat " + e.getMessage());
         lockException = e;
       }
+    }
+  }
+
+  /**
+   * Synchronized MetaStoreClient wrapper
+   */
+  final class SynchronizedMetaStoreClient {
+    private final IMetaStoreClient client;
+    SynchronizedMetaStoreClient(IMetaStoreClient client) {
+      this.client = client;
+    }
+
+    synchronized long openTxn(String user) throws TException {
+      return client.openTxn(user);
+    }
+
+    synchronized void commitTxn(long txnid) throws TException {
+      client.commitTxn(txnid);
+    }
+
+    synchronized void rollbackTxn(long txnid) throws TException {
+      client.rollbackTxn(txnid);
+    }
+
+    synchronized void heartbeat(long txnid, long lockid) throws TException {
+      client.heartbeat(txnid, lockid);
+    }
+
+    synchronized ValidTxnList getValidTxns(long currentTxn) throws TException {
+      return client.getValidTxns(currentTxn);
+    }
+
+    synchronized LockResponse lock(LockRequest request) throws TException {
+      return client.lock(request);
+    }
+
+    synchronized LockResponse checkLock(long lockid) throws TException {
+      return client.checkLock(lockid);
+    }
+
+    synchronized void unlock(long lockid) throws TException {
+      client.unlock(lockid);
+    }
+
+    synchronized ShowLocksResponse showLocks(ShowLocksRequest showLocksRequest) throws TException {
+      return client.showLocks(showLocksRequest);
     }
   }
 }
