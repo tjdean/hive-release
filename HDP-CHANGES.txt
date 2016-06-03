@@ -268,6 +268,51 @@ BUG FIXES
     HIVE-11960: braces in join conditions are not supported
     HIVE-11517: Vectorized auto_smb_mapjoin_14.q produces different results
     HIVE-12522: Wrong FS error during Tez merge files when warehouse and scratchdir are on different FS
+    HIVE-10061: HiveConf Should not be used as part of the HS2 client side code
+    HIVE-11768: java.io.DeleteOnExitHook leaks memory on long running Hive Server2 Instances
+    HIVE-12279: Testcase to verify session temporary files are removed after HIVE-11768
+    HIVE-10729: Query failed when select complex columns from joinned table (tez map join only)
+    HIVE-11097: HiveInputFormat uses String.startsWith to compare splitPath and PathToAliases
+    HIVE-11470: LLAP: hadoop-1 build is broken as MiniLlapCluster cannot compile on hadoop-1
+    HIVE-11816: Upgrade groovy to 2.4.4
+    HIVE-11891: Add basic performance logging to metastore calls
+    HIVE-12435: SELECT COUNT(CASE WHEN...) GROUPBY returns 1 for 'NULL' in a case of ORC and vectorization is enabled.
+    HIVE-12563: NullPointerException with 3-way Tez merge join
+    HIVE-12660: HS2 memory leak with .hiverc file use
+    HIVE-12766: TezTask does not close DagClient after execution
+    HIVE-12768: Thread safety: binary sortable serde decimal deserialization
+    HIVE-12875: Verify sem.getInputs() and sem.getOutputs()
+    HIVE-13043: Reload function has no impact to function registry
+    HIVE-13051: Deadline class has numerous issues
+    HIVE-13092: Vectorized java.lang.ClassCastException: org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo cannot be cast to org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo
+    HIVE-10729: Query failed when select complex columns from joinned table (tez map join only)
+    HIVE-13296: Add vectorized Q test with complex types showing count(*) etc work correctly
+    HIVE-13120: propagate doAs when generating ORC splits
+    HIVE-13144: HS2 can leak ZK ACL objects when curator retries to create the persistent ephemeral node
+    HIVE-13174: Remove Vectorizer noise in logs
+    HIVE-13263: Vectorization: Unable to vectorize regexp_extract/regexp_replace " Udf: GenericUDFBridge, is not supported"
+    HIVE-13285: Orc concatenation may drop old files from moving to final path
+    HIVE-13298: nested join support causes undecipherable errors in SemanticAnalyzer
+    HIVE-13325: Excessive logging when ORC PPD fails type conversions
+    HIVE-13330: ORC vectorized string dictionary reader does not differentiate null vs empty string dictionary
+    HIVE-13372: Hive Macro overwritten when multiple macros are used in one column
+    HIVE-13561: HiveServer2 is leaking ClassLoaders when add jar / temporary functions are used
+    HIVE-13602: TPCH q16 return wrong result when CBO is on
+    HIVE-13609: Fix UDTFs to allow local fetch task to fetch rows forwarded by GenericUDTF.close()
+    HIVE-7193: Hive should support additional LDAP authentication parameters
+    HIVE-11583: When PTF is used over a large partitions result could be corrupted
+    HIVE-11841: KeyValuesInputMerger creates huge logs
+    HIVE-12165: wrong result when hive.optimize.sampling.orderby=true with some aggregate functions
+    HIVE-12189: The list in pushdownPreds of ppd.ExprWalkerInfo should not be allowed to grow very large
+    HIVE-12749: Constant propagate returns string values in incorrect format
+    HIVE-12784: Group by SemanticException: Invalid column reference
+    HIVE-12947: SMB join in tez has ClassCastException when container reuse is on
+    HIVE-12992: Hive on tez: Bucket map join plan is incorrect
+    HIVE-13090: Hive metastore crashes on NPE with ZooKeeperTokenStore
+    HIVE-13126: Clean up MapJoinOperator properly to avoid object cache reuse with unintentional states
+    HIVE-13200: Aggregation functions returning empty rows on partitioned columns
+    HIVE-13242: DISTINCT keyword is dropped by the parser for windowing
+    HIVE-13394: Analyze table fails in tez on empty partitions/files/tables
 
 
 INTERNAL FIXES (NO APACHE JIRA)
