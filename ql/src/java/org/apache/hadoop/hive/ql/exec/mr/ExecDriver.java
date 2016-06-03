@@ -434,10 +434,11 @@ public class ExecDriver extends Task<MapredWork> implements Serializable, Hadoop
         HiveConf.setVar(job, HiveConf.ConfVars.METASTOREPWD, pwd);
       }
 
-      returnVal = jobExecHelper.progress(rj, jc);
+      returnVal = jobExecHelper.progress(rj, jc, ctx);
       success = (returnVal == 0);
     } catch (Exception e) {
       e.printStackTrace();
+      setException(e);
       String mesg = " with exception '" + Utilities.getNameMessage(e) + "'";
       if (rj != null) {
         mesg = "Ended Job = " + rj.getJobID() + mesg;
