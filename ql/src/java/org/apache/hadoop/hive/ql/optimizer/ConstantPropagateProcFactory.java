@@ -69,6 +69,7 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDF.DeferredJavaObject;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFBaseCompare;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFBridge;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFCase;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDFNvl;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPAnd;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPEqual;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFOPEqualOrGreaterThan;
@@ -714,8 +715,18 @@ public final class ConstantPropagateProcFactory {
         } else if(thenVal.equals(elseVal)){
           return thenExpr;
         } else if (thenVal instanceof Boolean && elseVal instanceof Boolean) {
-          return Boolean.TRUE.equals(thenVal) ? whenExpr :
-            ExprNodeGenericFuncDesc.newInstance(new GenericUDFOPNot(), Lists.newArrayList(whenExpr));
+          List<ExprNodeDesc> children = new ArrayList<>();
+          children.add(whenExpr);
+          children.add(new ExprNodeConstantDesc(false));
+          ExprNodeGenericFuncDesc func = ExprNodeGenericFuncDesc.newInstance(new GenericUDFNvl(),
+              children);
+          if (Boolean.TRUE.equals(thenVal)) {
+            return func;
+          } else {
+            List<ExprNodeDesc> exprs = new ArrayList<>();
+            exprs.add(func);
+            return ExprNodeGenericFuncDesc.newInstance(new GenericUDFOPNot(), exprs);
+          }
         } else {
           return null;
         }
@@ -758,10 +769,20 @@ public final class ConstantPropagateProcFactory {
         } else if(thenVal.equals(elseVal)){
           return thenExpr;
         } else if (thenVal instanceof Boolean && elseVal instanceof Boolean) {
-          return Boolean.TRUE.equals(thenVal) ? ExprNodeGenericFuncDesc.newInstance(new GenericUDFOPEqual(),
-                  Lists.newArrayList(newExprs.subList(0, 2))) :
-            ExprNodeGenericFuncDesc.newInstance(new GenericUDFOPNotEqual(),
-                    Lists.newArrayList(newExprs.subList(0, 2)));
+          ExprNodeGenericFuncDesc equal = ExprNodeGenericFuncDesc.newInstance(
+              new GenericUDFOPEqual(), newExprs.subList(0, 2));
+          List<ExprNodeDesc> children = new ArrayList<>();
+          children.add(equal);
+          children.add(new ExprNodeConstantDesc(false));
+          ExprNodeGenericFuncDesc func = ExprNodeGenericFuncDesc.newInstance(new GenericUDFNvl(),
+              children);
+          if (Boolean.TRUE.equals(thenVal)) {
+            return func;
+          } else {
+            List<ExprNodeDesc> exprs = new ArrayList<>();
+            exprs.add(func);
+            return ExprNodeGenericFuncDesc.newInstance(new GenericUDFOPNot(), exprs);
+          }
         } else {
           return null;
         }
