@@ -2115,10 +2115,14 @@ public class HiveConf extends Configuration {
         " This setting takes effect only if session idle timeout (hive.server2.idle.session.timeout) and checking\n" +
         "(hive.server2.session.check.interval) are enabled."),
 
+    HIVE_SERVER2_XSRF_FILTER_ENABLED("hive.server2.xsrf.filter.enabled",false,
+        "If enabled, HiveServer2 will block any requests made to it over http " +
+        "if an X-XSRF-HEADER header is not present"),
     HIVE_SECURITY_COMMAND_WHITELIST("hive.security.command.whitelist", "set,reset,dfs,add,list,delete,reload,compile",
         "Comma separated list of non-SQL Hive commands users are authorized to execute"),
     HIVE_CONF_RESTRICTED_LIST("hive.conf.restricted.list",
-        "hive.security.authenticator.manager,hive.security.authorization.manager,hive.users.in.admin.role",
+        "hive.security.authenticator.manager,hive.security.authorization.manager,hive.users.in.admin.role," +
+        "hive.server2.xsrf.filter.enabled",
         "Comma separated list of configuration options which are immutable at runtime"),
     HIVE_CONF_HIDDEN_LIST("hive.conf.hidden.list",
         METASTOREPWD.varname + "," + HIVE_SERVER2_SSL_KEYSTORE_PASSWORD.varname,
