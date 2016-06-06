@@ -83,7 +83,7 @@ public class OperatorUtils {
 
   public static <T> T findSingleOperatorUpstreamJoinAccounted(Operator<?> start, Class<T> clazz) {
     Set<T> found = findOperatorsUpstreamJoinAccounted(start, clazz, new HashSet<T>());
-    return found.size() == 1 ? found.iterator().next(): null;
+    return found.size() >= 1 ? found.iterator().next(): null;
   }
 
   public static <T> Set<T> findOperatorsUpstream(Collection<Operator<?>> starts, Class<T> clazz) {
@@ -118,8 +118,10 @@ public class OperatorUtils {
       MapJoinDesc desc = (MapJoinDesc) mapJoinOp.getConf();
       onlyIncludeIndex = desc.getPosBigTable();
     }
+    LOG.info("Starting with parent list.");
     if (start.getParentOperators() != null) {
       int i = 0;
+      LOG.info("Parent ops are: " + start.getParentOperators());
       for (Operator<?> parent : start.getParentOperators()) {
         if (onlyIncludeIndex >= 0) {
           if (onlyIncludeIndex == i) {
@@ -131,6 +133,7 @@ public class OperatorUtils {
         i++;
       }
     }
+    LOG.info("We found these: " + found);
     return found;
   }
 
