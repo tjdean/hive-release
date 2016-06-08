@@ -315,6 +315,8 @@ BUG FIXES
     HIVE-13394: Analyze table fails in tez on empty partitions/files/tables
     HIVE-13693: Multi-insert query drops Filter before file output when there is a.val <> b.val
     HIVE-13831: Error pushing predicates to HBase storage handler
+    HIVE-12879: RowResolver of Semijoin not updated in CalcitePlanner
+    HIVE-13767: Wrong type inferred in Semijoin condition leads to AssertionError
 
 INTERNAL FIXES (NO APACHE JIRA)
     MHIVE-629: Hive schema initialization failed for azuredb
