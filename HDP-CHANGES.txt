@@ -313,7 +313,8 @@ BUG FIXES
     HIVE-13200: Aggregation functions returning empty rows on partitioned columns
     HIVE-13242: DISTINCT keyword is dropped by the parser for windowing
     HIVE-13394: Analyze table fails in tez on empty partitions/files/tables
-
+    HIVE-13693: Multi-insert query drops Filter before file output when there is a.val <> b.val
+    HIVE-13831: Error pushing predicates to HBase storage handler
 
 INTERNAL FIXES (NO APACHE JIRA)
     MHIVE-629: Hive schema initialization failed for azuredb
