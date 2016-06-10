@@ -444,6 +444,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     private final int numBuckets;
     private final long maxSize;
     private final long minSize;
+    private final int minSplits;
     private final boolean footerInSplits;
     private final boolean cacheStripeDetails;
     private final boolean forceThreadpool;
@@ -453,6 +454,10 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     private SplitStrategyKind splitStrategyKind;
 
     Context(Configuration conf) {
+      this(conf, 1);
+    }
+
+    Context(Configuration conf, final int minSplits) {
       this.conf = conf;
       minSize = conf.getLong(MIN_SPLIT_SIZE, DEFAULT_MIN_SPLIT_SIZE);
       maxSize = conf.getLong(MAX_SPLIT_SIZE, DEFAULT_MAX_SPLIT_SIZE);
@@ -475,6 +480,8 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
           ConfVars.HIVE_ORC_COMPUTE_SPLITS_NUM_THREADS);
 
       cacheStripeDetails = (cacheStripeDetailsSize > 0);
+
+      this.minSplits = Math.min(cacheStripeDetailsSize, minSplits);
 
       synchronized (Context.class) {
         if (threadPool == null) {
@@ -785,7 +792,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
             break;
           default:
             // HYBRID strategy
-            if (avgFileSize > context.maxSize) {
+            if (avgFileSize > context.maxSize || numFiles <= context.minSplits) {
               splitStrategy = new ETLSplitStrategy(context, fs, dir, children, isOriginal, deltas,
                   covered);
             } else {
@@ -1126,8 +1133,13 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
 
   static List<OrcSplit> generateSplitsInfo(Configuration conf)
       throws IOException {
+    return generateSplitsInfo(conf, -1);
+  }
+
+  static List<OrcSplit> generateSplitsInfo(Configuration conf, int numSplits)
+      throws IOException {
     // use threads to resolve directories into splits
-    Context context = new Context(conf);
+    Context context = new Context(conf, numSplits);
     if (LOG.isInfoEnabled()) {
       LOG.info("ORC pushdown predicate: " + SearchArgumentFactory.createFromConf(conf));
     }
@@ -1196,7 +1208,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
   public InputSplit[] getSplits(JobConf job,
                                 int numSplits) throws IOException {
     perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.ORC_GET_SPLITS);
-    List<OrcSplit> result = generateSplitsInfo(job);
+    List<OrcSplit> result = generateSplitsInfo(job, numSplits);
     perfLogger.PerfLogEnd(CLASS_NAME, PerfLogger.ORC_GET_SPLITS);
     return result.toArray(new InputSplit[result.size()]);
   }
