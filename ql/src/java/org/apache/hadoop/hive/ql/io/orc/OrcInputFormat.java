@@ -68,7 +68,6 @@ import org.apache.hadoop.hive.ql.log.PerfLogger;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.SerDeStats;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
-import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.shims.HadoopShims;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.io.LongWritable;
@@ -130,6 +129,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
 
   private static final long DEFAULT_MIN_SPLIT_SIZE = 16 * 1024 * 1024;
   private static final long DEFAULT_MAX_SPLIT_SIZE = 256 * 1024 * 1024;
+  private static final int DEFAULT_ETL_FILE_THRESHOLD = 100;
 
   private static final PerfLogger perfLogger = PerfLogger.getPerfLogger();
   private static final String CLASS_NAME = ReaderImpl.class.getName();
@@ -444,10 +444,10 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     private final int numBuckets;
     private final long maxSize;
     private final long minSize;
-    private final int minSplits;
     private final boolean footerInSplits;
     private final boolean cacheStripeDetails;
     private final boolean forceThreadpool;
+    private final int etlFileThreshold;
     private final AtomicInteger cacheHitCounter = new AtomicInteger(0);
     private final AtomicInteger numFilesCounter = new AtomicInteger(0);
     private ValidTxnList transactionList;
@@ -481,7 +481,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
 
       cacheStripeDetails = (cacheStripeDetailsSize > 0);
 
-      this.minSplits = Math.min(cacheStripeDetailsSize, minSplits);
+      this.etlFileThreshold = minSplits <= 0 ? DEFAULT_ETL_FILE_THRESHOLD : minSplits;
 
       synchronized (Context.class) {
         if (threadPool == null) {
@@ -779,6 +779,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
 
         int numFiles = children.size();
         long avgFileSize = totalFileSize / numFiles;
+        int totalFiles = context.numFilesCounter.addAndGet(numFiles);
         switch(context.splitStrategyKind) {
           case BI:
             // BI strategy requested through config
@@ -792,7 +793,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
             break;
           default:
             // HYBRID strategy
-            if (avgFileSize > context.maxSize || numFiles <= context.minSplits) {
+            if (avgFileSize > context.maxSize || totalFiles <= context.etlFileThreshold) {
               splitStrategy = new ETLSplitStrategy(context, fs, dir, children, isOriginal, deltas,
                   covered);
             } else {
