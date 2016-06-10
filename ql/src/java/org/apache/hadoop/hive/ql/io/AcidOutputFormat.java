@@ -39,7 +39,7 @@ public interface AcidOutputFormat<K extends WritableComparable, V> extends HiveO
   /**
    * Options to control how the files are written
    */
-  public static class Options {
+  public static class Options implements Cloneable {
     private final Configuration configuration;
     private FileSystem fs;
     private ObjectInspector inspector;
@@ -60,6 +60,19 @@ public interface AcidOutputFormat<K extends WritableComparable, V> extends HiveO
      */
     public Options(Configuration conf) {
       this.configuration = conf;
+    }
+
+    /**
+     * shallow clone
+     */
+    @Override
+    public Options clone() {
+      try {
+        return (Options)super.clone();
+      }
+      catch(CloneNotSupportedException ex) {
+        throw new RuntimeException("clone() not properly implemented: " + ex.getMessage(), ex);
+      }
     }
 
     /**

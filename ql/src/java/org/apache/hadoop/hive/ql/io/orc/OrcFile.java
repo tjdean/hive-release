@@ -488,6 +488,13 @@ public final class OrcFile {
       return this;
     }
 
+    public int getBufferSize() {
+      return bufferSizeValue;
+    }
+
+    public long getStripeSize() {
+      return stripeSizeValue;
+    }
   }
 
   /**
