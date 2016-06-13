@@ -237,6 +237,12 @@ import java.util.regex.Pattern;
 
 import static org.apache.commons.lang.StringUtils.join;
 import static org.apache.hadoop.hive.metastore.MetaStoreUtils.*;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimaps;
 
 /**
  * TODO:pc remove application logic to a separate interface.
@@ -3786,18 +3792,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
     }
 
-    private List<String> getPartValsFromName(RawStore ms, String dbName, String tblName,
-        String partName) throws MetaException, InvalidObjectException {
+    private List<String> getPartValsFromName(Table t, String partName)
+        throws MetaException, InvalidObjectException {
+      Preconditions.checkArgument(t != null, "Table can not be null");
       // Unescape the partition name
       LinkedHashMap<String, String> hm = Warehouse.makeSpecFromName(partName);
-
-      // getPartition expects partition values in a list. use info from the
-      // table to put the partition column values in order
-      Table t = ms.getTable(dbName, tblName);
-      if (t == null) {
-        throw new InvalidObjectException(dbName + "." + tblName
-            + " table not found");
-      }
 
       List<String> partVals = new ArrayList<String>();
       for (FieldSchema field : t.getPartitionKeys()) {
@@ -3809,6 +3808,16 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         partVals.add(val);
       }
       return partVals;
+    }
+
+    private List<String> getPartValsFromName(RawStore ms, String dbName, String tblName,
+        String partName) throws MetaException, InvalidObjectException {
+      Table t = ms.getTable(dbName, tblName);
+      if (t == null) {
+        throw new InvalidObjectException(dbName + "." + tblName
+            + " table not found");
+      }
+      return getPartValsFromName(t, partName);
     }
 
     private Partition get_partition_by_name_core(final RawStore ms, final String db_name,
@@ -4437,12 +4446,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
     }
 
-    @Override
-    public boolean update_partition_column_statistics(ColumnStatistics colStats)
-      throws NoSuchObjectException,InvalidObjectException,MetaException,TException,
-      InvalidInputException
-    {
-
+    private boolean updatePartitonColStats(Table tbl, ColumnStatistics colStats)
+        throws MetaException, InvalidObjectException, NoSuchObjectException, InvalidInputException {
       String dbName = null;
       String tableName = null;
       String partName = null;
@@ -4466,7 +4471,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         colName = statsObj.getColName().toLowerCase();
         statsObj.setColName(colName);
         startFunction("write_partition_column_statistics:  db=" + dbName + " table=" + tableName +
-          " part=" + partName + "column=" + colName);
+            " part=" + partName + "column=" + colName);
       }
 
       colStats.setStatsDesc(statsDesc);
@@ -4475,13 +4480,22 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       boolean ret = false;
 
       try {
-        List<String> partVals = getPartValsFromName(getMS(), dbName,
-            tableName, partName);
+        if (tbl == null) {
+          tbl = getTable(dbName, tableName);
+        }
+        List<String> partVals = getPartValsFromName(tbl, partName);
         ret = getMS().updatePartitionColumnStatistics(colStats, partVals);
         return ret;
       } finally {
         endFunction("write_partition_column_statistics: ", ret != false, null, tableName);
       }
+    }
+
+    @Override
+    public boolean update_partition_column_statistics(ColumnStatistics colStats)
+      throws NoSuchObjectException,InvalidObjectException,MetaException,TException,
+      InvalidInputException {
+      return updatePartitonColStats(null, colStats);
     }
 
     @Override
@@ -5813,10 +5827,31 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         throws NoSuchObjectException, InvalidObjectException, MetaException, InvalidInputException,
         TException {
       boolean ret = true;
+      String dbName = null;
+      String tableName = null;
+      Table t = null;
       for (ColumnStatistics colStats : request.getColStats()) {
-        ret = ret && update_partition_column_statistics(colStats);
+        ColumnStatisticsDesc statsDesc =  colStats.getStatsDesc();
+        if (dbName == null) {
+          dbName = statsDesc.getDbName();
+        }
+        if (tableName == null) {
+          tableName = statsDesc.getTableName();
+          t = getTable(tableName, dbName);
+        }
+        ret = ret && updatePartitonColStats(t, colStats);
       }
       return ret;
+    }
+
+    private Table getTable(String dbName, String tableName)
+        throws MetaException, InvalidObjectException {
+      Table t = getMS().getTable(dbName, tableName);
+      if (t == null) {
+        throw new InvalidObjectException(dbName + "." + tableName
+            + " table not found");
+      }
+      return t;
     }
 
     @Override
