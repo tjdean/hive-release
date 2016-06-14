@@ -29,6 +29,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
@@ -54,6 +55,7 @@ import org.apache.hadoop.hive.ql.plan.DescTableDesc;
 import org.apache.hadoop.hive.ql.plan.PlanUtils;
 import org.apache.hadoop.hive.ql.plan.ShowIndexesDesc;
 import org.apache.hadoop.hive.serde2.io.DateWritable;
+import org.apache.hive.common.util.HiveStringUtils;
 
 
 /**
@@ -367,7 +369,7 @@ public final class MetaDataFormatUtils {
 
     if (tbl.getParameters().size() > 0) {
       tableInfo.append("Table Parameters:").append(LINE_DELIM);
-      displayAllParameters(tbl.getParameters(), tableInfo);
+      displayAllParameters(tbl.getParameters(), tableInfo, false);
     }
   }
 
@@ -388,12 +390,28 @@ public final class MetaDataFormatUtils {
     }
   }
 
+  /**
+   * Display key, value pairs of the parameters. The characters will be escaped
+   * including unicode.
+   */
   private static void displayAllParameters(Map<String, String> params, StringBuilder tableInfo) {
+    displayAllParameters(params, tableInfo, true);
+  }
+
+  /**
+   * Display key, value pairs of the parameters. The characters will be escaped
+   * including unicode if escapeUnicode is true; otherwise the characters other
+   * than unicode will be escaped.
+   */
+
+  private static void displayAllParameters(Map<String, String> params, StringBuilder tableInfo, boolean escapeUnicode) {
     List<String> keys = new ArrayList<String>(params.keySet());
     Collections.sort(keys);
     for (String key : keys) {
       tableInfo.append(FIELD_DELIM); // Ensures all params are indented.
-      formatOutput(key, StringEscapeUtils.escapeJava(params.get(key)), tableInfo);
+      formatOutput(key,
+          escapeUnicode ? StringEscapeUtils.escapeJava(params.get(key)) : HiveStringUtils.escapeJava(params.get(key)),
+          tableInfo);
     }
   }
 
