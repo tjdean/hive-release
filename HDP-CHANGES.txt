@@ -322,6 +322,7 @@ BUG FIXES
     HIVE-12885: LDAP Authenticator improvements
     HIVE-11866: Add framework to enable testing using LDAPServer using LDAP protocol
     HIVE-13295: Improvement to LDAP search queries in HS2 LDAP Authenticator
+    HIVE-13619: Bucket map join plan is incorrect
 
 INTERNAL FIXES (NO APACHE JIRA)
     MHIVE-629: Hive schema initialization failed for azuredb
