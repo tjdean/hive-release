@@ -930,9 +930,10 @@ public class TestCompactor {
     runInitiator(conf);
     rsp = txnHandler.showCompact(new ShowCompactRequest());
     Assert.assertEquals(4, rsp.getCompacts().size());
-    Assert.assertEquals("ttp1", rsp.getCompacts().get(0).getTablename());
+    // CompactionTxnHandler.findPotentialCompactions is using a Set to store CompactionInfo's, so order is unpredictable
+    Assert.assertTrue(rsp.getCompacts().get(0).getTablename().matches("ttp[12]"));
     Assert.assertEquals(TxnStore.INITIATED_RESPONSE, rsp.getCompacts().get(0).getState());
-    Assert.assertEquals("ttp2", rsp.getCompacts().get(1).getTablename());
+    Assert.assertTrue(rsp.getCompacts().get(1).getTablename().matches("ttp[12]"));
     Assert.assertEquals(TxnStore.INITIATED_RESPONSE, rsp.getCompacts().get(1).getState());
 
     // Finish the scheduled compaction for ttp2
