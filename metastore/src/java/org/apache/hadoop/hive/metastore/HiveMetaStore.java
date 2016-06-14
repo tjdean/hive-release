@@ -5837,7 +5837,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         }
         if (tableName == null) {
           tableName = statsDesc.getTableName();
-          t = getTable(tableName, dbName);
+          t = getTable(dbName, tableName);
         }
         ret = ret && updatePartitonColStats(t, colStats);
       }
