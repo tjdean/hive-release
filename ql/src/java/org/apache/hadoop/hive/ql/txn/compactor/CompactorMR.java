@@ -124,6 +124,10 @@ public class CompactorMR {
     job.setInt(NUM_BUCKETS, sd.getNumBuckets());
     job.set(ValidTxnList.VALID_TXNS_KEY, txns.toString());
     setColumnTypes(job, sd.getCols());
+    //with feature on, multiple tasks may get into conflict creating/using TMP_LOCATION and if we were
+    //to generate the target dir in the Map task, there is no easy way to pass it to OutputCommitter
+    //to do the final move
+    job.setBoolean("mapreduce.map.speculative", false);
     return job;
   }
   /**
