@@ -97,9 +97,12 @@ public class StatsOptimizer implements Transform {
   @Override
   public ParseContext transform(ParseContext pctx) throws SemanticException {
 
-    if (pctx.getFetchTask() != null || !pctx.getQueryProperties().isQuery() ||
-        pctx.getQueryProperties().isAnalyzeRewrite() || pctx.getQueryProperties().isCTAS() ||
-        pctx.getLoadFileWork().size() > 1 || !pctx.getLoadTableWork().isEmpty()) {
+    if (pctx.getFetchTask() != null || !pctx.getQueryProperties().isQuery()
+        || pctx.getQueryProperties().isAnalyzeRewrite() || pctx.getQueryProperties().isCTAS()
+        || pctx.getLoadFileWork().size() > 1 || !pctx.getLoadTableWork().isEmpty()
+        // If getNameToSplitSample is not empty, at least one of the source
+        // tables is being sampled and we can not optimize.
+        || !pctx.getNameToSplitSample().isEmpty()) {
       return pctx;
     }
 
@@ -212,6 +215,11 @@ public class StatsOptimizer implements Transform {
         TableScanOperator tsOp = (TableScanOperator) stack.get(0);
         if (tsOp.getNumParent() > 0) {
           // looks like a subq plan.
+          return null;
+        }
+        if (tsOp.getConf().getRowLimit() != -1) {
+          // table is sampled. In some situation, we really can leverage row
+          // limit. In order to be safe, we do not use it now.
           return null;
         }
         SelectOperator pselOp = (SelectOperator)stack.get(1);
