@@ -152,6 +152,10 @@ public interface Reader {
    */
   OrcFile.WriterVersion getWriterVersion();
 
+  OrcProto.FileTail getFileTail();
+
+  ByteBuffer getSerializedFileFooter();
+
   /**
    * Options for creating a RecordReader.
    */

@@ -33,7 +33,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileSplit;
  *
  */
 public class OrcNewSplit extends FileSplit {
-  private ReaderImpl.FileMetaInfo fileMetaInfo;
+  private OrcTail orcTail;
   private boolean hasFooter;
   private boolean isOriginal;
   private boolean hasBase;
@@ -50,7 +50,7 @@ public class OrcNewSplit extends FileSplit {
   public OrcNewSplit(OrcSplit inner) throws IOException {
     super(inner.getPath(), inner.getStart(), inner.getLength(),
           inner.getLocations());
-    this.fileMetaInfo = inner.getFileMetaInfo();
+    this.orcTail = inner.getOrcTail();
     this.hasFooter = inner.hasFooter();
     this.isOriginal = inner.isOriginal();
     this.hasBase = inner.hasBase();
@@ -71,20 +71,11 @@ public class OrcNewSplit extends FileSplit {
       out.writeLong(delta);
     }
     if (hasFooter) {
-      // serialize FileMetaInfo fields
-      Text.writeString(out, fileMetaInfo.compressionType);
-      WritableUtils.writeVInt(out, fileMetaInfo.bufferSize);
-      WritableUtils.writeVInt(out, fileMetaInfo.metadataSize);
-
-      // serialize FileMetaInfo field footer
-      ByteBuffer footerBuff = fileMetaInfo.footerBuffer;
-      footerBuff.reset();
-
-      // write length of buffer
-      WritableUtils.writeVInt(out, footerBuff.limit() - footerBuff.position());
-      out.write(footerBuff.array(), footerBuff.position(),
-          footerBuff.limit() - footerBuff.position());
-      WritableUtils.writeVInt(out, fileMetaInfo.writerVersion.getId());
+      OrcProto.FileTail fileTail = orcTail.getMinimalFileTail();
+      byte[] tailBuffer = fileTail.toByteArray();
+      int tailLen = tailBuffer.length;
+      WritableUtils.writeVInt(out, tailLen);
+      out.write(tailBuffer);
     }
   }
 
@@ -104,25 +95,12 @@ public class OrcNewSplit extends FileSplit {
       deltas.add(in.readLong());
     }
     if (hasFooter) {
-      // deserialize FileMetaInfo fields
-      String compressionType = Text.readString(in);
-      int bufferSize = WritableUtils.readVInt(in);
-      int metadataSize = WritableUtils.readVInt(in);
-
-      // deserialize FileMetaInfo field footer
-      int footerBuffSize = WritableUtils.readVInt(in);
-      ByteBuffer footerBuff = ByteBuffer.allocate(footerBuffSize);
-      in.readFully(footerBuff.array(), 0, footerBuffSize);
-      OrcFile.WriterVersion writerVersion =
-          ReaderImpl.getWriterVersion(WritableUtils.readVInt(in));
-
-      fileMetaInfo = new ReaderImpl.FileMetaInfo(compressionType, bufferSize,
-          metadataSize, footerBuff, writerVersion);
+      int tailLen = WritableUtils.readVInt(in);
+      byte[] tailBuffer = new byte[tailLen];
+      in.readFully(tailBuffer);
+      OrcProto.FileTail fileTail = OrcProto.FileTail.parseFrom(tailBuffer);
+      orcTail = new OrcTail(fileTail, null);
     }
-  }
-
-  ReaderImpl.FileMetaInfo getFileMetaInfo(){
-    return fileMetaInfo;
   }
 
   public boolean hasFooter() {
@@ -139,5 +117,9 @@ public class OrcNewSplit extends FileSplit {
 
   public List<Long> getDeltas() {
     return deltas;
+  }
+
+  public OrcTail getOrcTail() {
+    return orcTail;
   }
 }
