@@ -1920,6 +1920,61 @@ public class ConvertTreeReaderFactory extends TreeReaderFactory {
     }
   }
 
+  public static class DecimalFromDecimalTreeReader extends ConvertTreeReader {
+
+    private DecimalTreeReader decimalTreeReader;
+
+    private final TypeDescription fileType;
+    private final TypeDescription readerType;
+    private DecimalColumnVector fileDecimalColVector;
+    private int filePrecision;
+    private int fileScale;
+    private int readerPrecision;
+    private int readerScale;
+    private DecimalColumnVector decimalColVector;
+
+    DecimalFromDecimalTreeReader(int columnId, TypeDescription fileType, TypeDescription readerType)
+        throws IOException {
+      super(columnId);
+      this.fileType = fileType;
+      filePrecision = fileType.getPrecision();
+      fileScale = fileType.getScale();
+      this.readerType = readerType;
+      readerPrecision = readerType.getPrecision();
+      readerScale = readerType.getScale();
+      decimalTreeReader = new DecimalTreeReader(columnId, filePrecision, fileScale);
+      setConvertTreeReader(decimalTreeReader);
+    }
+
+    @Override
+    public void setConvertVectorElement(int elementNum) throws IOException {
+
+      HiveDecimalWritable valueWritable = HiveDecimalWritable.enforcePrecisionScale(
+          fileDecimalColVector.vector[elementNum], readerPrecision, readerScale);
+      if (valueWritable != null) {
+        decimalColVector.set(elementNum, valueWritable);
+      } else {
+        decimalColVector.noNulls = false;
+        decimalColVector.isNull[elementNum] = true;
+      }
+    }
+
+    @Override
+    public Object nextVector(Object previousVector, long batchSize) throws IOException {
+      if (fileDecimalColVector == null) {
+        // Allocate column vector for file; cast column vector for reader.
+        fileDecimalColVector = new DecimalColumnVector(filePrecision, fileScale);
+        decimalColVector = (DecimalColumnVector) previousVector;
+      }
+      // Read present/isNull stream
+      decimalTreeReader.nextVector(fileDecimalColVector, batchSize);
+
+      convertVector(fileDecimalColVector, decimalColVector, batchSize);
+
+      return decimalColVector;
+    }
+  }
+
   public static class StringGroupFromAnyIntegerTreeReader extends ConvertTreeReader {
 
     private AnyIntegerTreeReader anyIntegerAsLongTreeReader;
@@ -3119,7 +3174,7 @@ public class ConvertTreeReaderFactory extends TreeReaderFactory {
       return new TimestampFromDecimalTreeReader(columnId, fileType, skipCorrupt);
 
     case DECIMAL:
-      // UNDONE: Decimal to Decimal conversion????
+      return new DecimalFromDecimalTreeReader(columnId, fileType, readerType);
 
     // Not currently supported conversion(s):
     case BINARY:
@@ -3225,8 +3280,7 @@ public class ConvertTreeReaderFactory extends TreeReaderFactory {
       return new StringGroupFromStringGroupTreeReader(columnId, fileType, readerType);
 
     case CHAR:
-      throw new IllegalArgumentException("No conversion of type " +
-          readerType.getCategory() + " to self needed");
+      return new StringGroupFromStringGroupTreeReader(columnId, fileType, readerType);
 
     case BINARY:
       return new BinaryFromStringGroupTreeReader(columnId, fileType);
@@ -3282,8 +3336,7 @@ public class ConvertTreeReaderFactory extends TreeReaderFactory {
       return new StringGroupFromStringGroupTreeReader(columnId, fileType, readerType);
 
     case VARCHAR:
-      throw new IllegalArgumentException("No conversion of type " +
-          readerType.getCategory() + " to self needed");
+      return new StringGroupFromStringGroupTreeReader(columnId, fileType, readerType);
 
     case BINARY:
       return new BinaryFromStringGroupTreeReader(columnId, fileType);

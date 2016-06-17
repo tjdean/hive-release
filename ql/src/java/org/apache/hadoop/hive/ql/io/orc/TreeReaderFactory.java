@@ -2422,7 +2422,7 @@ public class TreeReaderFactory {
       return new NullTreeReader(0, cls);
     }
     TypeDescription.Category readerTypeCategory = readerType.getCategory();
-    if (!fileType.getCategory().equals(readerTypeCategory) &&
+    if (!fileType.equals(readerType) &&
         (readerTypeCategory != TypeDescription.Category.STRUCT &&
          readerTypeCategory != TypeDescription.Category.MAP &&
          readerTypeCategory != TypeDescription.Category.LIST &&
@@ -2459,19 +2459,23 @@ public class TreeReaderFactory {
       case DATE:
         return new DateTreeReader(fileType.getId());
       case DECIMAL:
-        return new DecimalTreeReader(fileType.getId(),
-            readerType.getPrecision(), readerType.getScale());
+        return new DecimalTreeReader(fileType.getId(), readerType.getPrecision(),
+            readerType.getScale());
       case STRUCT:
-        return new StructTreeReader(fileType.getId(), readerType, evolution, included, skipCorrupt);
+        return new StructTreeReader(fileType.getId(), readerType,
+            evolution, included, skipCorrupt);
       case LIST:
-        return new ListTreeReader(fileType.getId(), readerType, evolution, included, skipCorrupt);
+        return new ListTreeReader(fileType.getId(), readerType,
+            evolution, included, skipCorrupt);
       case MAP:
-        return new MapTreeReader(fileType.getId(), readerType, evolution, included, skipCorrupt);
+        return new MapTreeReader(fileType.getId(), readerType, evolution,
+            included, skipCorrupt);
       case UNION:
-        return new UnionTreeReader(fileType.getId(), readerType, evolution, included, skipCorrupt);
+        return new UnionTreeReader(fileType.getId(), readerType,
+            evolution, included, skipCorrupt);
       default:
         throw new IllegalArgumentException("Unsupported type " +
-            readerType);
+            readerTypeCategory);
     }
   }
 }
