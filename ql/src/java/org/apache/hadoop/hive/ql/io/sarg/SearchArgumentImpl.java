@@ -22,7 +22,6 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -35,8 +34,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.common.type.HiveChar;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.common.type.HiveVarchar;
-import org.apache.hadoop.hive.ql.io.parquet.FilterPredicateLeafBuilder;
-import org.apache.hadoop.hive.ql.io.parquet.LeafFilterFactory;
 import org.apache.hadoop.hive.ql.plan.ExprNodeColumnDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeConstantDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeDesc;
@@ -63,9 +60,6 @@ import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-
-import org.apache.parquet.filter2.predicate.FilterApi;
-import org.apache.parquet.filter2.predicate.FilterPredicate;
 
 /**
  * The implementation of SearchArguments.
@@ -185,199 +179,6 @@ final class SearchArgumentImpl implements SearchArgument {
              (literal == null ? 0 : literal.hashCode()) * 101 * 3 * 17 +
              (literalList == null ? 0 : literalList.hashCode()) *
                  103 * 101 * 3 * 17;
-    }
-  }
-
-  static class ExpressionTree {
-    static enum Operator {OR, AND, NOT, LEAF, CONSTANT}
-    private final Operator operator;
-    private final List<ExpressionTree> children;
-    private final int leaf;
-    private final TruthValue constant;
-
-    ExpressionTree() {
-      operator = null;
-      children = null;
-      leaf = 0;
-      constant = null;
-    }
-
-    ExpressionTree(Operator op, ExpressionTree... kids) {
-      operator = op;
-      children = new ArrayList<ExpressionTree>();
-      leaf = -1;
-      this.constant = null;
-      Collections.addAll(children, kids);
-    }
-
-    ExpressionTree(int leaf) {
-      operator = Operator.LEAF;
-      children = null;
-      this.leaf = leaf;
-      this.constant = null;
-    }
-
-    ExpressionTree(TruthValue constant) {
-      operator = Operator.CONSTANT;
-      children = null;
-      this.leaf = -1;
-      this.constant = constant;
-    }
-
-    ExpressionTree(ExpressionTree other) {
-      this.operator = other.operator;
-      if (other.children == null) {
-        this.children = null;
-      } else {
-        this.children = new ArrayList<ExpressionTree>();
-        for(ExpressionTree child: other.children) {
-          children.add(new ExpressionTree(child));
-        }
-      }
-      this.leaf = other.leaf;
-      this.constant = other.constant;
-    }
-
-    TruthValue evaluate(TruthValue[] leaves) {
-      TruthValue result = null;
-      switch (operator) {
-        case OR:
-          for(ExpressionTree child: children) {
-            result = child.evaluate(leaves).or(result);
-          }
-          return result;
-        case AND:
-          for(ExpressionTree child: children) {
-            result = child.evaluate(leaves).and(result);
-          }
-          return result;
-        case NOT:
-          return children.get(0).evaluate(leaves).not();
-        case LEAF:
-          return leaves[leaf];
-        case CONSTANT:
-          return constant;
-        default:
-          throw new IllegalStateException("Unknown operator: " + operator);
-      }
-    }
-
-    FilterPredicate translate(List<PredicateLeaf> leafs){
-      FilterPredicate p = null;
-      switch (operator) {
-        case OR:
-          for(ExpressionTree child: children) {
-            if (p == null) {
-              p = child.translate(leafs);
-            } else {
-              FilterPredicate right = child.translate(leafs);
-              // constant means no filter, ignore it when it is null
-              if(right != null){
-                p = FilterApi.or(p, right);
-              }
-            }
-          }
-          return p;
-        case AND:
-          for(ExpressionTree child: children) {
-            if (p == null) {
-              p = child.translate(leafs);
-            } else {
-              FilterPredicate right = child.translate(leafs);
-              // constant means no filter, ignore it when it is null
-              if(right != null){
-                p = FilterApi.and(p, right);
-              }
-            }
-          }
-          return p;
-        case NOT:
-          FilterPredicate op = children.get(0).translate(leafs);
-          if (op != null) {
-            return FilterApi.not(op);
-          } else {
-            return null;
-          }
-        case LEAF:
-          return buildFilterPredicateFromPredicateLeaf(leafs.get(leaf));
-        case CONSTANT:
-          return null;// no filter will be executed for constant
-        default:
-          throw new IllegalStateException("Unknown operator: " + operator);
-      }
-    }
-
-    private FilterPredicate buildFilterPredicateFromPredicateLeaf(PredicateLeaf leaf) {
-      LeafFilterFactory leafFilterFactory = new LeafFilterFactory();
-      FilterPredicateLeafBuilder builder;
-      try {
-        builder = leafFilterFactory
-          .getLeafFilterBuilderByType(leaf.getType());
-        if (builder == null) {
-          return null;
-        }
-        if (isMultiLiteralsOperator(leaf.getOperator())) {
-          return builder.buildPredicate(leaf.getOperator(),
-              leaf.getLiteralList(),
-              leaf.getColumnName());
-        } else {
-          return builder
-            .buildPredict(leaf.getOperator(),
-              leaf.getLiteral(),
-              leaf.getColumnName());
-        }
-      } catch (Exception e) {
-        LOG.error("fail to build predicate filter leaf with errors" + e, e);
-        return null;
-      }
-    }
-
-    private boolean isMultiLiteralsOperator(PredicateLeaf.Operator op) {
-      return (op == PredicateLeaf.Operator.IN) || (op == PredicateLeaf.Operator.BETWEEN);
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder buffer = new StringBuilder();
-      switch (operator) {
-        case OR:
-          buffer.append("(or");
-          for(ExpressionTree child: children) {
-            buffer.append(' ');
-            buffer.append(child.toString());
-          }
-          buffer.append(')');
-          break;
-        case AND:
-          buffer.append("(and");
-          for(ExpressionTree child: children) {
-            buffer.append(' ');
-            buffer.append(child.toString());
-          }
-          buffer.append(')');
-          break;
-        case NOT:
-          buffer.append("(not ");
-          buffer.append(children.get(0));
-          buffer.append(')');
-          break;
-        case LEAF:
-          buffer.append("leaf-");
-          buffer.append(leaf);
-          break;
-        case CONSTANT:
-          buffer.append(constant);
-          break;
-      }
-      return buffer.toString();
-    }
-
-    Operator getOperator() {
-      return operator;
-    }
-
-    List<ExpressionTree> getChildren() {
-      return children;
     }
   }
 
@@ -981,12 +782,13 @@ final class SearchArgumentImpl implements SearchArgument {
   }
 
   @Override
-  public TruthValue evaluate(TruthValue[] leaves) {
-    return expression == null ? TruthValue.YES : expression.evaluate(leaves);
+  public ExpressionTree getExpression() {
+    return expression;
   }
 
-  ExpressionTree getExpression() {
-    return expression;
+  @Override
+  public TruthValue evaluate(TruthValue[] leaves) {
+    return expression == null ? TruthValue.YES : expression.evaluate(leaves);
   }
 
   @Override
@@ -1014,11 +816,6 @@ final class SearchArgumentImpl implements SearchArgument {
   static SearchArgument fromKryo(String value) {
     Input input = new Input(Base64.decodeBase64(value));
     return new Kryo().readObject(input, SearchArgumentImpl.class);
-  }
-
-  @Override
-  public FilterPredicate toFilterPredicate() {
-    return expression.translate(leaves);
   }
 
   private static class BuilderImpl implements Builder {

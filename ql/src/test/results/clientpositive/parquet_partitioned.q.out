@@ -170,3 +170,167 @@ POSTHOOK: Input: default@parquet_partitioned@part=part2
 #### A masked pattern was here ####
 part1	1
 part2	2
+PREHOOK: query: select * from parquet_partitioned where part="part2"
+PREHOOK: type: QUERY
+PREHOOK: Input: default@parquet_partitioned
+PREHOOK: Input: default@parquet_partitioned@part=part2
+#### A masked pattern was here ####
+POSTHOOK: query: select * from parquet_partitioned where part="part2"
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@parquet_partitioned
+POSTHOOK: Input: default@parquet_partitioned@part=part2
+#### A masked pattern was here ####
+2	bar	part2
+3	baz	part2
+PREHOOK: query: select * from parquet_partitioned where part in ("part2")
+PREHOOK: type: QUERY
+PREHOOK: Input: default@parquet_partitioned
+PREHOOK: Input: default@parquet_partitioned@part=part2
+#### A masked pattern was here ####
+POSTHOOK: query: select * from parquet_partitioned where part in ("part2")
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@parquet_partitioned
+POSTHOOK: Input: default@parquet_partitioned@part=part2
+#### A masked pattern was here ####
+2	bar	part2
+3	baz	part2
+PREHOOK: query: select * from parquet_partitioned where part between "part0" and "part2"
+PREHOOK: type: QUERY
+PREHOOK: Input: default@parquet_partitioned
+PREHOOK: Input: default@parquet_partitioned@part=part1
+PREHOOK: Input: default@parquet_partitioned@part=part2
+#### A masked pattern was here ####
+POSTHOOK: query: select * from parquet_partitioned where part between "part0" and "part2"
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@parquet_partitioned
+POSTHOOK: Input: default@parquet_partitioned@part=part1
+POSTHOOK: Input: default@parquet_partitioned@part=part2
+#### A masked pattern was here ####
+1	foo	part1
+2	bar	part2
+3	baz	part2
+PREHOOK: query: select * from parquet_partitioned where part!="part2"
+PREHOOK: type: QUERY
+PREHOOK: Input: default@parquet_partitioned
+PREHOOK: Input: default@parquet_partitioned@part=part1
+#### A masked pattern was here ####
+POSTHOOK: query: select * from parquet_partitioned where part!="part2"
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@parquet_partitioned
+POSTHOOK: Input: default@parquet_partitioned@part=part1
+#### A masked pattern was here ####
+1	foo	part1
+PREHOOK: query: select * from parquet_partitioned where part<"part2"
+PREHOOK: type: QUERY
+PREHOOK: Input: default@parquet_partitioned
+PREHOOK: Input: default@parquet_partitioned@part=part1
+#### A masked pattern was here ####
+POSTHOOK: query: select * from parquet_partitioned where part<"part2"
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@parquet_partitioned
+POSTHOOK: Input: default@parquet_partitioned@part=part1
+#### A masked pattern was here ####
+1	foo	part1
+PREHOOK: query: select * from parquet_partitioned where part is null
+PREHOOK: type: QUERY
+PREHOOK: Input: default@parquet_partitioned
+#### A masked pattern was here ####
+POSTHOOK: query: select * from parquet_partitioned where part is null
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@parquet_partitioned
+#### A masked pattern was here ####
+PREHOOK: query: select * from parquet_partitioned where part is not null
+PREHOOK: type: QUERY
+PREHOOK: Input: default@parquet_partitioned
+PREHOOK: Input: default@parquet_partitioned@part=part1
+PREHOOK: Input: default@parquet_partitioned@part=part2
+#### A masked pattern was here ####
+POSTHOOK: query: select * from parquet_partitioned where part is not null
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@parquet_partitioned
+POSTHOOK: Input: default@parquet_partitioned@part=part1
+POSTHOOK: Input: default@parquet_partitioned@part=part2
+#### A masked pattern was here ####
+1	foo	part1
+2	bar	part2
+3	baz	part2
+PREHOOK: query: select * from parquet_partitioned where part is not null and part="part1"
+PREHOOK: type: QUERY
+PREHOOK: Input: default@parquet_partitioned
+PREHOOK: Input: default@parquet_partitioned@part=part1
+#### A masked pattern was here ####
+POSTHOOK: query: select * from parquet_partitioned where part is not null and part="part1"
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@parquet_partitioned
+POSTHOOK: Input: default@parquet_partitioned@part=part1
+#### A masked pattern was here ####
+1	foo	part1
+PREHOOK: query: select * from parquet_partitioned where part="part2" and id>=2
+PREHOOK: type: QUERY
+PREHOOK: Input: default@parquet_partitioned
+PREHOOK: Input: default@parquet_partitioned@part=part2
+#### A masked pattern was here ####
+POSTHOOK: query: select * from parquet_partitioned where part="part2" and id>=2
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@parquet_partitioned
+POSTHOOK: Input: default@parquet_partitioned@part=part2
+#### A masked pattern was here ####
+2	bar	part2
+3	baz	part2
+PREHOOK: query: select * from parquet_partitioned where part="part1" and id=1
+PREHOOK: type: QUERY
+PREHOOK: Input: default@parquet_partitioned
+PREHOOK: Input: default@parquet_partitioned@part=part1
+#### A masked pattern was here ####
+POSTHOOK: query: select * from parquet_partitioned where part="part1" and id=1
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@parquet_partitioned
+POSTHOOK: Input: default@parquet_partitioned@part=part1
+#### A masked pattern was here ####
+1	foo	part1
+PREHOOK: query: select * from parquet_partitioned where part="part2" and id between 2 and 3
+PREHOOK: type: QUERY
+PREHOOK: Input: default@parquet_partitioned
+PREHOOK: Input: default@parquet_partitioned@part=part2
+#### A masked pattern was here ####
+POSTHOOK: query: select * from parquet_partitioned where part="part2" and id between 2 and 3
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@parquet_partitioned
+POSTHOOK: Input: default@parquet_partitioned@part=part2
+#### A masked pattern was here ####
+2	bar	part2
+3	baz	part2
+PREHOOK: query: select * from parquet_partitioned where part="part2" and id in (2,3)
+PREHOOK: type: QUERY
+PREHOOK: Input: default@parquet_partitioned
+PREHOOK: Input: default@parquet_partitioned@part=part2
+#### A masked pattern was here ####
+POSTHOOK: query: select * from parquet_partitioned where part="part2" and id in (2,3)
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@parquet_partitioned
+POSTHOOK: Input: default@parquet_partitioned@part=part2
+#### A masked pattern was here ####
+2	bar	part2
+3	baz	part2
+PREHOOK: query: select * from parquet_partitioned where part<=>"part2" and id in (2,3)
+PREHOOK: type: QUERY
+PREHOOK: Input: default@parquet_partitioned
+PREHOOK: Input: default@parquet_partitioned@part=part2
+#### A masked pattern was here ####
+POSTHOOK: query: select * from parquet_partitioned where part<=>"part2" and id in (2,3)
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@parquet_partitioned
+POSTHOOK: Input: default@parquet_partitioned@part=part2
+#### A masked pattern was here ####
+2	bar	part2
+3	baz	part2
+PREHOOK: query: select * from parquet_partitioned where part<>"part2" and id in (2,3)
+PREHOOK: type: QUERY
+PREHOOK: Input: default@parquet_partitioned
+PREHOOK: Input: default@parquet_partitioned@part=part1
+#### A masked pattern was here ####
+POSTHOOK: query: select * from parquet_partitioned where part<>"part2" and id in (2,3)
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@parquet_partitioned
+POSTHOOK: Input: default@parquet_partitioned@part=part1
+#### A masked pattern was here ####

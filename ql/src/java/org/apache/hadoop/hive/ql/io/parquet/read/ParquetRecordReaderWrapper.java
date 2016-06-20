@@ -14,8 +14,7 @@
 package org.apache.hadoop.hive.ql.io.parquet.read;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -25,6 +24,8 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.io.IOConstants;
 import org.apache.hadoop.hive.ql.io.parquet.ProjectionPusher;
+import org.apache.hadoop.hive.ql.io.sarg.PredicateLeaf;
+import org.apache.hadoop.hive.ql.io.sarg.SearchArgument;
 import org.apache.hadoop.hive.ql.io.sarg.SearchArgumentFactory;
 import org.apache.hadoop.hive.ql.plan.TableScanDesc;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
@@ -50,9 +51,11 @@ import org.apache.parquet.hadoop.metadata.BlockMetaData;
 import org.apache.parquet.hadoop.metadata.FileMetaData;
 import org.apache.parquet.hadoop.metadata.ParquetMetadata;
 import org.apache.parquet.hadoop.util.ContextUtil;
+import org.apache.parquet.schema.MessageType;
 import org.apache.parquet.schema.MessageTypeParser;
 
 import com.google.common.base.Strings;
+import org.apache.parquet.schema.Type;
 
 public class ParquetRecordReaderWrapper  implements RecordReader<Void, ArrayWritable> {
   public static final Log LOG = LogFactory.getLog(ParquetRecordReaderWrapper.class);
@@ -132,7 +135,7 @@ public class ParquetRecordReaderWrapper  implements RecordReader<Void, ArrayWrit
     }
   }
 
-  public FilterCompat.Filter setFilter(final JobConf conf) {
+  public FilterCompat.Filter setFilter(final JobConf conf, MessageType schema) {
     String serializedPushdown = conf.get(TableScanDesc.FILTER_EXPR_CONF_STR);
     String columnNamesString =
       conf.get(ColumnProjectionUtils.READ_COLUMN_NAMES_CONF_STR);
@@ -141,16 +144,22 @@ public class ParquetRecordReaderWrapper  implements RecordReader<Void, ArrayWrit
       return null;
     }
 
-    FilterPredicate p =
-      SearchArgumentFactory.create(Utilities.deserializeExpression(serializedPushdown))
-        .toFilterPredicate();
+    SearchArgument sarg = SearchArgumentFactory.create(Utilities.deserializeExpression(serializedPushdown));
+    if (sarg == null) {
+      return null;
+    }
+
+    // Create the Parquet FilterPredicate without including columns that do not exist
+    // on the shema (such as partition columns).
+    FilterPredicate p = ParquetFilterPredicateConverter.toFilterPredicate(sarg, schema);
     if (p != null) {
-      LOG.debug("Predicate filter for parquet is " + p.toString());
+      // Filter may have sensitive information. Do not send to debug.
+      LOG.debug("PARQUET predicate push down generated.");
       ParquetInputFormat.setFilterPredicate(conf, p);
       return FilterCompat.get(p);
     } else {
-      LOG.debug("No predicate filter can be generated for " + TableScanDesc.FILTER_EXPR_CONF_STR +
-        " with the value of " + serializedPushdown);
+      // Filter may have sensitive information. Do not send to debug.
+      LOG.debug("No PARQUET predicate push down is generated.");
       return null;
     }
   }
@@ -242,11 +251,11 @@ public class ParquetRecordReaderWrapper  implements RecordReader<Void, ArrayWrit
     if (oldSplit instanceof FileSplit) {
       final Path finalPath = ((FileSplit) oldSplit).getPath();
       jobConf = projectionPusher.pushProjectionsAndFilters(conf, finalPath.getParent());
-      FilterCompat.Filter filter = setFilter(jobConf);
 
       final ParquetMetadata parquetMetadata = ParquetFileReader.readFooter(jobConf, finalPath);
       final List<BlockMetaData> blocks = parquetMetadata.getBlocks();
       final FileMetaData fileMetaData = parquetMetadata.getFileMetaData();
+      FilterCompat.Filter filter = setFilter(jobConf, fileMetaData.getSchema());
 
       final ReadContext readContext = new DataWritableReadSupport().init(new InitContext(jobConf,
           null, fileMetaData.getSchema()));
