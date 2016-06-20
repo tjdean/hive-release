@@ -79,8 +79,9 @@
       <version>${kryo.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.twitter</groupId>
+      <groupId>org.apache.parquet</groupId>
       <artifactId>parquet-hadoop-bundle</artifactId>
+      <version>${parquet.version}</version>
     </dependency>
     <dependency>
       <groupId>commons-codec</groupId>
@@ -316,7 +317,7 @@
     <!-- test intra-project -->
     <!-- test inter-project -->
     <dependency>
-      <groupId>com.twitter</groupId>
+      <groupId>org.apache.parquet</groupId>
       <artifactId>parquet-column</artifactId>
       <classifier>tests</classifier>
       <scope>test</scope>
@@ -696,7 +697,7 @@
                   <include>org.apache.hive:hive-exec</include>
                   <include>org.apache.hive:hive-serde</include>
                   <include>com.esotericsoftware.kryo:kryo</include>
-                  <include>com.twitter:parquet-hadoop-bundle</include>
+                  <include>org.apache.parquet:parquet-hadoop-bundle</include>
                   <include>org.apache.thrift:libthrift</include>
                   <include>commons-lang:commons-lang</include>
                   <include>org.apache.commons:commons-lang3</include>
