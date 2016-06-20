@@ -299,7 +299,6 @@ BUG FIXES
     HIVE-13561: HiveServer2 is leaking ClassLoaders when add jar / temporary functions are used
     HIVE-13602: TPCH q16 return wrong result when CBO is on
     HIVE-13609: Fix UDTFs to allow local fetch task to fetch rows forwarded by GenericUDTF.close()
-    HIVE-7193: Hive should support additional LDAP authentication parameters
     HIVE-11583: When PTF is used over a large partitions result could be corrupted
     HIVE-11841: KeyValuesInputMerger creates huge logs
     HIVE-12165: wrong result when hive.optimize.sampling.orderby=true with some aggregate functions
@@ -317,11 +316,6 @@ BUG FIXES
     HIVE-13831: Error pushing predicates to HBase storage handler
     HIVE-12879: RowResolver of Semijoin not updated in CalcitePlanner
     HIVE-13767: Wrong type inferred in Semijoin condition leads to AssertionError
-    HIVE-11512: Hive LDAP Authenticator should also support full DN in Authenticate()
-    HIVE-12007: Hive LDAP Authenticator should allow just Domain without baseDN (for AD)
-    HIVE-12885: LDAP Authenticator improvements
-    HIVE-11866: Add framework to enable testing using LDAPServer using LDAP protocol
-    HIVE-13295: Improvement to LDAP search queries in HS2 LDAP Authenticator
     HIVE-13619: Bucket map join plan is incorrect
 
 INTERNAL FIXES (NO APACHE JIRA)
