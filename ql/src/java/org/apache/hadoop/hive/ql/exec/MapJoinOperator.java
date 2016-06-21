@@ -624,7 +624,7 @@ public class MapJoinOperator extends AbstractMapJoinOperator<MapJoinDesc> implem
     }
 
     container.setTotalInMemRowCount(container.getTotalInMemRowCount()
-        + restoredHashMap.getNumValues() + kvContainer.size());
+        + restoredHashMap.getNumValues());
     kvContainer.clear();
 
     spilledMapJoinTables[pos] = new MapJoinBytesTableContainer(restoredHashMap);

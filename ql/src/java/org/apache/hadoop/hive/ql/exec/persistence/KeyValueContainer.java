@@ -216,6 +216,10 @@ public class KeyValueContainer {
     return row;
   }
 
+  public int numRowsInReadBuffer() {
+    return rowsInReadBuffer;
+  }
+
   public int size() {
     return rowsInReadBuffer + rowsOnDisk;
   }
