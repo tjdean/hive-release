@@ -183,17 +183,4 @@ public class HiveDecimalWritable implements WritableComparable<HiveDecimalWritab
   public int getScale() {
     return scale;
   }
-
-  public static
-  HiveDecimalWritable enforcePrecisionScale(HiveDecimalWritable writable,
-                                            int precision, int scale) {
-    if (writable == null) {
-      return null;
-    }
-
-    HiveDecimal dec =
-        HiveDecimal.enforcePrecisionScale(writable.getHiveDecimal(), precision,
-            scale);
-    return dec == null ? null : new HiveDecimalWritable(dec);
-  }
 }

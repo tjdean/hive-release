@@ -99,10 +99,12 @@ public class SchemaEvolution {
           break;
         case CHAR:
         case VARCHAR:
-          // We do conversion when same CHAR/VARCHAR type but different maxLength.
+          // HIVE-13648: Look at ORC data type conversion edge cases (CHAR, VARCHAR, DECIMAL)
+          isOk = fileType.getMaxLength() == readerType.getMaxLength();
           break;
         case DECIMAL:
-          // We do conversion when same DECIMAL type but different precision/scale.
+          // HIVE-13648: Look at ORC data type conversion edge cases (CHAR, VARCHAR, DECIMAL)
+          // TODO we don't enforce scale and precision checks, but probably should
           break;
         case UNION:
         case MAP:
