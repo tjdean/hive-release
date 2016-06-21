@@ -361,94 +361,95 @@ public class ReaderImpl implements Reader {
     // figure out the size of the file using the option or filesystem
     long size;
     long modificationTime;
-    if (maxFileLength == Long.MAX_VALUE) {
-      FileStatus fileStatus = fs.getFileStatus(path);
-      size = fileStatus.getLen();
-      modificationTime = fileStatus.getModificationTime();
-    } else {
-      size = maxFileLength;
-      modificationTime = -1;
+    ByteBuffer buffer;
+    try {
+      if (maxFileLength == Long.MAX_VALUE) {
+        FileStatus fileStatus = fs.getFileStatus(path);
+        size = fileStatus.getLen();
+        modificationTime = fileStatus.getModificationTime();
+      } else {
+        size = maxFileLength;
+        modificationTime = -1;
+      }
+      fileTailBuilder.setFileLength(size);
+
+      //read last bytes into buffer to get PostScript
+      int readSize = (int) Math.min(size, DIRECTORY_SIZE_GUESS);
+      file.seek(size - readSize);
+      buffer = ByteBuffer.allocate(readSize);
+      file.readFully(buffer.array(), buffer.arrayOffset() + buffer.position(),
+              buffer.remaining());
+
+      //read the PostScript
+      //get length of PostScript
+      int psLen = buffer.get(readSize - 1) & 0xff;
+      ensureOrcFooter(file, path, psLen, buffer);
+      int psOffset = readSize - 1 - psLen;
+      CodedInputStream in = CodedInputStream.newInstance(buffer.array(),
+              buffer.arrayOffset() + psOffset, psLen);
+      OrcProto.PostScript ps = OrcProto.PostScript.parseFrom(in);
+
+      checkOrcVersion(LOG, path, ps.getVersionList());
+
+      int footerSize = (int) ps.getFooterLength();
+      int metadataSize = (int) ps.getMetadataLength();
+
+      //check compression codec
+      switch (ps.getCompression()) {
+        case NONE:
+          break;
+        case ZLIB:
+          break;
+        case SNAPPY:
+          break;
+        case LZO:
+          break;
+        default:
+          throw new IllegalArgumentException("Unknown compression");
+      }
+
+      //check if extra bytes need to be read
+      int extra = Math.max(0, psLen + 1 + footerSize + metadataSize - readSize);
+      if (extra > 0) {
+        //more bytes need to be read, seek back to the right place and read extra bytes
+        file.seek(size - readSize - extra);
+        ByteBuffer extraBuf = ByteBuffer.allocate(extra + readSize);
+        file.readFully(extraBuf.array(),
+                extraBuf.arrayOffset() + extraBuf.position(), extra);
+        extraBuf.position(extra);
+        //append with already read bytes
+        extraBuf.put(buffer);
+        buffer = extraBuf;
+        buffer.position(0);
+        buffer.limit(footerSize + metadataSize);
+        readSize += extra;
+        psOffset = readSize - 1 - psLen;
+      } else {
+        //footer is already in the bytes in buffer, just adjust position, length
+        buffer.position(psOffset - footerSize - metadataSize);
+        buffer.limit(psOffset);
+      }
+
+      // remember position for later
+      buffer.mark();
+
+      int bufferSize = (int) ps.getCompressionBlockSize();
+      CompressionCodec codec = WriterImpl.createCodec(CompressionKind.valueOf(ps.getCompression().name()));
+      fileTailBuilder.setPostscriptLength(psLen).setPostscript(ps);
+      int footerOffset = psOffset - footerSize;
+      buffer.position(footerOffset);
+      ByteBuffer footerBuffer = buffer.slice();
+      buffer.reset();
+      OrcProto.Footer footer = extractFooter(footerBuffer, 0, footerSize,
+              codec, bufferSize);
+      fileTailBuilder.setFooter(footer);
+    } finally {
+      try {
+        file.close();
+      } catch (IOException ex) {
+        LOG.error("Failed to close the file after another error", ex);
+      }
     }
-    fileTailBuilder.setFileLength(size);
-
-    //read last bytes into buffer to get PostScript
-    int readSize = (int) Math.min(size, DIRECTORY_SIZE_GUESS);
-    file.seek(size - readSize);
-    ByteBuffer buffer = ByteBuffer.allocate(readSize);
-    file.readFully(buffer.array(), buffer.arrayOffset() + buffer.position(),
-      buffer.remaining());
-
-    //read the PostScript
-    //get length of PostScript
-    int psLen = buffer.get(readSize - 1) & 0xff;
-    ensureOrcFooter(file, path, psLen, buffer);
-    int psOffset = readSize - 1 - psLen;
-    CodedInputStream in = CodedInputStream.newInstance(buffer.array(),
-      buffer.arrayOffset() + psOffset, psLen);
-    OrcProto.PostScript ps = OrcProto.PostScript.parseFrom(in);
-
-    checkOrcVersion(LOG, path, ps.getVersionList());
-
-    int footerSize = (int) ps.getFooterLength();
-    int metadataSize = (int) ps.getMetadataLength();
-    OrcFile.WriterVersion writerVersion;
-    if (ps.hasWriterVersion()) {
-      writerVersion =  getWriterVersion(ps.getWriterVersion());
-    } else {
-      writerVersion = OrcFile.WriterVersion.ORIGINAL;
-    }
-
-    //check compression codec
-    switch (ps.getCompression()) {
-      case NONE:
-        break;
-      case ZLIB:
-        break;
-      case SNAPPY:
-        break;
-      case LZO:
-        break;
-      default:
-        throw new IllegalArgumentException("Unknown compression");
-    }
-
-    //check if extra bytes need to be read
-    int extra = Math.max(0, psLen + 1 + footerSize + metadataSize - readSize);
-    if (extra > 0) {
-      //more bytes need to be read, seek back to the right place and read extra bytes
-      file.seek(size - readSize - extra);
-      ByteBuffer extraBuf = ByteBuffer.allocate(extra + readSize);
-      file.readFully(extraBuf.array(),
-        extraBuf.arrayOffset() + extraBuf.position(), extra);
-      extraBuf.position(extra);
-      //append with already read bytes
-      extraBuf.put(buffer);
-      buffer = extraBuf;
-      buffer.position(0);
-      buffer.limit(footerSize + metadataSize);
-      readSize += extra;
-      psOffset = readSize - 1 - psLen;
-    } else {
-      //footer is already in the bytes in buffer, just adjust position, length
-      buffer.position(psOffset - footerSize - metadataSize);
-      buffer.limit(psOffset);
-    }
-
-    // remember position for later
-    buffer.mark();
-
-    int bufferSize = (int) ps.getCompressionBlockSize();
-    CompressionCodec codec = WriterImpl.createCodec(CompressionKind.valueOf(ps.getCompression().name()));
-    fileTailBuilder.setPostscriptLength(psLen).setPostscript(ps);
-    int footerOffset = psOffset - footerSize;
-    buffer.position(footerOffset);
-    ByteBuffer footerBuffer = buffer.slice();
-    buffer.reset();
-    OrcProto.Footer footer = extractFooter(footerBuffer, 0, footerSize,
-            codec, bufferSize);
-    fileTailBuilder.setFooter(footer);
-
-    file.close();
 
     return new OrcTail(fileTailBuilder.build(), buffer.slice(), modificationTime);
   }
