@@ -78,7 +78,6 @@ public class MapJoinOperator extends AbstractMapJoinOperator<MapJoinDesc> implem
   private transient ObjectCache cache;
 
   protected HashTableLoader loader;
-  private boolean loadCalled;
 
   protected transient MapJoinTableContainer[] mapJoinTables;
   private transient MapJoinTableContainerSerDe[] mapJoinTableSerdes;
@@ -201,7 +200,7 @@ public class MapJoinOperator extends AbstractMapJoinOperator<MapJoinDesc> implem
         }
       }
 
-      if (!loadCalled && spilled) {
+      if (spilled) {
         // we can't use the cached table because it has spilled.
         loadHashTable(getExecContext(), MapredContext.get());
       } else {
@@ -284,8 +283,6 @@ public class MapJoinOperator extends AbstractMapJoinOperator<MapJoinDesc> implem
 
   protected Pair<MapJoinTableContainer[], MapJoinTableContainerSerDe[]> loadHashTable(
       ExecMapperContext mapContext, MapredContext mrContext) throws HiveException {
-    loadCalled = true;
-
     if (this.hashTblInitedOnce
         && ((mapContext == null) || (mapContext.getLocalWork() == null) || (mapContext
             .getLocalWork().getInputFileChangeSensitive() == false))) {
@@ -565,6 +562,7 @@ public class MapJoinOperator extends AbstractMapJoinOperator<MapJoinDesc> implem
       throws HiveException, IOException, SerDeException, ClassNotFoundException {
     for (byte pos = 0; pos < mapJoinTables.length; pos++) {
       if (pos != conf.getPosBigTable()) {
+        LOG.info("Going to reload hash partition " + partitionId);
         reloadHashTable(pos, partitionId);
       }
     }
@@ -589,6 +587,7 @@ public class MapJoinOperator extends AbstractMapJoinOperator<MapJoinDesc> implem
 
     // Merge the sidefile into the newly created hash table
     // This is where the spilling may happen again
+    LOG.info("Going to restore sidefile...");
     KeyValueContainer kvContainer = partition.getSidefileKVContainer();
     int rowCount = kvContainer.size();
     LOG.info("Hybrid Grace Hash Join: Number of rows restored from KeyValueContainer: " +
@@ -601,6 +600,7 @@ public class MapJoinOperator extends AbstractMapJoinOperator<MapJoinDesc> implem
                               // as the initialCapacity which cannot be 0, we provide a reasonable
                               // positive number here
     }
+    LOG.info("Going to restore hashmap...");
     BytesBytesMultiHashMap restoredHashMap = partition.getHashMapFromDisk(rowCount);
     rowCount += restoredHashMap.getNumValues();
     LOG.info("Hybrid Grace Hash Join: Deserializing spilled hash partition...");

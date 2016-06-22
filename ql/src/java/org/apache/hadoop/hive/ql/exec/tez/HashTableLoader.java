@@ -108,6 +108,7 @@ public class HashTableLoader implements org.apache.hadoop.hive.ql.exec.HashTable
     if (useHybridGraceHashJoin && mapJoinTables.length > 2) {
       // Create a Conf for n-way HybridHashTableContainers
       nwayConf = new HybridHashTableConf();
+      LOG.info("N-way join: " + (mapJoinTables.length - 1) + " small tables.");
 
       // Find the biggest small table; also calculate total data size of all small tables
       long maxSize = Long.MIN_VALUE; // the size of the biggest small table
@@ -196,6 +197,7 @@ public class HashTableLoader implements org.apache.hadoop.hive.ql.exec.HashTable
               valCtx, (Writable)kvReader.getCurrentValue());
         }
         tableContainer.seal();
+        LOG.info("Finished loading hashtable using " + tableContainer.getClass() + ". Small table position: " + pos);
         mapJoinTables[pos] = tableContainer;
       } catch (Exception e) {
         throw new HiveException(e);
