@@ -58,8 +58,6 @@ POSTHOOK: Input: default@sih_i_part@p=2
 POSTHOOK: Input: default@sih_i_part@p=3
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@sih_src
-POSTHOOK: Lineage: sih_src.key SIMPLE [(sih_i_part)sih_i_part.FieldSchema(name:key, type:int, comment:null), ]
-POSTHOOK: Lineage: sih_src.value SIMPLE [(sih_i_part)sih_i_part.FieldSchema(name:value, type:string, comment:null), ]
 PREHOOK: query: create table sih_src2 as select key, value from sih_src order by key, value
 PREHOOK: type: CREATETABLE_AS_SELECT
 PREHOOK: Input: default@sih_src
@@ -70,8 +68,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@sih_src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@sih_src2
-POSTHOOK: Lineage: sih_src2.key SIMPLE [(sih_src)sih_src.FieldSchema(name:key, type:int, comment:null), ]
-POSTHOOK: Lineage: sih_src2.value SIMPLE [(sih_src)sih_src.FieldSchema(name:value, type:string, comment:null), ]
 PREHOOK: query: -- Relaxing hive.exec.mode.local.auto.input.files.max=1.
 -- Hadoop20 will not generate more splits than there are files (one).
 -- Hadoop23 generate splits correctly (four), hence the max needs to be adjusted to ensure running in local mode.
@@ -91,11 +87,12 @@ value               	string
 # Detailed Table Information	 	 
 Database:           	default             	 
 #### A masked pattern was here ####
+Protect Mode:       	None                	 
 Retention:          	0                   	 
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	1500                
 	rawDataSize         	18124               
@@ -163,8 +160,8 @@ STAGE PLANS:
             compressed: false
             Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: COMPLETE
             table:
-                input format: org.apache.hadoop.mapred.SequenceFileInputFormat
-                output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
+                input format: org.apache.hadoop.mapred.TextInputFormat
+                output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                 serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
 
   Stage: Stage-0
@@ -213,8 +210,8 @@ STAGE PLANS:
             compressed: false
             Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: COMPLETE
             table:
-                input format: org.apache.hadoop.mapred.SequenceFileInputFormat
-                output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
+                input format: org.apache.hadoop.mapred.TextInputFormat
+                output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                 serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
 
   Stage: Stage-0
