@@ -2174,6 +2174,10 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           if (!rightAliases.contains(tableOrCol)) {
             rightAliases.add(tableOrCol);
           }
+          if (joinTree.getNoSemiJoin() == false) {
+            // if this is a semijoin, we need to add the condition
+            joinTree.addRHSSemijoinColumns(tableOrCol, condn);
+          }
         }
       }
       break;
