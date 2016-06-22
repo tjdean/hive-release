@@ -2311,6 +2311,8 @@ public class VectorizationContext {
     case VARCHAR:
       //Return the VARCHAR type as is, it includes maximum length.
       return hiveTypeName;
+    case BINARY:
+      return "Binary";
     case DATE:
       return "Date";
     case TIMESTAMP:
@@ -2338,6 +2340,8 @@ public class VectorizationContext {
       return "Char";
     case VARCHAR:
       return "VarChar";
+    case BINARY:
+      return "Binary";
     case DATE:
       return "Date";
     case TIMESTAMP:
