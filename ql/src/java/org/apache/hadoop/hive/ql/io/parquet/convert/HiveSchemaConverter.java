@@ -29,7 +29,6 @@ import parquet.schema.ConversionPatterns;
 import parquet.schema.GroupType;
 import parquet.schema.MessageType;
 import parquet.schema.OriginalType;
-import parquet.schema.PrimitiveType;
 import parquet.schema.PrimitiveType.PrimitiveTypeName;
 import parquet.schema.Type;
 import parquet.schema.Type.Repetition;
@@ -120,9 +119,10 @@ public class HiveSchemaConverter {
 
   // An optional group containing a repeated anonymous group "bag", containing
   // 1 anonymous element "array_element"
+  @SuppressWarnings("deprecation")
   private static GroupType convertArrayType(final String name, final ListTypeInfo typeInfo) {
     final TypeInfo subType = typeInfo.getListElementTypeInfo();
-    return listWrapper(name, OriginalType.LIST, new GroupType(Repetition.REPEATED,
+    return new GroupType(Repetition.OPTIONAL, name, OriginalType.LIST, new GroupType(Repetition.REPEATED,
         ParquetHiveSerDe.ARRAY.toString(), convertType("array_element", subType)));
   }
 
@@ -142,10 +142,5 @@ public class HiveSchemaConverter {
     final Type valueType = convertType(ParquetHiveSerDe.MAP_VALUE.toString(),
         typeInfo.getMapValueTypeInfo());
     return ConversionPatterns.mapType(Repetition.OPTIONAL, name, keyType, valueType);
-  }
-
-  private static GroupType listWrapper(final String name, final OriginalType originalType,
-      final GroupType groupType) {
-    return new GroupType(Repetition.OPTIONAL, name, originalType, groupType);
   }
 }
