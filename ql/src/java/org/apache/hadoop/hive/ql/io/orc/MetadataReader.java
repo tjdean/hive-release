@@ -110,7 +110,7 @@ public class MetadataReader {
     ByteBuffer tailBuf = ByteBuffer.allocate(tailLength);
     file.seek(offset);
     file.readFully(tailBuf.array(), tailBuf.arrayOffset(), tailLength);
-    return OrcProto.StripeFooter.parseFrom(InStream.create("footer",
+    return OrcProto.StripeFooter.parseFrom(InStream.createCodedInputStream("footer",
         Lists.<DiskRange>newArrayList(new BufferChunk(tailBuf, 0)),
         tailLength, codec, bufferSize));
   }
