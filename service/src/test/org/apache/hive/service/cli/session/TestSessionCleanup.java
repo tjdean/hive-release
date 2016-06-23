@@ -41,7 +41,7 @@ public class TestSessionCleanup extends TestCase {
   // This is to test session temporary files are cleaned up after HIVE-11768
   public void testTempSessionFileCleanup() throws Exception {
     EmbeddedThriftBinaryCLIService service = new EmbeddedThriftBinaryCLIService();
-    service.init(null);
+    service.init(new HiveConf());
     ThriftCLIServiceClient client = new ThriftCLIServiceClient(service);
 
     Set<String> existingPipeoutFiles = new HashSet<String>(Arrays.asList(getPipeoutFiles()));
