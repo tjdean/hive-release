@@ -61,6 +61,7 @@ import org.apache.hive.jdbc.miniHS2.MiniHS2;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.NucleusContext;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
+import org.datanucleus.AbstractNucleusContext;
 import org.apache.hive.service.Service;
 import org.apache.hive.service.cli.CLIService;
 import org.apache.hive.service.cli.operation.OperationManager;
@@ -758,8 +759,8 @@ public class TestJdbcWithMiniHS2 {
   }
 
   /**
-   * Tests that DataNucleus' NucleusContext.classLoaderResolverMap clears cached class objects (& hence
-   * doesn't leak classloaders) on closing any session
+   * Tests that DataNucleus' NucleusContext.classLoaderResolverMap clears cached class objects
+   * (& hence doesn't leak classloaders) on closing any session
    *
    * @throws Exception
    */
@@ -822,7 +823,7 @@ public class TestJdbcWithMiniHS2 {
     }
     if (nc != null) {
       try {
-        classLoaderResolverMap = NucleusContext.class.getDeclaredField("classLoaderResolverMap");
+        classLoaderResolverMap = AbstractNucleusContext.class.getDeclaredField("classLoaderResolverMap");
         if (classLoaderResolverMap != null) {
           classLoaderResolverMap.setAccessible(true);
           cMap = (Map<String, ClassLoaderResolver>) classLoaderResolverMap.get(nc);
