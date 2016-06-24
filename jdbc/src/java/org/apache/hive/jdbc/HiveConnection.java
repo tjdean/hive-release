@@ -236,26 +236,7 @@ public class HiveConnection implements java.sql.Connection {
     boolean useSsl = isSslConnection();
     // Create an http client from the configs
     httpClient = getHttpClient(useSsl);
-    try {
-      transport = new THttpClient(getServerHttpUrl(useSsl), httpClient);
-      // We'll call an open/close here to send a test HTTP message to the server. Any
-      // TTransportException caused by trying to connect to a non-available peer are thrown here.
-      // Bubbling them up the call hierarchy so that a retry can happen in openTransport,
-      // if dynamic service discovery is configured.
-      TCLIService.Iface client = new TCLIService.Client(new TBinaryProtocol(transport));
-      TOpenSessionResp openResp = client.OpenSession(new TOpenSessionReq());
-      if (openResp != null) {
-        client.CloseSession(new TCloseSessionReq(openResp.getSessionHandle()));
-      }
-    }
-    catch (TException e) {
-      LOG.info("JDBC Connection Parameters used : useSSL = " + useSsl + " , httpPath  = " +
-        sessConfMap.get(JdbcConnectionParams.HTTP_PATH) + " Authentication type = " +
-        sessConfMap.get(JdbcConnectionParams.AUTH_TYPE));
-      String msg =  "Could not create http connection to " +
-          jdbcUriString + ". " + e.getMessage();
-      throw new TTransportException(msg, e);
-    }
+    transport = new THttpClient(getServerHttpUrl(useSsl), httpClient);
     return transport;
   }
 
