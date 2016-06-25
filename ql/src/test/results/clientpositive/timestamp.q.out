@@ -18,64 +18,60 @@ STAGE PLANS:
             alias: src
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: COMPLETE
             Select Operator
-              expressions: 2011-01-01 01:01:01.0 (type: timestamp)
-              outputColumnNames: _col0
-              Statistics: Num rows: 500 Data size: 20000 Basic stats: COMPLETE Column stats: COMPLETE
+              Statistics: Num rows: 500 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
               Union
-                Statistics: Num rows: 1000 Data size: 40000 Basic stats: COMPLETE Column stats: COMPLETE
+                Statistics: Num rows: 1000 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
                 Select Operator
-                  expressions: 2011-01-01 01:01:01.0 (type: timestamp)
-                  outputColumnNames: _col0
-                  Statistics: Num rows: 1000 Data size: 40000 Basic stats: COMPLETE Column stats: COMPLETE
+                  Statistics: Num rows: 1000 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
                   Group By Operator
-                    keys: _col0 (type: timestamp)
+                    keys: 2011-01-01 01:01:01.0 (type: timestamp)
                     mode: hash
                     outputColumnNames: _col0
-                    Statistics: Num rows: 1 Data size: 40 Basic stats: COMPLETE Column stats: COMPLETE
+                    Statistics: Num rows: 1000 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
                     Reduce Output Operator
-                      key expressions: _col0 (type: timestamp)
+                      key expressions: 2011-01-01 01:01:01.0 (type: timestamp)
                       sort order: +
-                      Map-reduce partition columns: _col0 (type: timestamp)
-                      Statistics: Num rows: 1 Data size: 40 Basic stats: COMPLETE Column stats: COMPLETE
+                      Map-reduce partition columns: 2011-01-01 01:01:01.0 (type: timestamp)
+                      Statistics: Num rows: 1000 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
           TableScan
             alias: src
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: COMPLETE
             Select Operator
-              expressions: 2011-01-01 01:01:01.0 (type: timestamp)
-              outputColumnNames: _col0
-              Statistics: Num rows: 500 Data size: 20000 Basic stats: COMPLETE Column stats: COMPLETE
+              Statistics: Num rows: 500 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
               Union
-                Statistics: Num rows: 1000 Data size: 40000 Basic stats: COMPLETE Column stats: COMPLETE
+                Statistics: Num rows: 1000 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
                 Select Operator
-                  expressions: 2011-01-01 01:01:01.0 (type: timestamp)
-                  outputColumnNames: _col0
-                  Statistics: Num rows: 1000 Data size: 40000 Basic stats: COMPLETE Column stats: COMPLETE
+                  Statistics: Num rows: 1000 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
                   Group By Operator
-                    keys: _col0 (type: timestamp)
+                    keys: 2011-01-01 01:01:01.0 (type: timestamp)
                     mode: hash
                     outputColumnNames: _col0
-                    Statistics: Num rows: 1 Data size: 40 Basic stats: COMPLETE Column stats: COMPLETE
+                    Statistics: Num rows: 1000 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
                     Reduce Output Operator
-                      key expressions: _col0 (type: timestamp)
+                      key expressions: 2011-01-01 01:01:01.0 (type: timestamp)
                       sort order: +
-                      Map-reduce partition columns: _col0 (type: timestamp)
-                      Statistics: Num rows: 1 Data size: 40 Basic stats: COMPLETE Column stats: COMPLETE
+                      Map-reduce partition columns: 2011-01-01 01:01:01.0 (type: timestamp)
+                      Statistics: Num rows: 1000 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
       Reduce Operator Tree:
         Group By Operator
-          keys: KEY._col0 (type: timestamp)
+          keys: 2011-01-01 01:01:01.0 (type: timestamp)
           mode: mergepartial
           outputColumnNames: _col0
-          Statistics: Num rows: 1 Data size: 40 Basic stats: COMPLETE Column stats: COMPLETE
-          Limit
-            Number of rows: 5
-            Statistics: Num rows: 1 Data size: 40 Basic stats: COMPLETE Column stats: COMPLETE
-            File Output Operator
-              compressed: false
-              Statistics: Num rows: 1 Data size: 40 Basic stats: COMPLETE Column stats: COMPLETE
-              table:
-                  input format: org.apache.hadoop.mapred.TextInputFormat
-                  output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
-                  serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+          Statistics: Num rows: 500 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
+          Select Operator
+            expressions: 2011-01-01 01:01:01.0 (type: timestamp)
+            outputColumnNames: _col0
+            Statistics: Num rows: 500 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
+            Limit
+              Number of rows: 5
+              Statistics: Num rows: 5 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
+              File Output Operator
+                compressed: false
+                Statistics: Num rows: 5 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
+                table:
+                    input format: org.apache.hadoop.mapred.TextInputFormat
+                    output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+                    serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
 
   Stage: Stage-0
     Fetch Operator
@@ -108,64 +104,60 @@ STAGE PLANS:
             alias: src
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: COMPLETE
             Select Operator
-              expressions: 2011-01-01 01:01:01.123 (type: timestamp)
-              outputColumnNames: _col0
-              Statistics: Num rows: 500 Data size: 20000 Basic stats: COMPLETE Column stats: COMPLETE
+              Statistics: Num rows: 500 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
               Union
-                Statistics: Num rows: 1000 Data size: 40000 Basic stats: COMPLETE Column stats: COMPLETE
+                Statistics: Num rows: 1000 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
                 Select Operator
-                  expressions: 2011-01-01 01:01:01.123 (type: timestamp)
-                  outputColumnNames: _col0
-                  Statistics: Num rows: 1000 Data size: 40000 Basic stats: COMPLETE Column stats: COMPLETE
+                  Statistics: Num rows: 1000 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
                   Group By Operator
-                    keys: _col0 (type: timestamp)
+                    keys: 2011-01-01 01:01:01.123 (type: timestamp)
                     mode: hash
                     outputColumnNames: _col0
-                    Statistics: Num rows: 1 Data size: 40 Basic stats: COMPLETE Column stats: COMPLETE
+                    Statistics: Num rows: 1000 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
                     Reduce Output Operator
-                      key expressions: _col0 (type: timestamp)
+                      key expressions: 2011-01-01 01:01:01.123 (type: timestamp)
                       sort order: +
-                      Map-reduce partition columns: _col0 (type: timestamp)
-                      Statistics: Num rows: 1 Data size: 40 Basic stats: COMPLETE Column stats: COMPLETE
+                      Map-reduce partition columns: 2011-01-01 01:01:01.123 (type: timestamp)
+                      Statistics: Num rows: 1000 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
           TableScan
             alias: src
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: COMPLETE
             Select Operator
-              expressions: 2011-01-01 01:01:01.123 (type: timestamp)
-              outputColumnNames: _col0
-              Statistics: Num rows: 500 Data size: 20000 Basic stats: COMPLETE Column stats: COMPLETE
+              Statistics: Num rows: 500 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
               Union
-                Statistics: Num rows: 1000 Data size: 40000 Basic stats: COMPLETE Column stats: COMPLETE
+                Statistics: Num rows: 1000 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
                 Select Operator
-                  expressions: 2011-01-01 01:01:01.123 (type: timestamp)
-                  outputColumnNames: _col0
-                  Statistics: Num rows: 1000 Data size: 40000 Basic stats: COMPLETE Column stats: COMPLETE
+                  Statistics: Num rows: 1000 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
                   Group By Operator
-                    keys: _col0 (type: timestamp)
+                    keys: 2011-01-01 01:01:01.123 (type: timestamp)
                     mode: hash
                     outputColumnNames: _col0
-                    Statistics: Num rows: 1 Data size: 40 Basic stats: COMPLETE Column stats: COMPLETE
+                    Statistics: Num rows: 1000 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
                     Reduce Output Operator
-                      key expressions: _col0 (type: timestamp)
+                      key expressions: 2011-01-01 01:01:01.123 (type: timestamp)
                       sort order: +
-                      Map-reduce partition columns: _col0 (type: timestamp)
-                      Statistics: Num rows: 1 Data size: 40 Basic stats: COMPLETE Column stats: COMPLETE
+                      Map-reduce partition columns: 2011-01-01 01:01:01.123 (type: timestamp)
+                      Statistics: Num rows: 1000 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
       Reduce Operator Tree:
         Group By Operator
-          keys: KEY._col0 (type: timestamp)
+          keys: 2011-01-01 01:01:01.123 (type: timestamp)
           mode: mergepartial
           outputColumnNames: _col0
-          Statistics: Num rows: 1 Data size: 40 Basic stats: COMPLETE Column stats: COMPLETE
-          Limit
-            Number of rows: 5
-            Statistics: Num rows: 1 Data size: 40 Basic stats: COMPLETE Column stats: COMPLETE
-            File Output Operator
-              compressed: false
-              Statistics: Num rows: 1 Data size: 40 Basic stats: COMPLETE Column stats: COMPLETE
-              table:
-                  input format: org.apache.hadoop.mapred.TextInputFormat
-                  output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
-                  serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+          Statistics: Num rows: 500 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
+          Select Operator
+            expressions: 2011-01-01 01:01:01.123 (type: timestamp)
+            outputColumnNames: _col0
+            Statistics: Num rows: 500 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
+            Limit
+              Number of rows: 5
+              Statistics: Num rows: 5 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
+              File Output Operator
+                compressed: false
+                Statistics: Num rows: 5 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
+                table:
+                    input format: org.apache.hadoop.mapred.TextInputFormat
+                    output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
+                    serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
 
   Stage: Stage-0
     Fetch Operator
