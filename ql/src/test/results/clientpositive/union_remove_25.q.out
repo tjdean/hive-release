@@ -216,10 +216,7 @@ Table:              	outputtbl1
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	false               
 	numFiles            	2                   
-	numRows             	-1                  
-	rawDataSize         	-1                  
 	totalSize           	40                  
 #### A masked pattern was here ####
 	 	 
@@ -422,10 +419,7 @@ Table:              	outputtbl2
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	false               
 	numFiles            	2                   
-	numRows             	-1                  
-	rawDataSize         	-1                  
 	totalSize           	6812                
 #### A masked pattern was here ####
 	 	 
@@ -612,10 +606,7 @@ Table:              	outputtbl3
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	false               
 	numFiles            	2                   
-	numRows             	-1                  
-	rawDataSize         	-1                  
 	totalSize           	6812                
 #### A masked pattern was here ####
 	 	 
