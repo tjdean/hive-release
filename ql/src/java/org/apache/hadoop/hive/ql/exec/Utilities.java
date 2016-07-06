@@ -2002,7 +2002,7 @@ public final class Utilities {
     if (success) {
       if (fs.exists(tmpPath)) {
         // remove any tmp file or double-committed output files
-        ArrayList<String> emptyBuckets =
+        List<Path> emptyBuckets =
             Utilities.removeTempOrDuplicateFiles(fs, tmpPath, dpCtx, conf, hconf);
         // create empty buckets if necessary
         if (emptyBuckets.size() > 0) {
@@ -2030,7 +2030,7 @@ public final class Utilities {
    * @throws HiveException
    * @throws IOException
    */
-  private static void createEmptyBuckets(Configuration hconf, ArrayList<String> paths,
+  private static void createEmptyBuckets(Configuration hconf, List<Path> paths,
       FileSinkDesc conf, Reporter reporter)
       throws HiveException, IOException {
 
@@ -2058,8 +2058,7 @@ public final class Utilities {
       throw new HiveException(e);
     }
 
-    for (String p : paths) {
-      Path path = new Path(p);
+    for (Path path : paths) {
       RecordWriter writer = HiveFileFormatUtils.getRecordWriter(
           jc, hiveOutputFormat, outputClass, isCompressed,
           tableInfo.getProperties(), path, reporter);
@@ -2080,13 +2079,13 @@ public final class Utilities {
    *
    * @return a list of path names corresponding to should-be-created empty buckets.
    */
-  public static ArrayList<String> removeTempOrDuplicateFiles(FileSystem fs, Path path,
+  public static List<Path> removeTempOrDuplicateFiles(FileSystem fs, Path path,
       DynamicPartitionCtx dpCtx, FileSinkDesc conf, Configuration hconf) throws IOException {
     if (path == null) {
       return null;
     }
 
-    ArrayList<String> result = new ArrayList<String>();
+    List<Path> result = new ArrayList<Path>();
     HashMap<String, FileStatus> taskIDToFile = null;
     if (dpCtx != null) {
       FileStatus parts[] = HiveStatsUtils.getFileStatusRecurse(path, dpCtx.getNumDPCols(), fs);
@@ -2117,8 +2116,9 @@ public final class Utilities {
             String taskID2 = replaceTaskId(taskID1, j);
             if (!taskIDToFile.containsKey(taskID2)) {
               // create empty bucket, file name should be derived from taskID2
-              String path2 = replaceTaskIdFromFilename(bucketPath.toUri().getPath().toString(), j);
-              result.add(path2);
+              URI bucketUri = bucketPath.toUri();
+              String path2 = replaceTaskIdFromFilename(bucketUri.getPath().toString(), j);
+              result.add(new Path(bucketUri.getScheme(), bucketUri.getAuthority(), path2));
             }
           }
         }
@@ -2135,8 +2135,9 @@ public final class Utilities {
           String taskID2 = replaceTaskId(taskID1, j);
           if (!taskIDToFile.containsKey(taskID2)) {
             // create empty bucket, file name should be derived from taskID2
-            String path2 = replaceTaskIdFromFilename(bucketPath.toUri().getPath().toString(), j);
-            result.add(path2);
+            URI bucketUri = bucketPath.toUri();
+            String path2 = replaceTaskIdFromFilename(bucketUri.getPath().toString(), j);
+            result.add(new Path(bucketUri.getScheme(), bucketUri.getAuthority(), path2));
           }
         }
       }
