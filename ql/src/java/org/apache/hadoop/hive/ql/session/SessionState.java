@@ -1514,14 +1514,29 @@ public class SessionState {
   }
 
   /**
+   * @return  Tries to return an instance of the class whose name is configured in
+   *          hive.exec.perf.logger, but if it can't it just returns an instance of
+   *          the base PerfLogger class
+   *
+   */
+  public static PerfLogger getPerfLogger() {
+    return getPerfLogger(false);
+  }
+
+  /**
    * @param resetPerfLogger
    * @return  Tries to return an instance of the class whose name is configured in
    *          hive.exec.perf.logger, but if it can't it just returns an instance of
    *          the base PerfLogger class
 
    */
-  public PerfLogger getPerfLogger(boolean resetPerfLogger) {
-    return PerfLogger.getPerfLogger(conf, resetPerfLogger);
+  public static PerfLogger getPerfLogger(boolean resetPerfLogger) {
+    SessionState ss = get();
+    if (ss == null) {
+      return PerfLogger.getPerfLogger(null, resetPerfLogger);
+    } else {
+      return PerfLogger.getPerfLogger(ss.getConf(), resetPerfLogger);
+    }
   }
 
   public TezSessionState getTezSession() {

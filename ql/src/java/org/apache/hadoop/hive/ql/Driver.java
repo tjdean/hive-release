@@ -372,7 +372,8 @@ public class Driver implements CommandProcessor {
    * @return 0 for ok
    */
   public int compile(String command, boolean resetTaskIds) {
-    PerfLogger perfLogger = PerfLogger.getPerfLogger();
+    PerfLogger perfLogger = PerfLogger.getPerfLogger(true);
+    perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.DRIVER_RUN);
     perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.COMPILE);
 
     String queryStr = null;
@@ -1231,18 +1232,19 @@ public class Driver implements CommandProcessor {
       return createProcessorResponse(12);
     }
 
-    // Reset the perf logger
-    PerfLogger perfLogger = PerfLogger.getPerfLogger(true);
-    perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.DRIVER_RUN);
-    perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.TIME_TO_SUBMIT);
-
+    PerfLogger perfLogger = null;
     int ret;
     if (!alreadyCompiled) {
+      // compile internal will automatically reset the perf logger
       ret = compileInternal(command);
+      // then we continue to use this perf logger
+      perfLogger = SessionState.getPerfLogger();
       if (ret != 0) {
         return createProcessorResponse(ret);
       }
     } else {
+      // reuse existing perf logger.
+      perfLogger = SessionState.getPerfLogger();
       // Since we're reusing the compiled plan, we need to update its start time for current run
       plan.setQueryStartTime(perfLogger.getStartTime(PerfLogger.DRIVER_RUN));
     }
@@ -1457,7 +1459,6 @@ public class Driver implements CommandProcessor {
         driverCxt.addToRunnable(tsk);
       }
 
-      perfLogger.PerfLogEnd(CLASS_NAME, PerfLogger.TIME_TO_SUBMIT);
       perfLogger.PerfLogBegin(CLASS_NAME, PerfLogger.RUN_TASKS);
       // Loop while you either have tasks running, or tasks queued up
       while (!destroyed && driverCxt.isRunning()) {

@@ -471,7 +471,7 @@ public class TezJobMonitor {
      * TezRunDag.startTime, so calculate the duration and print it.
      */
     totalInPrepTime = perfLogger.getStartTime(PerfLogger.TEZ_RUN_DAG) -
-        perfLogger.getStartTime(PerfLogger.TIME_TO_SUBMIT);
+        perfLogger.getStartTime(PerfLogger.COMPILE);
 
     console.printInfo(String.format("%-30s %11s\n", TOTAL_PREP_TIME, commaFormat.format(
         totalInPrepTime)));
