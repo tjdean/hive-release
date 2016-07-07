@@ -11,6 +11,7 @@ NEW FEATURES
 
 IMPROVEMENTS
 
+    HIVE-11945 : ORC with non-local reads may not be reusing connection to DN
     HIVE-13922 : Optimize the code path that analyzes/updates col stats
     HIVE-13905 : Optimize ColumnStatsTask::constructColumnStatsFromPackedRows to have lesser number of getTable calls
     HIVE-13799 : Optimize TableScanRule::checkBucketedTable
