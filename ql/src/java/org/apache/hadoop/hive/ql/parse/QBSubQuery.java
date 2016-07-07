@@ -402,7 +402,6 @@ public class QBSubQuery implements ISubQueryJoinInfo {
           CNT_ALIAS,
           subQryCorrExprs,
           sqRR);
-      SubQueryUtils.setOriginDeep(ast, QBSubQuery.this.originalSQASTOrigin);
       return ast;
     }
 
@@ -417,7 +416,6 @@ public class QBSubQuery implements ISubQueryJoinInfo {
     public ASTNode getJoinConditionAST() {
       ASTNode ast =
           SubQueryUtils.buildNotInNullJoinCond(getAlias(), CNT_ALIAS);
-      SubQueryUtils.setOriginDeep(ast, QBSubQuery.this.originalSQASTOrigin);
       return ast;
     }
 
@@ -577,8 +575,6 @@ public class QBSubQuery implements ISubQueryJoinInfo {
 
     rewrite(outerQueryRR, forHavingClause, outerQueryAlias, insertClause, selectClause);
 
-    SubQueryUtils.setOriginDeep(subQueryAST, originalSQASTOrigin);
-
     /*
      * Restriction.13.m :: In the case of an implied Group By on a
      * correlated SubQuery, the SubQuery always returns 1 row.
@@ -697,8 +693,6 @@ public class QBSubQuery implements ISubQueryJoinInfo {
       }
     }
 
-    SubQueryUtils.setOriginDeep(joinConditionAST, originalSQASTOrigin);
-    SubQueryUtils.setOriginDeep(postJoinConditionAST, originalSQASTOrigin);
   }
 
   ASTNode updateOuterQueryFilter(ASTNode outerQryFilter) {
@@ -712,7 +706,6 @@ public class QBSubQuery implements ISubQueryJoinInfo {
       return postJoinConditionAST;
     }
     ASTNode node = SubQueryUtils.andAST(outerQryFilter, postJoinConditionAST);
-    node.setOrigin(originalSQASTOrigin);
     return node;
   }
 
