@@ -30,6 +30,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -78,14 +81,17 @@ public class SQLOperation extends ExecuteStatementOperation {
   private Schema mResultSchema = null;
   private SerDe serde = null;
   private boolean fetchStarted = false;
-
-  public SQLOperation(HiveSession parentSession, String statement, Map<String,
-      String> confOverlay, boolean runInBackground) {
+  private long queryTimeout;
+  private ScheduledExecutorService timeoutExecutor;
+  
+  public SQLOperation(HiveSession parentSession, String statement, Map<String, String> confOverlay,
+      boolean runInBackground, long queryTimeout) {
     // TODO: call setRemoteUser in ExecuteStatementOperation or higher.
     super(parentSession, statement, confOverlay, runInBackground);
+    this.queryTimeout = queryTimeout;
   }
 
-  /***
+  /**
    * Compile the query and extract metadata
    * @param sqlOperationConf
    * @throws HiveSQLException
@@ -96,6 +102,29 @@ public class SQLOperation extends ExecuteStatementOperation {
     try {
       driver = new Driver(sqlOperationConf, getParentSession().getUserName());
 
+      // Start the timer thread for cancelling the query when query timeout is
+      // reached
+      // queryTimeout == 0 means no timeout
+      if (queryTimeout > 0) {
+        timeoutExecutor = new ScheduledThreadPoolExecutor(1);
+        Runnable timeoutTask = new Runnable() {
+          @Override
+          public void run() {
+            try {
+              LOG.info("Query timed out after: " + queryTimeout
+                  + " seconds. Cancelling the execution now.");
+              SQLOperation.this.cancel(OperationState.TIMEDOUT);
+            } catch (HiveSQLException e) {
+              LOG.error("Error cancelling the query after timeout: " + queryTimeout + " seconds", e);
+            } finally {
+              // Stop
+              timeoutExecutor.shutdown();
+            }
+          }
+        };
+        timeoutExecutor.schedule(timeoutTask, queryTimeout, TimeUnit.SECONDS);
+      }
+      
       // set the operation handle information in Driver, so that thrift API users
       // can use the operation handle they receive, to lookup query information in
       // Yarn ATS
@@ -149,6 +178,13 @@ public class SQLOperation extends ExecuteStatementOperation {
 
   private void runQuery(HiveConf sqlOperationConf) throws HiveSQLException {
     try {
+      OperationState opState = getStatus().getState();
+      // Operation may have been cancelled by another thread
+      if (opState.isTerminal()) {
+        LOG.info("Not running the query. Operation is already in terminal state: " + opState
+            + ", perhaps cancelled due to query timeout or by another thread.");
+        return;
+      }
       // In Hive server mode, we are not able to retry in the FetchTask
       // case, when calling fetch queries since execute() has returned.
       // For now, we disable the test attempts.
@@ -158,14 +194,16 @@ public class SQLOperation extends ExecuteStatementOperation {
         throw toSQLException("Error while processing statement", response);
       }
     } catch (HiveSQLException e) {
-      // If the operation was cancelled by another thread,
-      // Driver#run will return a non-zero response code.
-      // We will simply return if the operation state is CANCELED,
-      // otherwise throw an exception
-      if (getStatus().getState() == OperationState.CANCELED) {
+      /**
+       * If the operation was cancelled by another thread, or the execution timed out, Driver#run
+       * may return a non-zero response code. We will simply return if the operation state is
+       * CANCELED, TIMEDOUT or CLOSED, otherwise throw an exception
+       */
+      if ((getStatus().getState() == OperationState.CANCELED)
+          || (getStatus().getState() == OperationState.TIMEDOUT)
+          || (getStatus().getState() == OperationState.CLOSED)) {
         return;
-      }
-      else {
+      } else {
         setState(OperationState.ERROR);
         throw e;
       }
@@ -290,28 +328,40 @@ public class SQLOperation extends ExecuteStatementOperation {
     }
   }
 
-  private void cleanup(OperationState state) throws HiveSQLException {
+  private synchronized void cleanup(OperationState state) throws HiveSQLException {
     setState(state);
+    if (driver != null) {
+      driver.close();
+      driver.destroy();
+    }
+    driver = null;
+    
+    SessionState ss = SessionState.get();
+    if (ss == null) {
+      LOG.warn("Operation seems to be in invalid state, SessionState is null");
+    } else {
+      if (ss.getTmpOutputFile() != null) {
+        ss.getTmpOutputFile().delete();
+      }
+    }
+
     if (shouldRunAsync()) {
       Future<?> backgroundHandle = getBackgroundHandle();
       if (backgroundHandle != null) {
         backgroundHandle.cancel(true);
       }
     }
-    if (driver != null) {
-      driver.close();
-      driver.destroy();
-    }
-    driver = null;
 
-    SessionState ss = SessionState.get();
-    ss.deleteTmpOutputFile();
-    ss.deleteTmpErrOutputFile();
+    // Shutdown the timeout thread if any, while closing this operation
+    if ((timeoutExecutor != null) && (state != OperationState.TIMEDOUT) && (state.isTerminal())) {
+      timeoutExecutor.shutdownNow();
+    }
   }
 
   @Override
-  public void cancel() throws HiveSQLException {
-    cleanup(OperationState.CANCELED);
+  public void cancel(OperationState stateAfterCancel) throws HiveSQLException {
+    cleanup(stateAfterCancel);
+    cleanupOperationLog();
   }
 
   @Override

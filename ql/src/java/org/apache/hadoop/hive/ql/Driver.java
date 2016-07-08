@@ -1635,19 +1635,30 @@ public class Driver implements CommandProcessor {
         console.printInfo("Total MapReduce CPU Time Spent: " + Utilities.formatMsecToStr(totalCpu));
       }
     }
-    plan.setDone();
-
-    if (SessionState.get() != null) {
-      try {
-        SessionState.get().getLineageState().clear();
-        SessionState.get().getHiveHistory().logPlanProgress(plan);
-      } catch (Exception e) {
-        // ignore
-      }
+    
+    releasePlan(plan);
+    
+    if (console != null) {
+      console.printInfo("OK");
     }
-    console.printInfo("OK");
 
     return (0);
+  }
+  
+  private synchronized void releasePlan(QueryPlan plan) {
+    // Plan maybe null if Driver.close is called in another thread for the same Driver object
+    if (plan != null) {
+      plan.setDone();
+      if (SessionState.get() != null) {
+        try {
+          SessionState.get().getLineageState().clear();
+          SessionState.get().getHiveHistory().logPlanProgress(plan);
+        } catch (Exception e) {
+          // Log and ignore
+          LOG.warn("Could not log query plan progress", e);
+        }
+      }
+    }
   }
 
   private void setErrorMsgAndDetail(int exitVal, Throwable downstreamError, Task tsk) {

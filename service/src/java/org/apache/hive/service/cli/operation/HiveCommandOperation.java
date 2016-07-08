@@ -210,4 +210,9 @@ public class HiveCommandOperation extends ExecuteStatementOperation {
       resultReader = null;
     }
   }
+
+  @Override
+  public void cancel(OperationState stateAfterCancel) throws HiveSQLException {
+    throw new UnsupportedOperationException("HiveCommandOperation.cancel()");
+  }
 }

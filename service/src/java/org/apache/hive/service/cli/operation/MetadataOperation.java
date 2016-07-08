@@ -133,4 +133,9 @@ public abstract class MetadataOperation extends Operation {
     }
   }
 
+  @Override
+  public void cancel(OperationState stateAfterCancel) throws HiveSQLException {
+    throw new UnsupportedOperationException("MetadataOperation.cancel()");
+  }
+
 }

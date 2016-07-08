@@ -172,7 +172,7 @@ public class HiveSessionImpl implements HiveSession {
       OperationHandle opHandle = null;
       try {
         //execute in sync mode
-        opHandle = executeStatementInternal(cmd_trimed, null, false);
+        opHandle = executeStatementInternal(cmd_trimed, null, false, 0);
       } catch (HiveSQLException e) {
         LOG.warn("Failed to execute command in global .hiverc file.", e);
         return -1;
@@ -399,23 +399,34 @@ public class HiveSessionImpl implements HiveSession {
   @Override
   public OperationHandle executeStatement(String statement, Map<String, String> confOverlay)
       throws HiveSQLException {
-    return executeStatementInternal(statement, confOverlay, false);
+    return executeStatementInternal(statement, confOverlay, false, 0);
+  }
+  
+  @Override
+  public OperationHandle executeStatement(String statement, Map<String, String> confOverlay,
+      long queryTimeout) throws HiveSQLException {
+    return executeStatementInternal(statement, confOverlay, false, queryTimeout);
   }
 
   @Override
   public OperationHandle executeStatementAsync(String statement, Map<String, String> confOverlay)
       throws HiveSQLException {
-    return executeStatementInternal(statement, confOverlay, true);
+    return executeStatementInternal(statement, confOverlay, true, 0);
   }
 
-  private OperationHandle executeStatementInternal(String statement, Map<String, String> confOverlay,
-      boolean runAsync)
-          throws HiveSQLException {
+  @Override
+  public OperationHandle executeStatementAsync(String statement, Map<String, String> confOverlay,
+      long queryTimeout) throws HiveSQLException {
+    return executeStatementInternal(statement, confOverlay, true, queryTimeout);
+  }
+
+  private OperationHandle executeStatementInternal(String statement,
+      Map<String, String> confOverlay, boolean runAsync, long queryTimeout) throws HiveSQLException {
     acquire(true);
 
     OperationManager operationManager = getOperationManager();
-    ExecuteStatementOperation operation = operationManager
-        .newExecuteStatementOperation(getSession(), statement, confOverlay, runAsync);
+    ExecuteStatementOperation operation = operationManager.newExecuteStatementOperation(
+        getSession(), statement, confOverlay, runAsync, queryTimeout);
     OperationHandle opHandle = operation.getHandle();
     try {
       operation.run();
