@@ -269,6 +269,38 @@ public class ExprWalkerInfo implements NodeProcessorCtx {
     return pushdownPreds;
   }
 
+  private List<ExprNodeDesc> getPushdownPreds(String alias) {
+    List<ExprNodeDesc> predicates = pushdownPreds.get(alias);
+    if (predicates == null) {
+      pushdownPreds.put(alias, predicates = new ArrayList<ExprNodeDesc>());
+    }
+    return predicates;
+  }
+
+  public boolean hasAnyCandidates() {
+    if (pushdownPreds == null || pushdownPreds.isEmpty()) {
+      return false;
+    }
+    for (List<ExprNodeDesc> exprs : pushdownPreds.values()) {
+      if (!exprs.isEmpty()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public boolean hasNonFinalCandidates() {
+    if (nonFinalPreds == null || nonFinalPreds.isEmpty()) {
+      return false;
+    }
+    for (List<ExprNodeDesc> exprs : nonFinalPreds.values()) {
+      if (!exprs.isEmpty()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * Adds the specified expr as a non-final candidate
    *
