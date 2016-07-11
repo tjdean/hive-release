@@ -337,7 +337,12 @@ public final class ExprWalkerProcFactory {
     }
 
     if (ctx.isCandidate(expr)) {
-      ctx.addFinalCandidate(expr);
+      ExprNodeDesc convertedExpr = ctx.getConvertedNode(expr);
+      if (convertedExpr != null) {
+        ctx.addFinalCandidate(convertedExpr);
+      } else {
+        ctx.addFinalCandidate(expr);
+      }
       return;
     } else if (!FunctionRegistry.isOpAnd(expr) &&
         HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVEPPDREMOVEDUPLICATEFILTERS)) {
