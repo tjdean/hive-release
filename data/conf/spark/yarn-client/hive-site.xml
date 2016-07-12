@@ -65,6 +65,16 @@
   <value>jdbc:derby:;databaseName=${test.tmp.dir}/TempStatsStore;create=true</value>
 </property>
 
+<property>
+  <name>hive.metastore.schema.verification</name>
+  <value>false</value>
+</property>
+
+<property>
+  <name>javax.jdo.option.ConnectionURL</name>
+  <value>jdbc:derby:;databaseName=${test.tmp.dir}/junit_metastore_db;create=true</value>
+</property>
+
 
 <property>
   <name>javax.jdo.option.ConnectionDriverName</name>

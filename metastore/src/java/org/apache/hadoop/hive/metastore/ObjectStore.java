@@ -336,6 +336,7 @@ public class ObjectStore implements RawStore, Configurable {
   @SuppressWarnings("nls")
   private static Properties getDataSourceProps(Configuration conf) {
     Properties prop = new Properties();
+    correctAutoStartMechanism(conf);
 
     Iterator<Map.Entry<String, String>> iter = conf.iterator();
     while (iter.hasNext()) {
@@ -368,6 +369,24 @@ public class ObjectStore implements RawStore, Configurable {
       }
     }
     return prop;
+  }
+
+  /**
+   * Update conf to set datanucleus.autoStartMechanismMode=ignored.
+   * This is necessary to able to use older version of hive against
+   * an upgraded but compatible metastore schema in db from new version
+   * of hive
+   * @param conf
+   */
+  private static void correctAutoStartMechanism(Configuration conf) {
+    final String autoStartKey = "datanucleus.autoStartMechanismMode";
+    final String autoStartIgnore = "ignored";
+    String currentAutoStartVal = conf.get(autoStartKey);
+    if(currentAutoStartVal != null && !currentAutoStartVal.equalsIgnoreCase(autoStartIgnore)) {
+      LOG.warn(autoStartKey + " is set to unsupported value " + conf.get(autoStartKey) +
+          " . Setting it to value " + autoStartIgnore);
+    }
+    conf.set(autoStartKey, autoStartIgnore);
   }
 
   private static synchronized PersistenceManagerFactory getPMF() {
@@ -6824,10 +6843,10 @@ public class ObjectStore implements RawStore, Configurable {
           "Set by MetaStore " + USER + "@" + HOSTNAME);
       }
     } else {
-      // metastore schema version is different than Hive distribution needs
       if (MetaStoreSchemaInfo.isVersionCompatible(hiveSchemaVer, dbSchemaVer)) {
         LOG.debug("Found expected HMS version of " + dbSchemaVer);
       } else {
+        // metastore schema version is different than Hive distribution needs
         if (strictValidation) {
           throw new MetaException("Hive Schema version " + hiveSchemaVer +
               " does not match metastore's schema version " + dbSchemaVer +
@@ -6836,7 +6855,7 @@ public class ObjectStore implements RawStore, Configurable {
           LOG.error("Version information found in metastore differs " + dbSchemaVer +
               " from expected schema version " + hiveSchemaVer +
               ". Schema verififcation is disabled " +
-              HiveConf.ConfVars.METASTORE_SCHEMA_VERIFICATION + " so setting version.");
+              HiveConf.ConfVars.METASTORE_SCHEMA_VERIFICATION);
           setMetaStoreSchemaVersion(hiveSchemaVer,
             "Set by MetaStore " + USER + "@" + HOSTNAME);
         }
@@ -6910,6 +6929,7 @@ public class ObjectStore implements RawStore, Configurable {
         "version = " + schemaVersion + ", comment = " + comment);
       return;
     }
+    LOG.warn("Setting metastore schema version in db to " + schemaVersion);
 
     try {
       mSchemaVer = getMSchemaVersion();
