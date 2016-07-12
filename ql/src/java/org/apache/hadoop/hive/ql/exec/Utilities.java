@@ -102,6 +102,7 @@ import org.apache.hadoop.hive.common.HiveInterruptCallback;
 import org.apache.hadoop.hive.common.HiveInterruptUtils;
 import org.apache.hadoop.hive.common.HiveStatsUtils;
 import org.apache.hadoop.hive.common.JavaUtils;
+import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
@@ -164,6 +165,7 @@ import org.apache.hadoop.hive.ql.plan.ReduceWork;
 import org.apache.hadoop.hive.ql.plan.SparkEdgeProperty;
 import org.apache.hadoop.hive.ql.plan.SparkWork;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
+import org.apache.hadoop.hive.ql.plan.TableScanDesc;
 import org.apache.hadoop.hive.ql.plan.api.Adjacency;
 import org.apache.hadoop.hive.ql.plan.api.Graph;
 import org.apache.hadoop.hive.ql.session.SessionState;
@@ -4103,4 +4105,33 @@ public final class Utilities {
 
     return rowObjectInspector;
   }
+  
+  public static List<String> getStatsTmpDirs(BaseWork work, Configuration conf) {
+
+    List<String> statsTmpDirs = new ArrayList<>();
+    if (!StatsSetupConst.StatDB.fs.name().equalsIgnoreCase(HiveConf.getVar(conf, ConfVars.HIVESTATSDBCLASS))) {
+      // no-op for non-fs stats collection
+      return statsTmpDirs;
+    }
+    // if its auto-stats gather for inserts or CTAS, stats dir will be in FileSink
+    Set<Operator<? extends OperatorDesc>> ops = work.getAllLeafOperators();
+    if (work instanceof MapWork) {
+      // if its an anlayze statement, stats dir will be in TableScan
+      ops.addAll(work.getAllRootOperators());
+    }
+    for (Operator<? extends OperatorDesc> op : ops) {
+      OperatorDesc desc = op.getConf();
+      String statsTmpDir = null;
+      if (desc instanceof FileSinkDesc) {
+         statsTmpDir = ((FileSinkDesc)desc).getStatsTmpDir();
+      } else if (desc instanceof TableScanDesc) {
+        statsTmpDir = ((TableScanDesc) desc).getTmpStatsDir();
+      }
+      if (statsTmpDir != null && !statsTmpDir.isEmpty()) {
+        statsTmpDirs.add(statsTmpDir);
+      }
+    }
+    return statsTmpDirs;
+  }
+
 }

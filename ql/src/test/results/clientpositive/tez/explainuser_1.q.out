@@ -244,10 +244,10 @@ Stage-0
                      outputColumnNames:["_col0"]
                      Statistics:Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: NONE
                      Select Operator [SEL_2]
-                        Statistics:Num rows: 1 Data size: 2527 Basic stats: PARTIAL Column stats: NONE
+                        Statistics:Num rows: 500 Data size: 47000 Basic stats: COMPLETE Column stats: NONE
                         TableScan [TS_0]
                            alias:src_orc_merge_test_part
-                           Statistics:Num rows: 1 Data size: 2527 Basic stats: PARTIAL Column stats: NONE
+                           Statistics:Num rows: 500 Data size: 47000 Basic stats: COMPLETE Column stats: NONE
 
 PREHOOK: query: explain select sum(hash(key)), sum(hash(value)) from src_orc_merge_test_part where ds='2012-01-03' and ts='2012-01-03+14:46:31'
 PREHOOK: type: QUERY
@@ -282,10 +282,10 @@ Stage-0
                      Statistics:Num rows: 1 Data size: 16 Basic stats: COMPLETE Column stats: NONE
                      Select Operator [SEL_2]
                         outputColumnNames:["_col0","_col1"]
-                        Statistics:Num rows: 24 Data size: 2527 Basic stats: COMPLETE Column stats: NONE
+                        Statistics:Num rows: 500 Data size: 47000 Basic stats: COMPLETE Column stats: NONE
                         TableScan [TS_0]
                            alias:src_orc_merge_test_part
-                           Statistics:Num rows: 24 Data size: 2527 Basic stats: COMPLETE Column stats: NONE
+                           Statistics:Num rows: 500 Data size: 47000 Basic stats: COMPLETE Column stats: NONE
 
 PREHOOK: query: drop table src_orc_merge_test_part
 PREHOOK: type: DROPTABLE
@@ -5122,12 +5122,12 @@ Stage-0
             |<-Map 1 [SIMPLE_EDGE]
                Reduce Output Operator [RS_3]
                   sort order:
-                  Statistics:Num rows: 1 Data size: 171 Basic stats: COMPLETE Column stats: COMPLETE
+                  Statistics:Num rows: 5 Data size: 32 Basic stats: COMPLETE Column stats: COMPLETE
                   Select Operator [SEL_1]
-                     Statistics:Num rows: 1 Data size: 171 Basic stats: COMPLETE Column stats: COMPLETE
+                     Statistics:Num rows: 5 Data size: 32 Basic stats: COMPLETE Column stats: COMPLETE
                      TableScan [TS_0]
                         alias:tgt_rc_merge_test
-                        Statistics:Num rows: 1 Data size: 171 Basic stats: COMPLETE Column stats: COMPLETE
+                        Statistics:Num rows: 5 Data size: 32 Basic stats: COMPLETE Column stats: COMPLETE
 
 PREHOOK: query: explain select sum(hash(key)), sum(hash(value)) from tgt_rc_merge_test
 PREHOOK: type: QUERY
@@ -5154,14 +5154,14 @@ Stage-0
             |<-Map 1 [SIMPLE_EDGE]
                Reduce Output Operator [RS_3]
                   sort order:
-                  Statistics:Num rows: 1 Data size: 171 Basic stats: COMPLETE Column stats: NONE
+                  Statistics:Num rows: 5 Data size: 32 Basic stats: COMPLETE Column stats: NONE
                   value expressions:_col0 (type: int), _col1 (type: int)
                   Select Operator [SEL_1]
                      outputColumnNames:["_col0","_col1"]
-                     Statistics:Num rows: 1 Data size: 171 Basic stats: COMPLETE Column stats: NONE
+                     Statistics:Num rows: 5 Data size: 32 Basic stats: COMPLETE Column stats: NONE
                      TableScan [TS_0]
                         alias:tgt_rc_merge_test
-                        Statistics:Num rows: 1 Data size: 171 Basic stats: COMPLETE Column stats: NONE
+                        Statistics:Num rows: 5 Data size: 32 Basic stats: COMPLETE Column stats: NONE
 
 PREHOOK: query: drop table src_rc_merge_test
 PREHOOK: type: DROPTABLE
@@ -5310,6 +5310,8 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@nzhang_CTAS1
+POSTHOOK: Lineage: nzhang_ctas1.k SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
+POSTHOOK: Lineage: nzhang_ctas1.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: explain create table nzhang_ctas3 row format serde "org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe" stored as RCFile as select key/2 half_key, concat(value, "_con") conb  from src sort by half_key, conb limit 10
 PREHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: query: explain create table nzhang_ctas3 row format serde "org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe" stored as RCFile as select key/2 half_key, concat(value, "_con") conb  from src sort by half_key, conb limit 10
@@ -5378,6 +5380,8 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@nzhang_ctas3
+POSTHOOK: Lineage: nzhang_ctas3.conb EXPRESSION [(src)src.FieldSchema(name:value, type:string, comment:default), ]
+POSTHOOK: Lineage: nzhang_ctas3.half_key EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 PREHOOK: query: explain create table if not exists nzhang_ctas3 as select key, value from src sort by key, value limit 2
 PREHOOK: type: CREATETABLE
 POSTHOOK: query: explain create table if not exists nzhang_ctas3 as select key, value from src sort by key, value limit 2

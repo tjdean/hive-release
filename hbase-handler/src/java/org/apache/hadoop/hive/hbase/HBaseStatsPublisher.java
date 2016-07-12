@@ -33,6 +33,7 @@ import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hive.ql.stats.StatsCollectionContext;
 import org.apache.hadoop.hive.ql.stats.StatsPublisher;
 
 /**
@@ -150,5 +151,23 @@ public class HBaseStatsPublisher implements StatsPublisher {
     }
 
     return true;
+  }
+
+  @Override
+  public boolean init(StatsCollectionContext context) {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  public boolean connect(StatsCollectionContext context) {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  public boolean closeConnection(StatsCollectionContext context) {
+    // TODO Auto-generated method stub
+    return false;
   }
 }

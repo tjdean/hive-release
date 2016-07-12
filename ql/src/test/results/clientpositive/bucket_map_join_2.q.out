@@ -172,7 +172,6 @@ STAGE PLANS:
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
-              COLUMN_STATS_ACCURATE true
               SORTBUCKETCOLSPREFIX TRUE
               bucket_count 1
               bucket_field_name key
@@ -182,6 +181,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
               name default.table1
               numFiles 1
+              numRows 0
+              rawDataSize 0
               serialization.ddl struct table1 { string key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -192,7 +193,6 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE true
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 1
                 bucket_field_name key
@@ -202,6 +202,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                 name default.table1
                 numFiles 1
+                numRows 0
+                rawDataSize 0
                 serialization.ddl struct table1 { string key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe

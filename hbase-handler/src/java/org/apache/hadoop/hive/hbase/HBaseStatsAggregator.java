@@ -34,6 +34,7 @@ import org.apache.hadoop.hbase.filter.PrefixFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.stats.StatsAggregator;
+import org.apache.hadoop.hive.ql.stats.StatsCollectionContext;
 
 
 /**
@@ -124,5 +125,17 @@ public class HBaseStatsAggregator implements StatsAggregator {
       LOG.error("Error during publishing aggregation. ", e);
       return false;
     }
+  }
+
+  @Override
+  public boolean connect(StatsCollectionContext scc) {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  @Override
+  public boolean closeConnection(StatsCollectionContext scc) {
+    // TODO Auto-generated method stub
+    return false;
   }
 }

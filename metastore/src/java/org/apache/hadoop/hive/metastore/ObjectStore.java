@@ -66,6 +66,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.common.ObjectPair;
+import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.common.classification.InterfaceAudience;
 import org.apache.hadoop.hive.common.classification.InterfaceStability;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -6044,7 +6045,7 @@ public class ObjectStore implements RawStore, Configurable {
 
   @Override
   public boolean updateTableColumnStatistics(ColumnStatistics colStats)
-    throws NoSuchObjectException, MetaException, InvalidObjectException, InvalidInputException {
+      throws NoSuchObjectException, MetaException, InvalidObjectException, InvalidInputException {
     boolean committed = false;
 
     openTransaction();
@@ -6052,7 +6053,8 @@ public class ObjectStore implements RawStore, Configurable {
       List<ColumnStatisticsObj> statsObjs = colStats.getStatsObj();
       ColumnStatisticsDesc statsDesc = colStats.getStatsDesc();
 
-      // DataNucleus objects get detached all over the place for no (real) reason.
+      // DataNucleus objects get detached all over the place for no (real)
+      // reason.
       // So let's not use them anywhere unless absolutely necessary.
       Table table = ensureGetTable(statsDesc.getDbName(), statsDesc.getTableName());
       List<String> colNames = new ArrayList<>();
@@ -6060,12 +6062,24 @@ public class ObjectStore implements RawStore, Configurable {
         colNames.add(statsObj.getColName());
       }
       Map<String, MTableColumnStatistics> oldStats = getPartitionColStats(table, colNames);
-      for (ColumnStatisticsObj statsObj:statsObjs) {
+
+      for (ColumnStatisticsObj statsObj : statsObjs) {
         // We have to get mtable again because DataNucleus.
         MTableColumnStatistics mStatsObj = StatObjectConverter.convertToMTableColumnStatistics(
             ensureGetMTable(statsDesc.getDbName(), statsDesc.getTableName()), statsDesc, statsObj);
         writeMTableColumnStatistics(table, mStatsObj, oldStats.get(statsObj.getColName()));
+        colNames.add(statsObj.getColName());
       }
+
+      // Set the table properties
+      // No need to check again if it exists.
+      String dbname = table.getDbName();
+      String name = table.getTableName();
+      MTable oldt = getMTable(dbname, name);
+      Map<String, String> parameters = table.getParameters();
+      StatsSetupConst.setColumnStatsState(parameters, colNames);
+      oldt.setParameters(parameters);
+
       committed = commitTransaction();
       return committed;
     } finally {
@@ -6117,18 +6131,21 @@ public class ObjectStore implements RawStore, Configurable {
       Map<String, MPartitionColumnStatistics> oldStats = getPartitionColStats(table, statsDesc
           .getPartName(), colNames);
 
-      for (ColumnStatisticsObj statsObj:statsObjs) {
-        // We have to get partition again because DataNucleus
-        MPartition mPartition = getMPartition(
-            statsDesc.getDbName(), statsDesc.getTableName(), partVals);
-        if (partition == null) {
-          throw new NoSuchObjectException("Partition for which stats is gathered doesn't exist.");
-        }
+      MPartition mPartition = getMPartition(
+          statsDesc.getDbName(), statsDesc.getTableName(), partVals);
+      if (partition == null) {
+        throw new NoSuchObjectException("Partition for which stats is gathered doesn't exist.");
+      }
+
+      for (ColumnStatisticsObj statsObj : statsObjs) {
         MPartitionColumnStatistics mStatsObj =
             StatObjectConverter.convertToMPartitionColumnStatistics(mPartition, statsDesc, statsObj);
         writeMPartitionColumnStatistics(table, partition, mStatsObj,
             oldStats.get(statsObj.getColName()));
       }
+      Map<String, String> parameters = mPartition.getParameters();
+      StatsSetupConst.setColumnStatsState(parameters, colNames);
+      mPartition.setParameters(parameters);
       committed = commitTransaction();
       return committed;
     } finally {

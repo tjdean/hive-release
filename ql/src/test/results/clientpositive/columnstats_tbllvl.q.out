@@ -134,7 +134,6 @@ STAGE PLANS:
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
-              COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns sourceip,desturl,visitdate,adrevenue,useragent,ccode,lcode,skeyword,avgtimeonsite
               columns.comments 
@@ -143,6 +142,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
               name default.uservisits_web_text_none
               numFiles 1
+              numRows 0
+              rawDataSize 0
               serialization.ddl struct uservisits_web_text_none { string sourceip, string desturl, string visitdate, float adrevenue, string useragent, string ccode, string lcode, string skeyword, i32 avgtimeonsite}
               serialization.format |
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -153,7 +154,6 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE true
                 bucket_count -1
                 columns sourceip,desturl,visitdate,adrevenue,useragent,ccode,lcode,skeyword,avgtimeonsite
                 columns.comments 
@@ -162,6 +162,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                 name default.uservisits_web_text_none
                 numFiles 1
+                numRows 0
+                rawDataSize 0
                 serialization.ddl struct uservisits_web_text_none { string sourceip, string desturl, string visitdate, float adrevenue, string useragent, string ccode, string lcode, string skeyword, i32 avgtimeonsite}
                 serialization.format |
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -536,7 +538,6 @@ STAGE PLANS:
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
-              COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns sourceip,desturl,visitdate,adrevenue,useragent,ccode,lcode,skeyword,avgtimeonsite
               columns.comments 
@@ -545,6 +546,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
               name dummydb.uservisits_in_dummy_db
               numFiles 1
+              numRows 0
+              rawDataSize 0
               serialization.ddl struct uservisits_in_dummy_db { string sourceip, string desturl, string visitdate, float adrevenue, string useragent, string ccode, string lcode, string skeyword, i32 avgtimeonsite}
               serialization.format |
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -555,7 +558,6 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE true
                 bucket_count -1
                 columns sourceip,desturl,visitdate,adrevenue,useragent,ccode,lcode,skeyword,avgtimeonsite
                 columns.comments 
@@ -564,6 +566,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                 name dummydb.uservisits_in_dummy_db
                 numFiles 1
+                numRows 0
+                rawDataSize 0
                 serialization.ddl struct uservisits_in_dummy_db { string sourceip, string desturl, string visitdate, float adrevenue, string useragent, string ccode, string lcode, string skeyword, i32 avgtimeonsite}
                 serialization.format |
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe

@@ -30,6 +30,7 @@ PREHOOK: Output: default@hb_target
 #### A masked pattern was here ####
 insert overwrite table hb_target select distinct key, value from src cluster by key
 POSTHOOK: type: QUERY
+POSTHOOK: Input: default@hb_target
 POSTHOOK: Input: default@src
 POSTHOOK: Output: default@hb_target
 PREHOOK: query: -- To get the files out to your local filesystem for loading into

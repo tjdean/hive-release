@@ -697,6 +697,9 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@emp
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@empc
+POSTHOOK: Lineage: empc.deptid SIMPLE [(emp)emp.FieldSchema(name:deptid, type:int, comment:null), ]
+POSTHOOK: Lineage: empc.lastname SIMPLE [(emp)emp.FieldSchema(name:lastname, type:string, comment:null), ]
+POSTHOOK: Lineage: empc.locid SIMPLE [(emp)emp.FieldSchema(name:locid, type:int, comment:null), ]
 PREHOOK: query: analyze table empc compute statistics
 PREHOOK: type: QUERY
 PREHOOK: Input: default@empc

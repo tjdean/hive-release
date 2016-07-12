@@ -146,6 +146,8 @@ import org.apache.hadoop.hive.ql.parse.WindowingSpec.WindowFrameSpec;
 import org.apache.hadoop.hive.ql.parse.WindowingSpec.WindowFunctionSpec;
 import org.apache.hadoop.hive.ql.parse.WindowingSpec.WindowSpec;
 import org.apache.hadoop.hive.ql.plan.AggregationDesc;
+import org.apache.hadoop.hive.ql.plan.AlterTableDesc;
+import org.apache.hadoop.hive.ql.plan.AlterTableDesc.AlterTableTypes;
 import org.apache.hadoop.hive.ql.plan.CreateTableDesc;
 import org.apache.hadoop.hive.ql.plan.CreateTableLikeDesc;
 import org.apache.hadoop.hive.ql.plan.CreateViewDesc;
@@ -6211,6 +6213,19 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     }
   }
 
+  @SuppressWarnings("unchecked")
+  private void setStatsForNonNativeTable(Table tab) throws SemanticException {
+    String tableName = DDLSemanticAnalyzer.getDotName(new String[] { tab.getDbName(),
+        tab.getTableName() });
+    AlterTableDesc alterTblDesc = new AlterTableDesc(AlterTableTypes.DROPPROPS, null, false);
+    HashMap<String, String> mapProp = new HashMap<>();
+    mapProp.put(StatsSetupConst.COLUMN_STATS_ACCURATE, null);
+    alterTblDesc.setOldName(tableName);
+    alterTblDesc.setProps(mapProp);
+    alterTblDesc.setDropIfExists(true);
+    this.rootTasks.add(TaskFactory.get(new DDLWork(getInputs(), getOutputs(), alterTblDesc), conf));
+  }
+
   @SuppressWarnings("nls")
   protected Operator genFileSinkPlan(String dest, QB qb, Operator input)
       throws SemanticException {
@@ -6332,11 +6347,15 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           acidOp = getAcidType(table_desc.getOutputFileFormatClass());
           checkAcidConstraints(qb, table_desc, dest_tab);
         }
-        ltd = new LoadTableDesc(queryTmpdir,table_desc, dpCtx, acidOp);
+        ltd = new LoadTableDesc(queryTmpdir, table_desc, dpCtx, acidOp);
         ltd.setReplace(!qb.getParseInfo().isInsertIntoTable(dest_tab.getDbName(),
             dest_tab.getTableName()));
         ltd.setLbCtx(lbCtx);
         loadTableWork.add(ltd);
+      } else {
+        // This is a non-native table.
+        // We need to set stats as inaccurate.
+        setStatsForNonNativeTable(dest_tab);
       }
 
       WriteEntity output = null;
@@ -6653,8 +6672,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     fileSinkDesc.setStatsAggPrefix(fileSinkDesc.getDirName().toString());
     if (HiveConf.getVar(conf, HIVESTATSDBCLASS).equalsIgnoreCase(StatDB.fs.name())) {
       String statsTmpLoc = ctx.getExtTmpPathRelTo(queryTmpdir).toString();
-      LOG.info("Set stats collection dir : " + statsTmpLoc);
-      conf.set(StatsSetupConst.STATS_TMP_LOC, statsTmpLoc);
+      fileSinkDesc.setStatsTmpDir(statsTmpLoc);
+      LOG.debug("Set stats collection dir : " + statsTmpLoc);
     }
 
     if (dest_part != null) {
@@ -6674,6 +6693,19 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     if (ltd != null && SessionState.get() != null) {
       SessionState.get().getLineageState()
           .mapDirToFop(ltd.getSourcePath(), (FileSinkOperator) output);
+    } else if ( SessionState.get().getCommandType().equals(HiveOperation.CREATETABLE_AS_SELECT.getOperationName())) {
+
+      Path tlocation = null;
+      String tName = Utilities.getDbTableName(tableDesc.getTableName())[1];
+      try {
+        Warehouse wh = new Warehouse(conf);
+        tlocation = wh.getTablePath(db.getDatabase(tableDesc.getDatabaseName()), tName);
+      } catch (MetaException|HiveException e) {
+        throw new SemanticException(e);
+      }
+
+      SessionState.get().getLineageState()
+              .mapDirToFop(tlocation, (FileSinkOperator) output);
     }
 
     if (LOG.isDebugEnabled()) {
@@ -9605,8 +9637,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     } else {
       if (HiveConf.getVar(conf, HIVESTATSDBCLASS).equalsIgnoreCase(StatDB.fs.name())) {
         String statsTmpLoc = ctx.getExtTmpPathRelTo(tab.getPath()).toString();
-        LOG.info("Set stats collection dir : " + statsTmpLoc);
-        conf.set(StatsSetupConst.STATS_TMP_LOC, statsTmpLoc);
+        LOG.debug("Set stats collection dir : " + statsTmpLoc);
+        tsDesc.setTmpStatsDir(statsTmpLoc);
       }
       tsDesc.setGatherStats(true);
       tsDesc.setStatsReliable(conf.getBoolVar(HiveConf.ConfVars.HIVE_STATS_RELIABLE));
@@ -11261,7 +11293,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           rowFormatParams.lineDelim, comment, storageFormat.getInputFormat(),
           storageFormat.getOutputFormat(), location, storageFormat.getSerde(),
           storageFormat.getStorageHandler(), storageFormat.getSerdeProps(), tblProps, ifNotExists,
-          skewedColNames, skewedValues);
+          skewedColNames, skewedValues, true);
       tableDesc.setStoredAsSubDirectories(storedAsDirs);
       tableDesc.setNullFormat(rowFormatParams.nullFormat);
       qb.setTableDesc(tableDesc);

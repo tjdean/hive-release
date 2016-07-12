@@ -513,7 +513,7 @@ public class TestDbTxnManager {
       tblProps = new HashMap<>();
     }
     tblProps.put(hive_metastoreConstants.TABLE_IS_TRANSACTIONAL, "true");
-    t.setParamters(tblProps);
+    t.setParameters(tblProps);
     return t;
   }
 
