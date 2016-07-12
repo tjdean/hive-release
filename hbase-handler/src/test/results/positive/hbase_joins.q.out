@@ -75,7 +75,6 @@ POSTHOOK: query: INSERT OVERWRITE TABLE users SELECT 'user1', 'IA', 'USA', 0
 FROM src WHERE key=100
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@src
-POSTHOOK: Input: default@users
 POSTHOOK: Output: default@users
 PREHOOK: query: INSERT OVERWRITE TABLE states SELECT 'IA', 'Iowa'
 FROM src WHERE key=100
@@ -86,7 +85,6 @@ POSTHOOK: query: INSERT OVERWRITE TABLE states SELECT 'IA', 'Iowa'
 FROM src WHERE key=100
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@src
-POSTHOOK: Input: default@states
 POSTHOOK: Output: default@states
 PREHOOK: query: INSERT OVERWRITE TABLE countries SELECT 'USA', 'United States', 'USA', 1
 FROM src WHERE key=100
@@ -96,7 +94,6 @@ PREHOOK: Output: default@countries
 POSTHOOK: query: INSERT OVERWRITE TABLE countries SELECT 'USA', 'United States', 'USA', 1
 FROM src WHERE key=100
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@countries
 POSTHOOK: Input: default@src
 POSTHOOK: Output: default@countries
 PREHOOK: query: SELECT u.key, u.country, c.name, c.key FROM users u JOIN countries c 

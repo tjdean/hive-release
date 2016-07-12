@@ -145,8 +145,11 @@ Table:              	fact_daily
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
+	COLUMN_STATS_ACCURATE	false               
 #### A masked pattern was here ####
 	numFiles            	2                   
+	numRows             	-1                  
+	rawDataSize         	-1                  
 	totalSize           	24                  
 #### A masked pattern was here ####
 	 	 
@@ -236,6 +239,7 @@ STAGE PLANS:
             partition values:
               ds 1
             properties:
+              COLUMN_STATS_ACCURATE false
               bucket_count -1
               columns x,y
               columns.comments 
@@ -243,8 +247,10 @@ STAGE PLANS:
 #### A masked pattern was here ####
               name default.fact_daily
               numFiles 2
+              numRows -1
               partition_columns ds
               partition_columns.types string
+              rawDataSize -1
               serialization.ddl struct fact_daily { i32 x, string y}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -368,6 +374,7 @@ STAGE PLANS:
             partition values:
               ds 1
             properties:
+              COLUMN_STATS_ACCURATE false
               bucket_count -1
               columns x,y
               columns.comments 
@@ -375,8 +382,10 @@ STAGE PLANS:
 #### A masked pattern was here ####
               name default.fact_daily
               numFiles 2
+              numRows -1
               partition_columns ds
               partition_columns.types string
+              rawDataSize -1
               serialization.ddl struct fact_daily { i32 x, string y}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -518,6 +527,7 @@ STAGE PLANS:
             partition values:
               ds 1
             properties:
+              COLUMN_STATS_ACCURATE false
               bucket_count -1
               columns x,y
               columns.comments 
@@ -525,8 +535,10 @@ STAGE PLANS:
 #### A masked pattern was here ####
               name default.fact_daily
               numFiles 2
+              numRows -1
               partition_columns ds
               partition_columns.types string
+              rawDataSize -1
               serialization.ddl struct fact_daily { i32 x, string y}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -705,6 +717,7 @@ STAGE PLANS:
             partition values:
               ds 1
             properties:
+              COLUMN_STATS_ACCURATE false
               bucket_count -1
               columns x,y
               columns.comments 
@@ -712,8 +725,10 @@ STAGE PLANS:
 #### A masked pattern was here ####
               name default.fact_daily
               numFiles 2
+              numRows -1
               partition_columns ds
               partition_columns.types string
+              rawDataSize -1
               serialization.ddl struct fact_daily { i32 x, string y}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe

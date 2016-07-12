@@ -246,9 +246,8 @@ OUTPUTFORMAT
 LOCATION
 #### A masked pattern was here ####
 TBLPROPERTIES (
+  'COLUMN_STATS_ACCURATE'='true', 
   'numFiles'='1', 
-  'numRows'='0', 
-  'rawDataSize'='0', 
   'totalSize'='11', 
 #### A masked pattern was here ####
 PREHOOK: query: export table unptn_t to 'ql/test/data/exports/unptn_t_1' for replication('unptn_t_1')
@@ -293,7 +292,7 @@ OUTPUTFORMAT
 LOCATION
 #### A masked pattern was here ####
 TBLPROPERTIES (
-  'COLUMN_STATS_ACCURATE'='{\"BASIC_STATS\":\"true\"}', 
+  'COLUMN_STATS_ACCURATE'='true', 
   'numFiles'='1', 
   'numRows'='6', 
   'rawDataSize'='6', 
@@ -598,9 +597,8 @@ OUTPUTFORMAT
 LOCATION
 #### A masked pattern was here ####
 TBLPROPERTIES (
+  'COLUMN_STATS_ACCURATE'='true', 
   'numFiles'='1', 
-  'numRows'='0', 
-  'rawDataSize'='0', 
   'repl.last.id'='0', 
   'totalSize'='11', 
 #### A masked pattern was here ####
@@ -655,6 +653,7 @@ OUTPUTFORMAT
 LOCATION
 #### A masked pattern was here ####
 TBLPROPERTIES (
+  'COLUMN_STATS_ACCURATE'='true', 
   'numFiles'='1', 
   'numRows'='6', 
   'rawDataSize'='6', 

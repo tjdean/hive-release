@@ -24,11 +24,6 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
-	numFiles            	0                   
-	numRows             	0                   
-	rawDataSize         	0                   
-	totalSize           	0                   
 #### A masked pattern was here ####
 	 	 
 # Storage Information	 	 
@@ -51,8 +46,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@rcfile_default_format_ctas
-POSTHOOK: Lineage: rcfile_default_format_ctas.key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: rcfile_default_format_ctas.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: DESCRIBE FORMATTED rcfile_default_format_ctas
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: default@rcfile_default_format_ctas
@@ -72,7 +65,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	500                 
 	rawDataSize         	4812                
@@ -124,7 +117,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	500                 
 	rawDataSize         	1406                
@@ -151,8 +144,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@rcfile_default_format_ctas
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@textfile_default_format_ctas
-POSTHOOK: Lineage: textfile_default_format_ctas.key SIMPLE [(rcfile_default_format_ctas)rcfile_default_format_ctas.FieldSchema(name:key, type:string, comment:null), ]
-POSTHOOK: Lineage: textfile_default_format_ctas.value SIMPLE [(rcfile_default_format_ctas)rcfile_default_format_ctas.FieldSchema(name:value, type:string, comment:null), ]
 PREHOOK: query: DESCRIBE FORMATTED textfile_default_format_ctas
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: default@textfile_default_format_ctas
@@ -172,7 +163,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	500                 
 	rawDataSize         	5312                
@@ -199,8 +190,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@rcfile_default_format_ctas
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@rcfile_default_format_ctas_default_serde
-POSTHOOK: Lineage: rcfile_default_format_ctas_default_serde.key SIMPLE [(rcfile_default_format_ctas)rcfile_default_format_ctas.FieldSchema(name:key, type:string, comment:null), ]
-POSTHOOK: Lineage: rcfile_default_format_ctas_default_serde.value SIMPLE [(rcfile_default_format_ctas)rcfile_default_format_ctas.FieldSchema(name:value, type:string, comment:null), ]
 PREHOOK: query: DESCRIBE FORMATTED rcfile_default_format_ctas_default_serde
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: default@rcfile_default_format_ctas_default_serde
@@ -220,7 +209,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	500                 
 	rawDataSize         	4812                
@@ -263,11 +252,6 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
-	numFiles            	0                   
-	numRows             	0                   
-	rawDataSize         	0                   
-	totalSize           	0                   
 #### A masked pattern was here ####
 	 	 
 # Storage Information	 	 
@@ -290,8 +274,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@rcfile_default_format_ctas
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@rcfile_ctas_default_serde
-POSTHOOK: Lineage: rcfile_ctas_default_serde.key SIMPLE [(rcfile_default_format_ctas)rcfile_default_format_ctas.FieldSchema(name:key, type:string, comment:null), ]
-POSTHOOK: Lineage: rcfile_ctas_default_serde.value SIMPLE [(rcfile_default_format_ctas)rcfile_default_format_ctas.FieldSchema(name:value, type:string, comment:null), ]
 PREHOOK: query: DESCRIBE FORMATTED rcfile_ctas_default_serde
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: default@rcfile_ctas_default_serde
@@ -311,7 +293,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	500                 
 	rawDataSize         	4812                
@@ -354,11 +336,6 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
-	numFiles            	0                   
-	numRows             	0                   
-	rawDataSize         	0                   
-	totalSize           	0                   
 #### A masked pattern was here ####
 	 	 
 # Storage Information	 	 

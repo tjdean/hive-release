@@ -92,7 +92,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	3                   
 	numRows             	1500                
 	rawDataSize         	141000              
@@ -144,7 +144,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	1500                
 	rawDataSize         	141000              
@@ -247,7 +247,7 @@ Table:              	src_orc_merge_test_part_stat
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	3                   
 	numRows             	1500                
 	rawDataSize         	141000              
@@ -298,7 +298,7 @@ Table:              	src_orc_merge_test_part_stat
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	3                   
 	numRows             	1500                
 	rawDataSize         	141000              
@@ -357,7 +357,7 @@ Table:              	src_orc_merge_test_part_stat
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	1500                
 	rawDataSize         	141000              

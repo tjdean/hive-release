@@ -57,14 +57,9 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	hbase.table.default.storage.type	binary              
 	hbase.table.name    	t_hive              
-	numFiles            	0                   
-	numRows             	0                   
-	rawDataSize         	0                   
 	storage_handler     	org.apache.hadoop.hive.hbase.HBaseStorageHandler
-	totalSize           	0                   
 #### A masked pattern was here ####
 	 	 
 # Storage Information	 	 
@@ -91,7 +86,6 @@ FROM src
 WHERE key=100 OR key=125 OR key=126
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@src
-POSTHOOK: Input: default@t_hbase
 POSTHOOK: Output: default@t_hbase
 PREHOOK: query: INSERT OVERWRITE TABLE t_hbase
 SELECT 'user2', 127, 327, 2147, 9223372036854775807, 211.31, 268746532.0571, false
@@ -106,7 +100,6 @@ FROM src
 WHERE key=100 OR key=125 OR key=126
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@src
-POSTHOOK: Input: default@t_hbase
 POSTHOOK: Output: default@t_hbase
 PREHOOK: query: INSERT OVERWRITE TABLE t_hbase
 SELECT 'user3', -128, -327, -214748, -9223372036854775808, -201.17, -2110789.37145, true
@@ -121,7 +114,6 @@ FROM src
 WHERE key=100 OR key=125 OR key=126
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@src
-POSTHOOK: Input: default@t_hbase
 POSTHOOK: Output: default@t_hbase
 PREHOOK: query: explain SELECT * FROM t_hbase where int_col > 0
 PREHOOK: type: QUERY

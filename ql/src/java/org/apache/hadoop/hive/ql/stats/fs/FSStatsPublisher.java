@@ -20,7 +20,6 @@ package org.apache.hadoop.hive.ql.stats.fs;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -31,7 +30,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.stats.StatsCollectionTaskIndependent;
-import org.apache.hadoop.hive.ql.stats.StatsCollectionContext;
 import org.apache.hadoop.hive.ql.stats.StatsPublisher;
 
 import com.esotericsoftware.kryo.io.Output;
@@ -43,14 +41,12 @@ public class FSStatsPublisher implements StatsPublisher, StatsCollectionTaskInde
   private Map<String, Map<String,String>> statsMap; // map from partID -> (statType->value)
 
   @Override
-  public boolean init(StatsCollectionContext context) {
+  public boolean init(Configuration hconf) {
+    Path statsDir = new Path(hconf.get(StatsSetupConst.STATS_TMP_LOC));
+    LOG.debug("Initing FSStatsPublisher with : " + statsDir);
     try {
-      for (String tmpDir : context.getStatsTmpDirs()) {
-        Path statsDir = new Path(tmpDir);
-        LOG.debug("Initing FSStatsPublisher with : " + statsDir);
-        statsDir.getFileSystem(context.getHiveConf()).mkdirs(statsDir);
-        LOG.info("created : " + statsDir);
-      }
+      statsDir.getFileSystem(hconf).mkdirs(statsDir);
+      LOG.info("created : " + statsDir);
       return true;
     } catch (IOException e) {
       LOG.error(e);
@@ -59,11 +55,9 @@ public class FSStatsPublisher implements StatsPublisher, StatsCollectionTaskInde
   }
 
   @Override
-  public boolean connect(StatsCollectionContext context) {
-    conf = context.getHiveConf();
-    List<String> statsDirs = context.getStatsTmpDirs();
-    assert statsDirs.size() == 1 : "Found multiple stats dirs: " + statsDirs;
-    Path statsDir = new Path(statsDirs.get(0));
+  public boolean connect(Configuration hconf) {
+    conf = hconf;
+    Path statsDir = new Path(hconf.get(StatsSetupConst.STATS_TMP_LOC));
     LOG.debug("Connecting to : " + statsDir);
     statsMap = new HashMap<String, Map<String,String>>();
     try {
@@ -91,16 +85,14 @@ public class FSStatsPublisher implements StatsPublisher, StatsCollectionTaskInde
   }
 
   @Override
-  public boolean closeConnection(StatsCollectionContext context) {
-    List<String> statsDirs = context.getStatsTmpDirs();
-    assert statsDirs.size() == 1 : "Found multiple stats dirs: " + statsDirs;
-    Path statsDir = new Path(statsDirs.get(0));
+  public boolean closeConnection() {
+    Path statsDir = new Path(conf.get(StatsSetupConst.STATS_TMP_LOC));
     try {
       Path statsFile = new Path(statsDir,StatsSetupConst.STATS_FILE_PREFIX +conf.getInt("mapred.task.partition",0));
       LOG.debug("About to create stats file for this task : " + statsFile);
       Output output = new Output(statsFile.getFileSystem(conf).create(statsFile,true));
-      LOG.debug("Created file : " + statsFile);
-      LOG.debug("Writing stats in it : " + statsMap);
+      LOG.info("Created file : " + statsFile);
+      LOG.info("Writing stats in it : " + statsMap);
       Utilities.runtimeSerializationKryo.get().writeObject(output, statsMap);
       output.close();
       return true;

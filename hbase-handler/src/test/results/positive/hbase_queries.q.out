@@ -40,18 +40,9 @@ POSTHOOK: query: EXPLAIN FROM src INSERT OVERWRITE TABLE hbase_table_1 SELECT * 
 POSTHOOK: type: QUERY
 STAGE DEPENDENCIES:
   Stage-0 is a root stage
-  Stage-1 is a root stage
 
 STAGE PLANS:
   Stage: Stage-0
-      Alter Table Operator:
-        Alter Table
-          type: drop props
-          old name: default.hbase_table_1
-          properties:
-            COLUMN_STATS_ACCURATE 
-
-  Stage: Stage-1
     Map Reduce
       Map Operator Tree:
           TableScan
@@ -79,7 +70,6 @@ PREHOOK: Input: default@src
 PREHOOK: Output: default@hbase_table_1
 POSTHOOK: query: FROM src INSERT OVERWRITE TABLE hbase_table_1 SELECT * WHERE (key%2)=0
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@hbase_table_1
 POSTHOOK: Input: default@src
 POSTHOOK: Output: default@hbase_table_1
 PREHOOK: query: DROP TABLE hbase_table_2
@@ -492,20 +482,11 @@ JOIN
 ON (x.key = Y.key)
 POSTHOOK: type: QUERY
 STAGE DEPENDENCIES:
-  Stage-0 is a root stage
-  Stage-2 is a root stage
-  Stage-1 depends on stages: Stage-2
+  Stage-1 is a root stage
+  Stage-0 depends on stages: Stage-1
 
 STAGE PLANS:
-  Stage: Stage-0
-      Alter Table Operator:
-        Alter Table
-          type: drop props
-          old name: default.hbase_table_3
-          properties:
-            COLUMN_STATS_ACCURATE 
-
-  Stage: Stage-2
+  Stage: Stage-1
     Map Reduce
       Map Operator Tree:
           TableScan
@@ -540,7 +521,7 @@ STAGE PLANS:
                 output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
                 serde: org.apache.hadoop.hive.serde2.lazybinary.LazyBinarySerDe
 
-  Stage: Stage-1
+  Stage: Stage-0
     Map Reduce
       Map Operator Tree:
           TableScan
@@ -608,7 +589,6 @@ JOIN
 ON (x.key = Y.key)
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@hbase_table_1
-POSTHOOK: Input: default@hbase_table_3
 POSTHOOK: Input: default@src
 POSTHOOK: Output: default@hbase_table_3
 PREHOOK: query: select count(1) from hbase_table_3
@@ -674,7 +654,6 @@ PREHOOK: Output: default@hbase_table_4
 POSTHOOK: query: INSERT OVERWRITE TABLE hbase_table_4 SELECT key, value, key+1, key+2 
 FROM src WHERE key=98 OR key=100
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@hbase_table_4
 POSTHOOK: Input: default@src
 POSTHOOK: Output: default@hbase_table_4
 PREHOOK: query: SELECT * FROM hbase_table_4 ORDER BY key
@@ -743,7 +722,6 @@ PREHOOK: Output: default@hbase_table_6
 POSTHOOK: query: INSERT OVERWRITE TABLE hbase_table_6 SELECT key, map(value, key) FROM src
 WHERE key=98 OR key=100
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@hbase_table_6
 POSTHOOK: Input: default@src
 POSTHOOK: Output: default@hbase_table_6
 PREHOOK: query: SELECT * FROM hbase_table_6 ORDER BY key
@@ -786,7 +764,6 @@ POSTHOOK: query: INSERT OVERWRITE TABLE hbase_table_7
 SELECT map(value, key, upper(value), key+1), key FROM src
 WHERE key=98 OR key=100
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@hbase_table_7
 POSTHOOK: Input: default@src
 POSTHOOK: Output: default@hbase_table_7
 PREHOOK: query: SELECT * FROM hbase_table_7 ORDER BY key
@@ -827,7 +804,6 @@ PREHOOK: Output: default@hbase_table_8
 POSTHOOK: query: INSERT OVERWRITE TABLE hbase_table_8 SELECT key, value, key+1, key+2 
 FROM src WHERE key=98 OR key=100
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@hbase_table_8
 POSTHOOK: Input: default@src
 POSTHOOK: Output: default@hbase_table_8
 PREHOOK: query: SELECT * FROM hbase_table_8 ORDER BY key

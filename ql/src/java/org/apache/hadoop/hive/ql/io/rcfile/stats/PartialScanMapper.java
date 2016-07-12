@@ -33,8 +33,7 @@ import org.apache.hadoop.hive.ql.io.RCFile.KeyBuffer;
 import org.apache.hadoop.hive.ql.io.rcfile.merge.RCFileKeyBufferWrapper;
 import org.apache.hadoop.hive.ql.io.rcfile.merge.RCFileValueBufferWrapper;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.ql.stats.StatsCollectionContext;
-import org.apache.hadoop.hive.ql.stats.StatsCollectionTaskIndependent;
+import org.apache.hadoop.hive.ql.stats.CounterStatsPublisher;
 import org.apache.hadoop.hive.ql.stats.StatsFactory;
 import org.apache.hadoop.hive.ql.stats.StatsPublisher;
 import org.apache.hadoop.hive.shims.CombineHiveKey;
@@ -146,9 +145,7 @@ public class PartialScanMapper extends MapReduceBase implements
       throw new HiveException(ErrorMsg.STATSPUBLISHER_NOT_OBTAINED.getErrorCodedMsg());
     }
 
-    StatsCollectionContext sc = new StatsCollectionContext(jc);
-    sc.setStatsTmpDir(jc.get(StatsSetupConst.STATS_TMP_LOC, ""));
-    if (!statsPublisher.connect(sc)) {
+    if (!statsPublisher.connect(jc)) {
       // should fail since stats gathering is main purpose of the job
       LOG.error("StatsPublishing error: cannot connect to database");
       throw new HiveException(ErrorMsg.STATSPUBLISHER_CONNECTION_ERROR.getErrorCodedMsg());
@@ -157,7 +154,7 @@ public class PartialScanMapper extends MapReduceBase implements
     int maxPrefixLength = StatsFactory.getMaxPrefixLength(jc);
     // construct key used to store stats in intermediate db
     String key = Utilities.getHashedStatsPrefix(statsAggKeyPrefix, maxPrefixLength);
-    if (!(statsPublisher instanceof StatsCollectionTaskIndependent)) {
+    if (!(statsPublisher instanceof CounterStatsPublisher)) {
       String taskID = Utilities.getTaskIdFromFilename(Utilities.getTaskId(jc));
       key = Utilities.join(key, taskID);
     }
@@ -173,7 +170,7 @@ public class PartialScanMapper extends MapReduceBase implements
       throw new HiveException(ErrorMsg.STATSPUBLISHER_PUBLISHING_ERROR.getErrorCodedMsg());
     }
 
-    if (!statsPublisher.closeConnection(sc)) {
+    if (!statsPublisher.closeConnection()) {
       // The original exception is lost.
       // Not changing the interface to maintain backward compatibility
       throw new HiveException(ErrorMsg.STATSPUBLISHER_CLOSING_ERROR.getErrorCodedMsg());

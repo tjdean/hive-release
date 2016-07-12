@@ -62,7 +62,6 @@ PREHOOK: Output: default@hive1_tbl_data_hbase1
 POSTHOOK: query: --load data to hive table 1
 insert into table hive1_tbl_data_hbase1 select '00001','john','doe','john@hotmail.com','2014-01-01 12:01:02','4000-10000' from src where key = 100
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@hive1_tbl_data_hbase1
 POSTHOOK: Input: default@src
 POSTHOOK: Output: default@hive1_tbl_data_hbase1
 PREHOOK: query: --create hive hbase table 2
@@ -109,7 +108,6 @@ PREHOOK: Output: default@hive1_tbl_data_hbase2
 POSTHOOK: query: --load data to hive hbase table 2
 insert into table hive1_tbl_data_hbase2 select '00001','john','doe','john@hotmail.com','2014-01-01 12:01:02','00001' from src where key = 100
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@hive1_tbl_data_hbase2
 POSTHOOK: Input: default@src
 POSTHOOK: Output: default@hive1_tbl_data_hbase2
 PREHOOK: query: -- do not return value without fix 

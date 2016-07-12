@@ -27,7 +27,6 @@ PREHOOK: Input: default@src
 PREHOOK: Output: default@hbase_str
 POSTHOOK: query: insert overwrite table hbase_str select key, '2001-02-03-04.05.06.123456', value from src limit 3
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@hbase_str
 POSTHOOK: Input: default@src
 POSTHOOK: Output: default@hbase_str
 PREHOOK: query: select * from hbase_str

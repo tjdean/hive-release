@@ -1,6 +1,5 @@
 set hive.exec.infer.bucket.sort=true;
 set hive.exec.infer.bucket.sort.num.buckets.power.two=true;
-set hive.stats.dbclass=fs;
 
 -- This tests inferring how data is bucketed/sorted from the operators in the reducer
 -- and populating that information in partitions' metadata.  In particular, those cases

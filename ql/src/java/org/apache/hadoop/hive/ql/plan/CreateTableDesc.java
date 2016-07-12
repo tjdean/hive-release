@@ -79,7 +79,6 @@ public class CreateTableDesc extends DDLDesc implements Serializable {
   boolean isStoredAsSubDirectories = false;
   boolean isTemporary = false;
   private boolean replaceMode = false;
-  private boolean isCTAS = false;
 
   public CreateTableDesc() {
   }
@@ -103,27 +102,6 @@ public class CreateTableDesc extends DDLDesc implements Serializable {
 
     this.databaseName = databaseName;
   }
-
-  public CreateTableDesc(String databaseName, String tableName, boolean isExternal, boolean isTemporary,
-                         List<FieldSchema> cols, List<FieldSchema> partCols,
-                         List<String> bucketCols, List<Order> sortCols, int numBuckets,
-                         String fieldDelim, String fieldEscape, String collItemDelim,
-                         String mapKeyDelim, String lineDelim, String comment, String inputFormat,
-                         String outputFormat, String location, String serName,
-                         String storageHandler,
-                         Map<String, String> serdeProps,
-                         Map<String, String> tblProps,
-                         boolean ifNotExists, List<String> skewedColNames, List<List<String>> skewedColValues,
-                         boolean isCTAS) {
-    this(databaseName, tableName, isExternal, isTemporary, cols, partCols,
-            bucketCols, sortCols, numBuckets, fieldDelim, fieldEscape,
-            collItemDelim, mapKeyDelim, lineDelim, comment, inputFormat,
-            outputFormat, location, serName, storageHandler, serdeProps,
-            tblProps, ifNotExists, skewedColNames, skewedColValues);
-    this.isCTAS = isCTAS;
-
-  }
-
 
   public CreateTableDesc(String tableName, boolean isExternal, boolean isTemporary,
       List<FieldSchema> cols, List<FieldSchema> partCols,
@@ -586,9 +564,5 @@ public class CreateTableDesc extends DDLDesc implements Serializable {
    */
   public boolean getReplaceMode() {
     return replaceMode;
-  }
-
-  public boolean isCTAS() {
-    return isCTAS;
   }
 }

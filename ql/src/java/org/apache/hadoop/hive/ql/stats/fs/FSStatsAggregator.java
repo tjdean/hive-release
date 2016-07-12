@@ -26,14 +26,15 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hive.common.StatsSetupConst;
+import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.stats.StatsAggregator;
-import org.apache.hadoop.hive.ql.stats.StatsCollectionContext;
 import org.apache.hadoop.hive.ql.stats.StatsCollectionTaskIndependent;
 
 import com.esotericsoftware.kryo.io.Input;
@@ -43,17 +44,17 @@ public class FSStatsAggregator implements StatsAggregator, StatsCollectionTaskIn
   private List<Map<String,Map<String,String>>> statsList;
   private Map<String, Map<String,String>> statsMap;
   private FileSystem fs;
+  private Configuration conf;
 
   @Override
-  public boolean connect(StatsCollectionContext scc) {
-    List<String> statsDirs = scc.getStatsTmpDirs();
-    assert statsDirs.size() == 1 : "Found multiple stats dirs: " + statsDirs;
-    Path statsDir = new Path(statsDirs.get(0));
+  public boolean connect(Configuration hconf, Task sourceTask) {
+    conf = hconf;
+    Path statsDir = new Path(hconf.get(StatsSetupConst.STATS_TMP_LOC));
     LOG.debug("About to read stats from : " + statsDir);
     statsMap  = new HashMap<String, Map<String,String>>();
 
     try {
-      fs = statsDir.getFileSystem(scc.getHiveConf());
+      fs = statsDir.getFileSystem(hconf);
       statsList = new ArrayList<Map<String,Map<String,String>>>();
       FileStatus[] status = fs.listStatus(statsDir, new PathFilter() {
         @Override
@@ -97,15 +98,11 @@ public class FSStatsAggregator implements StatsAggregator, StatsCollectionTaskIn
   }
 
   @Override
-  public boolean closeConnection(StatsCollectionContext scc) {
-    List<String> statsDirs = scc.getStatsTmpDirs();
-    assert statsDirs.size() == 1 : "Found multiple stats dirs: " + statsDirs;
-    Path statsDir = new Path(statsDirs.get(0));
-
-    LOG.debug("About to delete stats tmp dir :" + statsDir);
+  public boolean closeConnection() {
+    LOG.debug("About to delete stats tmp dir");
 
     try {
-      fs.delete(statsDir,true);
+      fs.delete(new Path(conf.get(StatsSetupConst.STATS_TMP_LOC)),true);
       return true;
     } catch (IOException e) {
       LOG.error(e);

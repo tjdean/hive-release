@@ -176,6 +176,7 @@ STAGE PLANS:
                   partition values:
                     ds 2008-04-08
                   properties:
+                    COLUMN_STATS_ACCURATE true
                     bucket_count 2
                     bucket_field_name key
                     columns key,value
@@ -184,10 +185,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.bucket_small
                     numFiles 2
-                    numRows 0
                     partition_columns ds
                     partition_columns.types string
-                    rawDataSize 0
                     serialization.ddl struct bucket_small { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -221,6 +220,7 @@ STAGE PLANS:
                   partition values:
                     ds 2008-04-09
                   properties:
+                    COLUMN_STATS_ACCURATE true
                     bucket_count 2
                     bucket_field_name key
                     columns key,value
@@ -229,10 +229,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.bucket_small
                     numFiles 2
-                    numRows 0
                     partition_columns ds
                     partition_columns.types string
-                    rawDataSize 0
                     serialization.ddl struct bucket_small { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -327,6 +325,7 @@ STAGE PLANS:
             partition values:
               ds 2008-04-08
             properties:
+              COLUMN_STATS_ACCURATE true
               bucket_count 4
               bucket_field_name key
               columns key,value
@@ -335,10 +334,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
               name default.bucket_big
               numFiles 4
-              numRows 0
               partition_columns ds
               partition_columns.types string
-              rawDataSize 0
               serialization.ddl struct bucket_big { string key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -374,6 +371,7 @@ STAGE PLANS:
             partition values:
               ds 2008-04-09
             properties:
+              COLUMN_STATS_ACCURATE true
               bucket_count 4
               bucket_field_name key
               columns key,value
@@ -382,10 +380,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
               name default.bucket_big
               numFiles 4
-              numRows 0
               partition_columns ds
               partition_columns.types string
-              rawDataSize 0
               serialization.ddl struct bucket_big { string key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -555,6 +551,7 @@ STAGE PLANS:
             partition values:
               ds 2008-04-08
             properties:
+              COLUMN_STATS_ACCURATE true
               bucket_count 4
               bucket_field_name key
               columns key,value
@@ -563,10 +560,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
               name default.bucket_big
               numFiles 4
-              numRows 0
               partition_columns ds
               partition_columns.types string
-              rawDataSize 0
               serialization.ddl struct bucket_big { string key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -602,6 +597,7 @@ STAGE PLANS:
             partition values:
               ds 2008-04-09
             properties:
+              COLUMN_STATS_ACCURATE true
               bucket_count 4
               bucket_field_name key
               columns key,value
@@ -610,10 +606,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
               name default.bucket_big
               numFiles 4
-              numRows 0
               partition_columns ds
               partition_columns.types string
-              rawDataSize 0
               serialization.ddl struct bucket_big { string key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe

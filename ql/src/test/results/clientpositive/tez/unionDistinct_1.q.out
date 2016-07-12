@@ -6660,7 +6660,7 @@ STAGE PLANS:
                   partition values:
                     ds 1
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns k0,k1,k2,k3,k4,k5
                     columns.comments 
@@ -6732,7 +6732,7 @@ STAGE PLANS:
                   partition values:
                     ds 1
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns k0,k1,k2,k3,k4,k5
                     columns.comments 
@@ -6826,7 +6826,7 @@ STAGE PLANS:
                   partition values:
                     ds 1
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns k1,k2,k3,k4
                     columns.comments 
@@ -7771,8 +7771,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@src2
-POSTHOOK: Lineage: src2.count EXPRESSION [(src)src.null, ]
-POSTHOOK: Lineage: src2.key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 PREHOOK: query: create table src3 as select * from src2
 PREHOOK: type: CREATETABLE_AS_SELECT
 PREHOOK: Input: default@src2
@@ -7783,8 +7781,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src2
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@src3
-POSTHOOK: Lineage: src3.count SIMPLE [(src2)src2.FieldSchema(name:count, type:bigint, comment:null), ]
-POSTHOOK: Lineage: src3.key SIMPLE [(src2)src2.FieldSchema(name:key, type:string, comment:null), ]
 PREHOOK: query: create table src4 as select * from src2
 PREHOOK: type: CREATETABLE_AS_SELECT
 PREHOOK: Input: default@src2
@@ -7795,8 +7791,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src2
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@src4
-POSTHOOK: Lineage: src4.count SIMPLE [(src2)src2.FieldSchema(name:count, type:bigint, comment:null), ]
-POSTHOOK: Lineage: src4.key SIMPLE [(src2)src2.FieldSchema(name:key, type:string, comment:null), ]
 PREHOOK: query: create table src5 as select * from src2
 PREHOOK: type: CREATETABLE_AS_SELECT
 PREHOOK: Input: default@src2
@@ -7807,8 +7801,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src2
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@src5
-POSTHOOK: Lineage: src5.count SIMPLE [(src2)src2.FieldSchema(name:count, type:bigint, comment:null), ]
-POSTHOOK: Lineage: src5.key SIMPLE [(src2)src2.FieldSchema(name:key, type:string, comment:null), ]
 PREHOOK: query: explain extended
 select s.key, s.count from (
   select key, count from src2  where key < 10
@@ -8032,7 +8024,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,count
                     columns.comments 
@@ -8052,7 +8044,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,count
                       columns.comments 
@@ -8109,7 +8101,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,count
                     columns.comments 
@@ -8129,7 +8121,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,count
                       columns.comments 
@@ -8184,7 +8176,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,count
                     columns.comments 
@@ -8204,7 +8196,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,count
                       columns.comments 
@@ -8259,7 +8251,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,count
                     columns.comments 
@@ -8279,7 +8271,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,count
                       columns.comments 
@@ -8642,7 +8634,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,count
                     columns.comments 
@@ -8662,7 +8654,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,count
                       columns.comments 
@@ -8717,7 +8709,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,count
                     columns.comments 
@@ -8737,7 +8729,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,count
                       columns.comments 
@@ -8805,7 +8797,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,count
                     columns.comments 
@@ -8825,7 +8817,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,count
                       columns.comments 
@@ -8872,7 +8864,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,count
                     columns.comments 
@@ -8892,7 +8884,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,count
                       columns.comments 
@@ -9211,7 +9203,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,count
                     columns.comments 
@@ -9231,7 +9223,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,count
                       columns.comments 
@@ -9286,7 +9278,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,count
                     columns.comments 
@@ -9306,7 +9298,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,count
                       columns.comments 
@@ -9372,7 +9364,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,count
                     columns.comments 
@@ -9392,7 +9384,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,count
                       columns.comments 
@@ -9438,7 +9430,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,count
                     columns.comments 
@@ -9458,7 +9450,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,count
                       columns.comments 
@@ -11098,8 +11090,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@jackson_sev_same
-POSTHOOK: Lineage: jackson_sev_same.key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: jackson_sev_same.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: create table dim_pho as select * from src
 PREHOOK: type: CREATETABLE_AS_SELECT
 PREHOOK: Input: default@src
@@ -11110,8 +11100,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@dim_pho
-POSTHOOK: Lineage: dim_pho.key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: dim_pho.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: create table jackson_sev_add as select * from src
 PREHOOK: type: CREATETABLE_AS_SELECT
 PREHOOK: Input: default@src
@@ -11122,8 +11110,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@jackson_sev_add
-POSTHOOK: Lineage: jackson_sev_add.key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: jackson_sev_add.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: explain select b.* from jackson_sev_same a join (select * from dim_pho UNION DISTINCT select * from jackson_sev_add)b on a.key=b.key and b.key=97
 PREHOOK: type: QUERY
 POSTHOOK: query: explain select b.* from jackson_sev_same a join (select * from dim_pho UNION DISTINCT select * from jackson_sev_add)b on a.key=b.key and b.key=97
@@ -12427,8 +12413,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@t1
-POSTHOOK: Lineage: t1.key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: t1.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: create table t2 as select * from src where key < 10
 PREHOOK: type: CREATETABLE_AS_SELECT
 PREHOOK: Input: default@src
@@ -12439,8 +12423,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@t2
-POSTHOOK: Lineage: t2.key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: t2.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: create table t3(key string, cnt int)
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
@@ -13003,8 +12985,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@t1
-POSTHOOK: Lineage: t1.key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: t1.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: create table t2 as select key, count(1) as cnt from src where key < 10 group by key
 PREHOOK: type: CREATETABLE_AS_SELECT
 PREHOOK: Input: default@src
@@ -13015,8 +12995,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@t2
-POSTHOOK: Lineage: t2.cnt EXPRESSION [(src)src.null, ]
-POSTHOOK: Lineage: t2.key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 PREHOOK: query: create table t7(c1 string, cnt int)
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
@@ -13324,8 +13302,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@t1
-POSTHOOK: Lineage: t1.key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: t1.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: CREATE TABLE t2 AS SELECT * FROM src WHERE key < 10
 PREHOOK: type: CREATETABLE_AS_SELECT
 PREHOOK: Input: default@src
@@ -13336,8 +13312,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@t2
-POSTHOOK: Lineage: t2.key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: t2.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: -- Test simple union with double
 EXPLAIN
 SELECT * FROM 

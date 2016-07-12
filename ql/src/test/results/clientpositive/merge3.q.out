@@ -22,8 +22,6 @@ POSTHOOK: Input: default@srcpart@ds=2008-04-09/hr=11
 POSTHOOK: Input: default@srcpart@ds=2008-04-09/hr=12
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@merge_src
-POSTHOOK: Lineage: merge_src.key SIMPLE [(srcpart)srcpart.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: merge_src.value SIMPLE [(srcpart)srcpart.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: create table merge_src_part (key string, value string) partitioned by (ds string)
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
@@ -146,7 +144,7 @@ STAGE PLANS:
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
-              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+              COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns key,value
               columns.comments 
@@ -166,7 +164,7 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                COLUMN_STATS_ACCURATE true
                 bucket_count -1
                 columns key,value
                 columns.comments 
@@ -244,7 +242,7 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: -ext-10004
+            base file name: -ext-10003
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
@@ -298,7 +296,7 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: -ext-10004
+            base file name: -ext-10003
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
@@ -341,8 +339,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@merge_src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@merge_src2
-POSTHOOK: Lineage: merge_src2.key SIMPLE [(merge_src)merge_src.FieldSchema(name:key, type:string, comment:null), ]
-POSTHOOK: Lineage: merge_src2.value SIMPLE [(merge_src)merge_src.FieldSchema(name:value, type:string, comment:null), ]
 PREHOOK: query: select * from merge_src2
 PREHOOK: type: QUERY
 PREHOOK: Input: default@merge_src2
@@ -2370,7 +2366,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	2000                
 	rawDataSize         	21248               
@@ -2498,7 +2494,7 @@ STAGE PLANS:
             partition values:
               ds 2008-04-08
             properties:
-              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+              COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns key,value
               columns.comments 
@@ -2543,7 +2539,7 @@ STAGE PLANS:
             partition values:
               ds 2008-04-09
             properties:
-              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+              COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns key,value
               columns.comments 
@@ -2659,7 +2655,7 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: -ext-10002
+            base file name: -ext-10001
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
@@ -2734,7 +2730,7 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: -ext-10002
+            base file name: -ext-10001
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
@@ -4932,7 +4928,7 @@ STAGE PLANS:
             partition values:
               ds 2008-04-08
             properties:
-              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+              COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns key,value
               columns.comments 
@@ -4977,7 +4973,7 @@ STAGE PLANS:
             partition values:
               ds 2008-04-09
             properties:
-              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+              COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns key,value
               columns.comments 
@@ -5127,7 +5123,7 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: -ext-10002
+            base file name: -ext-10001
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
@@ -5202,7 +5198,7 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: -ext-10002
+            base file name: -ext-10001
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:

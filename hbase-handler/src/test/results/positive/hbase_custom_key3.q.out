@@ -34,7 +34,6 @@ struct(
   cast(cast(key + 2000 as int) as string)),
 value
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@hbase_ck_5
 POSTHOOK: Input: default@src
 POSTHOOK: Output: default@hbase_ck_5
 PREHOOK: query: -- 165,238,27,311,86

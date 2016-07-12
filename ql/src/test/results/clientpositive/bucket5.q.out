@@ -129,7 +129,7 @@ STAGE PLANS:
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
-              COLUMN_STATS_ACCURATE {"COLUMN_STATS":{"key":"true","value":"true"},"BASIC_STATS":"true"}
+              COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns key,value
               columns.comments 'default','default'
@@ -149,7 +149,7 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE {"COLUMN_STATS":{"key":"true","value":"true"},"BASIC_STATS":"true"}
+                COLUMN_STATS_ACCURATE true
                 bucket_count -1
                 columns key,value
                 columns.comments 'default','default'
@@ -186,7 +186,6 @@ STAGE PLANS:
                 input format: org.apache.hadoop.mapred.TextInputFormat
                 output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                 properties:
-                  COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                   SORTBUCKETCOLSPREFIX TRUE
                   bucket_count 2
                   bucket_field_name key
@@ -195,13 +194,9 @@ STAGE PLANS:
                   columns.types int:string
 #### A masked pattern was here ####
                   name default.bucketed_table
-                  numFiles 0
-                  numRows 0
-                  rawDataSize 0
                   serialization.ddl struct bucketed_table { i32 key, string value}
                   serialization.format 1
                   serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                  totalSize 0
 #### A masked pattern was here ####
                 serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 name: default.bucketed_table
@@ -218,7 +213,6 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                 SORTBUCKETCOLSPREFIX TRUE
                 bucket_count 2
                 bucket_field_name key
@@ -227,13 +221,9 @@ STAGE PLANS:
                 columns.types int:string
 #### A masked pattern was here ####
                 name default.bucketed_table
-                numFiles 0
-                numRows 0
-                rawDataSize 0
                 serialization.ddl struct bucketed_table { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                totalSize 0
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.bucketed_table
@@ -260,7 +250,7 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: -mr-10004
+            base file name: -mr-10002
             input format: org.apache.hadoop.mapred.SequenceFileInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
             properties:
@@ -297,20 +287,15 @@ STAGE PLANS:
                 input format: org.apache.hadoop.mapred.TextInputFormat
                 output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                 properties:
-                  COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                   bucket_count -1
                   columns key,value
                   columns.comments 
                   columns.types int:string
 #### A masked pattern was here ####
                   name default.unbucketed_table
-                  numFiles 0
-                  numRows 0
-                  rawDataSize 0
                   serialization.ddl struct unbucketed_table { i32 key, string value}
                   serialization.format 1
                   serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                  totalSize 0
 #### A masked pattern was here ####
                 serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 name: default.unbucketed_table
@@ -336,20 +321,15 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                 bucket_count -1
                 columns key,value
                 columns.comments 
                 columns.types int:string
 #### A masked pattern was here ####
                 name default.unbucketed_table
-                numFiles 0
-                numRows 0
-                rawDataSize 0
                 serialization.ddl struct unbucketed_table { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                totalSize 0
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.unbucketed_table
@@ -372,20 +352,15 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns key,value
                     columns.comments 
                     columns.types int:string
 #### A masked pattern was here ####
                     name default.unbucketed_table
-                    numFiles 0
-                    numRows 0
-                    rawDataSize 0
                     serialization.ddl struct unbucketed_table { i32 key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                   name: default.unbucketed_table
@@ -397,44 +372,34 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: -ext-10005
+            base file name: -ext-10003
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
-              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns key,value
               columns.comments 
               columns.types int:string
 #### A masked pattern was here ####
               name default.unbucketed_table
-              numFiles 0
-              numRows 0
-              rawDataSize 0
               serialization.ddl struct unbucketed_table { i32 key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                 bucket_count -1
                 columns key,value
                 columns.comments 
                 columns.types int:string
 #### A masked pattern was here ####
                 name default.unbucketed_table
-                numFiles 0
-                numRows 0
-                rawDataSize 0
                 serialization.ddl struct unbucketed_table { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                totalSize 0
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.unbucketed_table
@@ -456,20 +421,15 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns key,value
                     columns.comments 
                     columns.types int:string
 #### A masked pattern was here ####
                     name default.unbucketed_table
-                    numFiles 0
-                    numRows 0
-                    rawDataSize 0
                     serialization.ddl struct unbucketed_table { i32 key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                   name: default.unbucketed_table
@@ -481,44 +441,34 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: -ext-10005
+            base file name: -ext-10003
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
-              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns key,value
               columns.comments 
               columns.types int:string
 #### A masked pattern was here ####
               name default.unbucketed_table
-              numFiles 0
-              numRows 0
-              rawDataSize 0
               serialization.ddl struct unbucketed_table { i32 key, string value}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                 bucket_count -1
                 columns key,value
                 columns.comments 
                 columns.types int:string
 #### A masked pattern was here ####
                 name default.unbucketed_table
-                numFiles 0
-                numRows 0
-                rawDataSize 0
                 serialization.ddl struct unbucketed_table { i32 key, string value}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                totalSize 0
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.unbucketed_table
@@ -569,11 +519,11 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	SORTBUCKETCOLSPREFIX	TRUE                
 	numFiles            	2                   
-	numRows             	500                 
-	rawDataSize         	5312                
+	numRows             	0                   
+	rawDataSize         	0                   
 	totalSize           	5812                
 #### A masked pattern was here ####
 	 	 

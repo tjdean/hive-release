@@ -180,22 +180,17 @@ STAGE PLANS:
                   partition values:
                     ds 1
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test1
-                    numFiles 0
-                    numRows 0
                     partition_columns ds
                     partition_columns.types string
-                    rawDataSize 0
                     serialization.ddl struct test1 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.NullStructSerDe
                 
@@ -333,22 +328,17 @@ STAGE PLANS:
                   partition values:
                     ds 1
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test1
-                    numFiles 0
-                    numRows 0
                     partition_columns ds
                     partition_columns.types string
-                    rawDataSize 0
                     serialization.ddl struct test1 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.NullStructSerDe
                 
@@ -486,22 +476,17 @@ STAGE PLANS:
                   partition values:
                     ds 1
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test1
-                    numFiles 0
-                    numRows 0
                     partition_columns ds
                     partition_columns.types string
-                    rawDataSize 0
                     serialization.ddl struct test1 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
@@ -673,22 +658,17 @@ STAGE PLANS:
                   partition values:
                     ds 1
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test1
-                    numFiles 0
-                    numRows 0
                     partition_columns ds
                     partition_columns.types string
-                    rawDataSize 0
                     serialization.ddl struct test1 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
@@ -718,22 +698,17 @@ STAGE PLANS:
                   partition values:
                     ds 2
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test1
-                    numFiles 0
-                    numRows 0
                     partition_columns ds
                     partition_columns.types string
-                    rawDataSize 0
                     serialization.ddl struct test1 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
@@ -790,22 +765,17 @@ STAGE PLANS:
                   partition values:
                     ds 1
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test1
-                    numFiles 0
-                    numRows 0
                     partition_columns ds
                     partition_columns.types string
-                    rawDataSize 0
                     serialization.ddl struct test1 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
@@ -835,22 +805,17 @@ STAGE PLANS:
                   partition values:
                     ds 2
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test1
-                    numFiles 0
-                    numRows 0
                     partition_columns ds
                     partition_columns.types string
-                    rawDataSize 0
                     serialization.ddl struct test1 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
@@ -1086,22 +1051,17 @@ STAGE PLANS:
                     ds 1
                     hr 1
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test2
-                    numFiles 0
-                    numRows 0
                     partition_columns ds/hr
                     partition_columns.types string:string
-                    rawDataSize 0
                     serialization.ddl struct test2 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.NullStructSerDe
                 
@@ -1131,22 +1091,17 @@ STAGE PLANS:
                     ds 1
                     hr 2
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test2
-                    numFiles 0
-                    numRows 0
                     partition_columns ds/hr
                     partition_columns.types string:string
-                    rawDataSize 0
                     serialization.ddl struct test2 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.NullStructSerDe
                 
@@ -1176,22 +1131,17 @@ STAGE PLANS:
                     ds 1
                     hr 3
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test2
-                    numFiles 0
-                    numRows 0
                     partition_columns ds/hr
                     partition_columns.types string:string
-                    rawDataSize 0
                     serialization.ddl struct test2 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.NullStructSerDe
                 
@@ -1346,22 +1296,17 @@ STAGE PLANS:
                     ds 1
                     hr 1
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test2
-                    numFiles 0
-                    numRows 0
                     partition_columns ds/hr
                     partition_columns.types string:string
-                    rawDataSize 0
                     serialization.ddl struct test2 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
@@ -1392,22 +1337,17 @@ STAGE PLANS:
                     ds 1
                     hr 2
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test2
-                    numFiles 0
-                    numRows 0
                     partition_columns ds/hr
                     partition_columns.types string:string
-                    rawDataSize 0
                     serialization.ddl struct test2 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
@@ -1438,22 +1378,17 @@ STAGE PLANS:
                     ds 1
                     hr 3
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test2
-                    numFiles 0
-                    numRows 0
                     partition_columns ds/hr
                     partition_columns.types string:string
-                    rawDataSize 0
                     serialization.ddl struct test2 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                 
@@ -1597,22 +1532,17 @@ STAGE PLANS:
                   partition values:
                     ds 1
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test1
-                    numFiles 0
-                    numRows 0
                     partition_columns ds
                     partition_columns.types string
-                    rawDataSize 0
                     serialization.ddl struct test1 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.NullStructSerDe
                 
@@ -1641,22 +1571,17 @@ STAGE PLANS:
                   partition values:
                     ds 2
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test1
-                    numFiles 0
-                    numRows 0
                     partition_columns ds
                     partition_columns.types string
-                    rawDataSize 0
                     serialization.ddl struct test1 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.NullStructSerDe
                 
@@ -1860,22 +1785,17 @@ STAGE PLANS:
                     ds 01:10:10
                     hr 01
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test2
-                    numFiles 0
-                    numRows 0
                     partition_columns ds/hr
                     partition_columns.types string:string
-                    rawDataSize 0
                     serialization.ddl struct test2 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.NullStructSerDe
                 
@@ -1905,22 +1825,17 @@ STAGE PLANS:
                     ds 01:10:20
                     hr 02
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test2
-                    numFiles 0
-                    numRows 0
                     partition_columns ds/hr
                     partition_columns.types string:string
-                    rawDataSize 0
                     serialization.ddl struct test2 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.NullStructSerDe
                 
@@ -1950,22 +1865,17 @@ STAGE PLANS:
                     ds 1
                     hr 1
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test2
-                    numFiles 0
-                    numRows 0
                     partition_columns ds/hr
                     partition_columns.types string:string
-                    rawDataSize 0
                     serialization.ddl struct test2 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.NullStructSerDe
                 
@@ -1995,22 +1905,17 @@ STAGE PLANS:
                     ds 1
                     hr 2
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test2
-                    numFiles 0
-                    numRows 0
                     partition_columns ds/hr
                     partition_columns.types string:string
-                    rawDataSize 0
                     serialization.ddl struct test2 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.NullStructSerDe
                 
@@ -2040,22 +1945,17 @@ STAGE PLANS:
                     ds 1
                     hr 3
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns a,b
                     columns.comments 
                     columns.types int:double
 #### A masked pattern was here ####
                     name default.test2
-                    numFiles 0
-                    numRows 0
                     partition_columns ds/hr
                     partition_columns.types string:string
-                    rawDataSize 0
                     serialization.ddl struct test2 { i32 a, double b}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.NullStructSerDe
                 

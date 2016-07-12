@@ -289,7 +289,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
   private CreateTableDesc getBaseCreateTableDescFromTable(String dbName,
       org.apache.hadoop.hive.metastore.api.Table table) {
     if ((table.getPartitionKeys() == null) || (table.getPartitionKeys().size() == 0)){
-      table.putToParameters(StatsSetupConst.DO_NOT_UPDATE_STATS, StatsSetupConst.TRUE);
+      table.putToParameters(StatsSetupConst.DO_NOT_UPDATE_STATS,"true");
     }
     CreateTableDesc tblDesc = new CreateTableDesc(
         dbName,

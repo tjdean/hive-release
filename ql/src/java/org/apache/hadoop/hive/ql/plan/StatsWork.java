@@ -44,10 +44,6 @@ public class StatsWork implements Serializable {
   // are still valid. However, if a load file is being performed, the old stats collected by
   // aggregator are not valid. It might be a good idea to clear them instead of leaving wrong
   // and old stats.
-  // Since HIVE-12661, we maintain the old stats (although may be wrong) for CBO
-  // purpose. We use a flag COLUMN_STATS_ACCURATE to
-  // show the accuracy of the stats.
-
   private boolean clearAggregatorStats = false;
 
   private boolean noStatsAggregator = false;
@@ -60,9 +56,6 @@ public class StatsWork implements Serializable {
   // by various optimizers (auto.convert.join, for example)
   // so this is set by DriverContext in runtime
   private transient Task sourceTask;
-
-  // used by FS based stats collector
-  private String statsTmpDir;
 
   public StatsWork() {
   }
@@ -77,6 +70,10 @@ public class StatsWork implements Serializable {
 
   public StatsWork(LoadFileDesc loadFileDesc) {
     this.loadFileDesc = loadFileDesc;
+  }
+
+  public StatsWork(boolean statsReliable) {
+    this.statsReliable = statsReliable;
   }
 
   public TableSpec getTableSpecs() {
@@ -98,14 +95,6 @@ public class StatsWork implements Serializable {
   @Explain(displayName = "Stats Aggregation Key Prefix", explainLevels = { Level.EXTENDED })
   public String getAggKey() {
     return aggKey;
-  }
-
-  public String getStatsTmpDir() {
-    return statsTmpDir;
-  }
-
-  public void setStatsTmpDir(String statsTmpDir) {
-    this.statsTmpDir = statsTmpDir;
   }
 
   public boolean getNoStatsAggregator() {

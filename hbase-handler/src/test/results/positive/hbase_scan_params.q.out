@@ -18,7 +18,6 @@ PREHOOK: Input: default@src
 PREHOOK: Output: default@hbase_pushdown
 POSTHOOK: query: INSERT OVERWRITE TABLE hbase_pushdown SELECT * FROM src
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@hbase_pushdown
 POSTHOOK: Input: default@src
 POSTHOOK: Output: default@hbase_pushdown
 PREHOOK: query: select * from hbase_pushdown

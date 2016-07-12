@@ -31,7 +31,6 @@ PREHOOK: Input: default@src
 PREHOOK: Output: default@hbase_table
 POSTHOOK: query: FROM src INSERT OVERWRITE TABLE hbase_table SELECT key, value, "2012-02-23 10:14:52" WHERE (key % 17) = 0
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@hbase_table
 POSTHOOK: Input: default@src
 POSTHOOK: Output: default@hbase_table
 PREHOOK: query: SELECT * FROM hbase_table
@@ -88,7 +87,6 @@ PREHOOK: Input: default@src
 PREHOOK: Output: default@hbase_table
 POSTHOOK: query: FROM src INSERT OVERWRITE TABLE hbase_table SELECT key, value, 1329959754000 WHERE (key % 17) = 0
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@hbase_table
 POSTHOOK: Input: default@src
 POSTHOOK: Output: default@hbase_table
 PREHOOK: query: SELECT key, value, cast(time as timestamp) FROM hbase_table
@@ -155,7 +153,6 @@ POSTHOOK: query: insert overwrite table hbase_table select key,value,ts FROM
   select key, value, 200000000000 as ts from src WHERE (key % 37) = 0
 ) T
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@hbase_table
 POSTHOOK: Input: default@src
 POSTHOOK: Output: default@hbase_table
 PREHOOK: query: explain

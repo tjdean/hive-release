@@ -203,7 +203,7 @@ Table:              	ss_part
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	11                  
 	rawDataSize         	151                 
@@ -265,7 +265,7 @@ Table:              	ss_part
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	13                  
 	rawDataSize         	186                 
@@ -435,7 +435,7 @@ Table:              	ss_part
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	11                  
 	rawDataSize         	151                 
@@ -497,7 +497,7 @@ Table:              	ss_part
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	13                  
 	rawDataSize         	186                 
@@ -688,7 +688,7 @@ Table:              	ss_part
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	11                  
 	rawDataSize         	151                 
@@ -750,7 +750,7 @@ Table:              	ss_part
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	13                  
 	rawDataSize         	186                 
@@ -919,7 +919,7 @@ Table:              	ss_part
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	11                  
 	rawDataSize         	151                 
@@ -981,7 +981,7 @@ Table:              	ss_part
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	13                  
 	rawDataSize         	186                 
@@ -1229,7 +1229,7 @@ Table:              	ss_part_orc
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	11                  
 	rawDataSize         	88                  
@@ -1291,7 +1291,7 @@ Table:              	ss_part_orc
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	13                  
 	rawDataSize         	104                 
@@ -1462,7 +1462,7 @@ Table:              	ss_part_orc
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	11                  
 	rawDataSize         	88                  
@@ -1524,7 +1524,7 @@ Table:              	ss_part_orc
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	13                  
 	rawDataSize         	104                 

@@ -189,6 +189,7 @@ STAGE PLANS:
                   partition values:
                     ds 2008-04-08
                   properties:
+                    COLUMN_STATS_ACCURATE true
                     bucket_count 2
                     bucket_field_name key
                     columns key,value
@@ -371,6 +372,7 @@ STAGE PLANS:
                   partition values:
                     ds 2008-04-08
                   properties:
+                    COLUMN_STATS_ACCURATE true
                     bucket_count 2
                     bucket_field_name key
                     columns key,value
@@ -544,6 +546,7 @@ STAGE PLANS:
                   partition values:
                     ds 2008-04-08
                   properties:
+                    COLUMN_STATS_ACCURATE true
                     bucket_count 4
                     bucket_field_name key
                     columns key,value
@@ -591,6 +594,7 @@ STAGE PLANS:
                   partition values:
                     ds 2008-04-09
                   properties:
+                    COLUMN_STATS_ACCURATE true
                     bucket_count 4
                     bucket_field_name key
                     columns key,value
@@ -690,6 +694,7 @@ STAGE PLANS:
                   partition values:
                     ds 2008-04-08
                   properties:
+                    COLUMN_STATS_ACCURATE true
                     bucket_count 2
                     bucket_field_name key
                     columns key,value

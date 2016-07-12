@@ -87,10 +87,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@summary
-POSTHOOK: Lineage: summary.c1 EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: summary.c2 EXPRESSION [(src)src.FieldSchema(name:value, type:string, comment:default), ]
-POSTHOOK: Lineage: summary.key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: summary.value SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: describe formatted summary
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: default@summary
@@ -112,7 +108,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	20                  
 	rawDataSize         	620                 
@@ -250,9 +246,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src1
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@x4
-POSTHOOK: Lineage: x4.key SCRIPT [(src1)src1.FieldSchema(name:key, type:string, comment:default), (src1)src1.FieldSchema(name:value, type:string, comment:default), (src1)src1.FieldSchema(name:BLOCK__OFFSET__INSIDE__FILE, type:bigint, comment:), (src1)src1.FieldSchema(name:INPUT__FILE__NAME, type:string, comment:), (src1)src1.FieldSchema(name:ROW__ID, type:struct<transactionId:bigint,bucketId:int,rowId:bigint>, comment:), ]
-POSTHOOK: Lineage: x4.rr SCRIPT [(src1)src1.FieldSchema(name:key, type:string, comment:default), (src1)src1.FieldSchema(name:value, type:string, comment:default), (src1)src1.FieldSchema(name:BLOCK__OFFSET__INSIDE__FILE, type:bigint, comment:), (src1)src1.FieldSchema(name:INPUT__FILE__NAME, type:string, comment:), (src1)src1.FieldSchema(name:ROW__ID, type:struct<transactionId:bigint,bucketId:int,rowId:bigint>, comment:), ]
-POSTHOOK: Lineage: x4.value SCRIPT [(src1)src1.FieldSchema(name:key, type:string, comment:default), (src1)src1.FieldSchema(name:value, type:string, comment:default), (src1)src1.FieldSchema(name:BLOCK__OFFSET__INSIDE__FILE, type:bigint, comment:), (src1)src1.FieldSchema(name:INPUT__FILE__NAME, type:string, comment:), (src1)src1.FieldSchema(name:ROW__ID, type:struct<transactionId:bigint,bucketId:int,rowId:bigint>, comment:), ]
 PREHOOK: query: describe formatted x4
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: default@x4
@@ -273,7 +266,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	25                  
 	rawDataSize         	242                 
@@ -441,9 +434,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@x5
-POSTHOOK: Lineage: x5.key SCRIPT [(src)src.FieldSchema(name:key, type:string, comment:default), (src)src.FieldSchema(name:value, type:string, comment:default), (src)src.FieldSchema(name:BLOCK__OFFSET__INSIDE__FILE, type:bigint, comment:), (src)src.FieldSchema(name:INPUT__FILE__NAME, type:string, comment:), (src)src.FieldSchema(name:ROW__ID, type:struct<transactionId:bigint,bucketId:int,rowId:bigint>, comment:), ]
-POSTHOOK: Lineage: x5.lead1 SCRIPT [(src)src.FieldSchema(name:key, type:string, comment:default), (src)src.FieldSchema(name:value, type:string, comment:default), (src)src.FieldSchema(name:BLOCK__OFFSET__INSIDE__FILE, type:bigint, comment:), (src)src.FieldSchema(name:INPUT__FILE__NAME, type:string, comment:), (src)src.FieldSchema(name:ROW__ID, type:struct<transactionId:bigint,bucketId:int,rowId:bigint>, comment:), ]
-POSTHOOK: Lineage: x5.value SCRIPT [(src)src.FieldSchema(name:key, type:string, comment:default), (src)src.FieldSchema(name:value, type:string, comment:default), (src)src.FieldSchema(name:BLOCK__OFFSET__INSIDE__FILE, type:bigint, comment:), (src)src.FieldSchema(name:INPUT__FILE__NAME, type:string, comment:), (src)src.FieldSchema(name:ROW__ID, type:struct<transactionId:bigint,bucketId:int,rowId:bigint>, comment:), ]
 PREHOOK: query: describe formatted x5
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: default@x5
@@ -464,7 +454,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	20                  
 	rawDataSize         	268                 
@@ -615,9 +605,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src1
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@x6
-POSTHOOK: Lineage: x6._c1 EXPRESSION [(src1)src1.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: x6.key SIMPLE [(src1)src1.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: x6.value SIMPLE [(src1)src1.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: describe formatted x6
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: default@x6
@@ -638,7 +625,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	25                  
 	rawDataSize         	309                 
@@ -767,9 +754,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@x7
-POSTHOOK: Lineage: x7._c1 EXPRESSION [(src)src.FieldSchema(name:value, type:string, comment:default), ]
-POSTHOOK: Lineage: x7._col0 SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: x7._col1 SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: describe formatted x7
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: default@x7
@@ -790,7 +774,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	309                 
 	rawDataSize         	3891                
@@ -1206,9 +1190,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@x8
-POSTHOOK: Lineage: x8._c1 EXPRESSION [(src)src.FieldSchema(name:value, type:string, comment:default), ]
-POSTHOOK: Lineage: x8._col0 SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: x8._col1 SIMPLE [(src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: describe formatted x8
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: default@x8
@@ -1229,7 +1210,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	5                   
 	rawDataSize         	45                  
@@ -1348,8 +1329,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@x9
-POSTHOOK: Lineage: x9._c0 EXPRESSION [(src)src.FieldSchema(name:value, type:string, comment:default), ]
-POSTHOOK: Lineage: x9.key SIMPLE [(src)src.FieldSchema(name:key, type:string, comment:default), ]
 PREHOOK: query: describe formatted x9
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: default@x9
@@ -1369,7 +1348,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	5                   
 	rawDataSize         	35                  

@@ -18,7 +18,9 @@
 
 package org.apache.hadoop.hive.ql.stats;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.ql.exec.Task;
 
 /**
  * An test implementation for StatsAggregator.
@@ -32,9 +34,8 @@ public class DummyStatsAggregator implements StatsAggregator {
 
   // This is a test. The parameter hive.test.dummystats.aggregator's value
   // denotes the method which needs to throw an error.
-  @Override
-  public boolean connect(StatsCollectionContext scc) {
-    errorMethod = HiveConf.getVar(scc.getHiveConf(), HiveConf.ConfVars.HIVETESTMODEDUMMYSTATAGGR);
+  public boolean connect(Configuration hconf, Task sourceTask) {
+    errorMethod = HiveConf.getVar(hconf, HiveConf.ConfVars.HIVETESTMODEDUMMYSTATAGGR);
     if (errorMethod.equalsIgnoreCase("connect")) {
       return false;
     }
@@ -42,20 +43,17 @@ public class DummyStatsAggregator implements StatsAggregator {
     return true;
   }
 
-  @Override
   public String aggregateStats(String keyPrefix, String statType) {
     return null;
   }
 
-  @Override
-  public boolean closeConnection(StatsCollectionContext scc) {
+  public boolean closeConnection() {
     if (errorMethod.equalsIgnoreCase("closeConnection")) {
       return false;
     }
     return true;
   }
 
-  @Override
   public boolean cleanUp(String keyPrefix) {
     if (errorMethod.equalsIgnoreCase("cleanUp")) {
       return false;

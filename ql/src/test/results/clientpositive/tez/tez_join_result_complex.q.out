@@ -265,6 +265,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns contact_event_id,ce_create_dt,ce_end_dt,contact_type,cnctevs_cd,contact_mode,cntvnst_stts_cd,total_transfers,ce_notes
                     columns.comments 
@@ -276,8 +277,6 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.ct_events_clean
                     numFiles 1
-                    numRows 0
-                    rawDataSize 0
                     serialization.ddl struct ct_events_clean { string contact_event_id, string ce_create_dt, string ce_end_dt, string contact_type, string cnctevs_cd, string contact_mode, string cntvnst_stts_cd, i32 total_transfers, list<string> ce_notes}
                     serialization.format 	
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -288,6 +287,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns contact_event_id,ce_create_dt,ce_end_dt,contact_type,cnctevs_cd,contact_mode,cntvnst_stts_cd,total_transfers,ce_notes
                       columns.comments 
@@ -299,8 +299,6 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.ct_events_clean
                       numFiles 1
-                      numRows 0
-                      rawDataSize 0
                       serialization.ddl struct ct_events_clean { string contact_event_id, string ce_create_dt, string ce_end_dt, string contact_type, string cnctevs_cd, string contact_mode, string cntvnst_stts_cd, i32 total_transfers, list<string> ce_notes}
                       serialization.format 	
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -367,6 +365,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns cnctevn_id,svcrqst_id,svcrqst_crt_dts,subject_seq_no,plan_component,cust_segment,cnctyp_cd,cnctmd_cd,cnctevs_cd,svcrtyp_cd,svrstyp_cd,cmpltyp_cd,catsrsn_cd,apealvl_cd,cnstnty_cd,svcrqst_asrqst_ind,svcrqst_rtnorig_in,svcrqst_vwasof_dt,sum_reason_cd,sum_reason,crsr_master_claim_index,svcrqct_cds,svcrqst_lupdt,crsr_lupdt,cntevsds_lupdt,ignore_me,notes
                     columns.comments 
@@ -378,8 +377,6 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.service_request_clean
                     numFiles 1
-                    numRows 0
-                    rawDataSize 0
                     serialization.ddl struct service_request_clean { string cnctevn_id, string svcrqst_id, string svcrqst_crt_dts, i32 subject_seq_no, string plan_component, string cust_segment, string cnctyp_cd, string cnctmd_cd, string cnctevs_cd, string svcrtyp_cd, string svrstyp_cd, string cmpltyp_cd, string catsrsn_cd, string apealvl_cd, string cnstnty_cd, string svcrqst_asrqst_ind, string svcrqst_rtnorig_in, string svcrqst_vwasof_dt, string sum_reason_cd, string sum_reason, string crsr_master_claim_index, list<string> svcrqct_cds, string svcrqst_lupdt, timestamp crsr_lupdt, string cntevsds_lupdt, i32 ignore_me, list<string> notes}
                     serialization.format 	
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -390,6 +387,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns cnctevn_id,svcrqst_id,svcrqst_crt_dts,subject_seq_no,plan_component,cust_segment,cnctyp_cd,cnctmd_cd,cnctevs_cd,svcrtyp_cd,svrstyp_cd,cmpltyp_cd,catsrsn_cd,apealvl_cd,cnstnty_cd,svcrqst_asrqst_ind,svcrqst_rtnorig_in,svcrqst_vwasof_dt,sum_reason_cd,sum_reason,crsr_master_claim_index,svcrqct_cds,svcrqst_lupdt,crsr_lupdt,cntevsds_lupdt,ignore_me,notes
                       columns.comments 
@@ -401,8 +399,6 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.service_request_clean
                       numFiles 1
-                      numRows 0
-                      rawDataSize 0
                       serialization.ddl struct service_request_clean { string cnctevn_id, string svcrqst_id, string svcrqst_crt_dts, i32 subject_seq_no, string plan_component, string cust_segment, string cnctyp_cd, string cnctmd_cd, string cnctevs_cd, string svcrtyp_cd, string svrstyp_cd, string cmpltyp_cd, string catsrsn_cd, string apealvl_cd, string cnstnty_cd, string svcrqst_asrqst_ind, string svcrqst_rtnorig_in, string svcrqst_vwasof_dt, string sum_reason_cd, string sum_reason, string crsr_master_claim_index, list<string> svcrqct_cds, string svcrqst_lupdt, timestamp crsr_lupdt, string cntevsds_lupdt, i32 ignore_me, list<string> notes}
                       serialization.format 	
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -476,22 +472,6 @@ POSTHOOK: Input: default@ct_events_clean
 POSTHOOK: Input: default@service_request_clean
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@ct_events1_test
-POSTHOOK: Lineage: ct_events1_test.ce_create_dt SIMPLE [(ct_events_clean)a.FieldSchema(name:ce_create_dt, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.ce_end_dt SIMPLE [(ct_events_clean)a.FieldSchema(name:ce_end_dt, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.ce_notes SIMPLE [(ct_events_clean)a.FieldSchema(name:ce_notes, type:array<string>, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.cmpltyp_cd SIMPLE [(service_request_clean)b.FieldSchema(name:cmpltyp_cd, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.cnctevs_cd SIMPLE [(ct_events_clean)a.FieldSchema(name:cnctevs_cd, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.cnctmd_cd SIMPLE [(service_request_clean)b.FieldSchema(name:cnctmd_cd, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.cntvnst_stts_cd SIMPLE [(ct_events_clean)a.FieldSchema(name:cntvnst_stts_cd, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.contact_event_id SIMPLE [(ct_events_clean)a.FieldSchema(name:contact_event_id, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.contact_mode SIMPLE [(ct_events_clean)a.FieldSchema(name:contact_mode, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.contact_type SIMPLE [(ct_events_clean)a.FieldSchema(name:contact_type, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.notes SIMPLE [(service_request_clean)b.FieldSchema(name:notes, type:array<string>, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.src SIMPLE [(service_request_clean)b.FieldSchema(name:sum_reason_cd, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.svcrqct_cds SIMPLE [(service_request_clean)b.FieldSchema(name:svcrqct_cds, type:array<string>, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.svcrqst_id SIMPLE [(service_request_clean)b.FieldSchema(name:svcrqst_id, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.svcrtyp_cd SIMPLE [(service_request_clean)b.FieldSchema(name:svcrtyp_cd, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.total_transfers SIMPLE [(ct_events_clean)a.FieldSchema(name:total_transfers, type:int, comment:null), ]
 PREHOOK: query: select * from ct_events1_test
 PREHOOK: type: QUERY
 PREHOOK: Input: default@ct_events1_test
@@ -1309,6 +1289,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns contact_event_id,ce_create_dt,ce_end_dt,contact_type,cnctevs_cd,contact_mode,cntvnst_stts_cd,total_transfers,ce_notes
                     columns.comments 
@@ -1320,8 +1301,6 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.ct_events_clean
                     numFiles 1
-                    numRows 0
-                    rawDataSize 0
                     serialization.ddl struct ct_events_clean { string contact_event_id, string ce_create_dt, string ce_end_dt, string contact_type, string cnctevs_cd, string contact_mode, string cntvnst_stts_cd, i32 total_transfers, list<string> ce_notes}
                     serialization.format 	
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1332,6 +1311,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns contact_event_id,ce_create_dt,ce_end_dt,contact_type,cnctevs_cd,contact_mode,cntvnst_stts_cd,total_transfers,ce_notes
                       columns.comments 
@@ -1343,8 +1323,6 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.ct_events_clean
                       numFiles 1
-                      numRows 0
-                      rawDataSize 0
                       serialization.ddl struct ct_events_clean { string contact_event_id, string ce_create_dt, string ce_end_dt, string contact_type, string cnctevs_cd, string contact_mode, string cntvnst_stts_cd, i32 total_transfers, list<string> ce_notes}
                       serialization.format 	
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1412,6 +1390,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns cnctevn_id,svcrqst_id,svcrqst_crt_dts,subject_seq_no,plan_component,cust_segment,cnctyp_cd,cnctmd_cd,cnctevs_cd,svcrtyp_cd,svrstyp_cd,cmpltyp_cd,catsrsn_cd,apealvl_cd,cnstnty_cd,svcrqst_asrqst_ind,svcrqst_rtnorig_in,svcrqst_vwasof_dt,sum_reason_cd,sum_reason,crsr_master_claim_index,svcrqct_cds,svcrqst_lupdt,crsr_lupdt,cntevsds_lupdt,ignore_me,notes
                     columns.comments 
@@ -1423,8 +1402,6 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.service_request_clean
                     numFiles 1
-                    numRows 0
-                    rawDataSize 0
                     serialization.ddl struct service_request_clean { string cnctevn_id, string svcrqst_id, string svcrqst_crt_dts, i32 subject_seq_no, string plan_component, string cust_segment, string cnctyp_cd, string cnctmd_cd, string cnctevs_cd, string svcrtyp_cd, string svrstyp_cd, string cmpltyp_cd, string catsrsn_cd, string apealvl_cd, string cnstnty_cd, string svcrqst_asrqst_ind, string svcrqst_rtnorig_in, string svcrqst_vwasof_dt, string sum_reason_cd, string sum_reason, string crsr_master_claim_index, list<string> svcrqct_cds, string svcrqst_lupdt, timestamp crsr_lupdt, string cntevsds_lupdt, i32 ignore_me, list<string> notes}
                     serialization.format 	
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1435,6 +1412,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns cnctevn_id,svcrqst_id,svcrqst_crt_dts,subject_seq_no,plan_component,cust_segment,cnctyp_cd,cnctmd_cd,cnctevs_cd,svcrtyp_cd,svrstyp_cd,cmpltyp_cd,catsrsn_cd,apealvl_cd,cnstnty_cd,svcrqst_asrqst_ind,svcrqst_rtnorig_in,svcrqst_vwasof_dt,sum_reason_cd,sum_reason,crsr_master_claim_index,svcrqct_cds,svcrqst_lupdt,crsr_lupdt,cntevsds_lupdt,ignore_me,notes
                       columns.comments 
@@ -1446,8 +1424,6 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.service_request_clean
                       numFiles 1
-                      numRows 0
-                      rawDataSize 0
                       serialization.ddl struct service_request_clean { string cnctevn_id, string svcrqst_id, string svcrqst_crt_dts, i32 subject_seq_no, string plan_component, string cust_segment, string cnctyp_cd, string cnctmd_cd, string cnctevs_cd, string svcrtyp_cd, string svrstyp_cd, string cmpltyp_cd, string catsrsn_cd, string apealvl_cd, string cnstnty_cd, string svcrqst_asrqst_ind, string svcrqst_rtnorig_in, string svcrqst_vwasof_dt, string sum_reason_cd, string sum_reason, string crsr_master_claim_index, list<string> svcrqct_cds, string svcrqst_lupdt, timestamp crsr_lupdt, string cntevsds_lupdt, i32 ignore_me, list<string> notes}
                       serialization.format 	
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1521,22 +1497,6 @@ POSTHOOK: Input: default@ct_events_clean
 POSTHOOK: Input: default@service_request_clean
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@ct_events1_test
-POSTHOOK: Lineage: ct_events1_test.ce_create_dt SIMPLE [(ct_events_clean)a.FieldSchema(name:ce_create_dt, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.ce_end_dt SIMPLE [(ct_events_clean)a.FieldSchema(name:ce_end_dt, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.ce_notes SIMPLE [(ct_events_clean)a.FieldSchema(name:ce_notes, type:array<string>, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.cmpltyp_cd SIMPLE [(service_request_clean)b.FieldSchema(name:cmpltyp_cd, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.cnctevs_cd SIMPLE [(ct_events_clean)a.FieldSchema(name:cnctevs_cd, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.cnctmd_cd SIMPLE [(service_request_clean)b.FieldSchema(name:cnctmd_cd, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.cntvnst_stts_cd SIMPLE [(ct_events_clean)a.FieldSchema(name:cntvnst_stts_cd, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.contact_event_id SIMPLE [(ct_events_clean)a.FieldSchema(name:contact_event_id, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.contact_mode SIMPLE [(ct_events_clean)a.FieldSchema(name:contact_mode, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.contact_type SIMPLE [(ct_events_clean)a.FieldSchema(name:contact_type, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.notes SIMPLE [(service_request_clean)b.FieldSchema(name:notes, type:array<string>, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.src SIMPLE [(service_request_clean)b.FieldSchema(name:sum_reason_cd, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.svcrqct_cds SIMPLE [(service_request_clean)b.FieldSchema(name:svcrqct_cds, type:array<string>, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.svcrqst_id SIMPLE [(service_request_clean)b.FieldSchema(name:svcrqst_id, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.svcrtyp_cd SIMPLE [(service_request_clean)b.FieldSchema(name:svcrtyp_cd, type:string, comment:null), ]
-POSTHOOK: Lineage: ct_events1_test.total_transfers SIMPLE [(ct_events_clean)a.FieldSchema(name:total_transfers, type:int, comment:null), ]
 PREHOOK: query: select * from ct_events1_test
 PREHOOK: type: QUERY
 PREHOOK: Input: default@ct_events1_test

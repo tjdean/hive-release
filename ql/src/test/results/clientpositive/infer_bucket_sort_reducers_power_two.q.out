@@ -52,10 +52,10 @@ Table:              	test_table
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	4                   
-	numRows             	309                 
-	rawDataSize         	1482                
+	numRows             	0                   
+	rawDataSize         	0                   
 	totalSize           	1791                
 #### A masked pattern was here ####
 	 	 
@@ -107,10 +107,10 @@ Table:              	test_table
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	4                   
-	numRows             	1028                
-	rawDataSize         	10968               
+	numRows             	0                   
+	rawDataSize         	0                   
 	totalSize           	11996               
 #### A masked pattern was here ####
 	 	 
@@ -162,10 +162,10 @@ Table:              	test_table
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	4                   
-	numRows             	1028                
-	rawDataSize         	10968               
+	numRows             	0                   
+	rawDataSize         	0                   
 	totalSize           	11996               
 #### A masked pattern was here ####
 	 	 
@@ -217,10 +217,10 @@ Table:              	test_table
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	4                   
-	numRows             	2654                
-	rawDataSize         	28466               
+	numRows             	0                   
+	rawDataSize         	0                   
 	totalSize           	31120               
 #### A masked pattern was here ####
 	 	 
@@ -272,10 +272,10 @@ Table:              	test_table
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	16                  
-	numRows             	2654                
-	rawDataSize         	28466               
+	numRows             	0                   
+	rawDataSize         	0                   
 	totalSize           	31120               
 #### A masked pattern was here ####
 	 	 
@@ -329,10 +329,10 @@ Table:              	test_table
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
-	numRows             	5                   
-	rawDataSize         	19                  
+	numRows             	0                   
+	rawDataSize         	0                   
 	totalSize           	24                  
 #### A masked pattern was here ####
 	 	 

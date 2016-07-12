@@ -116,20 +116,15 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                     bucket_count -1
                     columns key,cnt
                     columns.comments 
                     columns.types int:int
 #### A masked pattern was here ####
                     name default.outputtbl1
-                    numFiles 0
-                    numRows 0
-                    rawDataSize 0
                     serialization.ddl struct outputtbl1 { i32 key, i32 cnt}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                    totalSize 0
 #### A masked pattern was here ####
                   serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                   name: default.outputtbl1
@@ -146,20 +141,15 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                 bucket_count -1
                 columns key,cnt
                 columns.comments 
                 columns.types int:int
 #### A masked pattern was here ####
                 name default.outputtbl1
-                numFiles 0
-                numRows 0
-                rawDataSize 0
                 serialization.ddl struct outputtbl1 { i32 key, i32 cnt}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-                totalSize 0
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.outputtbl1
@@ -295,7 +285,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,cnt
                     columns.comments 
@@ -325,7 +315,7 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                COLUMN_STATS_ACCURATE true
                 bucket_count -1
                 columns key,cnt
                 columns.comments 
@@ -451,6 +441,7 @@ STAGE PLANS:
             partition values:
               ds 2
             properties:
+              COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns key,val
               columns.comments 
@@ -458,10 +449,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
               name default.t1
               numFiles 1
-              numRows 0
               partition_columns ds
               partition_columns.types string
-              rawDataSize 0
               serialization.ddl struct t1 { string key, string val}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -512,7 +501,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,cnt
                     columns.comments 
@@ -542,7 +531,7 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                COLUMN_STATS_ACCURATE true
                 bucket_count -1
                 columns key,cnt
                 columns.comments 

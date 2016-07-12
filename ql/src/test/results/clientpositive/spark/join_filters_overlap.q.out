@@ -126,7 +126,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -146,7 +146,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 
@@ -193,7 +193,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -213,7 +213,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 
@@ -260,7 +260,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -280,7 +280,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 
@@ -489,7 +489,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -509,7 +509,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 
@@ -552,7 +552,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -572,7 +572,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 
@@ -619,7 +619,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -639,7 +639,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 
@@ -862,7 +862,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -882,7 +882,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 
@@ -925,7 +925,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -945,7 +945,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 
@@ -992,7 +992,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -1012,7 +1012,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 
@@ -1245,7 +1245,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -1265,7 +1265,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 
@@ -1308,7 +1308,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -1328,7 +1328,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 
@@ -1375,7 +1375,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -1395,7 +1395,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 
@@ -1442,7 +1442,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -1462,7 +1462,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 
@@ -1690,7 +1690,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -1710,7 +1710,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 
@@ -1757,7 +1757,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -1777,7 +1777,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 
@@ -1824,7 +1824,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -1844,7 +1844,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 
@@ -1891,7 +1891,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -1911,7 +1911,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 

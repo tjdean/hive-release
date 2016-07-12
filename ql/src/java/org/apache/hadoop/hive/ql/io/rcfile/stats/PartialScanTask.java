@@ -32,8 +32,6 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.JavaUtils;
-import org.apache.hadoop.hive.common.StatsSetupConst;
-import org.apache.hadoop.hive.common.StatsSetupConst.StatDB;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.Context;
 import org.apache.hadoop.hive.ql.DriverContext;
@@ -52,7 +50,6 @@ import org.apache.hadoop.hive.ql.plan.MapredWork;
 import org.apache.hadoop.hive.ql.plan.api.StageType;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.ql.session.SessionState.LogHelper;
-import org.apache.hadoop.hive.ql.stats.StatsCollectionContext;
 import org.apache.hadoop.hive.ql.stats.StatsFactory;
 import org.apache.hadoop.hive.ql.stats.StatsPublisher;
 import org.apache.hadoop.io.NullWritable;
@@ -148,7 +145,7 @@ public class PartialScanTask extends Task<PartialScanWork> implements
     LOG.info("Using " + inpFormat);
 
     try {
-      job.setInputFormat(JavaUtils.loadClass(inpFormat));
+      job.setInputFormat((Class<? extends InputFormat>) JavaUtils.loadClass(inpFormat));
     } catch (ClassNotFoundException e) {
       throw new RuntimeException(e.getMessage(), e);
     }
@@ -178,7 +175,7 @@ public class PartialScanTask extends Task<PartialScanWork> implements
     HiveConf.setVar(job,
         HiveConf.ConfVars.HIVE_STATS_KEY_PREFIX,
         work.getAggKey());
-      job.set(StatsSetupConst.STATS_TMP_LOC, work.getStatsTmpDir());
+
     try {
       addInputPaths(job, work);
 
@@ -208,9 +205,7 @@ public class PartialScanTask extends Task<PartialScanWork> implements
         StatsFactory factory = StatsFactory.newFactory(job);
         if (factory != null) {
           statsPublisher = factory.getStatsPublisher();
-          StatsCollectionContext sc = new StatsCollectionContext(job);
-          sc.setStatsTmpDir(work.getStatsTmpDir());
-          if (!statsPublisher.init(sc)) { // creating stats table if not exists
+          if (!statsPublisher.init(job)) { // creating stats table if not exists
             if (HiveConf.getBoolVar(job, HiveConf.ConfVars.HIVE_STATS_RELIABLE)) {
               throw
                 new HiveException(ErrorMsg.STATSPUBLISHER_INITIALIZATION_ERROR.getErrorCodedMsg());

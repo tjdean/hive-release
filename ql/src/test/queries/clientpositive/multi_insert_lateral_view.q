@@ -1,4 +1,3 @@
-set hive.stats.dbclass=fs;
 -- SORT_QUERY_RESULTS
 
 create table src_10 as select * from src limit 10;

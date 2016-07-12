@@ -245,7 +245,7 @@ STAGE PLANS:
                   partition values:
                     ds 1
                   properties:
-                    COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns k0,k1,k2,k3,k4,k5
                     columns.comments 
@@ -366,7 +366,7 @@ STAGE PLANS:
             partition values:
               ds 1
             properties:
-              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+              COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns k1,k2,k3,k4
               columns.comments 
@@ -411,7 +411,7 @@ STAGE PLANS:
             partition values:
               ds 1
             properties:
-              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+              COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns k0,k1,k2,k3,k4,k5
               columns.comments 
@@ -535,7 +535,7 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: -mr-10002
+            base file name: -mr-10001
             input format: org.apache.hadoop.mapred.SequenceFileInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
             properties:
@@ -561,7 +561,7 @@ STAGE PLANS:
             partition values:
               ds 1
             properties:
-              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+              COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns k0,k1,k2,k3,k4,k5
               columns.comments 
@@ -682,7 +682,7 @@ STAGE PLANS:
             partition values:
               ds 1
             properties:
-              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+              COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns k1,k2,k3,k4
               columns.comments 
@@ -727,7 +727,7 @@ STAGE PLANS:
             partition values:
               ds 1
             properties:
-              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
+              COLUMN_STATS_ACCURATE true
               bucket_count -1
               columns k0,k1,k2,k3,k4,k5
               columns.comments 

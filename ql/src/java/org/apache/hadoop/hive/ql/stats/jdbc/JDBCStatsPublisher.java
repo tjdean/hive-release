@@ -38,7 +38,6 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.Utilities;
-import org.apache.hadoop.hive.ql.stats.StatsCollectionContext;
 import org.apache.hadoop.hive.ql.stats.StatsPublisher;
 
 public class JDBCStatsPublisher implements StatsPublisher {
@@ -60,8 +59,8 @@ public class JDBCStatsPublisher implements StatsPublisher {
   }
 
   @Override
-  public boolean connect(StatsCollectionContext context) {
-    this.hiveconf = context.getHiveConf();
+  public boolean connect(Configuration hiveconf) {
+    this.hiveconf = hiveconf;
     maxRetries = HiveConf.getIntVar(hiveconf, HiveConf.ConfVars.HIVE_STATS_RETRIES_MAX);
     waitWindow = HiveConf.getTimeVar(
         hiveconf, HiveConf.ConfVars.HIVE_STATS_RETRIES_WAIT, TimeUnit.MILLISECONDS);
@@ -210,16 +209,15 @@ public class JDBCStatsPublisher implements StatsPublisher {
     if (failures >= maxRetries) {
       return false;
     }
-    StatsCollectionContext sCntxt = new StatsCollectionContext(hiveconf);
     // close the current connection
-    closeConnection(sCntxt);
+    closeConnection();
     long waitTime = Utilities.getRandomWaitTime(waitWindow, failures, r);
     try {
       Thread.sleep(waitTime);
     } catch (InterruptedException iex) {
     }
     // get a new connection
-    if (!connect(sCntxt)) {
+    if (!connect(hiveconf)) {
       // if cannot reconnect, just fail because connect() already handles retries.
       LOG.error("Error during publishing aggregation. " + e);
       return false;
@@ -228,7 +226,7 @@ public class JDBCStatsPublisher implements StatsPublisher {
   }
 
   @Override
-  public boolean closeConnection(StatsCollectionContext context) {
+  public boolean closeConnection() {
     if (conn == null) {
       return true;
     }
@@ -268,13 +266,13 @@ public class JDBCStatsPublisher implements StatsPublisher {
    * creating tables.).
    */
   @Override
-  public boolean init(StatsCollectionContext context) {
+  public boolean init(Configuration hconf) {
     Statement stmt = null;
     ResultSet rs = null;
     try {
-      this.hiveconf = context.getHiveConf();
-      connectionString = HiveConf.getVar(hiveconf, HiveConf.ConfVars.HIVESTATSDBCONNECTIONSTRING);
-      String driver = HiveConf.getVar(hiveconf, HiveConf.ConfVars.HIVESTATSJDBCDRIVER);
+      this.hiveconf = hconf;
+      connectionString = HiveConf.getVar(hconf, HiveConf.ConfVars.HIVESTATSDBCONNECTIONSTRING);
+      String driver = HiveConf.getVar(hconf, HiveConf.ConfVars.HIVESTATSJDBCDRIVER);
       JavaUtils.loadClass(driver).newInstance();
       synchronized(DriverManager.class) {
         DriverManager.setLoginTimeout(timeout);
@@ -332,7 +330,7 @@ public class JDBCStatsPublisher implements StatsPublisher {
           // do nothing
         }
       }
-      closeConnection(context);
+      closeConnection();
     }
     return true;
   }

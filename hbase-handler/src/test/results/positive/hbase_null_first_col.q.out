@@ -62,7 +62,6 @@ PREHOOK: Input: default@src_null
 PREHOOK: Output: default@hbase_null
 POSTHOOK: query: INSERT INTO TABLE hbase_null SELECT d, a, c FROM src_null
 POSTHOOK: type: QUERY
-POSTHOOK: Input: default@hbase_null
 POSTHOOK: Input: default@src_null
 POSTHOOK: Output: default@hbase_null
 PREHOOK: query: SELECT COUNT(d) FROM src_null

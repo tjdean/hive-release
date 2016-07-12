@@ -203,6 +203,7 @@ STAGE PLANS:
                   partition values:
                     part 1
                   properties:
+                    COLUMN_STATS_ACCURATE true
                     bucket_count 2
                     bucket_field_name key
                     columns key,value
@@ -299,6 +300,7 @@ STAGE PLANS:
                   partition values:
                     part 1
                   properties:
+                    COLUMN_STATS_ACCURATE true
                     bucket_count 2
                     bucket_field_name key
                     columns key,value
@@ -497,6 +499,7 @@ STAGE PLANS:
                   partition values:
                     part 1
                   properties:
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 
@@ -587,6 +590,7 @@ STAGE PLANS:
                   partition values:
                     part 1
                   properties:
+                    COLUMN_STATS_ACCURATE true
                     bucket_count 2
                     bucket_field_name key
                     columns key,value

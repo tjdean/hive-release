@@ -105,7 +105,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	100                 
 	rawDataSize         	52600               
@@ -154,7 +154,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	100                 
 	rawDataSize         	52600               
@@ -203,7 +203,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	100                 
 	rawDataSize         	52600               
@@ -293,7 +293,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	100                 
 	rawDataSize         	52600               
@@ -409,7 +409,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	21950               
@@ -454,7 +454,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	22050               
@@ -511,7 +511,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	21950               
@@ -556,7 +556,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	22050               
@@ -613,7 +613,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	21950               
@@ -658,7 +658,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	22050               
@@ -760,7 +760,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	21950               
@@ -805,7 +805,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	22050               
@@ -927,7 +927,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	21950               
@@ -972,7 +972,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	22050               
@@ -1029,7 +1029,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	21950               
@@ -1074,7 +1074,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	22050               
@@ -1131,7 +1131,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	21950               
@@ -1176,7 +1176,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	22050               
@@ -1284,7 +1284,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	21950               
@@ -1329,7 +1329,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	22050               
@@ -1447,7 +1447,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	21950               
@@ -1504,7 +1504,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	21950               
@@ -1561,7 +1561,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	1                   
 	numRows             	50                  
 	rawDataSize         	21950               
