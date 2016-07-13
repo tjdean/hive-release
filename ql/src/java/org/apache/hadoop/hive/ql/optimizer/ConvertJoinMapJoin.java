@@ -31,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.AppMasterEventOperator;
+import org.apache.hadoop.hive.ql.exec.CommonJoinOperator;
 import org.apache.hadoop.hive.ql.exec.CommonMergeJoinOperator;
 import org.apache.hadoop.hive.ql.exec.DummyStoreOperator;
 import org.apache.hadoop.hive.ql.exec.FileSinkOperator;
@@ -69,7 +70,8 @@ import org.apache.hadoop.util.ReflectionUtils;
  */
 public class ConvertJoinMapJoin implements NodeProcessor {
 
-  static final private Log LOG = LogFactory.getLog(ConvertJoinMapJoin.class.getName());
+  private static final Log LOG = LogFactory.getLog(ConvertJoinMapJoin.class.getName());
+
 
   @Override
   /*
@@ -149,9 +151,11 @@ public class ConvertJoinMapJoin implements NodeProcessor {
       }
     }
 
-    LOG.info("Convert to non-bucketed map join");
     // check if we can convert to map join no bucket scaling.
-    mapJoinConversionPos = getMapJoinConversionPos(joinOp, context, 1);
+    LOG.info("Convert to non-bucketed map join");
+    if (numBuckets != 1) {
+      mapJoinConversionPos = getMapJoinConversionPos(joinOp, context, 1);
+    }
     if (mapJoinConversionPos < 0) {
       // we are just converting to a common merge join operator. The shuffle
       // join in map-reduce case.
@@ -561,16 +565,20 @@ public class ConvertJoinMapJoin implements NodeProcessor {
         HiveConf.ConfVars.HIVECONVERTJOINNOCONDITIONALTASKTHRESHOLD);
 
     int bigTablePosition = -1;
-
+    // big input cumulative row count
+    long bigInputCumulativeCardinality = -1L;
+    // stats of the big input
     Statistics bigInputStat = null;
-    long totalSize = 0;
-    int pos = 0;
 
     // bigTableFound means we've encountered a table that's bigger than the
     // max. This table is either the the big table or we cannot convert.
-    boolean bigTableFound = false;
+    boolean foundInputNotFittingInMemory = false;
 
-    for (Operator<? extends OperatorDesc> parentOp : joinOp.getParentOperators()) {
+    // total size of the inputs
+    long totalSize = 0;
+
+    for (int pos = 0; pos < joinOp.getParentOperators().size(); pos++) {
+      Operator<? extends OperatorDesc> parentOp = joinOp.getParentOperators().get(pos);
 
       Statistics currInputStat = parentOp.getStatistics();
       if (currInputStat == null) {
@@ -579,15 +587,17 @@ public class ConvertJoinMapJoin implements NodeProcessor {
       }
 
       long inputSize = currInputStat.getDataSize();
-      if ((bigInputStat == null)
-          || ((bigInputStat != null) && (inputSize > bigInputStat.getDataSize()))) {
 
-        if (bigTableFound) {
+      boolean currentInputNotFittingInMemory = false;
+      if ((bigInputStat == null)
+              || ((bigInputStat != null) && (inputSize > bigInputStat.getDataSize()))) {
+
+        if (foundInputNotFittingInMemory) {
           // cannot convert to map join; we've already chosen a big table
           // on size and there's another one that's bigger.
           return -1;
         }
-
+        
         if (inputSize/buckets > maxSize) {
           if (!bigTableCandidateSet.contains(pos)) {
             // can't use the current table as the big table, but it's too
@@ -595,36 +605,91 @@ public class ConvertJoinMapJoin implements NodeProcessor {
             return -1;
           }
 
-          bigTableFound = true;
-        }
-
-        if (bigInputStat != null) {
-          // we're replacing the current big table with a new one. Need
-          // to count the current one as a map table then.
-          totalSize += bigInputStat.getDataSize();
-        }
-
-        if (totalSize/buckets > maxSize) {
-          // sum of small tables size in this join exceeds configured limit
-          // hence cannot convert.
-          return -1;
-        }
-
-        if (bigTableCandidateSet.contains(pos)) {
-          bigTablePosition = pos;
-          bigInputStat = currInputStat;
-        }
-      } else {
-        totalSize += currInputStat.getDataSize();
-        if (totalSize/buckets > maxSize) {
-          // cannot hold all map tables in memory. Cannot convert.
-          return -1;
+          currentInputNotFittingInMemory = true;
+          foundInputNotFittingInMemory = true;
         }
       }
-      pos++;
+
+      long currentInputCumulativeCardinality;
+      if (foundInputNotFittingInMemory) {
+        currentInputCumulativeCardinality = -1L;
+      } else {
+        Long cardinality = computeCumulativeCardinality(parentOp);
+        if (cardinality == null) {
+          // We could not get stats, we cannot convert
+          return -1;
+        }
+        currentInputCumulativeCardinality = cardinality;
+      }
+
+      // This input is the big table if it is contained in the big candidates set, and either:
+      // 1) we have not chosen a big table yet, or
+      // 2) it has been chosen as the big table above, or
+      // 3) the cumulative cardinality for this input is higher, or
+      // 4) the cumulative cardinality is equal, but the size is bigger,
+      boolean selectedBigTable = bigTableCandidateSet.contains(pos) &&
+              (bigInputStat == null || currentInputNotFittingInMemory ||
+                      (!foundInputNotFittingInMemory && (currentInputCumulativeCardinality > bigInputCumulativeCardinality ||
+                              (currentInputCumulativeCardinality == bigInputCumulativeCardinality && inputSize > bigInputStat.getDataSize()))));
+
+      if (bigInputStat != null && selectedBigTable) {
+        // We are replacing the current big table with a new one, thus
+        // we need to count the current one as a map table then.
+        totalSize += bigInputStat.getDataSize();
+      } else if (!selectedBigTable) {
+        // This is not the first table and we are not using it as big table,
+        // in fact, we're adding this table as a map table
+        totalSize += inputSize;
+      }
+
+      if (totalSize/buckets > maxSize) {
+        // sum of small tables size in this join exceeds configured limit
+        // hence cannot convert.
+        return -1;
+      }
+
+      if (selectedBigTable) {
+        bigTablePosition = pos;
+        bigInputCumulativeCardinality = currentInputCumulativeCardinality;
+        bigInputStat = currInputStat;
+      }
+
     }
 
     return bigTablePosition;
+  }
+
+  // This is akin to CBO cumulative cardinality model
+  private static Long computeCumulativeCardinality(Operator<? extends OperatorDesc> op) {
+    long cumulativeCardinality = 0L;
+    if (op instanceof CommonJoinOperator) {
+      // Choose max
+      for (Operator<? extends OperatorDesc> inputOp : op.getParentOperators()) {
+        Long inputCardinality = computeCumulativeCardinality(inputOp);
+        if (inputCardinality == null) {
+          return null;
+        }
+        if (inputCardinality > cumulativeCardinality) {
+          cumulativeCardinality = inputCardinality;
+        }
+      }
+    } else {
+      // Choose cumulative
+      for (Operator<? extends OperatorDesc> inputOp : op.getParentOperators()) {
+        Long inputCardinality = computeCumulativeCardinality(inputOp);
+        if (inputCardinality == null) {
+          return null;
+        }
+        cumulativeCardinality += inputCardinality;
+      }
+    }
+    Statistics currInputStat = op.getStatistics();
+    if (currInputStat == null) {
+      LOG.warn("Couldn't get statistics from: " + op);
+      return null;
+    }
+    cumulativeCardinality += currInputStat.getNumRows();
+    return cumulativeCardinality;
   }
 
   /*
