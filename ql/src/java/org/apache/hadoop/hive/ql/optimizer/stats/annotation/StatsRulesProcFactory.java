@@ -767,7 +767,7 @@ public class StatsRulesProcFactory {
               ColStatistics cs = stats.getColumnStatisticsFromColName(colName);
               if (cs != null) {
                 long dvs = cs.getCountDistint();
-                numRows = dvs == 0 ? numRows / 2 : numRows / dvs;
+                numRows = dvs == 0 ? numRows / 2 : Math.round( (double)numRows / dvs);
                 return numRows;
               }
             } else if (leaf instanceof ExprNodeColumnDesc) {
@@ -787,7 +787,7 @@ public class StatsRulesProcFactory {
                 ColStatistics cs = stats.getColumnStatisticsFromColName(colName);
                 if (cs != null) {
                   long dvs = cs.getCountDistint();
-                  numRows = dvs == 0 ? numRows / 2 : numRows / dvs;
+                  numRows = dvs == 0 ? numRows / 2 : Math.round( (double)numRows / dvs);
                   return numRows;
                 }
               }
