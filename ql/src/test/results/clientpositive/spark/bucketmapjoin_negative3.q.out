@@ -235,7 +235,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name key
@@ -245,6 +244,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test1
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test1 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -255,7 +256,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name key
@@ -265,6 +265,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test1
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test1 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -343,7 +345,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name key
@@ -353,6 +354,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test1
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test1 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -363,7 +366,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name key
@@ -373,6 +375,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test1
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test1 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -481,7 +485,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name value
@@ -491,6 +494,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test2
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test2 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -501,7 +506,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name value
@@ -511,6 +515,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test2
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test2 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -589,7 +595,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name value
@@ -599,6 +604,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test2
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test2 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -609,7 +616,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name value
@@ -619,6 +625,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test2
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test2 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -719,7 +727,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name key
@@ -729,6 +736,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test1
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test1 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -739,7 +748,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name key
@@ -749,6 +757,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test1
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test1 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -821,7 +831,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name key
@@ -831,6 +840,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test1
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test1 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -841,7 +852,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name key
@@ -851,6 +861,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test1
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test1 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -954,7 +966,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name value
@@ -964,6 +975,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test2
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test2 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -974,7 +987,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name value
@@ -984,6 +996,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test2
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test2 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1056,7 +1070,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name key
@@ -1066,6 +1079,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test1
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test1 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1076,7 +1091,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name key
@@ -1086,6 +1100,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test1
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test1 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1189,7 +1205,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name key
@@ -1199,6 +1214,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test3
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test3 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1209,7 +1226,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name key
@@ -1219,6 +1235,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test3
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test3 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1291,7 +1309,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name key
@@ -1301,6 +1318,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test1
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test1 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1311,7 +1330,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name key
@@ -1321,6 +1339,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test1
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test1 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1424,7 +1444,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name value
@@ -1434,6 +1453,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test4
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test4 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1444,7 +1465,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name value
@@ -1454,6 +1474,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test4
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test4 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1526,7 +1548,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name key
@@ -1536,6 +1557,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test1
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test1 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1546,7 +1569,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name key
@@ -1556,6 +1578,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test1
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test1 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1659,7 +1683,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name key
@@ -1669,6 +1692,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test3
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test3 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1679,7 +1704,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name key
@@ -1689,6 +1713,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test3
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test3 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1761,7 +1787,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name value
@@ -1771,6 +1796,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test2
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test2 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1781,7 +1808,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name value
@@ -1791,6 +1817,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test2
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test2 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1894,7 +1922,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name value
@@ -1904,6 +1931,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test4
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test4 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1914,7 +1943,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name value
@@ -1924,6 +1952,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test4
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test4 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -1996,7 +2026,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name value
@@ -2006,6 +2035,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test2
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test2 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -2016,7 +2047,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name value
@@ -2026,6 +2056,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test2
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test2 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -2129,7 +2161,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name value
@@ -2139,6 +2170,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test4
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test4 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -2149,7 +2182,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name value
@@ -2159,6 +2191,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test4
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test4 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -2231,7 +2265,6 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     SORTBUCKETCOLSPREFIX TRUE
                     bucket_count 3
                     bucket_field_name key
@@ -2241,6 +2274,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                     name default.test3
                     numFiles 3
+                    numRows 0
+                    rawDataSize 0
                     serialization.ddl struct test3 { string key, string value}
                     serialization.format 1
                     serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
@@ -2251,7 +2286,6 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE true
                       SORTBUCKETCOLSPREFIX TRUE
                       bucket_count 3
                       bucket_field_name key
@@ -2261,6 +2295,8 @@ STAGE PLANS:
 #### A masked pattern was here ####
                       name default.test3
                       numFiles 3
+                      numRows 0
+                      rawDataSize 0
                       serialization.ddl struct test3 { string key, string value}
                       serialization.format 1
                       serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe

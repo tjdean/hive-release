@@ -865,7 +865,7 @@ Table:              	over1k_part
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	numFiles            	2                   
 	numRows             	32                  
 	rawDataSize         	830                 
@@ -909,7 +909,7 @@ Table:              	over1k_part
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	numFiles            	2                   
 	numRows             	6                   
 	rawDataSize         	156                 
@@ -953,7 +953,7 @@ Table:              	over1k_part_limit
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	numFiles            	2                   
 	numRows             	14                  
 	rawDataSize         	362                 
@@ -997,7 +997,7 @@ Table:              	over1k_part_limit
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	numFiles            	2                   
 	numRows             	6                   
 	rawDataSize         	156                 
@@ -1040,7 +1040,7 @@ Table:              	over1k_part_buck
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	numFiles            	8                   
 	numRows             	32                  
 	rawDataSize         	830                 
@@ -1083,7 +1083,7 @@ Table:              	over1k_part_buck
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	numFiles            	4                   
 	numRows             	6                   
 	rawDataSize         	156                 
@@ -1126,7 +1126,7 @@ Table:              	over1k_part_buck_sort
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	numFiles            	8                   
 	numRows             	32                  
 	rawDataSize         	830                 
@@ -1169,7 +1169,7 @@ Table:              	over1k_part_buck_sort
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	numFiles            	4                   
 	numRows             	6                   
 	rawDataSize         	156                 
@@ -1695,7 +1695,7 @@ Table:              	over1k_part2
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	numFiles            	1                   
 	numRows             	16                  
 	rawDataSize         	415                 
@@ -1739,7 +1739,7 @@ Table:              	over1k_part2
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	numFiles            	1                   
 	numRows             	3                   
 	rawDataSize         	78                  
@@ -1844,7 +1844,7 @@ Table:              	over1k_part2
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	numFiles            	1                   
 	numRows             	16                  
 	rawDataSize         	415                 
@@ -1888,7 +1888,7 @@ Table:              	over1k_part2
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	numFiles            	1                   
 	numRows             	3                   
 	rawDataSize         	78                  
@@ -2158,7 +2158,7 @@ Table:              	over1k_part_buck_sort2
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	numFiles            	1                   
 	numRows             	16                  
 	rawDataSize         	415                 
@@ -2201,7 +2201,7 @@ Table:              	over1k_part_buck_sort2
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	numFiles            	1                   
 	numRows             	3                   
 	rawDataSize         	78                  
@@ -2305,7 +2305,7 @@ Table:              	over1k_part_buck_sort2
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	numFiles            	1                   
 	numRows             	16                  
 	rawDataSize         	415                 
@@ -2348,7 +2348,7 @@ Table:              	over1k_part_buck_sort2
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
 	numFiles            	1                   
 	numRows             	3                   
 	rawDataSize         	78                  

@@ -231,6 +231,14 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
     }
   }
 
+  // we check if there is only one immediate child task and it is stats task
+  private boolean hasFollowingStatsTask() {
+    if (this.getNumChild() == 1) {
+      return this.getChildTasks().get(0) instanceof StatsTask;
+    }
+    return false;
+  }
+
   @Override
   public int execute(DriverContext driverContext) {
 
@@ -317,11 +325,10 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
         DataContainer dc = null;
         if (tbd.getPartitionSpec().size() == 0) {
           dc = new DataContainer(table.getTTable());
-          db.loadTable(tbd.getSourcePath(), tbd.getTable()
-              .getTableName(), tbd.getReplace(), work.isSrcLocal(),
-              isSkewedStoredAsDirs(tbd),
+          db.loadTable(tbd.getSourcePath(), tbd.getTable().getTableName(), tbd.getReplace(),
+              work.isSrcLocal(), isSkewedStoredAsDirs(tbd),
               work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID,
-              work.isInImportScope());
+              hasFollowingStatsTask());
           if (work.getOutputs() != null) {
             work.getOutputs().add(new WriteEntity(table,
                 (tbd.getReplace() ? WriteEntity.WriteType.INSERT_OVERWRITE :
@@ -395,16 +402,16 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
             // The reason we don't do inside HIVE-1361 is the latter is large and we
             // want to isolate any potential issue it may introduce.
             Map<Map<String, String>, Partition> dp =
-              db.loadDynamicPartitions(
-                tbd.getSourcePath(),
-                tbd.getTable().getTableName(),
-                tbd.getPartitionSpec(),
-                tbd.getReplace(),
-                dpCtx.getNumDPCols(),
-                isSkewedStoredAsDirs(tbd),
-                work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID,
-                SessionState.get().getTxnMgr().getCurrentTxnId(),
-                work.getLoadTableWork().getWriteType());
+                db.loadDynamicPartitions(
+                  tbd.getSourcePath(),
+                  tbd.getTable().getTableName(),
+                  tbd.getPartitionSpec(),
+                  tbd.getReplace(),
+                  dpCtx.getNumDPCols(),
+                  isSkewedStoredAsDirs(tbd),
+                  work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID,
+                  SessionState.get().getTxnMgr().getCurrentTxnId(), hasFollowingStatsTask(),
+                  work.getLoadTableWork().getWriteType());
             console.printInfo("\t Time taken for load dynamic partitions : "  +
                 (System.currentTimeMillis() - startTime));
 
@@ -462,7 +469,7 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
             db.loadPartition(tbd.getSourcePath(), tbd.getTable().getTableName(),
                 tbd.getPartitionSpec(), tbd.getReplace(),
                 tbd.getInheritTableSpecs(), isSkewedStoredAsDirs(tbd), work.isSrcLocal(),
-                work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID);
+                work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID, hasFollowingStatsTask());
             Partition partn = db.getPartition(table, tbd.getPartitionSpec(), false);
 
             if (bucketCols != null || sortCols != null) {
@@ -585,7 +592,7 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
     }
 
     if (updateBucketCols || updateSortCols) {
-      db.alterPartition(table.getDbName(), table.getTableName(), partn);
+      db.alterPartition(table.getDbName(), table.getTableName(), partn, null);
     }
   }
 

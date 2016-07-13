@@ -158,26 +158,31 @@ STAGE PLANS:
                   value expressions: _col0 (type: string)
                   auto parallelism: false
       Path -> Alias:
-        -mr-10003default.test1{ds=1} [$hdt$_0:test1]
+        -mr-10004default.test1{ds=1} [$hdt$_0:test1]
       Path -> Partition:
-        -mr-10003default.test1{ds=1} 
+        -mr-10004default.test1{ds=1} 
           Partition
             input format: org.apache.hadoop.hive.ql.io.OneNullRowInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             partition values:
               ds 1
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test1
+              numFiles 0
+              numRows 0
               partition_columns ds
               partition_columns.types string
+              rawDataSize 0
               serialization.ddl struct test1 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.NullStructSerDe
           
@@ -200,7 +205,7 @@ STAGE PLANS:
               name: default.test1
             name: default.test1
       Truncated Path -> Alias:
-        -mr-10003default.test1{ds=1} [$hdt$_0:test1]
+        -mr-10004default.test1{ds=1} [$hdt$_0:test1]
       Needs Tagging: false
       Reduce Operator Tree:
         Group By Operator
@@ -299,26 +304,31 @@ STAGE PLANS:
                   tag: -1
                   auto parallelism: false
       Path -> Alias:
-        -mr-10003default.test1{ds=1} [$hdt$_0:test1]
+        -mr-10004default.test1{ds=1} [$hdt$_0:test1]
       Path -> Partition:
-        -mr-10003default.test1{ds=1} 
+        -mr-10004default.test1{ds=1} 
           Partition
             input format: org.apache.hadoop.hive.ql.io.OneNullRowInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             partition values:
               ds 1
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test1
+              numFiles 0
+              numRows 0
               partition_columns ds
               partition_columns.types string
+              rawDataSize 0
               serialization.ddl struct test1 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.NullStructSerDe
           
@@ -341,7 +351,7 @@ STAGE PLANS:
               name: default.test1
             name: default.test1
       Truncated Path -> Alias:
-        -mr-10003default.test1{ds=1} [$hdt$_0:test1]
+        -mr-10004default.test1{ds=1} [$hdt$_0:test1]
       Needs Tagging: false
       Reduce Operator Tree:
         Group By Operator
@@ -449,17 +459,22 @@ STAGE PLANS:
             partition values:
               ds 1
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test1
+              numFiles 0
+              numRows 0
               partition_columns ds
               partition_columns.types string
+              rawDataSize 0
               serialization.ddl struct test1 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
@@ -618,27 +633,32 @@ STAGE PLANS:
                   value expressions: _col0 (type: string)
                   auto parallelism: false
       Path -> Alias:
-        -mr-10005default.test1{ds=1} [$hdt$_0:$hdt$_1:$hdt$_1:a2]
-        -mr-10006default.test1{ds=2} [$hdt$_0:$hdt$_1:$hdt$_1:a2]
+        -mr-10006default.test1{ds=1} [$hdt$_0:$hdt$_1:$hdt$_1:a2]
+        -mr-10007default.test1{ds=2} [$hdt$_0:$hdt$_1:$hdt$_1:a2]
       Path -> Partition:
-        -mr-10005default.test1{ds=1} 
+        -mr-10006default.test1{ds=1} 
           Partition
             input format: org.apache.hadoop.hive.ql.io.OneNullRowInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             partition values:
               ds 1
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test1
+              numFiles 0
+              numRows 0
               partition_columns ds
               partition_columns.types string
+              rawDataSize 0
               serialization.ddl struct test1 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.NullStructSerDe
           
@@ -660,24 +680,29 @@ STAGE PLANS:
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.test1
             name: default.test1
-        -mr-10006default.test1{ds=2} 
+        -mr-10007default.test1{ds=2} 
           Partition
             input format: org.apache.hadoop.hive.ql.io.OneNullRowInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             partition values:
               ds 2
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test1
+              numFiles 0
+              numRows 0
               partition_columns ds
               partition_columns.types string
+              rawDataSize 0
               serialization.ddl struct test1 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.NullStructSerDe
           
@@ -700,8 +725,8 @@ STAGE PLANS:
               name: default.test1
             name: default.test1
       Truncated Path -> Alias:
-        -mr-10005default.test1{ds=1} [$hdt$_0:$hdt$_1:$hdt$_1:a2]
-        -mr-10006default.test1{ds=2} [$hdt$_0:$hdt$_1:$hdt$_1:a2]
+        -mr-10006default.test1{ds=1} [$hdt$_0:$hdt$_1:$hdt$_1:a2]
+        -mr-10007default.test1{ds=2} [$hdt$_0:$hdt$_1:$hdt$_1:a2]
       Needs Tagging: false
       Reduce Operator Tree:
         Group By Operator
@@ -763,7 +788,7 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: -mr-10004
+            base file name: -mr-10005
             input format: org.apache.hadoop.mapred.SequenceFileInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
             properties:
@@ -789,17 +814,22 @@ STAGE PLANS:
             partition values:
               ds 1
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test1
+              numFiles 0
+              numRows 0
               partition_columns ds
               partition_columns.types string
+              rawDataSize 0
               serialization.ddl struct test1 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
@@ -829,17 +859,22 @@ STAGE PLANS:
             partition values:
               ds 2
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test1
+              numFiles 0
+              numRows 0
               partition_columns ds
               partition_columns.types string
+              rawDataSize 0
               serialization.ddl struct test1 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
@@ -913,7 +948,7 @@ STAGE PLANS:
       Path -> Partition:
 #### A masked pattern was here ####
           Partition
-            base file name: -mr-10003
+            base file name: -mr-10004
             input format: org.apache.hadoop.mapred.SequenceFileInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveSequenceFileOutputFormat
             properties:
@@ -1069,11 +1104,11 @@ STAGE PLANS:
                   tag: -1
                   auto parallelism: false
       Path -> Alias:
-        -mr-10003default.test2{ds=1, hr=1} [$hdt$_0:test2]
-        -mr-10004default.test2{ds=1, hr=2} [$hdt$_0:test2]
-        -mr-10005default.test2{ds=1, hr=3} [$hdt$_0:test2]
+        -mr-10004default.test2{ds=1, hr=1} [$hdt$_0:test2]
+        -mr-10005default.test2{ds=1, hr=2} [$hdt$_0:test2]
+        -mr-10006default.test2{ds=1, hr=3} [$hdt$_0:test2]
       Path -> Partition:
-        -mr-10003default.test2{ds=1, hr=1} 
+        -mr-10004default.test2{ds=1, hr=1} 
           Partition
             input format: org.apache.hadoop.hive.ql.io.OneNullRowInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
@@ -1081,17 +1116,22 @@ STAGE PLANS:
               ds 1
               hr 1
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test2
+              numFiles 0
+              numRows 0
               partition_columns ds/hr
               partition_columns.types string:string
+              rawDataSize 0
               serialization.ddl struct test2 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.NullStructSerDe
           
@@ -1113,7 +1153,7 @@ STAGE PLANS:
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.test2
             name: default.test2
-        -mr-10004default.test2{ds=1, hr=2} 
+        -mr-10005default.test2{ds=1, hr=2} 
           Partition
             input format: org.apache.hadoop.hive.ql.io.OneNullRowInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
@@ -1121,17 +1161,22 @@ STAGE PLANS:
               ds 1
               hr 2
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test2
+              numFiles 0
+              numRows 0
               partition_columns ds/hr
               partition_columns.types string:string
+              rawDataSize 0
               serialization.ddl struct test2 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.NullStructSerDe
           
@@ -1153,7 +1198,7 @@ STAGE PLANS:
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.test2
             name: default.test2
-        -mr-10005default.test2{ds=1, hr=3} 
+        -mr-10006default.test2{ds=1, hr=3} 
           Partition
             input format: org.apache.hadoop.hive.ql.io.OneNullRowInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
@@ -1161,17 +1206,22 @@ STAGE PLANS:
               ds 1
               hr 3
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test2
+              numFiles 0
+              numRows 0
               partition_columns ds/hr
               partition_columns.types string:string
+              rawDataSize 0
               serialization.ddl struct test2 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.NullStructSerDe
           
@@ -1194,9 +1244,9 @@ STAGE PLANS:
               name: default.test2
             name: default.test2
       Truncated Path -> Alias:
-        -mr-10003default.test2{ds=1, hr=1} [$hdt$_0:test2]
-        -mr-10004default.test2{ds=1, hr=2} [$hdt$_0:test2]
-        -mr-10005default.test2{ds=1, hr=3} [$hdt$_0:test2]
+        -mr-10004default.test2{ds=1, hr=1} [$hdt$_0:test2]
+        -mr-10005default.test2{ds=1, hr=2} [$hdt$_0:test2]
+        -mr-10006default.test2{ds=1, hr=3} [$hdt$_0:test2]
       Needs Tagging: false
       Reduce Operator Tree:
         Group By Operator
@@ -1319,17 +1369,22 @@ STAGE PLANS:
               ds 1
               hr 1
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test2
+              numFiles 0
+              numRows 0
               partition_columns ds/hr
               partition_columns.types string:string
+              rawDataSize 0
               serialization.ddl struct test2 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
@@ -1360,17 +1415,22 @@ STAGE PLANS:
               ds 1
               hr 2
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test2
+              numFiles 0
+              numRows 0
               partition_columns ds/hr
               partition_columns.types string:string
+              rawDataSize 0
               serialization.ddl struct test2 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
@@ -1401,17 +1461,22 @@ STAGE PLANS:
               ds 1
               hr 3
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test2
+              numFiles 0
+              numRows 0
               partition_columns ds/hr
               partition_columns.types string:string
+              rawDataSize 0
               serialization.ddl struct test2 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
           
@@ -1538,27 +1603,32 @@ STAGE PLANS:
                   value expressions: _col0 (type: string)
                   auto parallelism: false
       Path -> Alias:
-        -mr-10003default.test1{ds=1} [$hdt$_0:test1]
-        -mr-10004default.test1{ds=2} [$hdt$_0:test1]
+        -mr-10004default.test1{ds=1} [$hdt$_0:test1]
+        -mr-10005default.test1{ds=2} [$hdt$_0:test1]
       Path -> Partition:
-        -mr-10003default.test1{ds=1} 
+        -mr-10004default.test1{ds=1} 
           Partition
             input format: org.apache.hadoop.hive.ql.io.OneNullRowInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             partition values:
               ds 1
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test1
+              numFiles 0
+              numRows 0
               partition_columns ds
               partition_columns.types string
+              rawDataSize 0
               serialization.ddl struct test1 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.NullStructSerDe
           
@@ -1580,24 +1650,29 @@ STAGE PLANS:
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.test1
             name: default.test1
-        -mr-10004default.test1{ds=2} 
+        -mr-10005default.test1{ds=2} 
           Partition
             input format: org.apache.hadoop.hive.ql.io.OneNullRowInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             partition values:
               ds 2
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test1
+              numFiles 0
+              numRows 0
               partition_columns ds
               partition_columns.types string
+              rawDataSize 0
               serialization.ddl struct test1 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.NullStructSerDe
           
@@ -1620,8 +1695,8 @@ STAGE PLANS:
               name: default.test1
             name: default.test1
       Truncated Path -> Alias:
-        -mr-10003default.test1{ds=1} [$hdt$_0:test1]
-        -mr-10004default.test1{ds=2} [$hdt$_0:test1]
+        -mr-10004default.test1{ds=1} [$hdt$_0:test1]
+        -mr-10005default.test1{ds=2} [$hdt$_0:test1]
       Needs Tagging: false
       Reduce Operator Tree:
         Group By Operator
@@ -1780,13 +1855,13 @@ STAGE PLANS:
                   tag: -1
                   auto parallelism: false
       Path -> Alias:
-        -mr-10003default.test2{ds=01_10_10, hr=01} [$hdt$_0:test2]
-        -mr-10004default.test2{ds=01_10_20, hr=02} [$hdt$_0:test2]
-        -mr-10005default.test2{ds=1, hr=1} [$hdt$_0:test2]
-        -mr-10006default.test2{ds=1, hr=2} [$hdt$_0:test2]
-        -mr-10007default.test2{ds=1, hr=3} [$hdt$_0:test2]
+        -mr-10004default.test2{ds=01_10_10, hr=01} [$hdt$_0:test2]
+        -mr-10005default.test2{ds=01_10_20, hr=02} [$hdt$_0:test2]
+        -mr-10006default.test2{ds=1, hr=1} [$hdt$_0:test2]
+        -mr-10007default.test2{ds=1, hr=2} [$hdt$_0:test2]
+        -mr-10008default.test2{ds=1, hr=3} [$hdt$_0:test2]
       Path -> Partition:
-        -mr-10003default.test2{ds=01_10_10, hr=01} 
+        -mr-10004default.test2{ds=01_10_10, hr=01} 
           Partition
             input format: org.apache.hadoop.hive.ql.io.OneNullRowInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
@@ -1794,17 +1869,22 @@ STAGE PLANS:
               ds 01:10:10
               hr 01
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test2
+              numFiles 0
+              numRows 0
               partition_columns ds/hr
               partition_columns.types string:string
+              rawDataSize 0
               serialization.ddl struct test2 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.NullStructSerDe
           
@@ -1826,7 +1906,7 @@ STAGE PLANS:
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.test2
             name: default.test2
-        -mr-10004default.test2{ds=01_10_20, hr=02} 
+        -mr-10005default.test2{ds=01_10_20, hr=02} 
           Partition
             input format: org.apache.hadoop.hive.ql.io.OneNullRowInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
@@ -1834,17 +1914,22 @@ STAGE PLANS:
               ds 01:10:20
               hr 02
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test2
+              numFiles 0
+              numRows 0
               partition_columns ds/hr
               partition_columns.types string:string
+              rawDataSize 0
               serialization.ddl struct test2 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.NullStructSerDe
           
@@ -1866,7 +1951,7 @@ STAGE PLANS:
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.test2
             name: default.test2
-        -mr-10005default.test2{ds=1, hr=1} 
+        -mr-10006default.test2{ds=1, hr=1} 
           Partition
             input format: org.apache.hadoop.hive.ql.io.OneNullRowInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
@@ -1874,17 +1959,22 @@ STAGE PLANS:
               ds 1
               hr 1
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test2
+              numFiles 0
+              numRows 0
               partition_columns ds/hr
               partition_columns.types string:string
+              rawDataSize 0
               serialization.ddl struct test2 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.NullStructSerDe
           
@@ -1906,7 +1996,7 @@ STAGE PLANS:
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.test2
             name: default.test2
-        -mr-10006default.test2{ds=1, hr=2} 
+        -mr-10007default.test2{ds=1, hr=2} 
           Partition
             input format: org.apache.hadoop.hive.ql.io.OneNullRowInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
@@ -1914,17 +2004,22 @@ STAGE PLANS:
               ds 1
               hr 2
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test2
+              numFiles 0
+              numRows 0
               partition_columns ds/hr
               partition_columns.types string:string
+              rawDataSize 0
               serialization.ddl struct test2 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.NullStructSerDe
           
@@ -1946,7 +2041,7 @@ STAGE PLANS:
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.test2
             name: default.test2
-        -mr-10007default.test2{ds=1, hr=3} 
+        -mr-10008default.test2{ds=1, hr=3} 
           Partition
             input format: org.apache.hadoop.hive.ql.io.OneNullRowInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
@@ -1954,17 +2049,22 @@ STAGE PLANS:
               ds 1
               hr 3
             properties:
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
               bucket_count -1
               columns a,b
               columns.comments 
               columns.types int:double
 #### A masked pattern was here ####
               name default.test2
+              numFiles 0
+              numRows 0
               partition_columns ds/hr
               partition_columns.types string:string
+              rawDataSize 0
               serialization.ddl struct test2 { i32 a, double b}
               serialization.format 1
               serialization.lib org.apache.hadoop.hive.serde2.NullStructSerDe
+              totalSize 0
 #### A masked pattern was here ####
             serde: org.apache.hadoop.hive.serde2.NullStructSerDe
           
@@ -1987,11 +2087,11 @@ STAGE PLANS:
               name: default.test2
             name: default.test2
       Truncated Path -> Alias:
-        -mr-10003default.test2{ds=01_10_10, hr=01} [$hdt$_0:test2]
-        -mr-10004default.test2{ds=01_10_20, hr=02} [$hdt$_0:test2]
-        -mr-10005default.test2{ds=1, hr=1} [$hdt$_0:test2]
-        -mr-10006default.test2{ds=1, hr=2} [$hdt$_0:test2]
-        -mr-10007default.test2{ds=1, hr=3} [$hdt$_0:test2]
+        -mr-10004default.test2{ds=01_10_10, hr=01} [$hdt$_0:test2]
+        -mr-10005default.test2{ds=01_10_20, hr=02} [$hdt$_0:test2]
+        -mr-10006default.test2{ds=1, hr=1} [$hdt$_0:test2]
+        -mr-10007default.test2{ds=1, hr=2} [$hdt$_0:test2]
+        -mr-10008default.test2{ds=1, hr=3} [$hdt$_0:test2]
       Needs Tagging: false
       Reduce Operator Tree:
         Group By Operator

@@ -57,6 +57,7 @@ import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore.HMSHandler;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.EnvironmentContext;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
@@ -171,16 +172,16 @@ public class MetaStoreUtils {
   }
 
   public static boolean updateTableStatsFast(Database db, Table tbl, Warehouse wh,
-      boolean madeDir) throws MetaException {
-    return updateTableStatsFast(db, tbl, wh, madeDir, false);
+      boolean madeDir, EnvironmentContext environmentContext) throws MetaException {
+    return updateTableStatsFast(db, tbl, wh, madeDir, false, environmentContext);
   }
 
   public static boolean updateTableStatsFast(Database db, Table tbl, Warehouse wh,
-      boolean madeDir, boolean forceRecompute) throws MetaException {
+      boolean madeDir, boolean forceRecompute, EnvironmentContext environmentContext) throws MetaException {
     if (tbl.getPartitionKeysSize() == 0) {
       // Update stats only when unpartitioned
       FileStatus[] fileStatuses = wh.getFileStatusesForUnpartitionedTable(db, tbl);
-      return updateTableStatsFast(tbl, fileStatuses, madeDir, forceRecompute);
+      return updateTableStatsFast(tbl, fileStatuses, madeDir, forceRecompute, environmentContext);
     } else {
       return false;
     }
@@ -196,8 +197,8 @@ public class MetaStoreUtils {
    * these parameters set
    * @return true if the stats were updated, false otherwise
    */
-  public static boolean updateTableStatsFast(Table tbl,
-      FileStatus[] fileStatus, boolean newDir, boolean forceRecompute) throws MetaException {
+  public static boolean updateTableStatsFast(Table tbl, FileStatus[] fileStatus, boolean newDir,
+      boolean forceRecompute, EnvironmentContext environmentContext) throws MetaException {
 
     Map<String,String> params = tbl.getParameters();
 
@@ -223,15 +224,13 @@ public class MetaStoreUtils {
         LOG.info("Updating table stats fast for " + tbl.getTableName());
         populateQuickStats(fileStatus, params);
         LOG.info("Updated size of table " + tbl.getTableName() +" to "+ params.get(StatsSetupConst.TOTAL_SIZE));
-        if(!params.containsKey(StatsSetupConst.STATS_GENERATED_VIA_STATS_TASK)) {
-          // invalidate stats requiring scan since this is a regular ddl alter case
-          for (String stat : StatsSetupConst.statsRequireCompute) {
-            params.put(stat, "-1");
-          }
-          params.put(StatsSetupConst.COLUMN_STATS_ACCURATE, StatsSetupConst.FALSE);
+        if (environmentContext != null
+            && environmentContext.isSetProperties()
+            && StatsSetupConst.TASK.equals(environmentContext.getProperties().get(
+                StatsSetupConst.STATS_GENERATED))) {
+          StatsSetupConst.setBasicStatsState(params, StatsSetupConst.TRUE);
         } else {
-          params.remove(StatsSetupConst.STATS_GENERATED_VIA_STATS_TASK);
-          params.put(StatsSetupConst.COLUMN_STATS_ACCURATE, StatsSetupConst.TRUE);
+          StatsSetupConst.setBasicStatsState(params, StatsSetupConst.FALSE);
         }
       }
       tbl.setParameters(params);
@@ -256,7 +255,14 @@ public class MetaStoreUtils {
 
   // check if stats need to be (re)calculated
   public static boolean requireCalStats(Configuration hiveConf, Partition oldPart,
-    Partition newPart, Table tbl) {
+    Partition newPart, Table tbl, EnvironmentContext environmentContext) {
+
+    if (environmentContext != null
+        && environmentContext.isSetProperties()
+        && StatsSetupConst.TRUE.equals(environmentContext.getProperties().get(
+            StatsSetupConst.DO_NOT_UPDATE_STATS))) {
+      return false;
+    }
 
     if (MetaStoreUtils.isView(tbl)) {
       return false;
@@ -272,7 +278,10 @@ public class MetaStoreUtils {
       return true;
     }
 
-    if(newPart.getParameters().containsKey(StatsSetupConst.STATS_GENERATED_VIA_STATS_TASK)) {
+    if (environmentContext != null
+        && environmentContext.isSetProperties()
+        && StatsSetupConst.TASK.equals(environmentContext.getProperties().get(
+            StatsSetupConst.STATS_GENERATED))) {
       return true;
     }
 
@@ -291,14 +300,14 @@ public class MetaStoreUtils {
     return false;
   }
 
-  public static boolean updatePartitionStatsFast(Partition part, Warehouse wh)
+  public static boolean updatePartitionStatsFast(Partition part, Warehouse wh, EnvironmentContext environmentContext)
       throws MetaException {
-    return updatePartitionStatsFast(part, wh, false, false);
+    return updatePartitionStatsFast(part, wh, false, false, environmentContext);
   }
 
-  public static boolean updatePartitionStatsFast(Partition part, Warehouse wh, boolean madeDir)
+  public static boolean updatePartitionStatsFast(Partition part, Warehouse wh, boolean madeDir, EnvironmentContext environmentContext)
       throws MetaException {
-    return updatePartitionStatsFast(part, wh, madeDir, false);
+    return updatePartitionStatsFast(part, wh, madeDir, false, environmentContext);
   }
 
   /**
@@ -312,9 +321,9 @@ public class MetaStoreUtils {
    * @return true if the stats were updated, false otherwise
    */
   public static boolean updatePartitionStatsFast(Partition part, Warehouse wh,
-      boolean madeDir, boolean forceRecompute) throws MetaException {
+      boolean madeDir, boolean forceRecompute, EnvironmentContext environmentContext) throws MetaException {
     return updatePartitionStatsFast(new PartitionSpecProxy.SimplePartitionWrapperIterator(part),
-                                    wh, madeDir, forceRecompute);
+                                    wh, madeDir, forceRecompute, environmentContext);
   }
 
   /**
@@ -328,18 +337,8 @@ public class MetaStoreUtils {
    * @return true if the stats were updated, false otherwise
    */
   public static boolean updatePartitionStatsFast(PartitionSpecProxy.PartitionIterator part, Warehouse wh,
-      boolean madeDir, boolean forceRecompute) throws MetaException {
+      boolean madeDir, boolean forceRecompute, EnvironmentContext environmentContext) throws MetaException {
     Map<String,String> params = part.getParameters();
-
-    if ((params!=null) && params.containsKey(StatsSetupConst.DO_NOT_UPDATE_STATS)){
-      boolean doNotUpdateStats = Boolean.valueOf(params.get(StatsSetupConst.DO_NOT_UPDATE_STATS));
-      params.remove(StatsSetupConst.DO_NOT_UPDATE_STATS);
-      part.setParameters(params); // to make sure we remove this marker property
-      if (doNotUpdateStats){
-        return false;
-      }
-    }
-
     boolean updated = false;
     if (forceRecompute ||
         params == null ||
@@ -354,15 +353,13 @@ public class MetaStoreUtils {
         FileStatus[] fileStatus = wh.getFileStatusesForLocation(part.getLocation());
         populateQuickStats(fileStatus, params);
         LOG.warn("Updated size to " + params.get(StatsSetupConst.TOTAL_SIZE));
-        if(!params.containsKey(StatsSetupConst.STATS_GENERATED_VIA_STATS_TASK)) {
-          // invalidate stats requiring scan since this is a regular ddl alter case
-          for (String stat : StatsSetupConst.statsRequireCompute) {
-            params.put(stat, "-1");
-          }
-          params.put(StatsSetupConst.COLUMN_STATS_ACCURATE, StatsSetupConst.FALSE);
+        if (environmentContext != null
+            && environmentContext.isSetProperties()
+            && StatsSetupConst.TASK.equals(environmentContext.getProperties().get(
+                StatsSetupConst.STATS_GENERATED))) {
+          StatsSetupConst.setBasicStatsState(params, StatsSetupConst.TRUE);
         } else {
-          params.remove(StatsSetupConst.STATS_GENERATED_VIA_STATS_TASK);
-          params.put(StatsSetupConst.COLUMN_STATS_ACCURATE, StatsSetupConst.TRUE);
+          StatsSetupConst.setBasicStatsState(params, StatsSetupConst.FALSE);
         }
       }
       part.setParameters(params);

@@ -232,7 +232,6 @@ STAGE PLANS:
                   partition values:
                     ds 2008-04-08
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     bucket_count 4
                     bucket_field_name key
                     columns key,value
@@ -315,15 +314,20 @@ STAGE PLANS:
                               input format: org.apache.hadoop.mapred.TextInputFormat
                               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                               properties:
+                                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                                 bucket_count -1
                                 columns key,value1,value2
                                 columns.comments 
                                 columns.types string:string:string
 #### A masked pattern was here ####
                                 name default.bucketmapjoin_tmp_result
+                                numFiles 0
+                                numRows 0
+                                rawDataSize 0
                                 serialization.ddl struct bucketmapjoin_tmp_result { string key, string value1, string value2}
                                 serialization.format 1
                                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                                totalSize 0
 #### A masked pattern was here ####
                               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
                               name: default.bucketmapjoin_tmp_result
@@ -348,7 +352,6 @@ STAGE PLANS:
                   partition values:
                     ds 2008-04-08
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     bucket_count 2
                     bucket_field_name key
                     columns key,value
@@ -399,15 +402,20 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
+                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                 bucket_count -1
                 columns key,value1,value2
                 columns.comments 
                 columns.types string:string:string
 #### A masked pattern was here ####
                 name default.bucketmapjoin_tmp_result
+                numFiles 0
+                numRows 0
+                rawDataSize 0
                 serialization.ddl struct bucketmapjoin_tmp_result { string key, string value1, string value2}
                 serialization.format 1
                 serialization.lib org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+                totalSize 0
 #### A masked pattern was here ####
               serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
               name: default.bucketmapjoin_tmp_result
@@ -641,7 +649,6 @@ STAGE PLANS:
                   partition values:
                     ds 2008-04-08
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     bucket_count 2
                     bucket_field_name key
                     columns key,value
@@ -724,7 +731,7 @@ STAGE PLANS:
                               input format: org.apache.hadoop.mapred.TextInputFormat
                               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                               properties:
-                                COLUMN_STATS_ACCURATE true
+                                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                                 bucket_count -1
                                 columns key,value1,value2
                                 columns.comments 
@@ -762,7 +769,6 @@ STAGE PLANS:
                   partition values:
                     ds 2008-04-08
                   properties:
-                    COLUMN_STATS_ACCURATE true
                     bucket_count 4
                     bucket_field_name key
                     columns key,value
@@ -813,7 +819,7 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE true
+                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true"}
                 bucket_count -1
                 columns key,value1,value2
                 columns.comments 

@@ -234,7 +234,7 @@ Table:              	stats_null_part
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"COLUMN_STATS\":{\"a\":\"true\",\"b\":\"true\",\"c\":\"true\",\"d\":\"true\"},\"BASIC_STATS\":\"true\"}
 	numFiles            	1                   
 	numRows             	6                   
 	rawDataSize         	71                  
@@ -277,7 +277,7 @@ Table:              	stats_null_part
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	true                
+	COLUMN_STATS_ACCURATE	{\"COLUMN_STATS\":{\"a\":\"true\",\"b\":\"true\",\"c\":\"true\",\"d\":\"true\"},\"BASIC_STATS\":\"true\"}
 	numFiles            	1                   
 	numRows             	4                   
 	rawDataSize         	49                  

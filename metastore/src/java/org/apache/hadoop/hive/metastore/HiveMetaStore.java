@@ -38,6 +38,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.common.JvmPauseMonitor;
 import org.apache.hadoop.hive.common.LogUtils;
+import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.common.LogUtils.LogInitializationException;
 import org.apache.hadoop.hive.common.classification.InterfaceAudience;
 import org.apache.hadoop.hive.common.classification.InterfaceStability;
@@ -1487,7 +1488,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         LOG.info("create_table_core stats " + logName);
         if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVESTATSAUTOGATHER) &&
             !MetaStoreUtils.isView(tbl)) {
-          MetaStoreUtils.updateTableStatsFast(db, tbl, wh, madeDir);
+          MetaStoreUtils.updateTableStatsFast(db, tbl, wh, madeDir, envContext);
         }
 
         // set create time
@@ -2081,7 +2082,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
         if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVESTATSAUTOGATHER) &&
             !MetaStoreUtils.isView(tbl)) {
-          MetaStoreUtils.updatePartitionStatsFast(part, wh, madeDir);
+          MetaStoreUtils.updatePartitionStatsFast(part, wh, madeDir, envContext);
         }
 
         success = ms.addPartition(part);
@@ -2545,7 +2546,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         final Table tbl, final PartitionSpecProxy.PartitionIterator part, boolean madeDir) throws MetaException {
       if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVESTATSAUTOGATHER) &&
           !MetaStoreUtils.isView(tbl)) {
-        MetaStoreUtils.updatePartitionStatsFast(part, wh, madeDir, false);
+        MetaStoreUtils.updatePartitionStatsFast(part, wh, madeDir, false, null);
       }
 
       // set create time
@@ -3383,7 +3384,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
               partitionValidationPattern);
         }
 
-        oldPart = alterHandler.alterPartition(getMS(), wh, db_name, tbl_name, part_vals, new_part);
+        oldPart = alterHandler.alterPartition(getMS(), wh, db_name, tbl_name, part_vals, new_part, envContext);
 
         // Only fetch the table if we actually have a listener
         Table table = null;
@@ -3421,7 +3422,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public void alter_partitions(final String db_name, final String tbl_name,
-        final List<Partition> new_parts)
+        final List<Partition> new_parts) throws InvalidOperationException, MetaException,
+        TException {
+      alter_partitions_with_environment_context(db_name, tbl_name, new_parts, null);
+    }
+
+    @Override
+    public void alter_partitions_with_environment_context(final String db_name, final String tbl_name,
+        final List<Partition> new_parts, EnvironmentContext environmentContext)
         throws InvalidOperationException, MetaException,
         TException {
 
@@ -3440,7 +3448,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         for (Partition tmpPart : new_parts) {
           firePreEvent(new PreAlterPartitionEvent(db_name, tbl_name, null, tmpPart, this));
         }
-        oldParts = alterHandler.alterPartitions(getMS(), wh, db_name, tbl_name, new_parts);
+        oldParts = alterHandler.alterPartitions(getMS(), wh, db_name, tbl_name, new_parts, environmentContext);
 
         Iterator<Partition> olditr = oldParts.iterator();
         // Only fetch the table if we have a listener that needs it.
@@ -3537,15 +3545,19 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         final Table newTable)
         throws InvalidOperationException, MetaException {
       // Do not set an environment context.
-      alter_table_core(dbname,name, newTable, null, false);
+      alter_table_core(dbname,name, newTable, null);
     }
 
     @Override
     public void alter_table_with_cascade(final String dbname, final String name,
         final Table newTable, final boolean cascade)
         throws InvalidOperationException, MetaException {
-      // Do not set an environment context.
-      alter_table_core(dbname,name, newTable, null, cascade);
+      EnvironmentContext envContext = null;
+      if (cascade) {
+        envContext = new EnvironmentContext();
+        envContext.putToProperties(StatsSetupConst.CASCADE, StatsSetupConst.TRUE);
+      }
+      alter_table_core(dbname, name, newTable, envContext);
     }
 
     @Override
@@ -3553,15 +3565,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         final String name, final Table newTable,
         final EnvironmentContext envContext)
         throws InvalidOperationException, MetaException {
-      alter_table_core(dbname, name, newTable, envContext, false);
+      alter_table_core(dbname, name, newTable, envContext);
     }
 
     private void alter_table_core(final String dbname, final String name, final Table newTable,
-        final EnvironmentContext envContext, final boolean cascade)
+        final EnvironmentContext envContext)
         throws InvalidOperationException, MetaException {
       startFunction("alter_table", ": db=" + dbname + " tbl=" + name
           + " newtbl=" + newTable.getTableName());
-
       // Update the time if it hasn't been specified.
       if (newTable.getParameters() == null ||
           newTable.getParameters().get(hive_metastoreConstants.DDL_TIME) == null) {
@@ -3573,7 +3584,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       try {
         Table oldt = get_table_core(dbname, name);
         firePreEvent(new PreAlterTableEvent(oldt, newTable, this));
-        alterHandler.alterTable(getMS(), wh, dbname, name, newTable, cascade);
+        alterHandler.alterTable(getMS(), wh, dbname, name, newTable, envContext);
         success = true;
 
         for (MetaStoreEventListener listener : listeners) {

@@ -109,6 +109,7 @@ POSTHOOK: query: INSERT OVERWRITE TABLE t_hbase_maps
   WHERE key = 125
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@hbase_src
+POSTHOOK: Input: default@t_hbase_maps
 POSTHOOK: Output: default@t_hbase_maps
 PREHOOK: query: INSERT OVERWRITE TABLE t_hbase_maps
   SELECT key,
@@ -139,6 +140,7 @@ POSTHOOK: query: INSERT OVERWRITE TABLE t_hbase_maps
   WHERE key = 126
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@hbase_src
+POSTHOOK: Input: default@t_hbase_maps
 POSTHOOK: Output: default@t_hbase_maps
 PREHOOK: query: SELECT * FROM t_hbase_maps ORDER BY key
 PREHOOK: type: QUERY
@@ -373,6 +375,7 @@ POSTHOOK: query: INSERT OVERWRITE TABLE t_hbase_maps_1
   WHERE key = 125
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@hbase_src
+POSTHOOK: Input: default@t_hbase_maps_1
 POSTHOOK: Output: default@t_hbase_maps_1
 PREHOOK: query: INSERT OVERWRITE TABLE t_hbase_maps_1
   SELECT key,
@@ -403,6 +406,7 @@ POSTHOOK: query: INSERT OVERWRITE TABLE t_hbase_maps_1
   WHERE key = 126
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@hbase_src
+POSTHOOK: Input: default@t_hbase_maps_1
 POSTHOOK: Output: default@t_hbase_maps_1
 PREHOOK: query: SELECT * FROM t_hbase_maps_1 ORDER BY key
 PREHOOK: type: QUERY

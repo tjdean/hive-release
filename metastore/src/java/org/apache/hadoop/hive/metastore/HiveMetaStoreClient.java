@@ -47,6 +47,7 @@ import javax.security.auth.login.LoginException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.common.ObjectPair;
+import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.common.ValidTxnList;
 import org.apache.hadoop.hive.common.classification.InterfaceAudience;
 import org.apache.hadoop.hive.common.classification.InterfaceAudience.Public;
@@ -344,16 +345,28 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   @Override
   public void alter_table(String dbname, String tbl_name, Table new_tbl)
       throws InvalidOperationException, MetaException, TException {
-    alter_table(dbname, tbl_name, new_tbl, null);
+    alter_table_with_environmentContext(dbname, tbl_name, new_tbl, null);
   }
 
   @Override
+  @Deprecated
   public void alter_table(String dbname, String tbl_name, Table new_tbl, boolean cascade)
       throws InvalidOperationException, MetaException, TException {
-    client.alter_table_with_cascade(dbname, tbl_name, new_tbl, cascade);
+    EnvironmentContext envContext = null;
+    if (cascade) {
+      envContext = new EnvironmentContext();
+      envContext.putToProperties(StatsSetupConst.CASCADE, StatsSetupConst.TRUE);
+    }
+    client.alter_table_with_environment_context(dbname, tbl_name, new_tbl, envContext);
   }
 
+  @Deprecated
   public void alter_table(String dbname, String tbl_name, Table new_tbl,
+      EnvironmentContext envContext) throws InvalidOperationException, MetaException, TException {
+    client.alter_table_with_environment_context(dbname, tbl_name, new_tbl, envContext);
+  }
+
+  public void alter_table_with_environmentContext(String dbname, String tbl_name, Table new_tbl,
       EnvironmentContext envContext) throws InvalidOperationException, MetaException, TException {
     client.alter_table_with_environment_context(dbname, tbl_name, new_tbl, envContext);
   }
@@ -1312,17 +1325,30 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
         client.get_partition_names_ps(db_name, tbl_name, part_vals, max_parts));
   }
 
-  @Override
+  @Deprecated
   public void alter_partition(String dbName, String tblName, Partition newPart)
       throws InvalidOperationException, MetaException, TException {
-    client.alter_partition(dbName, tblName, newPart);
+    alter_partition(dbName, tblName, newPart, null);
   }
 
   @Override
+  public void alter_partition(String dbName, String tblName, Partition newPart, EnvironmentContext environmentContext)
+      throws InvalidOperationException, MetaException, TException {
+    client.alter_partition_with_environment_context(dbName, tblName, newPart, environmentContext);
+  }
+
+  @Deprecated
   public void alter_partitions(String dbName, String tblName, List<Partition> newParts)
-  throws InvalidOperationException, MetaException, TException {
-    client.alter_partitions(dbName, tblName, newParts);
-}
+      throws InvalidOperationException, MetaException, TException {
+    alter_partitions(dbName, tblName, newParts, null);
+  }
+
+  @Override
+  public void alter_partitions(String dbName, String tblName, List<Partition> newParts,
+      EnvironmentContext environmentContext) throws InvalidOperationException, MetaException,
+      TException {
+    client.alter_partitions_with_environment_context(dbName, tblName, newParts, environmentContext);
+  }
 
   @Override
   public void alterDatabase(String dbName, Database db)

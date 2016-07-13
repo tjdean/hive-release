@@ -32,10 +32,12 @@ import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.Warehouse;
+import org.apache.hadoop.hive.metastore.api.EnvironmentContext;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.ql.DriverContext;
 import org.apache.hadoop.hive.ql.ErrorMsg;
+import org.apache.hadoop.hive.ql.io.AcidUtils;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
@@ -46,6 +48,7 @@ import org.apache.hadoop.hive.ql.plan.StatsWork;
 import org.apache.hadoop.hive.ql.plan.api.StageType;
 import org.apache.hadoop.hive.ql.stats.StatsAggregator;
 import org.apache.hadoop.hive.ql.stats.StatsCollectionTaskIndependent;
+import org.apache.hadoop.hive.ql.stats.StatsCollectionContext;
 import org.apache.hadoop.hive.ql.stats.StatsFactory;
 import org.apache.hadoop.hive.ql.stats.StatsPublisher;
 import org.apache.hadoop.util.StringUtils;
@@ -84,7 +87,7 @@ public class StatsTask extends Task<StatsWork> implements Serializable {
   public int execute(DriverContext driverContext) {
 
     LOG.info("Executing stats task");
-    // Make sure that it is either an ANALYZE, INSERT OVERWRITE or CTAS command
+    // Make sure that it is either an ANALYZE, INSERT OVERWRITE (maybe load) or CTAS command
     short workComponentsPresent = 0;
     if (work.getLoadTableDesc() != null) {
       workComponentsPresent++;
@@ -133,13 +136,16 @@ public class StatsTask extends Task<StatsWork> implements Serializable {
 
     StatsAggregator statsAggregator = null;
     int ret = 0;
-
+    StatsCollectionContext scc = null;
+    EnvironmentContext environmentContext = null;
+    
     try {
       // Stats setup:
       Warehouse wh = new Warehouse(conf);
       if (!getWork().getNoStatsAggregator() && !getWork().isNoScanAnalyzeCommand()) {
         try {
-          statsAggregator = createStatsAggregator(conf);
+          scc = getContext();
+          statsAggregator = createStatsAggregator(scc);
         } catch (HiveException e) {
           if (HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_STATS_RELIABLE)) {
             throw e;
@@ -160,6 +166,19 @@ public class StatsTask extends Task<StatsWork> implements Serializable {
       if (partitions == null) {
         org.apache.hadoop.hive.metastore.api.Table tTable = table.getTTable();
         Map<String, String> parameters = tTable.getParameters();
+        // In the following scenarios, we need to reset the stats to true.
+        // work.getTableSpecs() != null means analyze command
+        // work.getLoadTableDesc().getReplace() is true means insert overwrite command 
+        // work.getLoadFileDesc().getDestinationCreateTable().isEmpty() means CTAS etc.
+        // acidTable will not have accurate stats unless it is set through analyze command.
+        if (work.getTableSpecs() == null && AcidUtils.isAcidTable(table)) {
+          StatsSetupConst.setBasicStatsState(parameters, StatsSetupConst.FALSE);
+        } else if (work.getTableSpecs() != null
+            || (work.getLoadTableDesc() != null && work.getLoadTableDesc().getReplace())
+            || (work.getLoadFileDesc() != null && !work.getLoadFileDesc()
+                .getDestinationCreateTable().isEmpty())) {
+          StatsSetupConst.setBasicStatsState(parameters, StatsSetupConst.TRUE);
+        }
         // non-partitioned tables:
         if (!existStats(parameters) && atomic) {
           return 0;
@@ -168,21 +187,25 @@ public class StatsTask extends Task<StatsWork> implements Serializable {
         // The collectable stats for the aggregator needs to be cleared.
         // For eg. if a file is being loaded, the old number of rows are not valid
         if (work.isClearAggregatorStats()) {
-          clearStats(parameters);
-        }
-
-        if (statsAggregator != null) {
-          String prefix = getAggregationPrefix(taskIndependent, table, null);
-          updateStats(statsAggregator, parameters, prefix, maxPrefixLength, atomic);
+          // we choose to keep the invalid stats and only change the setting.
+          StatsSetupConst.setBasicStatsState(parameters, StatsSetupConst.FALSE);
         }
 
         updateQuickStats(wh, parameters, tTable.getSd());
+        if (StatsSetupConst.areBasicStatsUptoDate(parameters)) {
+          if (statsAggregator != null) {
+            String prefix = getAggregationPrefix(taskIndependent, table, null);
+            updateStats(statsAggregator, parameters, prefix, maxPrefixLength, atomic);
+          }
+          // write table stats to metastore
+          if (!getWork().getNoStatsAggregator()) {
+            environmentContext = new EnvironmentContext();
+            environmentContext.putToProperties(StatsSetupConst.STATS_GENERATED,
+                StatsSetupConst.TASK);
+          }
+        }
 
-        // write table stats to metastore
-        parameters.put(StatsSetupConst.STATS_GENERATED_VIA_STATS_TASK, StatsSetupConst.TRUE);
-
-        db.alterTable(tableFullName, new Table(tTable));
-
+        db.alterTable(tableFullName, new Table(tTable), environmentContext);
         console.printInfo("Table " + tableFullName + " stats: [" + toString(parameters) + ']');
       } else {
         // Partitioned table:
@@ -195,6 +218,14 @@ public class StatsTask extends Task<StatsWork> implements Serializable {
           //
           org.apache.hadoop.hive.metastore.api.Partition tPart = partn.getTPartition();
           Map<String, String> parameters = tPart.getParameters();
+          if (work.getTableSpecs() == null && AcidUtils.isAcidTable(table)) {
+            StatsSetupConst.setBasicStatsState(parameters, StatsSetupConst.FALSE);
+          } else if (work.getTableSpecs() != null
+              || (work.getLoadTableDesc() != null && work.getLoadTableDesc().getReplace())
+              || (work.getLoadFileDesc() != null && !work.getLoadFileDesc()
+                  .getDestinationCreateTable().isEmpty())) {
+            StatsSetupConst.setBasicStatsState(parameters, StatsSetupConst.TRUE);
+          }
           if (!existStats(parameters) && atomic) {
             continue;
           }
@@ -202,24 +233,29 @@ public class StatsTask extends Task<StatsWork> implements Serializable {
           // The collectable stats for the aggregator needs to be cleared.
           // For eg. if a file is being loaded, the old number of rows are not valid
           if (work.isClearAggregatorStats()) {
-            clearStats(parameters);
-          }
-
-          if (statsAggregator != null) {
-            String prefix = getAggregationPrefix(taskIndependent, table, partn);
-            updateStats(statsAggregator, parameters, prefix, maxPrefixLength, atomic);
+            // we choose to keep the invalid stats and only change the setting.
+            StatsSetupConst.setBasicStatsState(parameters, StatsSetupConst.FALSE);
           }
 
           updateQuickStats(wh, parameters, tPart.getSd());
-
-          parameters.put(StatsSetupConst.STATS_GENERATED_VIA_STATS_TASK, StatsSetupConst.TRUE);
+          if (StatsSetupConst.areBasicStatsUptoDate(parameters)) {
+            if (statsAggregator != null) {
+              String prefix = getAggregationPrefix(taskIndependent, table, partn);
+              updateStats(statsAggregator, parameters, prefix, maxPrefixLength, atomic);
+            }
+            if (!getWork().getNoStatsAggregator()) {
+              environmentContext = new EnvironmentContext();
+              environmentContext.putToProperties(StatsSetupConst.STATS_GENERATED,
+                  StatsSetupConst.TASK);
+            }
+          }
           updates.add(new Partition(table, tPart));
 
           console.printInfo("Partition " + tableFullName + partn.getSpec() +
               " stats: [" + toString(parameters) + ']');
         }
         if (!updates.isEmpty()) {
-          db.alterPartitions(tableFullName, updates);
+          db.alterPartitions(tableFullName, updates, environmentContext);
         }
       }
 
@@ -234,7 +270,7 @@ public class StatsTask extends Task<StatsWork> implements Serializable {
       }
     } finally {
       if (statsAggregator != null) {
-        statsAggregator.closeConnection();
+        statsAggregator.closeConnection(scc);
       }
     }
     // The return value of 0 indicates success,
@@ -261,7 +297,7 @@ public class StatsTask extends Task<StatsWork> implements Serializable {
     return prefix.toString();
   }
 
-  private StatsAggregator createStatsAggregator(HiveConf conf) throws HiveException {
+  private StatsAggregator createStatsAggregator(StatsCollectionContext scc) throws HiveException {
     String statsImpl = HiveConf.getVar(conf, HiveConf.ConfVars.HIVESTATSDBCLASS);
     StatsFactory factory = StatsFactory.newFactory(statsImpl, conf);
     if (factory == null) {
@@ -270,19 +306,28 @@ public class StatsTask extends Task<StatsWork> implements Serializable {
     // initialize stats publishing table for noscan which has only stats task
     // the rest of MR task following stats task initializes it in ExecDriver.java
     StatsPublisher statsPublisher = factory.getStatsPublisher();
-    if (!statsPublisher.init(conf)) { // creating stats table if not exists
+    if (!statsPublisher.init(scc)) { // creating stats table if not exists
       throw new HiveException(ErrorMsg.STATSPUBLISHER_INITIALIZATION_ERROR.getErrorCodedMsg());
     }
+
+    // manufacture a StatsAggregator
+    StatsAggregator statsAggregator = factory.getStatsAggregator();
+    if (!statsAggregator.connect(scc)) {
+      throw new HiveException(ErrorMsg.STATSAGGREGATOR_CONNECTION_ERROR.getErrorCodedMsg(statsImpl));
+    }
+    return statsAggregator;
+  }
+
+  private StatsCollectionContext getContext() throws HiveException {
+
+    StatsCollectionContext scc = new StatsCollectionContext(conf);
     Task sourceTask = getWork().getSourceTask();
     if (sourceTask == null) {
       throw new HiveException(ErrorMsg.STATSAGGREGATOR_SOURCETASK_NULL.getErrorCodedMsg());
     }
-    // manufacture a StatsAggregator
-    StatsAggregator statsAggregator = factory.getStatsAggregator();
-    if (!statsAggregator.connect(conf, sourceTask)) {
-      throw new HiveException(ErrorMsg.STATSAGGREGATOR_CONNECTION_ERROR.getErrorCodedMsg(statsImpl));
-    }
-    return statsAggregator;
+    scc.setTask(sourceTask);
+    scc.setStatsTmpDir(this.getWork().getStatsTmpDir());
+    return scc;
   }
 
   private boolean existStats(Map<String, String> parameters) {
@@ -307,7 +352,7 @@ public class StatsTask extends Task<StatsWork> implements Serializable {
         if (work.getLoadTableDesc() != null &&
             !work.getLoadTableDesc().getReplace()) {
           String originalValue = parameters.get(statType);
-          if (originalValue != null && !originalValue.equals("-1")) {
+          if (originalValue != null) {
             longValue += Long.parseLong(originalValue); // todo: invalid + valid = invalid
           }
         }
@@ -328,14 +373,6 @@ public class StatsTask extends Task<StatsWork> implements Serializable {
      */
     FileStatus[] partfileStatus = wh.getFileStatusesForSD(desc);
     MetaStoreUtils.populateQuickStats(partfileStatus, parameters);
-  }
-
-  private void clearStats(Map<String, String> parameters) {
-    for (String statType : StatsSetupConst.supportedStats) {
-      if (parameters.containsKey(statType)) {
-        parameters.put(statType, "0");
-      }
-    }
   }
 
   private String toString(Map<String, String> parameters) {
