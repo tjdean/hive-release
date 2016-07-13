@@ -73,3 +73,15 @@ analyze table empc compute statistics;
 analyze table empc compute statistics for columns lastname,deptid,locid;
 
 explain select * from (select e1.deptid from emp e1 join dept d on (e1.deptid = d.deptid))s join empc e2 on (s.deptid = e2.deptid);
+
+-- left outer join
+explain select * from emp left outer join dept on emp.deptid = dept.deptid and emp.lastname = dept.deptname and dept.deptname = emp.lastname;
+
+-- left semi join
+explain select * from emp left semi join dept on emp.deptid = dept.deptid and emp.lastname = dept.deptname and dept.deptname = emp.lastname;
+
+-- right outer join
+explain select * from emp right outer join dept on emp.deptid = dept.deptid and emp.lastname = dept.deptname and dept.deptname = emp.lastname;
+
+-- full outer join
+explain select * from emp full outer join dept on emp.deptid = dept.deptid and emp.lastname = dept.deptname and dept.deptname = emp.lastname;
