@@ -213,6 +213,7 @@ public class ExecDriver extends Task<MapredWork> implements Serializable, Hadoop
     Context ctx = driverContext.getCtx();
     boolean ctxCreated = false;
     Path emptyScratchDir;
+    JobClient jc = null;
 
     MapWork mWork = work.getMapWork();
     ReduceWork rWork = work.getReduceWork();
@@ -400,7 +401,7 @@ public class ExecDriver extends Task<MapredWork> implements Serializable, Hadoop
         HiveConf.setVar(job, HiveConf.ConfVars.METASTOREPWD, "HIVE");
       }
       LOG.error(job.get("mapreduce.framework.name"));
-      JobClient jc = new JobClient(job);
+      jc = new JobClient(job);
       // make this client wait if job tracker is not behaving well.
       Throttle.checkJobTracker(job, LOG);
 
@@ -472,6 +473,9 @@ public class ExecDriver extends Task<MapredWork> implements Serializable, Hadoop
             rj.killJob();
           }
           jobID = rj.getID().toString();
+        }
+        if (jc!=null) {
+          jc.close();
         }
       } catch (Exception e) {
 	LOG.warn(e);
