@@ -59,7 +59,6 @@ public abstract class Operation {
   public static final long DEFAULT_FETCH_MAX_ROWS = 100;
   protected boolean hasResultSet;
   protected volatile HiveSQLException operationException;
-  protected final boolean runAsync;
   protected volatile Future<?> backgroundHandle;
   protected OperationLog operationLog;
   protected boolean isOperationLogEnabled;
@@ -72,7 +71,6 @@ public abstract class Operation {
 
   protected Operation(HiveSession parentSession, OperationType opType, boolean runInBackground) {
     this.parentSession = parentSession;
-    this.runAsync = runInBackground;
     this.opHandle = new OperationHandle(opType, parentSession.getProtocolVersion());
     lastAccessTime = System.currentTimeMillis();
     operationTimeout = HiveConf.getTimeVar(parentSession.getHiveConf(),
@@ -88,16 +86,16 @@ public abstract class Operation {
     this.backgroundHandle = backgroundHandle;
   }
 
-  public boolean shouldRunAsync() {
-    return runAsync;
-  }
-
   public void setConfiguration(HiveConf configuration) {
     this.configuration = new HiveConf(configuration);
   }
 
   public HiveConf getConfiguration() {
     return new HiveConf(configuration);
+  }
+
+  public boolean shouldRunAsync() {
+    return false; // Most operations cannot run asynchronously.
   }
 
   public HiveSession getParentSession() {

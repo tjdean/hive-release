@@ -74,7 +74,6 @@ import org.apache.hive.service.server.ThreadWithGarbageCleanup;
  *
  */
 public class SQLOperation extends ExecuteStatementOperation {
-
   private Driver driver = null;
   private CommandProcessorResponse response;
   private TableSchema resultSchema = null;
@@ -83,12 +82,18 @@ public class SQLOperation extends ExecuteStatementOperation {
   private boolean fetchStarted = false;
   private long queryTimeout;
   private ScheduledExecutorService timeoutExecutor;
-  
+  private final boolean runAsync;
   public SQLOperation(HiveSession parentSession, String statement, Map<String, String> confOverlay,
       boolean runInBackground, long queryTimeout) {
     // TODO: call setRemoteUser in ExecuteStatementOperation or higher.
     super(parentSession, statement, confOverlay, runInBackground);
+    this.runAsync = runInBackground;
     this.queryTimeout = queryTimeout;
+  }
+
+  @Override
+  public boolean shouldRunAsync() {
+    return runAsync;
   }
 
   /**
@@ -255,7 +260,6 @@ public class SQLOperation extends ExecuteStatementOperation {
               return null;
             }
           };
-
           try {
             currentUGI.doAs(doAsAction);
           } catch (Exception e) {
@@ -278,8 +282,7 @@ public class SQLOperation extends ExecuteStatementOperation {
       };
       try {
         // This submit blocks if no background threads are available to run this operation
-        Future<?> backgroundHandle =
-            getParentSession().getSessionManager().submitBackgroundOperation(backgroundOperation);
+        Future<?> backgroundHandle = getParentSession().submitBackgroundOperation(backgroundOperation);
         setBackgroundHandle(backgroundHandle);
       } catch (RejectedExecutionException rejected) {
         setState(OperationState.ERROR);
@@ -526,4 +529,5 @@ public class SQLOperation extends ExecuteStatementOperation {
     }
     return sqlOperationConf;
   }
+
 }

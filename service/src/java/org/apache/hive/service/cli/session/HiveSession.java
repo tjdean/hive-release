@@ -20,6 +20,7 @@ package org.apache.hive.service.cli.session;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hive.service.auth.HiveAuthFactory;
@@ -173,4 +174,6 @@ public interface HiveSession extends HiveSessionBase {
   void closeExpiredOperations();
 
   long getNoOperationTime();
+
+  Future<?> submitBackgroundOperation(Runnable work);
 }
