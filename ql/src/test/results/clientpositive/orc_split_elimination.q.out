@@ -1,12 +1,12 @@
 PREHOOK: query: -- SORT_QUERY_RESULTS
 
-create table orc_split_elim (userid bigint, string1 string, subtype double, decimal1 decimal, ts timestamp) stored as orc
+create table orc_split_elim (userid bigint, string1 string, subtype double, decimal1 decimal(38,10), ts timestamp) stored as orc
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
 PREHOOK: Output: default@orc_split_elim
 POSTHOOK: query: -- SORT_QUERY_RESULTS
 
-create table orc_split_elim (userid bigint, string1 string, subtype double, decimal1 decimal, ts timestamp) stored as orc
+create table orc_split_elim (userid bigint, string1 string, subtype double, decimal1 decimal(38,10), ts timestamp) stored as orc
 POSTHOOK: type: CREATETABLE
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@orc_split_elim
@@ -144,7 +144,7 @@ select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=2
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@orc_split_elim
 #### A masked pattern was here ####
-2	foo	0.8	1	1969-12-31 16:00:00
+2	foo	0.8	1.2	1969-12-31 16:00:00
 PREHOOK: query: -- 1 mapper
 select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=2
 PREHOOK: type: QUERY
@@ -155,7 +155,7 @@ select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=2
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@orc_split_elim
 #### A masked pattern was here ####
-2	foo	0.8	1	1969-12-31 16:00:00
+2	foo	0.8	1.2	1969-12-31 16:00:00
 PREHOOK: query: -- 5 mappers
 select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=5
 PREHOOK: type: QUERY
@@ -166,8 +166,8 @@ select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=5
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@orc_split_elim
 #### A masked pattern was here ####
-2	foo	0.8	1	1969-12-31 16:00:00
-5	eat	0.8	6	1969-12-31 16:00:20
+2	foo	0.8	1.2	1969-12-31 16:00:00
+5	eat	0.8	5.5	1969-12-31 16:00:20
 PREHOOK: query: -- 2 mappers
 select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=5
 PREHOOK: type: QUERY
@@ -178,8 +178,8 @@ select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=5
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@orc_split_elim
 #### A masked pattern was here ####
-2	foo	0.8	1	1969-12-31 16:00:00
-5	eat	0.8	6	1969-12-31 16:00:20
+2	foo	0.8	1.2	1969-12-31 16:00:00
+5	eat	0.8	5.5	1969-12-31 16:00:20
 PREHOOK: query: -- 5 mappers
 select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=13
 PREHOOK: type: QUERY
@@ -190,9 +190,9 @@ select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=13
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@orc_split_elim
 #### A masked pattern was here ####
-13	bar	80.0	2	1969-12-31 16:00:05
-2	foo	0.8	1	1969-12-31 16:00:00
-5	eat	0.8	6	1969-12-31 16:00:20
+13	bar	80.0	2.2	1969-12-31 16:00:05
+2	foo	0.8	1.2	1969-12-31 16:00:00
+5	eat	0.8	5.5	1969-12-31 16:00:20
 PREHOOK: query: -- 3 mappers
 select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=13
 PREHOOK: type: QUERY
@@ -203,9 +203,9 @@ select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=13
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@orc_split_elim
 #### A masked pattern was here ####
-13	bar	80.0	2	1969-12-31 16:00:05
-2	foo	0.8	1	1969-12-31 16:00:00
-5	eat	0.8	6	1969-12-31 16:00:20
+13	bar	80.0	2.2	1969-12-31 16:00:05
+2	foo	0.8	1.2	1969-12-31 16:00:00
+5	eat	0.8	5.5	1969-12-31 16:00:20
 PREHOOK: query: -- 5 mappers
 select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=29
 PREHOOK: type: QUERY
@@ -216,10 +216,10 @@ select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=29
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@orc_split_elim
 #### A masked pattern was here ####
-13	bar	80.0	2	1969-12-31 16:00:05
-2	foo	0.8	1	1969-12-31 16:00:00
-29	cat	8.0	3	1969-12-31 16:00:10
-5	eat	0.8	6	1969-12-31 16:00:20
+13	bar	80.0	2.2	1969-12-31 16:00:05
+2	foo	0.8	1.2	1969-12-31 16:00:00
+29	cat	8.0	3.3	1969-12-31 16:00:10
+5	eat	0.8	5.5	1969-12-31 16:00:20
 PREHOOK: query: -- 4 mappers
 select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=29
 PREHOOK: type: QUERY
@@ -230,10 +230,10 @@ select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=29
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@orc_split_elim
 #### A masked pattern was here ####
-13	bar	80.0	2	1969-12-31 16:00:05
-2	foo	0.8	1	1969-12-31 16:00:00
-29	cat	8.0	3	1969-12-31 16:00:10
-5	eat	0.8	6	1969-12-31 16:00:20
+13	bar	80.0	2.2	1969-12-31 16:00:05
+2	foo	0.8	1.2	1969-12-31 16:00:00
+29	cat	8.0	3.3	1969-12-31 16:00:10
+5	eat	0.8	5.5	1969-12-31 16:00:20
 PREHOOK: query: -- 5 mappers
 select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=70
 PREHOOK: type: QUERY
@@ -244,11 +244,11 @@ select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=70
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@orc_split_elim
 #### A masked pattern was here ####
-13	bar	80.0	2	1969-12-31 16:00:05
-2	foo	0.8	1	1969-12-31 16:00:00
-29	cat	8.0	3	1969-12-31 16:00:10
-5	eat	0.8	6	1969-12-31 16:00:20
-70	dog	1.8	4	1969-12-31 16:00:15
+13	bar	80.0	2.2	1969-12-31 16:00:05
+2	foo	0.8	1.2	1969-12-31 16:00:00
+29	cat	8.0	3.3	1969-12-31 16:00:10
+5	eat	0.8	5.5	1969-12-31 16:00:20
+70	dog	1.8	4.4	1969-12-31 16:00:15
 PREHOOK: query: -- 5 mappers
 select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=70
 PREHOOK: type: QUERY
@@ -259,18 +259,18 @@ select userid,string1,subtype,decimal1,ts from orc_split_elim where userid<=70
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@orc_split_elim
 #### A masked pattern was here ####
-13	bar	80.0	2	1969-12-31 16:00:05
-2	foo	0.8	1	1969-12-31 16:00:00
-29	cat	8.0	3	1969-12-31 16:00:10
-5	eat	0.8	6	1969-12-31 16:00:20
-70	dog	1.8	4	1969-12-31 16:00:15
+13	bar	80.0	2.2	1969-12-31 16:00:05
+2	foo	0.8	1.2	1969-12-31 16:00:00
+29	cat	8.0	3.3	1969-12-31 16:00:10
+5	eat	0.8	5.5	1969-12-31 16:00:20
+70	dog	1.8	4.4	1969-12-31 16:00:15
 PREHOOK: query: -- partitioned table
-create table orc_split_elim_part (userid bigint, string1 string, subtype double, decimal1 decimal, ts timestamp) partitioned by (country string, year int) stored as orc
+create table orc_split_elim_part (userid bigint, string1 string, subtype double, decimal1 decimal(38,10), ts timestamp) partitioned by (country string, year int) stored as orc
 PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
 PREHOOK: Output: default@orc_split_elim_part
 POSTHOOK: query: -- partitioned table
-create table orc_split_elim_part (userid bigint, string1 string, subtype double, decimal1 decimal, ts timestamp) partitioned by (country string, year int) stored as orc
+create table orc_split_elim_part (userid bigint, string1 string, subtype double, decimal1 decimal(38,10), ts timestamp) partitioned by (country string, year int) stored as orc
 POSTHOOK: type: CREATETABLE
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@orc_split_elim_part
@@ -318,8 +318,8 @@ POSTHOOK: Input: default@orc_split_elim_part
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2000
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2001
 #### A masked pattern was here ####
-2	foo	0.8	1	1969-12-31 16:00:00
-2	foo	0.8	1	1969-12-31 16:00:00
+2	foo	0.8	1.2	1969-12-31 16:00:00
+2	foo	0.8	1.2	1969-12-31 16:00:00
 PREHOOK: query: -- 2 mapper - split elimination
 select userid,string1,subtype,decimal1,ts from orc_split_elim_part where userid<=2 and country='us'
 PREHOOK: type: QUERY
@@ -334,8 +334,8 @@ POSTHOOK: Input: default@orc_split_elim_part
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2000
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2001
 #### A masked pattern was here ####
-2	foo	0.8	1	1969-12-31 16:00:00
-2	foo	0.8	1	1969-12-31 16:00:00
+2	foo	0.8	1.2	1969-12-31 16:00:00
+2	foo	0.8	1.2	1969-12-31 16:00:00
 PREHOOK: query: -- 10 mapper - no split elimination
 select userid,string1,subtype,decimal1,ts from orc_split_elim_part where userid<=2 and country='us' and (year=2000 or year=2001)
 PREHOOK: type: QUERY
@@ -350,8 +350,8 @@ POSTHOOK: Input: default@orc_split_elim_part
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2000
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2001
 #### A masked pattern was here ####
-2	foo	0.8	1	1969-12-31 16:00:00
-2	foo	0.8	1	1969-12-31 16:00:00
+2	foo	0.8	1.2	1969-12-31 16:00:00
+2	foo	0.8	1.2	1969-12-31 16:00:00
 PREHOOK: query: -- 2 mapper - split elimination
 select userid,string1,subtype,decimal1,ts from orc_split_elim_part where userid<=2 and country='us' and (year=2000 or year=2001)
 PREHOOK: type: QUERY
@@ -366,8 +366,8 @@ POSTHOOK: Input: default@orc_split_elim_part
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2000
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2001
 #### A masked pattern was here ####
-2	foo	0.8	1	1969-12-31 16:00:00
-2	foo	0.8	1	1969-12-31 16:00:00
+2	foo	0.8	1.2	1969-12-31 16:00:00
+2	foo	0.8	1.2	1969-12-31 16:00:00
 PREHOOK: query: -- 10 mapper - no split elimination
 select userid,string1,subtype,decimal1,ts from orc_split_elim_part where userid<=2 and country='us' and year=2000
 PREHOOK: type: QUERY
@@ -380,7 +380,7 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: default@orc_split_elim_part
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2000
 #### A masked pattern was here ####
-2	foo	0.8	1	1969-12-31 16:00:00
+2	foo	0.8	1.2	1969-12-31 16:00:00
 PREHOOK: query: -- 1 mapper - split elimination
 select userid,string1,subtype,decimal1,ts from orc_split_elim_part where userid<=2 and country='us' and year=2000
 PREHOOK: type: QUERY
@@ -393,7 +393,7 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: default@orc_split_elim_part
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2000
 #### A masked pattern was here ####
-2	foo	0.8	1	1969-12-31 16:00:00
+2	foo	0.8	1.2	1969-12-31 16:00:00
 PREHOOK: query: -- 10 mapper - no split elimination
 select userid,string1,subtype,decimal1,ts from orc_split_elim_part where userid<=5 and country='us'
 PREHOOK: type: QUERY
@@ -408,10 +408,10 @@ POSTHOOK: Input: default@orc_split_elim_part
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2000
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2001
 #### A masked pattern was here ####
-2	foo	0.8	1	1969-12-31 16:00:00
-2	foo	0.8	1	1969-12-31 16:00:00
-5	eat	0.8	6	1969-12-31 16:00:20
-5	eat	0.8	6	1969-12-31 16:00:20
+2	foo	0.8	1.2	1969-12-31 16:00:00
+2	foo	0.8	1.2	1969-12-31 16:00:00
+5	eat	0.8	5.5	1969-12-31 16:00:20
+5	eat	0.8	5.5	1969-12-31 16:00:20
 PREHOOK: query: -- 4 mapper - split elimination
 select userid,string1,subtype,decimal1,ts from orc_split_elim_part where userid<=5 and country='us'
 PREHOOK: type: QUERY
@@ -426,10 +426,10 @@ POSTHOOK: Input: default@orc_split_elim_part
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2000
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2001
 #### A masked pattern was here ####
-2	foo	0.8	1	1969-12-31 16:00:00
-2	foo	0.8	1	1969-12-31 16:00:00
-5	eat	0.8	6	1969-12-31 16:00:20
-5	eat	0.8	6	1969-12-31 16:00:20
+2	foo	0.8	1.2	1969-12-31 16:00:00
+2	foo	0.8	1.2	1969-12-31 16:00:00
+5	eat	0.8	5.5	1969-12-31 16:00:20
+5	eat	0.8	5.5	1969-12-31 16:00:20
 PREHOOK: query: -- 10 mapper - no split elimination
 select userid,string1,subtype,decimal1,ts from orc_split_elim_part where userid<=5 and country='us' and (year=2000 or year=2001)
 PREHOOK: type: QUERY
@@ -444,10 +444,10 @@ POSTHOOK: Input: default@orc_split_elim_part
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2000
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2001
 #### A masked pattern was here ####
-2	foo	0.8	1	1969-12-31 16:00:00
-2	foo	0.8	1	1969-12-31 16:00:00
-5	eat	0.8	6	1969-12-31 16:00:20
-5	eat	0.8	6	1969-12-31 16:00:20
+2	foo	0.8	1.2	1969-12-31 16:00:00
+2	foo	0.8	1.2	1969-12-31 16:00:00
+5	eat	0.8	5.5	1969-12-31 16:00:20
+5	eat	0.8	5.5	1969-12-31 16:00:20
 PREHOOK: query: -- 4 mapper - split elimination
 select userid,string1,subtype,decimal1,ts from orc_split_elim_part where userid<=5 and country='us' and (year=2000 or year=2001)
 PREHOOK: type: QUERY
@@ -462,10 +462,10 @@ POSTHOOK: Input: default@orc_split_elim_part
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2000
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2001
 #### A masked pattern was here ####
-2	foo	0.8	1	1969-12-31 16:00:00
-2	foo	0.8	1	1969-12-31 16:00:00
-5	eat	0.8	6	1969-12-31 16:00:20
-5	eat	0.8	6	1969-12-31 16:00:20
+2	foo	0.8	1.2	1969-12-31 16:00:00
+2	foo	0.8	1.2	1969-12-31 16:00:00
+5	eat	0.8	5.5	1969-12-31 16:00:20
+5	eat	0.8	5.5	1969-12-31 16:00:20
 PREHOOK: query: -- 10 mapper - no split elimination
 select userid,string1,subtype,decimal1,ts from orc_split_elim_part where userid<=5 and country='us' and year=2000
 PREHOOK: type: QUERY
@@ -478,8 +478,8 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: default@orc_split_elim_part
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2000
 #### A masked pattern was here ####
-2	foo	0.8	1	1969-12-31 16:00:00
-5	eat	0.8	6	1969-12-31 16:00:20
+2	foo	0.8	1.2	1969-12-31 16:00:00
+5	eat	0.8	5.5	1969-12-31 16:00:20
 PREHOOK: query: -- 2 mapper - split elimination
 select userid,string1,subtype,decimal1,ts from orc_split_elim_part where userid<=5 and country='us' and year=2000
 PREHOOK: type: QUERY
@@ -492,8 +492,8 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: default@orc_split_elim_part
 POSTHOOK: Input: default@orc_split_elim_part@country=us/year=2000
 #### A masked pattern was here ####
-2	foo	0.8	1	1969-12-31 16:00:00
-5	eat	0.8	6	1969-12-31 16:00:20
+2	foo	0.8	1.2	1969-12-31 16:00:00
+5	eat	0.8	5.5	1969-12-31 16:00:20
 PREHOOK: query: -- 0 mapper - no split elimination
 select userid,string1,subtype,decimal1,ts from orc_split_elim_part where userid<=70 and country='in'
 PREHOOK: type: QUERY

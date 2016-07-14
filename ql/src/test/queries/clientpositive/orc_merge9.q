@@ -2,7 +2,7 @@ create table ts_merge (
 userid bigint,
 string1 string,
 subtype double,
-decimal1 decimal(38,18),
+decimal1 decimal(38,10),
 ts timestamp
 ) stored as orc;
 

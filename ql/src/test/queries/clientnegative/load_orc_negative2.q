@@ -1,4 +1,4 @@
-create table text_test (userid bigint, string1 string, subtype double, decimal1 decimal, ts timestamp);
+create table text_test (userid bigint, string1 string, subtype double, decimal1 decimal(38,10), ts timestamp);
 load data local inpath '../../data/files/kv1.txt' into table text_test;
 
 set hive.default.fileformat=ORC;
