@@ -152,6 +152,8 @@ public class Driver implements CommandProcessor {
 
   // A list of FileSinkOperators writing in an ACID compliant manner
   private Set<FileSinkDesc> acidSinks;
+  // whether any ACID table is involved in a query
+  private boolean acidInQuery;
 
   // A limit on the number of threads that can be launched
   private int maxthreads;
@@ -475,6 +477,7 @@ public class Driver implements CommandProcessor {
 
       // validate the plan
       sem.validate();
+      acidInQuery = sem.hasAcidInQuery();
       perfLogger.PerfLogEnd(CLASS_NAME, PerfLogger.ANALYZE);
 
       // Command should be redacted before passing it to the QueryPlan in order
@@ -1059,7 +1062,9 @@ public class Driver implements CommandProcessor {
       }
 
       txnMgr.acquireLocks(plan, ctx, userFromUGI);
-      recordValidTxns();
+      if (acidInQuery) {
+        recordValidTxns();
+      }
 
       return 0;
     } catch (LockException e) {
