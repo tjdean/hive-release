@@ -15,6 +15,9 @@ IMPROVEMENTS
     HIVE-11037 : HiveOnTez: make explain user level = true as default
 
 BUG FIXES
+  HDP-2.4.3:
+    HIVE-12768: Thread safety: binary sortable serde decimal deserialization
+
   HDP-2.4.2:
     HIVE-13325: Excessive logging when ORC PPD fails type conversions
     HIVE-13298: nested join support causes undecipherable errors in SemanticAnalyzer
