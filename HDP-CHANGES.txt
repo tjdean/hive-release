@@ -22,6 +22,7 @@ BUG FIXES
     HIVE-13299: Column Names trimmed of leading and trailing spaces
     HIVE-13618: Trailing spaces in partition column will be treated differently
     HIVE-13619: Bucket map join plan is incorrect (Vikram Dixit K, reviewed by Gunther Hagleitner)
+    HIVE-13609: Fix UDTFs to allow local fetch task to fetch rows forwarded by GenericUDTF.close()
 
   HDP-2.4.2:
     HIVE-13325: Excessive logging when ORC PPD fails type conversions
