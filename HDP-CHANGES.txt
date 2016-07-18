@@ -25,6 +25,7 @@ BUG FIXES
     HIVE-13609: Fix UDTFs to allow local fetch task to fetch rows forwarded by GenericUDTF.close()
     HIVE-11716: Reading ACID table from non-acid session should raise an error
     HIVE-10632: Make sure TXN_COMPONENTS gets cleaned up if table is dropped before compaction.
+    HIVE-14178: Hive::needsToCopy should reuse FileUtils::equalsFileSystem
 
   HDP-2.4.2:
     HIVE-13325: Excessive logging when ORC PPD fails type conversions
