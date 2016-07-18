@@ -19,6 +19,8 @@ BUG FIXES
     HIVE-12768: Thread safety: binary sortable serde decimal deserialization
     HIVE-14045: (Vectorization) Add missing case for BINARY in VectorizationContext.getNormalizedName method
     HIVE-14132: Don't fail config validation for removed configs
+    HIVE-13299: Column Names trimmed of leading and trailing spaces
+    HIVE-13618: Trailing spaces in partition column will be treated differently
 
   HDP-2.4.2:
     HIVE-13325: Excessive logging when ORC PPD fails type conversions
