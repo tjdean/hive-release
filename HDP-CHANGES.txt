@@ -17,6 +17,7 @@ IMPROVEMENTS
 BUG FIXES
   HDP-2.4.3:
     HIVE-12768: Thread safety: binary sortable serde decimal deserialization
+    HIVE-14045: (Vectorization) Add missing case for BINARY in VectorizationContext.getNormalizedName method
 
   HDP-2.4.2:
     HIVE-13325: Excessive logging when ORC PPD fails type conversions
