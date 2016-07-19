@@ -21,21 +21,22 @@ BUG FIXES
     HIVE-14132: Don't fail config validation for removed configs
     HIVE-13299: Column Names trimmed of leading and trailing spaces
     HIVE-13618: Trailing spaces in partition column will be treated differently
-    HIVE-13619: Bucket map join plan is incorrect (Vikram Dixit K, reviewed by Gunther Hagleitner)
+    HIVE-13619: Bucket map join plan is incorrect
     HIVE-13609: Fix UDTFs to allow local fetch task to fetch rows forwarded by GenericUDTF.close()
     HIVE-11716: Reading ACID table from non-acid session should raise an error
     HIVE-10632: Make sure TXN_COMPONENTS gets cleaned up if table is dropped before compaction.
     HIVE-14178: Hive::needsToCopy should reuse FileUtils::equalsFileSystem
-    HIVE-14282: HCatLoader ToDate() exception with hive partition table ,partitioned by column of DATE datatype (Daniel Dai, reviewed by Thejas Nair)
+    HIVE-14282: HCatLoader ToDate() exception with hive partition table ,partitioned by column of DATE datatype
     HIVE-11498: HIVE Authorization v2 should not check permission for dummy entity
     HIVE-13390: Add more test to ZK service discovery using MiniHS2 (SSL Certificate Hostname vulnerability fix)
-    HIVE-13948: Incorrect timezone handling in Writable results in wrong dates in queries (Sergey Shelukhin, reviewed by Jason Dere)
-    HIVE-13175: Disallow making external tables transactional (Wei Zheng, reviewed by Eugene Koifman)
-    HIVE-9605: Remove parquet nested objects from wrapper writable objects (Sergio Pena, reviewed by Ferdinand Xu)
-    HIVE-13632: Hive failing on insert empty array into parquet table. (Yongzhi Chen, reviewed by Sergio Pena)
+    HIVE-13948: Incorrect timezone handling in Writable results in wrong dates in queries
+    HIVE-13175: Disallow making external tables transactional
+    HIVE-9605:  Remove parquet nested objects from wrapper writable objects 
+    HIVE-13632: Hive failing on insert empty array into parquet table.
     HIVE-13358: Stats state is not captured correctly: turn off stats optimizer for sampled table
-    HIVE-13730 : Avoid double spilling the same partition when memory threshold is set very low (Wei Zheng, reviewed by Vikram Dixit K)
+    HIVE-13730: Avoid double spilling the same partition when memory threshold is set very low
     HIVE-13373: Use most specific type for numerical constants
+    HIVE-13313: TABLESAMPLE ROWS feature broken for Vectorization 
 
   HDP-2.4.2:
     HIVE-13325: Excessive logging when ORC PPD fails type conversions
