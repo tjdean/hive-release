@@ -603,7 +603,7 @@ public class Registry {
       }
       return fi;
     } catch (Throwable e) {
-      LOG.info("Unable to look up " + functionName + " in metastore", e);
+      LOG.debug("Unable to look up " + functionName + " in metastore", e);
     }
     return null;
   }
