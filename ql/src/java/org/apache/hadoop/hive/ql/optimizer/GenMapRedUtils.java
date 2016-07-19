@@ -1463,12 +1463,6 @@ public final class GenMapRedUtils {
     statsWork.setAggKey(nd.getConf().getStatsAggPrefix());
     Task<? extends Serializable> statsTask = TaskFactory.get(statsWork, hconf);
 
-    // mark the MapredWork and FileSinkOperator for gathering stats
-    nd.getConf().setGatherStats(true);
-    nd.getConf().setStatsReliable(hconf.getBoolVar(ConfVars.HIVE_STATS_RELIABLE));
-    nd.getConf().setMaxStatsKeyPrefixLength(StatsFactory.getMaxPrefixLength(hconf));
-    // mrWork.addDestinationTable(nd.getConf().getTableInfo().getTableName());
-
     // subscribe feeds from the MoveTask so that MoveTask can forward the list
     // of dynamic partition list to the StatsTask
     mvTask.addDependentTask(statsTask);
@@ -1706,7 +1700,13 @@ public final class GenMapRedUtils {
       MoveTask mvTask = (MoveTask) GenMapRedUtils.findMoveTask(mvTasks, fsOp);
 
       if (mvTask != null && isInsertTable && hconf.getBoolVar(ConfVars.HIVESTATSAUTOGATHER)) {
-        GenMapRedUtils.addStatsTask(fsOp, mvTask, currTask, hconf);
+        // mark the MapredWork and FileSinkOperator for gathering stats
+        fsOp.getConf().setGatherStats(true);
+        fsOp.getConf().setStatsReliable(hconf.getBoolVar(ConfVars.HIVE_STATS_RELIABLE));
+        fsOp.getConf().setMaxStatsKeyPrefixLength(StatsFactory.getMaxPrefixLength(hconf));
+        if (!mvTask.hasFollowingStatsTask()) {
+          GenMapRedUtils.addStatsTask(fsOp, mvTask, currTask, hconf);
+        }
       }
 
       if ((mvTask != null) && !mvTask.isLocal() && fsOp.getConf().canBeMerged()) {

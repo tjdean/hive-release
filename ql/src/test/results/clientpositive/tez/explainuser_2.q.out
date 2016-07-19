@@ -4001,11 +4001,11 @@ Reducer 10 <- Reducer 14 (SIMPLE_EDGE), Union 4 (CONTAINS), Union 9 (SIMPLE_EDGE
 Reducer 14 <- Map 13 (SIMPLE_EDGE), Map 15 (SIMPLE_EDGE)
 Reducer 3 <- Map 7 (SIMPLE_EDGE), Union 2 (SIMPLE_EDGE), Union 4 (CONTAINS)
 
-Stage-15
+Stage-7
    Stats-Aggr Operator
-      Stage-1
+      Stage-2
          Move Operator
-            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","name:":"default.b","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
+            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","name:":"default.c","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Stage-4
                Dependency Collection{}
                   Stage-3
@@ -4391,63 +4391,18 @@ Stage-15
                            Statistics:Num rows: 1705 Data size: 18038 Basic stats: COMPLETE Column stats: NONE
                            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","name:":"default.c","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
                             Please refer to the previous Select Operator [SEL_17]
-Stage-14
+Stage-6
+   Stats-Aggr Operator
+      Stage-1
+         Move Operator
+            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","name:":"default.b","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
+             Please refer to the previous Stage-4
+Stage-5
    Stats-Aggr Operator
       Stage-0
          Move Operator
             table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","name:":"default.a","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
              Please refer to the previous Stage-4
-Stage-13
-   Stats-Aggr Operator
-      Stage-2
-         Move Operator
-            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","name:":"default.c","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
-             Please refer to the previous Stage-4
-Stage-12
-   Stats-Aggr Operator
-       Please refer to the previous Stage-1
-Stage-19
-   Stats-Aggr Operator
-       Please refer to the previous Stage-2
-Stage-18
-   Stats-Aggr Operator
-       Please refer to the previous Stage-1
-Stage-17
-   Stats-Aggr Operator
-       Please refer to the previous Stage-0
-Stage-16
-   Stats-Aggr Operator
-       Please refer to the previous Stage-2
-Stage-20
-   Stats-Aggr Operator
-       Please refer to the previous Stage-0
-Stage-9
-   Stats-Aggr Operator
-       Please refer to the previous Stage-1
-Stage-22
-   Stats-Aggr Operator
-       Please refer to the previous Stage-2
-Stage-8
-   Stats-Aggr Operator
-       Please refer to the previous Stage-0
-Stage-21
-   Stats-Aggr Operator
-       Please refer to the previous Stage-1
-Stage-7
-   Stats-Aggr Operator
-       Please refer to the previous Stage-2
-Stage-6
-   Stats-Aggr Operator
-       Please refer to the previous Stage-1
-Stage-10
-   Stats-Aggr Operator
-       Please refer to the previous Stage-2
-Stage-11
-   Stats-Aggr Operator
-       Please refer to the previous Stage-0
-Stage-5
-   Stats-Aggr Operator
-       Please refer to the previous Stage-0
 
 PREHOOK: query: explain
 FROM
