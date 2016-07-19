@@ -38,6 +38,7 @@ BUG FIXES
     HIVE-13373: Use most specific type for numerical constants
     HIVE-13313: TABLESAMPLE ROWS feature broken for Vectorization 
     HIVE-13294: AvroSerde leaks the connection in a case when reading schema from a url
+    HIVE-12619: Switching the field order within an array of structs causes the query to fail
 
   HDP-2.4.2:
     HIVE-13325: Excessive logging when ORC PPD fails type conversions
