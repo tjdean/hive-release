@@ -26,6 +26,7 @@ BUG FIXES
     HIVE-11716: Reading ACID table from non-acid session should raise an error
     HIVE-10632: Make sure TXN_COMPONENTS gets cleaned up if table is dropped before compaction.
     HIVE-14178: Hive::needsToCopy should reuse FileUtils::equalsFileSystem
+    HIVE-14282: HCatLoader ToDate() exception with hive partition table ,partitioned by column of DATE datatype (Daniel Dai, reviewed by Thejas Nair)
 
   HDP-2.4.2:
     HIVE-13325: Excessive logging when ORC PPD fails type conversions
