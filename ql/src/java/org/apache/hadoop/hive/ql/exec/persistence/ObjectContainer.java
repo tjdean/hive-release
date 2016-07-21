@@ -25,6 +25,7 @@ import com.google.common.base.Preconditions;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 
@@ -52,7 +53,7 @@ public class ObjectContainer<ROW> {
   private int readCursor = 0;             // cursor during reading
   private int rowsOnDisk = 0;             // total number of objects in output
 
-  private File parentFile;
+  private File parentDir;
   private File tmpFile;
 
   private Input input;
@@ -60,31 +61,28 @@ public class ObjectContainer<ROW> {
 
   private Kryo kryo;
 
-  public ObjectContainer() {
+  public ObjectContainer(String spillLocalDirs) {
     readBuffer = (ROW[]) new Object[IN_MEMORY_NUM_ROWS];
     for (int i = 0; i < IN_MEMORY_NUM_ROWS; i++) {
       readBuffer[i] = (ROW) new Object();
     }
     kryo = Utilities.runtimeSerializationKryo.get();
     try {
-      setupOutput();
+      setupOutput(spillLocalDirs);
     } catch (IOException | HiveException e) {
       throw new RuntimeException("Failed to create temporary output file on disk", e);
     }
   }
 
-  private void setupOutput() throws IOException, HiveException {
+  private void setupOutput(String spillLocalDirs) throws IOException, HiveException {
     FileOutputStream fos = null;
     try {
-      if (parentFile == null) {
-        parentFile = File.createTempFile("object-container", "");
-        if (parentFile.delete() && parentFile.mkdir()) {
-          parentFile.deleteOnExit();
-        }
+      if (parentDir == null) {
+        parentDir = FileUtils.createLocalDirsTempFile(spillLocalDirs, "object-container", "", true);
       }
 
       if (tmpFile == null || input != null) {
-        tmpFile = File.createTempFile("ObjectContainer", ".tmp", parentFile);
+        tmpFile = File.createTempFile("ObjectContainer", ".tmp", parentDir);
         LOG.info("ObjectContainer created temp file " + tmpFile.getAbsolutePath());
         tmpFile.deleteOnExit();
       }
@@ -109,7 +107,7 @@ public class ObjectContainer<ROW> {
     readCursor = rowsInReadBuffer = rowsOnDisk = 0;
     readBufferUsed = false;
 
-    if (parentFile != null) {
+    if (parentDir != null) {
       if (input != null) {
         try {
           input.close();
@@ -125,10 +123,10 @@ public class ObjectContainer<ROW> {
         output = null;
       }
       try {
-        FileUtil.fullyDelete(parentFile);
+        FileUtil.fullyDelete(parentDir);
       } catch (Throwable ignored) {
       }
-      parentFile = null;
+      parentDir = null;
       tmpFile = null;
     }
   }
