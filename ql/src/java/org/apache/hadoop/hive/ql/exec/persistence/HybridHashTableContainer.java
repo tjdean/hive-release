@@ -19,6 +19,8 @@
 package org.apache.hadoop.hive.ql.exec.persistence;
 
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
@@ -32,6 +34,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.ExprNodeEvaluator;
 import org.apache.hadoop.hive.ql.exec.JoinUtil;
@@ -43,6 +46,7 @@ import org.apache.hadoop.hive.ql.exec.vector.expressions.VectorExpressionWriter;
 import org.apache.hadoop.hive.ql.exec.vector.mapjoin.VectorMapJoinRowBytesContainer;
 import org.apache.hadoop.hive.ql.io.HiveKey;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.metadata.HiveUtils;
 import org.apache.hadoop.hive.serde2.ByteStream.Output;
 import org.apache.hadoop.hive.serde2.SerDe;
 import org.apache.hadoop.hive.serde2.SerDeException;
@@ -94,6 +98,8 @@ public class HybridHashTableContainer
 
   private final List<Object> EMPTY_LIST = new ArrayList<Object>(0);
 
+  private final String spillLocalDirs;
+
   /**
    * This class encapsulates the triplet together since they are closely related to each other
    * The triplet: hashmap (either in memory or on disk), small table container, big table container
@@ -111,12 +117,13 @@ public class HybridHashTableContainer
     float loadFactor;                       // Same as above
     int wbSize;                             // Same as above
     int rowsOnDisk;                         // How many rows saved to the on-disk hashmap (if on disk)
+    private final String spillLocalDirs;
 
     /* It may happen that there's not enough memory to instantiate a hashmap for the partition.
      * In that case, we don't create the hashmap, but pretend the hashmap is directly "spilled".
      */
     public HashPartition(int initialCapacity, float loadFactor, int wbSize, long maxProbeSize,
-                         boolean createHashMap) {
+                         boolean createHashMap, String spillLocalDirs) {
       if (createHashMap) {
         // Probe space should be at least equal to the size of our designated wbSize
         maxProbeSize = Math.max(maxProbeSize, wbSize);
@@ -125,6 +132,7 @@ public class HybridHashTableContainer
         hashMapSpilledOnCreation = true;
         hashMapOnDisk = true;
       }
+      this.spillLocalDirs = spillLocalDirs;
       this.initialCapacity = initialCapacity;
       this.loadFactor = loadFactor;
       this.wbSize = wbSize;
@@ -166,7 +174,7 @@ public class HybridHashTableContainer
     /* Get the small table key/value container */
     public KeyValueContainer getSidefileKVContainer() {
       if (sidefileKVContainer == null) {
-        sidefileKVContainer = new KeyValueContainer();
+        sidefileKVContainer = new KeyValueContainer(spillLocalDirs);
       }
       return sidefileKVContainer;
     }
@@ -174,7 +182,7 @@ public class HybridHashTableContainer
     /* Get the big table row container */
     public ObjectContainer getMatchfileObjContainer() {
       if (matchfileObjContainer == null) {
-        matchfileObjContainer = new ObjectContainer();
+        matchfileObjContainer = new ObjectContainer(spillLocalDirs);
       }
       return matchfileObjContainer;
     }
@@ -182,7 +190,7 @@ public class HybridHashTableContainer
     /* Get the big table row bytes container for native vector map join */
     public VectorMapJoinRowBytesContainer getMatchfileRowBytesContainer() {
       if (matchfileRowBytesContainer == null) {
-        matchfileRowBytesContainer = new VectorMapJoinRowBytesContainer();
+        matchfileRowBytesContainer = new VectorMapJoinRowBytesContainer(spillLocalDirs);
       }
       return matchfileRowBytesContainer;
     }
@@ -246,12 +254,14 @@ public class HybridHashTableContainer
         HiveConf.getIntVar(hconf,HiveConf.ConfVars.HIVEHASHTABLEWBSIZE),
         HiveConf.getIntVar(hconf,HiveConf.ConfVars.HIVEHYBRIDGRACEHASHJOINMINNUMPARTITIONS),
         HiveConf.getFloatVar(hconf, HiveConf.ConfVars.HIVEMAPJOINOPTIMIZEDTABLEPROBEPERCENT),
-        estimatedTableSize, keyCount, memoryAvailable, nwayConf);
+        estimatedTableSize, keyCount, memoryAvailable, nwayConf,
+        HiveUtils.getLocalDirList(hconf));
   }
 
   private HybridHashTableContainer(float keyCountAdj, int threshold, float loadFactor,
       int memCheckFreq, int minWbSize, int maxWbSize, int minNumParts, float probePercent,
-      long estimatedTableSize, long keyCount, long memoryAvailable, HybridHashTableConf nwayConf)
+      long estimatedTableSize, long keyCount, long memoryAvailable, HybridHashTableConf nwayConf,
+      String spillLocalDirs)
       throws SerDeException, IOException {
     directWriteHelper = new MapJoinBytesTableContainer.DirectKeyValueWriter();
 
@@ -261,6 +271,7 @@ public class HybridHashTableContainer
     memoryThreshold = memoryAvailable;
     tableRowSize = estimatedTableSize / (keyCount != 0 ? keyCount : 1);
     memoryCheckFrequency = memCheckFreq;
+    this.spillLocalDirs = spillLocalDirs;
 
     this.nwayConf = nwayConf;
     int numPartitions;
@@ -316,22 +327,23 @@ public class HybridHashTableContainer
           nwayConf.getLoadedContainerList().size() == 0) {  // n-way join, first (biggest) small table
         if (i == 0) { // We unconditionally create a hashmap for the first hash partition
           hashPartitions[i] = new HashPartition(initialCapacity, loadFactor, writeBufferSize,
-              maxCapacity, true);
+              maxCapacity, true, spillLocalDirs);
           LOG.info("Each new partition will require memory: " + hashPartitions[0].hashMap.memorySize());
         } else {
           // To check whether we have enough memory to allocate for another hash partition,
           // we need to get the size of the first hash partition to get an idea.
           hashPartitions[i] = new HashPartition(initialCapacity, loadFactor, writeBufferSize,
-              maxCapacity, memoryUsed + hashPartitions[0].hashMap.memorySize() < memoryThreshold);
+              maxCapacity, memoryUsed + hashPartitions[0].hashMap.memorySize() < memoryThreshold,
+              spillLocalDirs);
         }
       } else {                                              // n-way join, all later small tables
         // For all later small tables, follow the same pattern of the previously loaded tables.
         if (this.nwayConf.doSpillOnCreation(i)) {
           hashPartitions[i] = new HashPartition(initialCapacity, loadFactor, writeBufferSize,
-              maxCapacity, false);
+              maxCapacity, false, spillLocalDirs);
         } else {
           hashPartitions[i] = new HashPartition(initialCapacity, loadFactor, writeBufferSize,
-              maxCapacity, true);
+              maxCapacity, true, spillLocalDirs);
         }
       }
 
@@ -580,8 +592,9 @@ public class HybridHashTableContainer
           "hive.auto.convert.join.noconditionaltask.size being set too low.");
     }
 
-    Path path = Files.createTempFile("partition-" + partitionId + "-", null);
-    OutputStream outputStream = Files.newOutputStream(path);
+    File file = FileUtils.createLocalDirsTempFile(
+        spillLocalDirs, "partition-" + partitionId + "-", null, false);
+    OutputStream outputStream = new FileOutputStream(file, false);
 
     com.esotericsoftware.kryo.io.Output output =
         new com.esotericsoftware.kryo.io.Output(outputStream);
@@ -591,11 +604,11 @@ public class HybridHashTableContainer
     output.close();
     outputStream.close();
 
-    partition.hashMapLocalPath = path;
+    partition.hashMapLocalPath = file.toPath();
     partition.hashMapOnDisk = true;
 
     LOG.info("Spilling hash partition " + partitionId + " (Rows: " + inMemRowCount +
-        ", Mem size: " + partition.hashMap.memorySize() + "): " + path);
+        ", Mem size: " + partition.hashMap.memorySize() + "): " + file);
     LOG.info("Memory usage before spilling: " + memoryUsed);
 
     long memFreed = partition.hashMap.memorySize();
