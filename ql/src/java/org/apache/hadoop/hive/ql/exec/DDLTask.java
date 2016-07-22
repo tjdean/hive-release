@@ -48,7 +48,6 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
@@ -818,11 +817,20 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
   }
 
   private int dropIndex(Hive db, DropIndexDesc dropIdx) throws HiveException {
+
+    if (HiveConf.getVar(conf, HiveConf.ConfVars.HIVE_EXECUTION_ENGINE).equals("tez")) {
+      throw new UnsupportedOperationException("Indexes unsupported for Tez execution engine");
+    }
+
     db.dropIndex(dropIdx.getTableName(), dropIdx.getIndexName(), dropIdx.isThrowException(), true);
     return 0;
   }
 
   private int createIndex(Hive db, CreateIndexDesc crtIndex) throws HiveException {
+
+    if (HiveConf.getVar(conf, HiveConf.ConfVars.HIVE_EXECUTION_ENGINE).equals("tez")) {
+      throw new UnsupportedOperationException("Indexes unsupported for Tez execution engine");
+    }
 
     if( crtIndex.getSerde() != null) {
       validateSerDe(crtIndex.getSerde());
@@ -851,6 +859,11 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
   }
 
   private int alterIndex(Hive db, AlterIndexDesc alterIndex) throws HiveException {
+
+    if (HiveConf.getVar(conf, HiveConf.ConfVars.HIVE_EXECUTION_ENGINE).equals("tez")) {
+      throw new UnsupportedOperationException("Indexes unsupported for Tez execution engine");
+    }
+
     String baseTableName = alterIndex.getBaseTableName();
     String indexName = alterIndex.getIndexName();
     Index idx = db.getIndex(baseTableName, indexName);
