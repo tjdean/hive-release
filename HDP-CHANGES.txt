@@ -20,6 +20,7 @@ IMPROVEMENTS
 
 BUG FIXES
 
+  HDP-2.5.0:
     HIVE-14147: Hive PPD might remove predicates when they are defined as a simple expr e.g. WHERE 'a'
     HIVE-13823: Remove unnecessary log line in common join operator
     HIVE-4924: JDBC: Support query timeout for jdbc
@@ -71,7 +72,6 @@ BUG FIXES
     HIVE-13602: TPCH q16 return wrong result when CBO is on
     HIVE-14084 - orc table data load failure when metadata size is very large
     HIVE-12893: hive optimize.sort.dynamic.partition not enabled in case of combination of bucketing and constant propagation if subset of partiton column value set
-    HIVE-12749: Constant propagate returns string values in incorrect format
     HIVE-14006: Hive query with UNION ALL fails with ArrayIndexOutOfBoundsException.
     HIVE-12008: Hive queries failing when using count(*) on column in view
     HIVE-13693: Multi-insert query drops Filter before file output when there is a.val <> b.val
@@ -147,7 +147,6 @@ BUG FIXES
     HIVE-13941: Return better error messages from SchemaTool]
     HIVE-13853: Add X-XSRF-Header filter to HS2 HTTP mode and WebHCat]
     HIVE-13837: current_timestamp() output format is different in some cases
-    HIVE-12742: NULL table comparison within CASE does not work as previous hive versions
     HIVE-12751: Fix NVL explain syntax
     HIVE-13418: HiveServer2 HTTP mode should support X-Forwarded-Host header for authorization/audits
     HIVE-13912 DbTxnManager.commitTxn(): ORA-00918: column ambiguously defined
@@ -163,19 +162,16 @@ BUG FIXES
     HIVE-13867: restore HiveAuthorizer interface changes
     HIVE-13267: Vectorization: Add SelectLikeStringColScalar for non-filter operations
     HIVE-13043: Reload function has no impact to function registry
-    HIVE-13233: Use min and max values to estimate better stats for comparison operators
     HIVE-13313: TABLESAMPLE ROWS feature broken for Vectorization
     HIVE-13561: HiveServer2 is leaking ClassLoaders when add jar / temporary functions are used
     HIVE-12634 : Add command to kill an ACID transaction
     HIVE-13821 - delete statement lauches 1 Mappers that takes forever to finish for 1 TB tpch database(transactional)
     HIVE-13108: Operators: SORT BY randomness is not safe with network partitions
-    HIVE-11333: ColumnPruner prunes columns of UnionOperator that should be kept
     HIVE-13338: Differences in vectorized_casts.q output for vectorized and non-vectorized runs
     HIVE-13622: WriteSet tracking optimizations
     HIVE-13562: Enable vector bridge for all non-vectorized udfs
     HIVE-13395 Lost Update problem in ACID
     HIVE-13691 No record with CQ_ID=0 found in COMPACTION_QUEUE
-    HIVE-12947: SMB join in tez has ClassCastException when container reuse is on
     HIVE-11891: Add basic performance logging to metastore calls
     HIVE-13200: Aggregation functions returning empty rows on partitioned columns
     HIVE-13621: compute stats in certain cases fails with NPE
@@ -233,13 +229,9 @@ BUG FIXES
     HIVE-9365 : The Metastore should take port configuration from hive-site.xml
     HIVE-10761 : Create codahale-based metrics system for Hive
     HIVE-12741: HS2 ShutdownHookManager holds extra of Driver instance in master/branch-2.0
-    HIVE-12879: RowResolver of Semijoin not updated in CalcitePlanner
     HIVE-13302 : direct SQL: cast to date doesn't work on Oracle
-    HIVE-12165: wrong result when hive.optimize.sampling.orderby=true with some aggregate functions
     Hive Macro overwritten when multiple macros are used in one column
-    HIVE-12684: NPE in stats annotation when all values in decimal column are NULLs
     HIVE-13120 : propagate doAs when generating ORC splits
-    HIVE-13151 : Clean up UGI objects in FileSystem cache for transactions
     HIVE-13330 - vectorization returns NULL for empty values for varchar/string data type
     HIVE-11388 - Allow ACID Compactor components to run in multiple metastores
     HIVE-13344 - port HIVE-12902 to 1.x line
@@ -250,45 +242,27 @@ BUG FIXES
     HIVE-13013 - Further Improve concurrency in TxnHandler
     HIVE-11716 Reading ACID table from non-acid session should raise an error
     HIVE-12353 When Compactor fails it calls CompactionTxnHandler.markedCleaned().  it should not.
-    HIVE-12352 CompactionTxnHandler.markCleaned() may delete too much
     HIVE-12620 Misc improvement to Acid module
     HIVE-13326: HiveServer2: Make ZK config publishing configurable
     HIVE-13393: Beeline: Print help message for the --incremental option
     HIVE-12366 Refactor Heartbeater logic for transaction
     HIVE-13361: Orc concatenation should enforce the compression buffer size
     HIVE-13362: Commit binary file required for HIVE-13361
-    HIVE-13129: CliService leaks HMS connection
     HIVE-13209 : metastore get_delegation_token fails with null ip address
     HIVE-13169 - HiveServer2: Support delegation token based connection when using http transport
     HIVE-12435 SELECT COUNT(CASE WHEN...) GROUPBY returns 1 for 'NULL' in a case of ORC and vectorization is enabled.
-    HIVE-13092: Vectorized java.lang.ClassCastException: org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo cannot be cast to org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo
     HIVE-10729: Query failed when select complex columns from joinned table (tez map join only)
     HIVE-13093 : hive metastore does not exit on start failure
     HIVE-12724 ACID: Major compaction fails to include the original bucket files into MR job
-    HIVE-12064: prevent transactional=false
     HIVE-12937: DbNotificationListener unable to clean up old notification events
     HIVE-12992: Hive on tez: Bucket map join plan is incorrect
-    HIVE-13325 - Excessive logging when ORC PPD encounters a timestamp it cannot parse
     HIVE-13296 Add vectorized Q test with complex types showing count(*) etc work correctly
-    HIVE-12189: The list in pushdownPreds of ppd.ExprWalkerInfo should not be allowed to grow very large
-    HIVE-13298 : nested join support causes undecipherable errors in SemanticAnalyzer
     HIVE-11097: MR mode query fails if one table path string starts with another's
-    HIVE-12022: NPE in SARG with timestamp cast
     HIVE-13291 - ORC BI Split strategy should consider block size instead of file size
-    HIVE-12784: Group by SemanticException: Invalid column reference
     HIVE-13125: Support masking and filtering of rows/columns
     HIVE-13198: Authorization issues with cascading views
     HIVE-13095: Support view column authorization
-    HIVE-13016 - Orc FileDump recovery does not work on Windows
-    HIVE-13285 - Orc concatenation may drop old files from moving to final path
-    HIVE-13144: HS2 can leak ZK ACL objects when curator retries to create the persistent ephemeral node
-    HIVE-11470: NPE in DynamicPartFileRecordWriterContainer on null part-keys
     HIVE-13126: Clean up MapJoinOperator properly to avoid object cache reuse with unintentional states
-    HIVE-11816: Update groovy to 2.4.4
-    HIVE-13174: Remove Vectorizer noise in logs
-    HIVE-13263: Vectorization: Unable to vectorize regexp_extract/regexp_replace "Udf: GenericUDFBridge, is not supported"
-    HIVE-13232. Aggressively drop compression buffers in ORC OutStreams.
-    HIVE-11841: KeyValuesInputMerger creates huge logs
     HIVE-13056: delegation tokens do not work with HS2 when used with http transport and kerberos
     HIVE-13017: Child process of HiveServer2 fails to get delegation token from non default FileSystem
     HIVE-13018 On branch-1 "RuntimeException: Vectorization is not supported for datatype:LIST"
@@ -297,6 +271,38 @@ BUG FIXES
     HIVE-12584: Vectorized join with partition column of type char does not trim spaces
     HIVE-12887 Handle ORC schema on read with fewer columns than file schema (after Schema Evolution changes)
     HIVE-12875: SUMMARY-[Verify sem.getInputs() and sem.getOutputs()]
+
+  HDP-2.4.2:
+    HIVE-13325: Excessive logging when ORC PPD fails type conversions
+    HIVE-13298: nested join support causes undecipherable errors in SemanticAnalyzer
+    HIVE-13285: Orc concatenation may drop old files from moving to final path
+    HIVE-13263: Vectorization: Unable to vectorize regexp_extract/regexp_replace " Udf: GenericUDFBridge, is not supported"
+    HIVE-13233: Use min and max values to estimate better stats for comparison operators
+    HIVE-13232: Aggressively drop compression buffers in ORC OutStreams
+    HIVE-13174: Remove Vectorizer noise in logs
+    HIVE-13151: Clean up UGI objects in FileSystem cache for transactions
+    HIVE-13144: HS2 can leak ZK ACL objects when curator retries to create the persistent ephemeral node
+    HIVE-13129: CliService leaks HMS connection
+    HIVE-13092: Vectorized java.lang.ClassCastException: org.apache.hadoop.hive.serde2.typeinfo.ListTypeInfo cannot be cast to org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo
+    HIVE-13016: ORC FileDump recovery utility fails in Windows
+    HIVE-12947: SMB join in tez has ClassCastException when container reuse is on
+    HIVE-12879: RowResolver of Semijoin not updated in CalcitePlanner
+    HIVE-12784: Group by SemanticException: Invalid column reference
+    HIVE-12749: Constant propagate returns string values in incorrect format
+    HIVE-12742: NULL table comparison within CASE does not work as previous hive versions
+    HIVE-12684: NPE in stats annotation when all values in decimal column are NULLs
+    HIVE-12352: CompactionTxnHandler.markCleaned() may delete too much
+    HIVE-12189: The list in pushdownPreds of ppd.ExprWalkerInfo should not be allowed to grow very large
+    HIVE-12165: wrong result when hive.optimize.sampling.orderby=true with some aggregate functions
+    HIVE-12064: prevent transactional=false
+    HIVE-12022: NPE in SARG with timestamp cast
+    HIVE-11841: KeyValuesInputMerger creates huge logs
+    HIVE-11816: Upgrade groovy to 2.4.4
+    HIVE-11470: NPE in DynamicPartFileRecordWriterContainer on null part-keys.
+    HIVE-11333: ColumnPruner prunes columns of UnionOperator that should be kept
+    HIVE-11097: HiveInputFormat uses String.startsWith to compare splitPath and PathToAliases
+
+  Pre-HDP-2.4.2:
     HIVE-11727 : (BUG-44285). Hive on Tez through Oozie: Some queries fail with fnf exception
     HIVE-11147 : MetaTool doesn't update FS root location for partitions with space in name
     HIVE-11104 : Select operator doesn't propagate constants appearing in expressions
@@ -568,11 +574,16 @@ BUG FIXES
 
 
 INTERNAL FIXES (NO APACHE JIRA)
+  HDP-2.5.0:
     BUG-57856: Upgrade Hive1 Thrift to v 0.9.3
     CUST-92: change azure db upgrade to 1.2.1000 to use upsert
     CUST-92: change azure db upgrade to 1.1,1.2 to use upsert
-    MHIVE-753:  azure db upgrade failure
+
+  HDP-2.4.2:
     PROD-1120: Hive metastore fails to start with Invalid object name 'DBS'
+
+  Pre-HDP-2.4.2:
+    MHIVE-753:  azure db upgrade failure
     MHIVE-629: Hive schema initialization failed for azuredb
     MHIVE-661 - fix NOTIFICATION_SEQUENCE table creation in azuredb.sql
     BUG-45882 : Hive query fails with java.util.NoSuchElementException
