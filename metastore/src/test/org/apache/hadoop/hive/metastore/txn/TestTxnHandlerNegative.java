@@ -36,8 +36,7 @@ public class TestTxnHandlerNegative {
   @Test
   public void testBadConnection() throws Exception {
     HiveConf conf = new HiveConf();
-    String connectUrlKey = "blah";
-    conf.setVar(HiveConf.ConfVars.METASTORECONNECTURLKEY, connectUrlKey);
+    conf.setVar(HiveConf.ConfVars.METASTORECONNECTURLKEY, "blah");
     RuntimeException e = null;
     try {
       TxnUtils.getTxnStore(conf);
@@ -47,19 +46,9 @@ public class TestTxnHandlerNegative {
       e = ex;
     }
     assertNotNull(e);
-    String errMsg = e.getMessage().toLowerCase();
-    assertTrue(errMsg.contains(connectUrlKey.toLowerCase()));
-    assertTrue(errMsg.contains("driver")
-            || errMsg.contains("jdbc"));
-    assertTrue(errMsg.contains("no")
-            || errMsg.contains("fail")
-            || errMsg.contains("unable"));
-    /*
-    Catches typical error messages instead of checking for each known string
-    from various connection pools:
-      > No suitable driver found for blah
-      > Failed to get driver instance for jdbcUrl=blah
-      > Unable to get driver for JDBC URL blah
-     */
+    assertTrue(
+        e.getMessage().contains("No suitable driver found for blah")
+        || e.getMessage().contains("Failed to get driver instance for jdbcUrl=blah")
+    );
   }
 }
