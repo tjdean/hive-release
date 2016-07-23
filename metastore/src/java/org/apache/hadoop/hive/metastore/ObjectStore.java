@@ -155,7 +155,6 @@ import org.apache.hive.common.util.HiveStringUtils;
 import org.apache.thrift.TException;
 import org.datanucleus.ClassLoaderResolver;
 import org.datanucleus.NucleusContext;
-import org.datanucleus.AbstractNucleusContext;
 import org.datanucleus.api.jdo.JDOPersistenceManagerFactory;
 import org.datanucleus.store.rdbms.exceptions.MissingTableException;
 
@@ -7334,7 +7333,7 @@ public class ObjectStore implements RawStore, Configurable {
       JDOPersistenceManagerFactory jdoPmf = (JDOPersistenceManagerFactory) pmf;
       NucleusContext nc = jdoPmf.getNucleusContext();
       try {
-        Field classLoaderResolverMap = AbstractNucleusContext.class
+        Field classLoaderResolverMap = NucleusContext.class
             .getDeclaredField("classLoaderResolverMap");
         classLoaderResolverMap.setAccessible(true);
         classLoaderResolverMap.set(nc, new HashMap<String, ClassLoaderResolver>());
