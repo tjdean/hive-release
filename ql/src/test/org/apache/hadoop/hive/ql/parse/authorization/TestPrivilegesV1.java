@@ -44,6 +44,9 @@ public class TestPrivilegesV1 extends PrivilegesTestBase{
     db = Mockito.mock(Hive.class);
     table = new Table(DB, TABLE);
     partition = new Partition(table);
+    conf
+    .setVar(HiveConf.ConfVars.HIVE_AUTHORIZATION_MANAGER,
+        "org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory");
     SessionState.start(conf);
     Mockito.when(db.getTable(DB, TABLE, false)).thenReturn(table);
     Mockito.when(db.getTable(TABLE_QNAME, false)).thenReturn(table);
@@ -76,17 +79,8 @@ public class TestPrivilegesV1 extends PrivilegesTestBase{
    */
   @Test
   public void testPrivInGrantNotAccepted() throws Exception{
-    grantUserTableFail("insert");
-    grantUserTableFail("delete");
-  }
-
-  private void grantUserTableFail(String privName) {
-    try{
-      grantUserTable(privName, PrivilegeType.UNKNOWN);
-      Assert.fail("Exception expected");
-    }catch(Exception e){
-
-    }
+    grantUserTable("insert", PrivilegeType.INSERT);
+    grantUserTable("delete", PrivilegeType.DELETE);
   }
 
   private void grantUserTable(String privName, PrivilegeType privType) throws Exception {

@@ -101,6 +101,9 @@ public class TestHiveAuthorizationTaskFactory {
     conf = new HiveConf();
     conf.setVar(ConfVars.HIVE_AUTHORIZATION_TASK_FACTORY,
         TestHiveAuthorizationTaskFactory.DummyHiveAuthorizationTaskFactoryImpl.class.getName());
+    conf
+    .setVar(HiveConf.ConfVars.HIVE_AUTHORIZATION_MANAGER,
+        "org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory");
     db = Mockito.mock(Hive.class);
     table = new Table(DB, TABLE);
     partition = new Partition(table);

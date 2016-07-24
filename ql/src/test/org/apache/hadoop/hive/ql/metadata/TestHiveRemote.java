@@ -64,13 +64,15 @@ public class TestHiveRemote extends TestHive {
     hiveConf = new HiveConf(this.getClass());
     String port = findFreePort();
     hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, "thrift://localhost:" + port);
+    hiveConf
+    .setVar(HiveConf.ConfVars.HIVE_AUTHORIZATION_MANAGER,
+        "org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory");
 
     Thread t = new Thread(new RunMS(port));
     t.start();
 
     // Wait a little bit for the metastore to start.
     Thread.sleep(5000);
-
 
     try {
       hm = Hive.get(hiveConf);

@@ -44,6 +44,8 @@ public class TestHWISessionManager extends TestCase {
   public TestHWISessionManager(String name) {
     super(name);
     conf = new HiveConf(TestHWISessionManager.class);
+    conf.setVar(HiveConf.ConfVars.HIVE_AUTHORIZATION_MANAGER,
+        "org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory");
     String dataFileDir = conf.get("test.data.files").replace('\\', '/')
         .replace("c:", "");
     dataFilePath = new Path(dataFileDir, "kv1.txt");

@@ -83,6 +83,8 @@ public class TestExecDriver extends TestCase {
       conf = new HiveConf(ExecDriver.class);
       conf.setBoolVar(HiveConf.ConfVars.SUBMITVIACHILD, true);
       conf.setBoolVar(HiveConf.ConfVars.SUBMITLOCALTASKVIACHILD, true);
+      conf.setVar(HiveConf.ConfVars.HIVE_AUTHORIZATION_MANAGER,
+          "org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory");
 
       SessionState.start(conf);
 

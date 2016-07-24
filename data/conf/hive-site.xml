@@ -281,4 +281,10 @@
   <value>hive_admin_user</value>
 </property>
 
+<property>
+  <name>hive.security.authorization.manager</name>
+  <value>org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactoryForTest</value>
+  <description>The Hive client authorization manager class name.</description>
+</property>
+
 </configuration>
