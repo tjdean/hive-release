@@ -59,7 +59,7 @@
 </property>
 
 <property>
-  <name>datanucleus.schema.autoCreateAll</name>
+  <name>datanucleus.autoCreateSchema</name>
   <value>true</value>
 </property>
 
