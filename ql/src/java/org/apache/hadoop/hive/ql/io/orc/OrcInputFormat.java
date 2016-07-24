@@ -534,12 +534,14 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     private final FileSystem fs;
     private final FileStatus file;
     private final OrcTail orcTail;
+    private final List<OrcProto.Type> readerTypes;
     private final boolean isOriginal;
     private final List<Long> deltas;
     private final boolean hasBase;
 
     SplitInfo(Context context, FileSystem fs,
         FileStatus file, OrcTail orcTail,
+        List<OrcProto.Type> readerTypes,
         boolean isOriginal,
         List<Long> deltas,
         boolean hasBase, Path dir, boolean[] covered) throws IOException {
@@ -548,6 +550,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
       this.fs = fs;
       this.file = file;
       this.orcTail = orcTail;
+      this.readerTypes = readerTypes;
       this.isOriginal = isOriginal;
       this.deltas = deltas;
       this.hasBase = hasBase;
@@ -562,17 +565,19 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     Context context;
     FileSystem fs;
     List<FileStatus> files;
+    List<OrcProto.Type> readerTypes;
     boolean isOriginal;
     List<Long> deltas;
     Path dir;
     boolean[] covered;
 
     public ETLSplitStrategy(Context context, FileSystem fs, Path dir, List<FileStatus> children,
-        boolean isOriginal, List<Long> deltas, boolean[] covered) {
+        List<OrcProto.Type> readerTypes, boolean isOriginal, List<Long> deltas, boolean[] covered) {
       this.context = context;
       this.dir = dir;
       this.fs = fs;
       this.files = children;
+      this.readerTypes = readerTypes;
       this.isOriginal = isOriginal;
       this.deltas = deltas;
       this.covered = covered;
@@ -620,7 +625,8 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
         }
         // ignore files of 0 length
         if (file.getLen() > 0) {
-          result.add(new SplitInfo(context, fs, file, orcTail, isOriginal, deltas, true, dir, covered));
+          result.add(new SplitInfo(context, fs, file, orcTail, readerTypes, isOriginal, deltas,
+              true, dir, covered));
         }
       }
       return result;
@@ -644,8 +650,8 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     Path dir;
 
     public BISplitStrategy(Context context, FileSystem fs,
-        Path dir, List<FileStatus> fileStatuses, boolean isOriginal,
-        List<Long> deltas, boolean[] covered) {
+        Path dir, List<FileStatus> fileStatuses, List<OrcProto.Type> readerTypes,
+        boolean isOriginal, List<Long> deltas, boolean[] covered) {
       super(dir, context.numBuckets, deltas, covered);
       this.fileStatuses = fileStatuses;
       this.isOriginal = isOriginal;
@@ -726,12 +732,15 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     private final Context context;
     private final FileSystem fs;
     private final Path dir;
+    private final List<OrcProto.Type> readerTypes;
     private final UserGroupInformation ugi;
 
-    FileGenerator(Context context, FileSystem fs, Path dir, UserGroupInformation ugi) {
+    FileGenerator(Context context, FileSystem fs, Path dir, List<OrcProto.Type> readerTypes,
+        UserGroupInformation ugi) {
       this.context = context;
       this.fs = fs;
       this.dir = dir;
+      this.readerTypes = readerTypes;
       this.ugi = ugi;
     }
 
@@ -791,22 +800,22 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
         switch(context.splitStrategyKind) {
           case BI:
             // BI strategy requested through config
-            splitStrategy = new BISplitStrategy(context, fs, dir, children, isOriginal,
-                deltas, covered);
+            splitStrategy = new BISplitStrategy(context, fs, dir, children, readerTypes,
+                isOriginal, deltas, covered);
             break;
           case ETL:
             // ETL strategy requested through config
-            splitStrategy = new ETLSplitStrategy(context, fs, dir, children, isOriginal,
-                deltas, covered);
+            splitStrategy = new ETLSplitStrategy(context, fs, dir, children, readerTypes,
+                isOriginal, deltas, covered);
             break;
           default:
             // HYBRID strategy
             if (avgFileSize > context.maxSize || totalFiles <= context.etlFileThreshold) {
-              splitStrategy = new ETLSplitStrategy(context, fs, dir, children, isOriginal, deltas,
-                  covered);
+              splitStrategy = new ETLSplitStrategy(context, fs, dir, children, readerTypes,
+                  isOriginal, deltas, covered);
             } else {
-              splitStrategy = new BISplitStrategy(context, fs, dir, children, isOriginal, deltas,
-                  covered);
+              splitStrategy = new BISplitStrategy(context, fs, dir, children, readerTypes,
+                  isOriginal, deltas, covered);
             }
             break;
         }
@@ -830,10 +839,11 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     private final long blockSize;
     private final TreeMap<Long, BlockLocation> locations;
     private OrcTail orcTail;
+    private final List<OrcProto.Type> readerTypes;
     private List<StripeInformation> stripes;
     private List<StripeStatistics> stripeStats;
-    private List<OrcProto.Type> types;
-    private boolean[] includedCols;
+    private List<OrcProto.Type> fileTypes;
+    private boolean[] readerIncluded;
     private final boolean isOriginal;
     private final List<Long> deltas;
     private final boolean hasBase;
@@ -841,6 +851,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     private long projColsUncompressedSize;
     private List<OrcSplit> deltaSplits;
     private final UserGroupInformation ugi;
+    private SchemaEvolution evolution;
 
     public SplitGenerator(SplitInfo splitInfo, UserGroupInformation ugi) throws IOException {
       this.context = splitInfo.context;
@@ -848,6 +859,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
       this.file = splitInfo.file;
       this.blockSize = file.getBlockSize();
       this.orcTail = splitInfo.orcTail;
+      this.readerTypes = splitInfo.readerTypes;
       locations = SHIMS.getLocationsWithOffset(fs, file);
       this.isOriginal = splitInfo.isOriginal;
       this.deltas = splitInfo.deltas;
@@ -990,27 +1002,37 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
       // deltas may change the rows making them match the predicate.
       if (deltas.isEmpty()) {
         Reader.Options options = new Reader.Options();
-        options.include(includedCols);
-        setSearchArgument(options, types, context.conf, isOriginal, false);
+        options.include(readerIncluded);
+        setSearchArgument(options, (readerTypes == null ? fileTypes : readerTypes), context.conf, isOriginal, false);
         // only do split pruning if HIVE-8732 has been fixed in the writer
         if (options.getSearchArgument() != null &&
             writerVersion != OrcFile.WriterVersion.ORIGINAL) {
-          SearchArgument sarg = options.getSearchArgument();
-          List<PredicateLeaf> sargLeaves = sarg.getLeaves();
-          int[] filterColumns = RecordReaderImpl.mapSargColumns(sargLeaves,
-              options.getColumnNames(), getRootColumn(isOriginal));
+          // Also, we currently do not use predicate evaluation when the schema has data type
+          // conversion.
+          if (evolution.hasConversion()) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug(
+                  "Skipping split elimination for " + file.getPath() +
+                  " since the schema has data type conversion");
+            }
+          } else {
+            SearchArgument sarg = options.getSearchArgument();
+            List<PredicateLeaf> sargLeaves = sarg.getLeaves();
+            int[] filterColumns = RecordReaderImpl.mapSargColumns(sargLeaves,
+                options.getColumnNames(), getRootColumn(isOriginal));
 
-          if (stripeStats != null) {
-            // eliminate stripes that doesn't satisfy the predicate condition
-            includeStripe = new boolean[stripes.size()];
-            for (int i = 0; i < stripes.size(); ++i) {
-              includeStripe[i] = (i >= stripeStats.size()) ||
-                  isStripeSatisfyPredicate(stripeStats.get(i), sarg,
-                      filterColumns);
-              if (LOG.isDebugEnabled() && !includeStripe[i]) {
-                LOG.debug("Eliminating ORC stripe-" + i + " of file '" +
-                    file.getPath() + "'  as it did not satisfy " +
-                    "predicate condition.");
+            if (stripeStats != null) {
+              // eliminate stripes that doesn't satisfy the predicate condition
+              includeStripe = new boolean[stripes.size()];
+              for (int i = 0; i < stripes.size(); ++i) {
+                includeStripe[i] = (i >= stripeStats.size()) ||
+                    isStripeSatisfyPredicate(stripeStats.get(i), sarg,
+                        filterColumns);
+                if (LOG.isDebugEnabled() && !includeStripe[i]) {
+                  LOG.debug("Eliminating ORC stripe-" + i + " of file '" +
+                      file.getPath() + "'  as it did not satisfy " +
+                      "predicate condition.");
+                }
               }
             }
           }
@@ -1081,31 +1103,67 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
 
       stripes = orcTail.getStripes();
       stripeStats = orcTail.getStripeStatistics();
-      types = orcTail.getTypes();
+      fileTypes = orcTail.getTypes();
+      TypeDescription fileSchema = OrcUtils.convertTypeFromProtobuf(fileTypes, 0);
+      if (readerTypes == null) {
+        readerIncluded = genIncludedColumns(fileTypes, context.conf, isOriginal);
+        evolution = new SchemaEvolution(fileSchema, readerIncluded);
+      } else {
+        // The readerSchema always comes in without ACID columns.
+        readerIncluded = genIncludedColumns(readerTypes, context.conf, /* isOriginal */ true);
+        if (readerIncluded != null && !isOriginal) {
+          // We shift the include columns here because the SchemaEvolution constructor will
+          // add the ACID event metadata the readerSchema...
+          readerIncluded = shiftReaderIncludedForAcid(readerIncluded);
+        }
+        TypeDescription readerSchema = OrcUtils.convertTypeFromProtobuf(readerTypes, 0);
+        evolution = new SchemaEvolution(fileSchema, readerSchema, readerIncluded);
+      }
       writerVersion = orcTail.getWriterVersion();
-      includedCols = genIncludedColumns(types, context.conf, isOriginal);
       List<OrcProto.ColumnStatistics> fileColStats = orcTail.getFooter().getStatisticsList();
-      projColsUncompressedSize = computeProjectionSize(types, fileColStats, includedCols,
-              isOriginal);
+      boolean[] fileIncluded;
+      if (readerTypes == null) {
+        fileIncluded = readerIncluded;
+      } else {
+        fileIncluded = new boolean[fileTypes.size()];
+        final int readerSchemaSize = readerTypes.size();
+        for (int i = 0; i < readerSchemaSize; i++) {
+          TypeDescription fileType = evolution.getFileType(i);
+          if (fileType != null) {
+            fileIncluded[fileType.getId()] = true;
+          }
+        }
+      }
+      projColsUncompressedSize = computeProjectionSize(fileTypes, fileColStats, fileIncluded,
+          isOriginal);
       if (!context.footerInSplits) {
         orcTail = null;
       }
     }
 
-    private long computeProjectionSize(List<OrcProto.Type> types,
-                                       List<OrcProto.ColumnStatistics> stats,
-                                       boolean[] includedCols,
-                                       boolean isOriginal) {
+    private long computeProjectionSize(List<OrcProto.Type> fileTypes,
+        List<OrcProto.ColumnStatistics> stats, boolean[] fileIncluded, boolean isOriginal) {
       final int rootIdx = getRootColumn(isOriginal);
       List<Integer> internalColIds = Lists.newArrayList();
-      if (includedCols != null) {
-        for (int i = 0; i < includedCols.length; i++) {
-          if (includedCols[i]) {
+      if (fileIncluded != null) {
+        for (int i = 0; i < fileIncluded.length; i++) {
+          if (fileIncluded[i]) {
             internalColIds.add(rootIdx + i);
           }
         }
       }
-      return ReaderImpl.getRawDataSizeFromColIndices(internalColIds, types, stats);
+      return ReaderImpl.getRawDataSizeFromColIndices(internalColIds, fileTypes, stats);
+    }
+
+    private boolean[] shiftReaderIncludedForAcid(boolean[] included) {
+      // We always need the base row
+      included[0] = true;
+      boolean[] newIncluded = new boolean[included.length + OrcRecordUpdater.FIELDS];
+      Arrays.fill(newIncluded, 0, OrcRecordUpdater.FIELDS, true);
+      for(int i= 0; i < included.length; ++i) {
+        newIncluded[i + OrcRecordUpdater.FIELDS] = included[i];
+      }
+      return newIncluded;
     }
 
     private boolean isStripeSatisfyPredicate(StripeStatistics stripeStatistics,
@@ -1148,10 +1206,25 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     List<Future<?>> splitFutures = Lists.newArrayList();
     UserGroupInformation ugi = UserGroupInformation.getCurrentUser();
 
+    boolean isTransactionalTableScan =
+            HiveConf.getBoolVar(conf, ConfVars.HIVE_TRANSACTIONAL_TABLE_SCAN);
+    boolean isSchemaEvolution = HiveConf.getBoolVar(conf, ConfVars.HIVE_SCHEMA_EVOLUTION);
+    TypeDescription readerSchema =
+        OrcUtils.getDesiredRowTypeDescr(conf, isTransactionalTableScan);
+    List<OrcProto.Type> readerTypes = null;
+    if (readerSchema != null) {
+      readerTypes = OrcUtils.getOrcTypes(readerSchema);
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Generate splits schema evolution property " + isSchemaEvolution +
+        " reader schema " + (readerSchema == null ? "NULL" : readerSchema.toString()) +
+        " transactional scan property " + isTransactionalTableScan);
+    }
+
     // multi-threaded file statuses and split strategy
     for (Path dir : getInputPaths(conf)) {
       FileSystem fs = dir.getFileSystem(conf);
-      FileGenerator fileGenerator = new FileGenerator(context, fs, dir, ugi);
+      FileGenerator fileGenerator = new FileGenerator(context, fs, dir, readerTypes, ugi);
       pathFutures.add(context.threadPool.submit(fileGenerator));
     }
 

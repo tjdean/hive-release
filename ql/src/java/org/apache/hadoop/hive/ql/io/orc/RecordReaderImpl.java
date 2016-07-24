@@ -67,8 +67,10 @@ class RecordReaderImpl implements RecordReader {
   private OrcProto.StripeFooter stripeFooter;
   private final long totalRowCount;
   private final CompressionCodec codec;
+  protected final TypeDescription schema;
   private final List<OrcProto.Type> types;
   private final int bufferSize;
+  private final SchemaEvolution evolution;
   private final boolean[] included;
   private final long rowIndexStride;
   private long rowInStripe = 0;
@@ -152,20 +154,29 @@ class RecordReaderImpl implements RecordReader {
 
   protected RecordReaderImpl(ReaderImpl fileReader,
                              Reader.Options options) throws IOException {
-
-    SchemaEvolution treeReaderSchema;
     this.included = options.getInclude();
     this.included[0] = true;
     if (options.getSchema() == null) {
-       if (LOG.isInfoEnabled()) {
-         LOG.info("Schema on read not provided -- using file schema " + fileReader);
-       }
-      treeReaderSchema = new SchemaEvolution(fileReader.getSchema(), included);
+      if (LOG.isInfoEnabled()) {
+        LOG.info("Reader schema not provided -- using file schema " +
+            fileReader.getSchema());
+      }
+      evolution = new SchemaEvolution(fileReader.getSchema(), included);
     } else {
 
-      treeReaderSchema = new SchemaEvolution(fileReader.getSchema(),
-          options.getSchema(), included);
+      // Now that we are creating a record reader for a file, validate that the schema to read
+      // is compatible with the file schema.
+      //
+      evolution = new SchemaEvolution(fileReader.getSchema(),
+          options.getSchema(),included);
+      if (LOG.isDebugEnabled() && evolution.hasConversion()) {
+        LOG.debug("ORC file " + fileReader.path.toString() +
+            " has data type conversion --\n" +
+            "reader schema: " + options.getSchema().toString() + "\n" +
+            "file schema:   " + fileReader.getSchema());
+      }
     }
+    this.schema = evolution.getReaderSchema();
     this.path = fileReader.path;
     this.file = fileReader.fileSystem.open(path);
     this.codec = fileReader.codec;
@@ -175,11 +186,21 @@ class RecordReaderImpl implements RecordReader {
     this.rowIndexStride = fileReader.getRowIndexStride();
     this.metadata = new MetadataReader(file, codec, bufferSize, types.size());
     SearchArgument sarg = options.getSearchArgument();
-    if (sarg != null && rowIndexStride != 0) {
+    // We want to use the sarg for predicate evaluation but we have data type conversion
+    // (i.e Schema Evolution), so we currently ignore it.
+    if (sarg != null && rowIndexStride != 0 && !evolution.hasConversion()) {
       sargApp = new SargApplier(
-          sarg, options.getColumnNames(), rowIndexStride, types, included.length);
+          sarg, options.getColumnNames(), rowIndexStride, types,
+          included.length);
     } else {
       sargApp = null;
+      if (evolution.hasConversion()) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(
+              "Skipping stripe elimination for " + fileReader.path +
+              " since the schema has data type conversion");
+        }
+      }
     }
     long rows = 0;
     long skippedRows = 0;
@@ -202,7 +223,7 @@ class RecordReaderImpl implements RecordReader {
     firstRow = skippedRows;
     totalRowCount = rows;
     boolean skipCorrupt = HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_ORC_SKIP_CORRUPT_DATA);
-    reader = TreeReaderFactory.createTreeReader(treeReaderSchema.getReaderSchema(), treeReaderSchema, included, skipCorrupt);
+    reader = TreeReaderFactory.createTreeReader(evolution.getReaderSchema(), evolution, included, skipCorrupt);
     indexes = new OrcProto.RowIndex[types.size()];
     bloomFilterIndices = new OrcProto.BloomFilterIndex[types.size()];
     advanceToNextRow(reader, 0L, true);
