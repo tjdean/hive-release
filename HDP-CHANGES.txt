@@ -28,6 +28,7 @@ BUG FIXES
     HIVE-14178: Hive::needsToCopy should reuse FileUtils::equalsFileSystem
     HIVE-14282: HCatLoader ToDate() exception with hive partition table ,partitioned by column of DATE datatype (Daniel Dai, reviewed by Thejas Nair)
     HIVE-11498: HIVE Authorization v2 should not check permission for dummy entity
+    HIVE-13390: Add more test to ZK service discovery using MiniHS2 (SSL Certificate Hostname vulnerability fix)
 
   HDP-2.4.2:
     HIVE-13325: Excessive logging when ORC PPD fails type conversions
