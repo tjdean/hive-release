@@ -16,6 +16,7 @@ IMPROVEMENTS
 
 BUG FIXES
 
+    HIVE-14178: Hive::needsToCopy should reuse FileUtils::equalsFileSystem
     HIVE-12563: NullPointerException with 3-way Tez merge join
     HIVE-11727 : (BUG-44285). Hive on Tez through Oozie: Some queries fail with fnf exception
     HIVE-11147 : MetaTool doesn't update FS root location for partitions with space in name
