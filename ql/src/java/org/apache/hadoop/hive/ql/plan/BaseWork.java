@@ -68,6 +68,8 @@ public abstract class BaseWork extends AbstractOperatorDesc {
 
   protected VectorizedRowBatchCtx vectorizedRowBatchCtx;
 
+  private int reservedMemoryMB = -1;  // default to -1 means we leave it up to Tez to decide
+
   public void setGatheringStats(boolean gatherStats) {
     this.gatheringStats = gatherStats;
   }
@@ -178,6 +180,14 @@ public abstract class BaseWork extends AbstractOperatorDesc {
    */
   public void setMapRedLocalWork(final MapredLocalWork mapLocalWork) {
     this.mrLocalWork = mapLocalWork;
+  }
+
+  public int getReservedMemoryMB() {
+    return reservedMemoryMB;
+  }
+
+  public void setReservedMemoryMB(int memoryMB) {
+    reservedMemoryMB = memoryMB;
   }
 
   public abstract void configureJobConf(JobConf job);
