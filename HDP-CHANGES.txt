@@ -31,6 +31,8 @@ BUG FIXES
     HIVE-13390: Add more test to ZK service discovery using MiniHS2 (SSL Certificate Hostname vulnerability fix)
     HIVE-13948: Incorrect timezone handling in Writable results in wrong dates in queries (Sergey Shelukhin, reviewed by Jason Dere)
     HIVE-13175: Disallow making external tables transactional (Wei Zheng, reviewed by Eugene Koifman)
+    HIVE-9605: Remove parquet nested objects from wrapper writable objects (Sergio Pena, reviewed by Ferdinand Xu)
+    HIVE-13632: Hive failing on insert empty array into parquet table. (Yongzhi Chen, reviewed by Sergio Pena)
 
   HDP-2.4.2:
     HIVE-13325: Excessive logging when ORC PPD fails type conversions
