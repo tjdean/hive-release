@@ -35,6 +35,7 @@ BUG FIXES
     HIVE-13632: Hive failing on insert empty array into parquet table. (Yongzhi Chen, reviewed by Sergio Pena)
     HIVE-13358: Stats state is not captured correctly: turn off stats optimizer for sampled table
     HIVE-13730 : Avoid double spilling the same partition when memory threshold is set very low (Wei Zheng, reviewed by Vikram Dixit K)
+    HIVE-13373: Use most specific type for numerical constants
 
   HDP-2.4.2:
     HIVE-13325: Excessive logging when ORC PPD fails type conversions
