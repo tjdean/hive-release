@@ -2245,6 +2245,12 @@ public class HiveConf extends Configuration {
         "Exceeding this will trigger a flush irrelevant of memory pressure condition."),
     HIVE_VECTORIZATION_GROUPBY_FLUSH_PERCENT("hive.vectorized.groupby.flush.percent", (float) 0.1,
         "Percent of entries in the group by aggregation hash flushed when the memory threshold is exceeded."),
+    HIVE_VECTOR_ADAPTOR_USAGE_MODE("hive.vectorized.adaptor.usage.mode", "all", new StringSet("none", "chosen", "all"),
+        "Specifies the extent to which the VectorUDFAdaptor will be used for UDFs that do not have a cooresponding vectorized class.\n" +
+        "0. none   : disable any usage of VectorUDFAdaptor\n" +
+        "1. chosen : use VectorUDFAdaptor for a small set of UDFs that were choosen for good performance\n" +
+        "2. all    : use VectorUDFAdaptor for all UDFs"
+    ),
 
     HIVE_TYPE_CHECK_ON_INSERT("hive.typecheck.on.insert", true, "This property has been extended to control "
         + "whether to check, convert, and normalize partition value to conform to its column type in "
