@@ -42,6 +42,8 @@ BUG FIXES
     HIVE-13730: Avoid double spilling the same partition when memory threshold is set very low (Wei Zheng, reviewed by Vikram Dixit K)
     HIVE-13303: spill to YARN directories, not tmp, when available
     HIVE-14167: Use work directories provided by Tez instead of directly using YARN local dirs
+    HIVE-14282: HCatLoader ToDate() exception with hive partition table ,partitioned by column of DATE datatype (Daniel Dai, reviewed by Thejas Nair)
+    HIVE-13338: Differences in vectorized_casts.q output for vectorized and non-vectorized runs
 
   HDP-2.4.2:
     HIVE-13325: Excessive logging when ORC PPD fails type conversions
