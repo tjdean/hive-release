@@ -69,6 +69,7 @@ import org.apache.hadoop.hive.ql.exec.TaskFactory;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity;
+import org.apache.hadoop.hive.ql.hooks.WriteEntity.WriteType;
 import org.apache.hadoop.hive.ql.index.HiveIndex;
 import org.apache.hadoop.hive.ql.index.HiveIndex.IndexType;
 import org.apache.hadoop.hive.ql.index.HiveIndexHandler;
@@ -714,6 +715,8 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
       new AlterTableExchangePartition(sourceTable, destTable, partSpecs);
     rootTasks.add(TaskFactory.get(new DDLWork(getInputs(), getOutputs(),
       alterTableExchangePartition), conf));
+    inputs.add(new ReadEntity(sourceTable));
+    outputs.add(new WriteEntity(destTable, WriteType.DDL_SHARED));
   }
 
   /**
