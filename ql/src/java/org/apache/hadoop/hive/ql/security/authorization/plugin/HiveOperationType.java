@@ -120,6 +120,7 @@ public enum HiveOperationType {
   SHOW_COMPACTIONS,
   SHOW_TRANSACTIONS,
   ABORT_TRANSACTIONS,
+  ALTERTABLE_EXCHANGEPARTITION,
   // ==== Hive command operation types starts here ==== //
   SET,
   RESET,

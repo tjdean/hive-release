@@ -267,6 +267,11 @@ public class Operation2Privilege {
     // in alter-table-add-partition, the table is output, and location is input
     op2Priv.put(HiveOperationType.ALTERTABLE_ADDPARTS, PrivRequirement.newIOPrivRequirement
 (OWNER_INS_SEL_DEL_NOGRANT_AR, INS_NOGRANT_AR));
+    // For alter table exchange partition, we need select & delete on input & insert on output
+    op2Priv.put(
+        HiveOperationType.ALTERTABLE_EXCHANGEPARTITION,
+        PrivRequirement.newIOPrivRequirement(
+            arr(SQLPrivTypeGrant.SELECT_NOGRANT, SQLPrivTypeGrant.DELETE_NOGRANT), INS_NOGRANT_AR));
 
     // select with grant for exporting contents
     op2Priv.put(HiveOperationType.EXPORT, PrivRequirement.newIOPrivRequirement
