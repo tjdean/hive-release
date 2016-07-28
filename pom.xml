@@ -847,6 +847,7 @@
             <exclude>**/ql/exec/vector/udf/generic/*.java</exclude>
             <exclude>**/TestHiveServer2Concurrency.java</exclude>
             <exclude>**/TestHiveMetaStore.java</exclude>
+            <exclude>**/TestHWISessionManager.java</exclude>
             <exclude>${test.excludes.additional}</exclude>
             <exclude>${skip.spark.file1}</exclude>
             <exclude>${skip.spark.file2}</exclude>
