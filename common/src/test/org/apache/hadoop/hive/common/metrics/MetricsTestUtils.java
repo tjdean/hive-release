@@ -56,7 +56,7 @@ public class MetricsTestUtils {
     return jsonNode.asText();
   }
 
-  private static JsonNode getJsonNode(String json, MetricsCategory category, String metricsName) throws Exception {
+  public static JsonNode getJsonNode(String json, MetricsCategory category, String metricsName) throws Exception {
     ObjectMapper objectMapper = new ObjectMapper();
     JsonNode rootNode = objectMapper.readTree(json);
     JsonNode categoryNode = rootNode.path(category.category);
