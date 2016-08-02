@@ -60,6 +60,10 @@ public final class TxnDbUtil {
   }
 
   public static void prepDb() throws Exception {
+    prepDb(new HiveConf());
+  }
+
+  public static void prepDb(HiveConf conf) throws Exception {
     // This is a bogus hack because it copies the contents of the SQL file
     // intended for creating derby databases, and thus will inexorably get
     // out of date with it.  I'm open to any suggestions on how to make this
@@ -68,7 +72,7 @@ public final class TxnDbUtil {
     Connection conn = null;
     Statement stmt = null;
     try {
-      conn = getConnection();
+      conn = getConnection(conf);
       stmt = conn.createStatement();
       stmt.execute("CREATE TABLE TXNS (" +
           "  TXN_ID bigint PRIMARY KEY," +
@@ -152,7 +156,7 @@ public final class TxnDbUtil {
       // This might be a deadlock, if so, let's retry
       if (e instanceof SQLTransactionRollbackException && deadlockCnt++ < 5) {
         LOG.warn("Caught deadlock, retrying db creation");
-        prepDb();
+        prepDb(conf);
       } else {
         throw e;
       }
@@ -249,7 +253,10 @@ public final class TxnDbUtil {
   }
 
   private static Connection getConnection() throws Exception {
-    HiveConf conf = new HiveConf();
+    return getConnection(new HiveConf());
+  }
+
+  private static Connection getConnection(HiveConf conf) throws Exception {
     String jdbcDriver = HiveConf.getVar(conf, HiveConf.ConfVars.METASTORE_CONNECTION_DRIVER);
     Driver driver = (Driver) Class.forName(jdbcDriver).newInstance();
     Properties prop = new Properties();
