@@ -18,6 +18,9 @@
 package org.apache.hadoop.hive.metastore.txn;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.Service;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import com.jolbox.bonecp.BoneCPConfig;
 import com.jolbox.bonecp.BoneCPDataSource;
 import org.apache.commons.dbcp.ConnectionFactory;
@@ -3001,6 +3004,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
     if (connPool != null) return;
 
     String driverUrl = HiveConf.getVar(conf, HiveConf.ConfVars.METASTORECONNECTURLKEY);
+    String driverClassName = HiveConf.getVar(conf, HiveConf.ConfVars.METASTORE_CONNECTION_DRIVER);
     String user = HiveConf.getVar(conf, HiveConf.ConfVars.METASTORE_CONNECTION_USER_NAME);
     String passwd;
     try {
@@ -3032,6 +3036,14 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
       PoolableConnectionFactory poolConnFactory =
         new PoolableConnectionFactory(connFactory, objectPool, null, null, false, true);
       connPool = new PoolingDataSource(objectPool);
+    } else if ("hikaricp".equals(connectionPooler)) {
+      HikariConfig config = new HikariConfig();
+      config.setJdbcUrl(driverUrl);
+      config.setDriverClassName(driverClassName); // needed for older versions of HikariCP
+      config.setUsername(user);
+      config.setPassword(passwd);
+
+      connPool = new HikariDataSource(config);
     } else {
       throw new RuntimeException("Unknown JDBC connection pooling " + connectionPooler);
     }
