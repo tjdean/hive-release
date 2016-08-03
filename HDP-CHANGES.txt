@@ -18,6 +18,7 @@ BUG FIXES
   HDP-2.4.3:
     HIVE-14262: Inherit writetype from partition WriteEntity for table WriteEntity
     HIVE-13191: DummyTable map joins mix up columns between tables
+    HIVE-14277: Disable StatsOptimizer for all ACID tables
     HIVE-12768: Thread safety: binary sortable serde decimal deserialization
     HIVE-14045: (Vectorization) Add missing case for BINARY in VectorizationContext.getNormalizedName method
     HIVE-14132: Don't fail config validation for removed configs
