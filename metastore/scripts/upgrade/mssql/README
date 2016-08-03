@@ -80,6 +80,10 @@ Upgrading from 0.11.0 to 0.13.0
      <name>datanucleus.autoCreateSchema</name>
      <value>true</value>
    </property>
+   <property>
+     <name>datanucleus.schema.autoCreateAll</name>
+     <value>true</value>
+   </property>
    in your hive-site.xml.  This will cause DataNucleus to create
    tables which are missing from your database once metastore starts.
    
