@@ -145,6 +145,7 @@ public class HiveConf extends Configuration {
       HiveConf.ConfVars.METASTORE_VALIDATE_CONSTRAINTS,
       HiveConf.ConfVars.METASTORE_STORE_MANAGER_TYPE,
       HiveConf.ConfVars.METASTORE_AUTO_CREATE_SCHEMA,
+      HiveConf.ConfVars.METASTORE_AUTO_START_MECHANISM_MODE,
       HiveConf.ConfVars.METASTORE_TRANSACTION_ISOLATION,
       HiveConf.ConfVars.METASTORE_CACHE_LEVEL2,
       HiveConf.ConfVars.METASTORE_CACHE_LEVEL2_TYPE,
