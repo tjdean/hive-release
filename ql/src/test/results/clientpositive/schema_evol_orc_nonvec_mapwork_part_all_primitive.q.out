@@ -3120,15 +3120,15 @@ POSTHOOK: Input: default@part_change_same_type_different_params@part=1
 POSTHOOK: Input: default@part_change_same_type_different_params@part=2
 #### A masked pattern was here ####
 insert_num	part	c1	c2	c3	c4	c5	c6	b
-1	1	excess  	corporation believable          	gateway 	thumb repe	NULL	NULL	original
+1	1	excess  	corporation believable          	gateway 	thumb repe	76855494.39	NULL	original
 10	2	dreamlan	raster  devastation             	association boa	lubricant century	5830.99	NULL	new
 11	2	tiger   	however center                  	propeller agoni	shocking misshapen	6946533.8	31608910.03	new
 12	2	  bulgin	extensive  ambivalent           	rastled	billion zeroes	943084.3	3090297719.717120349328271	new
 13	2	12345678	12345678901234567890123456789012	123456789012345	123456789012345678	NULL	1234567890.543210987654321	new
-2	1	mutation	hideout authentic               	blankness sonic	hover know	NULL	NULL	original
-3	1	hibernat	country detox coyotes           	ball pulse cand	direct	NULL	NULL	original
-4	1	aquarium	encounter existent amuse        	fuse light head	bumper adm	NULL	NULL	original
-5	1	12345678	1234567890123456789012345       	123456789012345	1234567890	NULL	NULL	original
+2	1	mutation	hideout authentic               	blankness sonic	hover know	42093605	3182652.40668	original
+3	1	hibernat	country detox coyotes           	ball pulse cand	direct	1413570.3	8.3095808155	original
+4	1	aquarium	encounter existent amuse        	fuse light head	bumper adm	5475414.65	25937.6752563004	original
+5	1	12345678	1234567890123456789012345       	123456789012345	1234567890	12345678.12	1234567890.0987654321	original
 6	1	hollow  	innocent crabs blushing         	ambition ebony 	liquor ageless par	NULL	3841833197.31413709	new
 7	1	wig feel	social fork drum                	search bump	conclusion percept	8.31	NULL	new
 8	1	bubble f	drain loyal station             	racket	antique business	0.69	22.8326132787413	new

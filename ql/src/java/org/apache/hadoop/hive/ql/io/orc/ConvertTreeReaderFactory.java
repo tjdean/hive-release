@@ -1931,6 +1931,7 @@ public class ConvertTreeReaderFactory extends TreeReaderFactory {
     private int readerPrecision;
     private int readerScale;
     private DecimalColumnVector decimalColVector;
+    private HiveDecimalWritable hiveDecimalResult;
 
     DecimalFromDecimalTreeReader(int columnId, TypeDescription fileType, TypeDescription readerType)
         throws IOException {
@@ -1940,12 +1941,12 @@ public class ConvertTreeReaderFactory extends TreeReaderFactory {
       readerPrecision = readerType.getPrecision();
       readerScale = readerType.getScale();
       decimalTreeReader = new DecimalTreeReader(columnId, filePrecision, fileScale);
+      hiveDecimalResult = new HiveDecimalWritable();
       setConvertTreeReader(decimalTreeReader);
     }
 
     @Override
     public void setConvertVectorElement(int elementNum) throws IOException {
-
       HiveDecimalWritable valueWritable = HiveDecimalWritable.enforcePrecisionScale(
           fileDecimalColVector.vector[elementNum], readerPrecision, readerScale);
       if (valueWritable != null) {
@@ -1954,6 +1955,19 @@ public class ConvertTreeReaderFactory extends TreeReaderFactory {
         decimalColVector.noNulls = false;
         decimalColVector.isNull[elementNum] = true;
       }
+    }
+
+    @Override
+    Object next(Object previous) throws IOException {
+      HiveDecimalWritable readHiveDecimalResult =
+          (HiveDecimalWritable) decimalTreeReader.next(hiveDecimalResult);
+      if (readHiveDecimalResult == null) return null;
+      HiveDecimal value = readHiveDecimalResult.getHiveDecimal();
+      if (value == null) return null;
+      HiveDecimalWritable result = (previous == null)
+          ? new HiveDecimalWritable() : (HiveDecimalWritable) previous;
+      result.set(value, readerPrecision, readerScale);
+      return result;
     }
 
     @Override
