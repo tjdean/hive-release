@@ -16,6 +16,7 @@ IMPROVEMENTS
 
 BUG FIXES
   HDP-2.4.3:
+    HIVE-13991: Union All on view fail with no valid permission on underneath table
     HIVE-14262: Inherit writetype from partition WriteEntity for table WriteEntity
     HIVE-13191: DummyTable map joins mix up columns between tables
     HIVE-14277: Disable StatsOptimizer for all ACID tables
