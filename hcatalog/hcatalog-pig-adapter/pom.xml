@@ -45,6 +45,13 @@
       <artifactId>hive-hcatalog-core</artifactId>
       <version>${project.version}</version>
     </dependency>
+    <dependency>
+    <!--this should be automatically brought in by Pig, it's not in Pig 0.12 due to a bug
+        in Pig which requires it This is fixed in Pig's pom file in ASF trunk (pig 13)-->
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>${joda.version}</version>
+    </dependency>
     <!-- test intra-project -->
     <dependency>
       <groupId>org.apache.hive.hcatalog</groupId>
