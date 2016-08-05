@@ -49,6 +49,7 @@ BUG FIXES
     HIVE-14282: HCatLoader ToDate() exception with hive partition table ,partitioned by column of DATE datatype (Daniel Dai, reviewed by Thejas Nair)
     HIVE-13338: Differences in vectorized_casts.q output for vectorized and non-vectorized runs
     HIVE-14278: Migrate TestHadoop23SAuthBridge.java from Unit3 to Unit4
+    HIVE-14348: Alter Table Exchange Partition NullPointerException and authorization issues
 
   HDP-2.4.2:
     HIVE-13325: Excessive logging when ORC PPD fails type conversions
