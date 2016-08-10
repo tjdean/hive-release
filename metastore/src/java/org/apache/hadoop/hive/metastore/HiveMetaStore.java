@@ -2775,14 +2775,16 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           archiveParentDir = MetaStoreUtils.getOriginalLocation(part);
           verifyIsWritablePath(archiveParentDir);
         }
-        if (!ms.dropPartition(db_name, tbl_name, part_vals)) {
-          throw new MetaException("Unable to drop partition");
-        }
-        success = ms.commitTransaction();
+
         if ((part.getSd() != null) && (part.getSd().getLocation() != null)) {
           partPath = new Path(part.getSd().getLocation());
           verifyIsWritablePath(partPath);
         }
+
+        if (!ms.dropPartition(db_name, tbl_name, part_vals)) {
+          throw new MetaException("Unable to drop partition");
+        }
+        success = ms.commitTransaction();
       } finally {
         if (!success) {
           ms.rollbackTransaction();
