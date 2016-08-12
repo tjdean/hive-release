@@ -22,6 +22,7 @@ IMPROVEMENTS
 
 BUG FIXES
 
+    HIVE-14445: upgrade maven surefire to 2.19.1
     HIVE-14375: hcatalog-pig-adaptor pom.xml uses joda-time 2.2 instead of ${joda.version} that uses 2.8.1
     HIVE-13527: Using deprecated APIs in HBase client causes zookeeper connection leaks (Naveen Gangam via Chaoyu Tang)
     HIVE-12968: genNotNullFilterForJoinSourcePlan: needs to merge predicates into the multi-AND
