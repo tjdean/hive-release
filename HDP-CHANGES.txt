@@ -11,11 +11,29 @@ NEW FEATURES
 
 IMPROVEMENTS
 
+    HIVE-11891: Add basic performance logging to metastore calls
     HIVE-11164 : WebHCat should log contents of HiveConf on startup
     HIVE-11037 : HiveOnTez: make explain user level = true as default
 
 BUG FIXES
   HDP-2.4.3:
+
+    HIVE-14279: fix mvn test TestHiveMetaStore.testTransactionalValidation
+    HIVE-14027: NULL values produced by left outer join do not behave as NULL
+    HIVE-14147: Hive PPD might remove predicates when they are defined as a simple expr e.g. WHERE 'a'
+    HIVE-10631: create_table_core method has invalid update for Fast Stats
+    HIVE-13693: Multi-insert query drops Filter before file output when there is a.val <> b.val
+    HIVE-13592: metastore calls map is not thread safe
+    HIVE-13729: FileSystem$Cache leaks in FileUtils.checkFileAccessWithImpersonation
+    HIVE-13660: Vectorizing IN expression with list of columns throws java.lang.ClassCastException ExprNodeColumnDesc cannot be cast to ExprNodeConstantDesc
+    HIVE-13051: Deadline class has numerous issues
+    HIVE-13691: No record with CQ_ID=0 found in COMPACTION_QUEUE
+    HIVE-13561: HiveServer2 is leaking ClassLoaders when add jar / temporary functions are used
+    HIVE-13596: HS2 should be able to get UDFs on demand from metastore
+    HIVE-13394: Analyze table fails in tez on empty partitions/files/tables
+    HIVE-13405: Fix Connection Leak in OrcRawRecordMerger
+    HIVE-13043: Reload function has no impact to function registry
+    HIVE-13392: disable speculative execution for ACID Compactor
     HIVE-13991: Union All on view fail with no valid permission on underneath table
     HIVE-14262: Inherit writetype from partition WriteEntity for table WriteEntity
     HIVE-13191: DummyTable map joins mix up columns between tables
@@ -43,10 +61,8 @@ BUG FIXES
     HIVE-13313: TABLESAMPLE ROWS feature broken for Vectorization 
     HIVE-13294: AvroSerde leaks the connection in a case when reading schema from a url
     HIVE-12619: Switching the field order within an array of structs causes the query to fail
-    HIVE-13730: Avoid double spilling the same partition when memory threshold is set very low (Wei Zheng, reviewed by Vikram Dixit K)
     HIVE-13303: spill to YARN directories, not tmp, when available
     HIVE-14167: Use work directories provided by Tez instead of directly using YARN local dirs
-    HIVE-14282: HCatLoader ToDate() exception with hive partition table ,partitioned by column of DATE datatype (Daniel Dai, reviewed by Thejas Nair)
     HIVE-13338: Differences in vectorized_casts.q output for vectorized and non-vectorized runs
     HIVE-14278: Migrate TestHadoop23SAuthBridge.java from Unit3 to Unit4
     HIVE-14348: Alter Table Exchange Partition NullPointerException and authorization issues
