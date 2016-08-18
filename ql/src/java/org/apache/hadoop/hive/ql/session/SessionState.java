@@ -637,9 +637,6 @@ public class SessionState {
     if (isCleanUp) {
       fs.deleteOnExit(path);
     }
-    if (this.getTmpOutputFile().exists()) {
-      this.getTmpOutputFile().delete();
-    }
   }
 
   public String getHdfsScratchDirURIString() {
