@@ -702,12 +702,13 @@ public final class OpProcFactory {
      * @param ewi
      */
     protected void logExpr(Node nd, ExprWalkerInfo ewi) {
+      if (!LOG.isDebugEnabled()) return;
       for (Entry<String, List<ExprNodeDesc>> e : ewi.getFinalCandidates()
           .entrySet()) {
-        LOG.info("Pushdown Predicates of " + nd.getName() + " For Alias : "
+        LOG.debug("Pushdown Predicates of " + nd.getName() + " For Alias : "
             + e.getKey());
         for (ExprNodeDesc n : e.getValue()) {
-          LOG.info("\t" + n.getExprString());
+          LOG.debug("\t" + n.getExprString());
         }
       }
     }
