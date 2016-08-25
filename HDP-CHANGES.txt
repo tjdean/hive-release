@@ -66,6 +66,11 @@ BUG FIXES
     HIVE-13338: Differences in vectorized_casts.q output for vectorized and non-vectorized runs
     HIVE-14278: Migrate TestHadoop23SAuthBridge.java from Unit3 to Unit4
     HIVE-14348: Alter Table Exchange Partition NullPointerException and authorization issues
+    HIVE-13767: Wrong type inferred in Semijoin condition leads to AssertionError
+    HIVE-14349: Vectorization: LIKE should anchor the regexes
+    HIVE-13602: TPCH q16 return wrong result when CBO is on
+    HIVE-13108: Operators: SORT BY randomness is not safe with network partitions
+    HIVE-13200: Aggregation functions returning empty rows on partitioned columns
 
   HDP-2.4.2:
     HIVE-13325: Excessive logging when ORC PPD fails type conversions
