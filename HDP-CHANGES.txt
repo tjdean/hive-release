@@ -71,6 +71,7 @@ BUG FIXES
     HIVE-13602: TPCH q16 return wrong result when CBO is on
     HIVE-13108: Operators: SORT BY randomness is not safe with network partitions
     HIVE-13200: Aggregation functions returning empty rows on partitioned columns
+    HIVE-13242: DISTINCT keyword is dropped by the parser for windowing
 
   HDP-2.4.2:
     HIVE-13325: Excessive logging when ORC PPD fails type conversions
