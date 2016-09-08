@@ -2060,13 +2060,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
       if(dbProduct == null) {
         throw new IllegalStateException("DB Type not determined yet.");
       }
-      if (e instanceof SQLTransactionRollbackException ||
-        ((dbProduct == DatabaseProduct.MYSQL || dbProduct == DatabaseProduct.POSTGRES ||
-            dbProduct == DatabaseProduct.SQLSERVER)
-            && e.getSQLState().equals("40001")) ||
-        (dbProduct == DatabaseProduct.POSTGRES && e.getSQLState().equals("40P01")) ||
-        (dbProduct == DatabaseProduct.ORACLE && (e.getMessage().contains("deadlock detected")
-          || e.getMessage().contains("can't serialize access for this transaction")))) {
+      if (DatabaseProduct.isDeadlock(dbProduct, e)) {
         if (deadlockCnt++ < ALLOWED_REPEATED_DEADLOCKS) {
           long waitInterval = deadlockRetryInterval * deadlockCnt;
           LOG.warn("Deadlock detected in " + caller + ". Will wait " + waitInterval +
@@ -2170,7 +2164,23 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
     return identifierQuoteString;
   }
 
-  // TODO : we have multiple sources of this info - one in DirectSQL, one in SchemaTool, and one here - we should consolidate.
+
+  private void determineDatabaseProduct(Connection conn) {
+    if (dbProduct != null) return;
+    try {
+      String s = conn.getMetaData().getDatabaseProductName();
+      dbProduct = DatabaseProduct.determineDatabaseProduct(s);
+      if (dbProduct == DatabaseProduct.OTHER) {
+        String msg = "Unrecognized database product name <" + s + ">";
+        LOG.error(msg);
+        throw new IllegalStateException(msg);
+      }
+    } catch (SQLException e) {
+      String msg = "Unable to get database product name";
+      LOG.error(msg, e);
+      throw new IllegalStateException(msg, e);
+    }
+  }
 
   private static class LockInfo {
     private final long extLockId;
