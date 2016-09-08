@@ -190,6 +190,7 @@ public class SortedDynPartitionOptimizer implements Transform {
           destTable.getSortCols(), destTable.getCols());
       List<Integer> sortPositions = null;
       List<Integer> sortOrder = null;
+      ArrayList<ExprNodeDesc> bucketColumns;
       if (fsOp.getConf().getWriteType() == AcidUtils.Operation.UPDATE ||
           fsOp.getConf().getWriteType() == AcidUtils.Operation.DELETE) {
         // When doing updates and deletes we always want to sort on the rowid because the ACID
@@ -197,6 +198,7 @@ public class SortedDynPartitionOptimizer implements Transform {
         // ignore whatever comes from the table and enforce this sort order instead.
         sortPositions = Arrays.asList(0);
         sortOrder = Arrays.asList(1); // 1 means asc, could really use enum here in the thrift if
+        bucketColumns = new ArrayList<>(); // Bucketing column is already present in ROW__ID, which is specially handled in ReduceSink
       } else {
         if (!destTable.getSortCols().isEmpty()) {
           // Sort columns specified by table
@@ -208,13 +210,13 @@ public class SortedDynPartitionOptimizer implements Transform {
           sortOrder = Lists.newArrayList();
           inferSortPositions(fsParent, sortPositions, sortOrder);
         }
+        List<ColumnInfo> colInfos = fsParent.getSchema().getSignature();
+        bucketColumns = getPositionsToExprNodes(bucketPositions, colInfos);
       }
       LOG.debug("Got sort order");
       for (int i : sortPositions) LOG.debug("sort position " + i);
       for (int i : sortOrder) LOG.debug("sort order " + i);
       List<Integer> partitionPositions = getPartitionPositions(dpCtx, fsParent.getSchema());
-      List<ColumnInfo> colInfos = fsParent.getSchema().getSignature();
-      ArrayList<ExprNodeDesc> bucketColumns = getPositionsToExprNodes(bucketPositions, colInfos);
 
       // update file sink descriptor
       fsOp.getConf().setMultiFileSpray(false);

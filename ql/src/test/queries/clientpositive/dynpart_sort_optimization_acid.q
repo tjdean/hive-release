@@ -69,6 +69,12 @@ select count(*) from acid where ds='2008-04-08' and hr>=11;
 delete from acid where key = 'foo' and ds='2008-04-08' and hr=11;
 select count(*) from acid where ds='2008-04-08' and hr=11;
 
+-- test with bucketing column not in select list
+explain
+delete from acid where value = 'bar';
+delete from acid where value = 'bar';
+select count(*) from acid;
+
 set hive.optimize.sort.dynamic.partition=true;
 
 -- 2 level partition, sorted dynamic partition enabled
@@ -90,6 +96,13 @@ select count(*) from acid where ds='2008-04-08' and hr>=11;
 
 delete from acid where key = 'foo' and ds='2008-04-08' and hr=11;
 select count(*) from acid where ds='2008-04-08' and hr=11;
+
+-- test with bucketing column not in select list
+explain
+delete from acid where value = 'bar';
+delete from acid where value = 'bar';
+select count(*) from acid;
+
 
 set hive.optimize.sort.dynamic.partition=true;
 set hive.optimize.constant.propagation=false;
