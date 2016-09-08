@@ -4857,6 +4857,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         colExprMap);
 
     int keyLength = reduceKeys.size();
+    int numOfColsRmedFromkey = grpByExprs.size() - keyLength;
 
     // add a key for reduce sink
     if (groupingSetsPresent) {
@@ -4886,7 +4887,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           reduceSinkOutputRowResolver, outputValueColumnNames, reduceValues, colExprMap);
     } else {
       // Put partial aggregation results in reduceValues
-      int inputField = reduceKeys.size();
+      int inputField = reduceKeys.size() + numOfColsRmedFromkey;
 
       for (Map.Entry<String, ASTNode> entry : aggregationTrees.entrySet()) {
 
