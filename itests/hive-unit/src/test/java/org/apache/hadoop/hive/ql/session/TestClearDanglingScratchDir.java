@@ -53,7 +53,7 @@ public class TestClearDanglingScratchDir {
       WindowsPathUtil.convertPathsFromWindowsToHdfs(conf);
     }
     conf.set(HiveConf.ConfVars.HIVE_SCRATCH_DIR_LOCK.toString(), "true");
-    conf.set(HiveConf.ConfVars.METASTORE_AUTO_CREATE_SCHEMA.toString(), "true");
+    conf.set(HiveConf.ConfVars.METASTORE_AUTO_CREATE_ALL.toString(), "true");
     LoggerFactory.getLogger("SessionState");
     conf.setVar(HiveConf.ConfVars.METASTOREWAREHOUSE,
         new Path(System.getProperty("test.tmp.dir"), "warehouse").toString());
