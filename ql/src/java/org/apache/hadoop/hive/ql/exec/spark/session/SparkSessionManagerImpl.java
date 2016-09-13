@@ -25,6 +25,7 @@ import org.apache.hadoop.hive.ql.exec.spark.HiveSparkClientFactory;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.shims.Utils;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hive.common.util.ShutdownHookManager;
 import org.apache.hive.spark.client.SparkClientFactory;
 
 import java.io.IOException;
@@ -50,7 +51,7 @@ public class SparkSessionManagerImpl implements SparkSessionManager {
   private static SparkSessionManagerImpl instance;
 
   static {
-    Runtime.getRuntime().addShutdownHook(new Thread() {
+    ShutdownHookManager.addShutdownHook(new Runnable() {
       @Override
       public void run() {
         try {

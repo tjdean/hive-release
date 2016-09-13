@@ -57,6 +57,7 @@ import org.apache.hadoop.hive.shims.Utils;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hive.common.util.HiveStringUtils;
 import org.apache.hive.common.util.HiveVersionInfo;
+import org.apache.hive.common.util.ShutdownHookManager;
 import org.apache.hive.service.CompositeService;
 import org.apache.hive.service.ServiceException;
 import org.apache.hive.service.cli.CLIService;
@@ -121,7 +122,7 @@ public class HiveServer2 extends CompositeService {
     }
     // Add a shutdown hook for catching SIGTERM & SIGINT
     final HiveServer2 hiveServer2 = this;
-    Runtime.getRuntime().addShutdownHook(new Thread() {
+    ShutdownHookManager.addShutdownHook(new Runnable() {
       @Override
       public void run() {
         hiveServer2.stop();

@@ -27,6 +27,7 @@ import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.util.ZooKeeperHiveHelper;
+import org.apache.hive.common.util.ShutdownHookManager;
 
 public class CuratorFrameworkSingleton {
   private static HiveConf conf = null;
@@ -34,7 +35,7 @@ public class CuratorFrameworkSingleton {
   static final Log LOG = LogFactory.getLog("CuratorFrameworkSingleton");
   static {
     // Add shutdown hook.
-    Runtime.getRuntime().addShutdownHook(new Thread() {
+    ShutdownHookManager.addShutdownHook(new Runnable() {
       @Override
       public void run() {
         closeAndReleaseInstance();

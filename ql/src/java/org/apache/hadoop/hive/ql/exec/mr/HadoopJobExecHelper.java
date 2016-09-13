@@ -59,6 +59,7 @@ import org.apache.hadoop.mapred.JobStatus;
 import org.apache.hadoop.mapred.RunningJob;
 import org.apache.hadoop.mapred.TaskCompletionEvent;
 import org.apache.hadoop.mapred.TaskReport;
+import org.apache.hive.common.util.ShutdownHookManager;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.LogManager;
@@ -172,7 +173,7 @@ public class HadoopJobExecHelper {
    *
    */
   static {
-      Runtime.getRuntime().addShutdownHook(new Thread() {
+    ShutdownHookManager.addShutdownHook(new Runnable() {
         @Override
         public void run() {
           killRunningJobs();

@@ -87,6 +87,7 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.hadoop.io.IOUtils;
+import org.apache.hive.common.util.ShutdownHookManager;
 
 /**
  * A console SQL shell with command completion.
@@ -904,7 +905,7 @@ public class BeeLine implements Closeable {
     }
 
     // add shutdown hook to flush the history to history file
-    Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+    ShutdownHookManager.addShutdownHook(new Runnable() {
         @Override
         public void run() {
             History h = consoleReader.getHistory();
@@ -916,7 +917,7 @@ public class BeeLine implements Closeable {
                 }
             }
         }
-    }));
+    });
 
     consoleReader.addCompleter(new BeeLineCompleter(this));
     return consoleReader;

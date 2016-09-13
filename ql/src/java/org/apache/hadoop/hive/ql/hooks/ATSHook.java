@@ -37,6 +37,7 @@ import org.apache.hadoop.yarn.api.records.timeline.TimelineEntity;
 import org.apache.hadoop.yarn.api.records.timeline.TimelineEvent;
 import org.apache.hadoop.yarn.client.api.TimelineClient;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
+import org.apache.hive.common.util.ShutdownHookManager;
 import org.json.JSONObject;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -73,7 +74,7 @@ public class ATSHook implements ExecuteWithHookContext {
         timelineClient.init(yarnConf);
         timelineClient.start();
 
-        Runtime.getRuntime().addShutdownHook(new Thread() {
+        ShutdownHookManager.addShutdownHook(new Runnable() {
           @Override
           public void run() {
             try {
