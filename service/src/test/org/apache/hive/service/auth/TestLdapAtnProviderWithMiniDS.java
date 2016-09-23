@@ -175,7 +175,6 @@ public class TestLdapAtnProviderWithMiniDS extends AbstractLdapTestUnit {
     hiveConf = new HiveConf();
 
     ldapProvider = new LdapAuthenticationProviderImpl();
-    ldapProvider.init(hiveConf);
   }
 
   @AfterClass
@@ -209,7 +208,7 @@ public class TestLdapAtnProviderWithMiniDS extends AbstractLdapTestUnit {
       }
     }
 
-    ldapProvider.init(hiveConf);
+    ldapProvider = new LdapAuthenticationProviderImpl(hiveConf);
   }
 
   @Test
