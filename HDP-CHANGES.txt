@@ -21,6 +21,7 @@ IMPROVEMENTS
 BUG FIXES
 
   HDP-2.5.0:
+    HIVE-13185: orc.ReaderImp.ensureOrcFooter() method fails on small text files with IndexOutOfBoundsException
     HIVE-14147: Hive PPD might remove predicates when they are defined as a simple expr e.g. WHERE 'a'
     HIVE-13823: Remove unnecessary log line in common join operator
     HIVE-4924: JDBC: Support query timeout for jdbc
