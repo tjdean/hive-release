@@ -395,7 +395,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
 
   @Override
   public boolean validateInput(FileSystem fs, HiveConf conf,
-                               ArrayList<FileStatus> files
+                               List<FileStatus> files
                               ) throws IOException {
 
     if (Utilities.isVectorMode(conf)) {
@@ -406,6 +406,10 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
       return false;
     }
     for (FileStatus file : files) {
+      // 0 length files cannot be ORC files
+      if (file.getLen() == 0) {
+        return false;
+      }
       try {
         OrcFile.createReader(file.getPath(),
             OrcFile.readerOptions(conf).filesystem(fs).maxLength(file.getLen()));
