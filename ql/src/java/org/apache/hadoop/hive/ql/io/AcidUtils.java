@@ -493,7 +493,6 @@ public class AcidUtils {
        * {@link txnList}.  Note that 'original' files are logically a base_Long.MIN_VALUE and thus
        * cannot have any data for an open txn.  We could check {@link deltas} has files to cover
        * [1,n] w/o gaps but this would almost never happen...*/
-      //todo: this should only care about 'open' tnxs (HIVE-14211)
       long[] exceptions = txnList.getInvalidTransactions();
       String minOpenTxn = exceptions != null && exceptions.length > 0 ?
         Long.toString(exceptions[0]) : "x";
