@@ -16,6 +16,26 @@ IMPROVEMENTS
     HIVE-11037 : HiveOnTez: make explain user level = true as default
 
 BUG FIXES
+  HDP-2.4.3.1:
+    HIVE-13911 : load inpath fails throwing org.apache.hadoop.security.AccessControlException (Hari Sankar Subramaniyan via Ashutosh Chauhan)
+    HIVE-13933 : Add an option to turn off parallel file moves (Ashutosh Chauhan via Hari Sankar Subramaniyan)
+    HIVE-13902 : [Refactor] Minimize metastore jar dependencies on task nodes (Ashutosh Chauhan via Sergey Shelukhin)
+    HIVE-13857: insert overwrite select from some table fails throwing org.apache.hadoop.security.AccessControlException - II(Hari Subramaniyan, reviewed by Ashutosh Chauhan)
+    HIVE-13743 : Data move codepath is broken with hive (2.1.0-SNAPSHOT) (Ashutosh Chauhan via Thejas Nair)
+    HIVE-13705: Insert into table removes existing data (Reviewed by Ashutosh Chauhan)
+    HIVE-13726 : Improve dynamic partition loading VI (Ashutosh Chauhan via Rui Li)
+    HIVE-13716 : Improve dynamic partition loading V (Ashutosh Chauhan via Rui Li)
+    HIVE-13572 : Redundant setting full file status in Hive::copyFiles (Rui Li via Ashutosh Chauhan)
+    HIVE-13510 : Dynamic partitioning doesn’t work when remote metastore is used (Illya Yalovyy via Ashutosh Chauhan)
+    HIVE-12988 : Improve dynamic partition loading IV (Ashutosh Chauhan via Prasanth J)
+    HIVE-12908 : Improve dynamic partition loading III (Ashutosh Chauhan via Prasanth J)
+    HIVE-12907 : Improve dynamic partition loading - II (Ashutosh Chauhan via Prasanth J)
+    HIVE-12897 : Improve dynamic partition loading (Ashutosh Chauhan via Prasanth J)
+    HIVE-12505:Insert overwrite in same encrypted zone silently fails to remove some existing files (Chaoyu Tang, reviewed by Aihua Xu)
+    HIVE-11582 : Remove conf variable hive.mapred.supports.subdirectories (Chetna Chaudhari via Ashutosh Chauhan)
+    HIVE-12224 : Remove HOLD_DDLTIME (Ashutosh Chauhan via Pengcheng Xiong)
+
+
   HDP-2.4.3:
 
     HIVE-14279: fix mvn test TestHiveMetaStore.testTransactionalValidation
