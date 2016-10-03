@@ -1541,10 +1541,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	false               
 	numFiles            	1                   
-	numRows             	-1                  
-	rawDataSize         	-1                  
 	totalSize           	5812                
 #### A masked pattern was here ####
 	 	 
@@ -1645,10 +1642,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	false               
 	numFiles            	1                   
-	numRows             	-1                  
-	rawDataSize         	-1                  
 	totalSize           	5812                
 #### A masked pattern was here ####
 	 	 
@@ -1749,10 +1743,7 @@ Table:              	orc_create_people
 Protect Mode:       	None                	 
 #### A masked pattern was here ####
 Partition Parameters:	 	 
-	COLUMN_STATS_ACCURATE	false               
 	numFiles            	1                   
-	numRows             	-1                  
-	rawDataSize         	-1                  
 	totalSize           	5812                
 #### A masked pattern was here ####
 	 	 
