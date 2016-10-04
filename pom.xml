@@ -77,6 +77,7 @@
     <skip.spark.file1></skip.spark.file1>
     <skip.spark.file2></skip.spark.file2>
     <skip.spark.file3></skip.spark.file3>
+    <skip.spark.file4></skip.spark.file4>
 
     <!-- Plugin and Plugin Dependency Versions -->
     <ant.contrib.version>1.0b3</ant.contrib.version>
@@ -863,6 +864,7 @@
             <exclude>${skip.spark.file1}</exclude>
             <exclude>${skip.spark.file2}</exclude>
             <exclude>${skip.spark.file3}</exclude>
+            <exclude>${skip.spark.file4}</exclude>
           </excludes>
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
           <reuseForks>false</reuseForks>
@@ -1308,12 +1310,15 @@
     <profile>
       <id>skip-spark-test</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
+        <property>
+          <name>!runSparkTests</name>
+        </property>
       </activation>
       <properties>
         <skip.spark.file1>**/TestSparkSessionManagerImpl.java</skip.spark.file1>
         <skip.spark.file2>**/TestMultiSessionsHS2WithLocalClusterSpark.java</skip.spark.file2>
         <skip.spark.file3>**/TestJdbcWithLocalClusterSpark.java</skip.spark.file3>
+        <skip.spark.file4>**/TestSparkClient.java</skip.spark.file4>
       </properties>
     </profile>
   </profiles>
