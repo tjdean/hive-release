@@ -135,7 +135,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"COLUMN_STATS":{"key":"true","value":"true"},"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 'default','default'
@@ -155,7 +155,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"COLUMN_STATS":{"key":"true","value":"true"},"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 'default','default'
@@ -215,7 +215,7 @@ STAGE PLANS:
                   input format: org.apache.hadoop.mapred.TextInputFormat
                   output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                   properties:
-                    COLUMN_STATS_ACCURATE {"COLUMN_STATS":{"key":"true","value":"true"},"BASIC_STATS":"true"}
+                    COLUMN_STATS_ACCURATE true
                     bucket_count -1
                     columns key,value
                     columns.comments 'default','default'
@@ -235,7 +235,7 @@ STAGE PLANS:
                     input format: org.apache.hadoop.mapred.TextInputFormat
                     output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                     properties:
-                      COLUMN_STATS_ACCURATE {"COLUMN_STATS":{"key":"true","value":"true"},"BASIC_STATS":"true"}
+                      COLUMN_STATS_ACCURATE true
                       bucket_count -1
                       columns key,value
                       columns.comments 'default','default'
@@ -290,8 +290,6 @@ POSTHOOK: type: CREATETABLE_AS_SELECT
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@t
-POSTHOOK: Lineage: t.key EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), (src)src.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: t.value EXPRESSION [(src)src.FieldSchema(name:value, type:string, comment:default), (src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: select count(1) from t
 PREHOOK: type: QUERY
 PREHOOK: Input: default@t
@@ -320,7 +318,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	2                   
 	numRows             	1000                
 	rawDataSize         	10624               
@@ -349,8 +347,6 @@ POSTHOOK: Input: default@src
 POSTHOOK: Input: default@t
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@tt
-POSTHOOK: Lineage: tt.key EXPRESSION [(t)t.FieldSchema(name:key, type:string, comment:null), (src)src.FieldSchema(name:key, type:string, comment:default), ]
-POSTHOOK: Lineage: tt.value EXPRESSION [(t)t.FieldSchema(name:value, type:string, comment:null), (src)src.FieldSchema(name:value, type:string, comment:default), ]
 PREHOOK: query: desc formatted tt
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: default@tt
@@ -370,7 +366,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	2                   
 	numRows             	1500                
 	rawDataSize         	15936               
@@ -407,8 +403,6 @@ POSTHOOK: Input: default@src
 POSTHOOK: Input: default@t
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@tt
-POSTHOOK: Lineage: tt.key EXPRESSION [(src)src.FieldSchema(name:key, type:string, comment:default), (t)t.FieldSchema(name:key, type:string, comment:null), ]
-POSTHOOK: Lineage: tt.value EXPRESSION [(src)src.FieldSchema(name:value, type:string, comment:default), (t)t.FieldSchema(name:value, type:string, comment:null), ]
 PREHOOK: query: desc formatted tt
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: default@tt
@@ -428,7 +422,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	2                   
 	numRows             	1500                
 	rawDataSize         	15936               
@@ -498,7 +492,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	2                   
 	numRows             	1000                
 	rawDataSize         	10624               
@@ -534,7 +528,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\"}
+	COLUMN_STATS_ACCURATE	true                
 	numFiles            	2                   
 	numRows             	1000                
 	rawDataSize         	10624               
