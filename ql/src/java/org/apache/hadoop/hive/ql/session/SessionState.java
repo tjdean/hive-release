@@ -138,10 +138,6 @@ public class SessionState {
    */
   private boolean isHiveServerQuery = false;
 
-  /**
-   * The flag to indicate if the session already started so we can skip the init
-   */
-  private boolean isStarted = false;
   /*
    * HiveHistory Object
    */
@@ -498,13 +494,8 @@ public class SessionState {
    * multiple sessions - it must call this method with the new session object
    * when switching from one session to another.
    */
-  synchronized public static SessionState start(SessionState startSs) {
+  public static SessionState start(SessionState startSs) {
     setCurrentSessionState(startSs);
-
-    if (startSs.isStarted) {
-      return;
-    }
-    startSs.isStarted = true;
 
     if (startSs.hiveHist == null){
       if (startSs.getConf().getBoolVar(HiveConf.ConfVars.HIVE_SESSION_HISTORY_ENABLED)) {
