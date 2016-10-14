@@ -31,10 +31,13 @@ import org.apache.hadoop.hive.ql.util.JavaDataModel;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.hive.serde2.io.HiveDecimalWritable;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils.ObjectInspectorCopyOption;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.DecimalTypeInfo;
+import org.apache.hadoop.hive.serde2.typeinfo.HiveDecimalUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
@@ -115,7 +118,7 @@ public class GenericUDAFSum extends AbstractGenericUDAFResolver {
    *
    */
   public static class GenericUDAFSumHiveDecimal extends GenericUDAFEvaluator {
-    private PrimitiveObjectInspector inputOI;
+    private PrimitiveObjectInspector inputOI, outputOI;
     private HiveDecimalWritable result;
 
     @Override
@@ -133,7 +136,11 @@ public class GenericUDAFSum extends AbstractGenericUDAFResolver {
       } else {
         outputTypeInfo = (DecimalTypeInfo) inputOI.getTypeInfo();
       }
-      return PrimitiveObjectInspectorFactory.getPrimitiveWritableObjectInspector(outputTypeInfo);
+      ObjectInspector oi = PrimitiveObjectInspectorFactory.getPrimitiveWritableObjectInspector(outputTypeInfo);
+      outputOI = (PrimitiveObjectInspector) ObjectInspectorUtils.getStandardObjectInspector(
+          oi, ObjectInspectorCopyOption.JAVA);
+
+      return oi;
     }
 
     /** class for storing decimal sum value. */
@@ -200,6 +207,13 @@ public class GenericUDAFSum extends AbstractGenericUDAFResolver {
       if (myagg.empty || myagg.sum == null) {
         return null;
       }
+      if (myagg.sum != null) {
+        if (HiveDecimalUtils.enforcePrecisionScale(myagg.sum, (DecimalTypeInfo)outputOI.getTypeInfo()) == null) {
+          LOG.warn("The sum of a column with data type HiveDecimal is out of range");
+          return null;
+        }
+      }
+
       result.set(myagg.sum);
       return result;
     }

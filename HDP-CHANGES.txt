@@ -10,7 +10,7 @@ NEW FEATURES
     HIVE-10233 : Hive on tez: memory manager for grace hash join
 
 IMPROVEMENTS
-
+    
     HIVE-11945 : ORC with non-local reads may not be reusing connection to DN
     HIVE-13922 : Optimize the code path that analyzes/updates col stats
     HIVE-13905 : Optimize ColumnStatsTask::constructColumnStatsFromPackedRows to have lesser number of getTable calls
@@ -22,6 +22,7 @@ IMPROVEMENTS
 
 BUG FIXES
 
+    HIVE-13423: Handle the overflow case for decimal datatype for sum()
     HIVE-14935: Add tests for beeline force option
     HIVE-14445: upgrade maven surefire to 2.19.1
     HIVE-14375: hcatalog-pig-adaptor pom.xml uses joda-time 2.2 instead of ${joda.version} that uses 2.8.1
