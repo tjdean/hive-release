@@ -25,7 +25,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.cli.GnuParser;
@@ -34,6 +37,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.curator.framework.CuratorFramework;
@@ -50,6 +54,7 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.ql.exec.spark.session.SparkSessionManagerImpl;
 import org.apache.hadoop.hive.ql.exec.tez.TezSessionPoolManager;
+import org.apache.hadoop.hive.ql.session.ClearDanglingScratchDir;
 import org.apache.hadoop.hive.ql.util.ZooKeeperHiveHelper;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hadoop.hive.shims.Utils;
@@ -70,6 +75,7 @@ import org.apache.zookeeper.ZooDefs.Ids;
 import org.apache.zookeeper.ZooDefs.Perms;
 import org.apache.zookeeper.data.ACL;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 
 /**
@@ -415,6 +421,21 @@ public class HiveServer2 extends CompositeService {
     }
   }
 
+  @VisibleForTesting
+  public static void scheduleClearDanglingScratchDir(HiveConf hiveConf, int initialWaitInSec) {
+    if (hiveConf.getBoolVar(ConfVars.HIVE_SERVER2_CLEAR_DANGLING_SCRATCH_DIR)) {
+      ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
+          new BasicThreadFactory.Builder()
+          .namingPattern("cleardanglingscratchdir-%d")
+          .daemon(true)
+          .build());
+      executor.scheduleAtFixedRate(new ClearDanglingScratchDir(false, false, false,
+          HiveConf.getVar(hiveConf, HiveConf.ConfVars.SCRATCHDIR), hiveConf), initialWaitInSec,
+          HiveConf.getTimeVar(hiveConf, ConfVars.HIVE_SERVER2_CLEAR_DANGLING_SCRATCH_DIR_INTERVAL,
+          TimeUnit.SECONDS), TimeUnit.SECONDS);
+    }
+  }
+
   private static void startHiveServer2() throws Throwable {
     long attempts = 0, maxAttempts = 1;
     while (true) {
@@ -423,6 +444,11 @@ public class HiveServer2 extends CompositeService {
       maxAttempts = hiveConf.getLongVar(HiveConf.ConfVars.HIVE_SERVER2_MAX_START_ATTEMPTS);
       HiveServer2 server = null;
       try {
+        // Schedule task to cleanup dangling scratch dir periodically,
+        // initial wait for a random time between 0-10 min to
+        // avoid intial spike when using multiple HS2
+        scheduleClearDanglingScratchDir(hiveConf, new Random().nextInt(600));
+
         server = new HiveServer2();
         server.init(hiveConf);
         server.start();
