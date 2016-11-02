@@ -838,7 +838,7 @@ sub compare
         if (defined($testCmd->{'check_job_complete'}) || defined($testCmd->{'check_job_exit_value'})
             || defined($testCmd->{'check_job_percent_complete'})) {
           my $jobComplete;
-          my $NUM_RETRIES = 60;
+          my $NUM_RETRIES = 180;
           my $SLEEP_BETWEEN_RETRIES = 5;
 
           #first wait for job completion
