@@ -20,6 +20,21 @@ IMPROVEMENTS
 
 BUG FIXES
 
+  HDP-2.5.3:
+    HIVE-14595: TimestampWritable::setTimestamp gives wrong result when 2nd VInt exists
+    HIVE-12065: FS stats collection may generate incorrect stats for multi-insert query
+    HIVE-14236: CTAS with UNION ALL puts the wrong stats in Tez
+    HIVE-14590: CBO (Calcite Return Path) Incorrect result set when limit is present in one of the union branches
+    HIVE-14251: Union All of different types resolves to incorrect data
+    HIVE-14922: Add perf logging for post job completion steps
+    HIVE-14762: Add logging while removing scratch space
+    HIVE-14659: OutputStream won't close if caught exception in funtion unparseExprForValuesClause in SemanticAnalyzer.java
+    HIVE-14448: Queries with predicate fail when ETL split strategy is chosen for ACID tables
+    HIVE-14773: NPE aggregating column statistics for date column in partitioned table
+    HIVE-7239: Fix bug in HiveIndexedInputFormat implementation that causes incorrect query result when input backed by Sequence/RC files
+    HIVE-11120: Generic interface for file format validation
+    HIVE-14591: HS2 is shut down unexpectedly during the startup time
+
   HDP-2.5.0:
     HIVE-13185: orc.ReaderImp.ensureOrcFooter() method fails on small text files with IndexOutOfBoundsException
     HIVE-14147: Hive PPD might remove predicates when they are defined as a simple expr e.g. WHERE 'a'
