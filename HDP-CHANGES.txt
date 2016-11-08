@@ -22,6 +22,7 @@ IMPROVEMENTS
 
 BUG FIXES
 
+    HIVE-14924: MSCK REPAIR table with single threaded is throwing null pointer exception (Pengcheng Xiong, reviewed by Ashutosh Chauhan)
     HIVE-13936:Add streaming support for row_number
     HIVE-15589 : Flaky org.apache.hadoop.hive.ql.lockmgr.TestDbTxnManager.testHeartbeater (Wei Zheng)
     HIVE-15355: Concurrency issues during parallel moveFile due to HDFSUtils.setFullFileStatus (Vihang Karajgaonkar, reviewed by Sergio Pena and Sahil Takiar)
