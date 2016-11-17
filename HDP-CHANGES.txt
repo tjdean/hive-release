@@ -23,6 +23,7 @@ IMPROVEMENTS
 BUG FIXES
 
     HIVE-15338: Wrong result from vectorized DATEDIFF with scalar parameter of type DATE/TIMESTAMP
+    HIVE-15236: timestamp and date comparison should happen in timestamp
     HIVE-13539: HiveHFileOutputFormat searching the wrong directory for HFiles
     HIVE-15231: query on view with CTE and alias fails with table not found error
     HIVE-15120: Storage based auth: allow option to enforce write checks for external tables
