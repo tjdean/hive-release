@@ -17,7 +17,13 @@
  */
 package org.apache.hadoop.hive.ql.io.orc;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -25,7 +31,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.PrivilegedExceptionAction;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
@@ -51,7 +56,6 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
 import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
 import org.apache.hadoop.hive.ql.exec.SerializationUtilities;
 import org.apache.hadoop.hive.ql.exec.Utilities;
@@ -103,7 +107,6 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.OutputFormat;
 import org.apache.hadoop.mapred.RecordWriter;
 import org.apache.hadoop.mapred.Reporter;
-import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.Progressable;
 import org.apache.orc.OrcProto;
 
@@ -500,7 +503,7 @@ public class TestInputOutputFormat {
           final OrcInputFormat.Context context = new OrcInputFormat.Context(
               conf, n);
           OrcInputFormat.FileGenerator gen = new OrcInputFormat.FileGenerator(
-              context, fs, new MockPath(fs, "mock:/a/b"), false, null);
+              context, fs, new MockPath(fs, "mock:/a/b"), false);
           final SplitStrategy splitStrategy = createSplitStrategy(context, gen);
           assertTrue(
               String.format(
@@ -524,7 +527,7 @@ public class TestInputOutputFormat {
         new MockFile("mock:/a/b/part-04", 1000, new byte[0]));
     OrcInputFormat.FileGenerator gen =
       new OrcInputFormat.FileGenerator(context, fs,
-          new MockPath(fs, "mock:/a/b"), false, null);
+          new MockPath(fs, "mock:/a/b"), false);
     OrcInputFormat.SplitStrategy splitStrategy = createSplitStrategy(context, gen);
     assertEquals(true, splitStrategy instanceof OrcInputFormat.BISplitStrategy);
 
@@ -537,7 +540,7 @@ public class TestInputOutputFormat {
         new MockFile("mock:/a/b/.part-03", 1000, new byte[1000]),
         new MockFile("mock:/a/b/part-04", 1000, new byte[1000]));
     gen = new OrcInputFormat.FileGenerator(context, fs,
-            new MockPath(fs, "mock:/a/b"), false, null);
+            new MockPath(fs, "mock:/a/b"), false);
     splitStrategy = createSplitStrategy(context, gen);
     assertEquals(true, splitStrategy instanceof OrcInputFormat.ETLSplitStrategy);
   }
@@ -611,19 +614,19 @@ public class TestInputOutputFormat {
       MockFileSystem fs, String path, OrcInputFormat.CombinedCtx combineCtx) throws IOException {
     OrcInputFormat.AcidDirInfo adi = createAdi(context, fs, path);
     return OrcInputFormat.determineSplitStrategy(
-        combineCtx, context, adi.fs, adi.splitPath, adi.acidInfo, adi.baseOrOriginalFiles, null);
+        combineCtx, context, adi.fs, adi.splitPath, adi.acidInfo, adi.baseOrOriginalFiles);
   }
 
   public OrcInputFormat.AcidDirInfo createAdi(
       OrcInputFormat.Context context, MockFileSystem fs, String path) throws IOException {
-    return new OrcInputFormat.FileGenerator(context, fs, new MockPath(fs, path), false, null).call();
+    return new OrcInputFormat.FileGenerator(context, fs, new MockPath(fs, path), false).call();
   }
 
   private OrcInputFormat.SplitStrategy createSplitStrategy(
       OrcInputFormat.Context context, OrcInputFormat.FileGenerator gen) throws IOException {
     OrcInputFormat.AcidDirInfo adi = gen.call();
     return OrcInputFormat.determineSplitStrategy(
-        null, context, adi.fs, adi.splitPath, adi.acidInfo, adi.baseOrOriginalFiles, null);
+        null, context, adi.fs, adi.splitPath, adi.acidInfo, adi.baseOrOriginalFiles);
   }
 
   public static class MockBlock {
@@ -785,9 +788,6 @@ public class TestInputOutputFormat {
   public static class MockFileSystem extends FileSystem {
     final List<MockFile> files = new ArrayList<MockFile>();
     Path workingDir = new Path("/");
-    // statics for when the mock fs is created via FileSystem.get
-    private static String blockedUgi = null;
-    private final static List<MockFile> globalFiles = new ArrayList<MockFile>();
 
     public MockFileSystem() {
       // empty
@@ -803,10 +803,6 @@ public class TestInputOutputFormat {
       this.files.addAll(Arrays.asList(files));
     }
 
-    public static void setBlockedUgi(String s) {
-      blockedUgi = s;
-    }
-
     void clear() {
       files.clear();
     }
@@ -820,36 +816,14 @@ public class TestInputOutputFormat {
       }
     }
 
-    @SuppressWarnings("serial")
-    public static class MockAccessDenied extends IOException {
-    }
-
     @Override
     public FSDataInputStream open(Path path, int i) throws IOException {
-      checkAccess();
-      MockFile file = findFile(path);
-      if (file != null) return new FSDataInputStream(new MockInputStream(file));
+      for(MockFile file: files) {
+        if (file.path.equals(path)) {
+          return new FSDataInputStream(new MockInputStream(file));
+        }
+      }
       throw new IOException("File not found: " + path);
-    }
-
-    private MockFile findFile(Path path) {
-      for (MockFile file: files) {
-        if (file.path.equals(path)) {
-          return file;
-        }
-      }
-      for (MockFile file: globalFiles) {
-        if (file.path.equals(path)) {
-          return file;
-        }
-      }
-      return null;
-    }
-
-    private void checkAccess() throws IOException {
-      if (blockedUgi == null) return;
-      if (!blockedUgi.equals(UserGroupInformation.getCurrentUser().getShortUserName())) return;
-      throw new MockAccessDenied();
     }
 
     @Override
@@ -858,8 +832,13 @@ public class TestInputOutputFormat {
                                      short replication, long blockSize,
                                      Progressable progressable
                                      ) throws IOException {
-      checkAccess();
-      MockFile file = findFile(path);
+      MockFile file = null;
+      for(MockFile currentFile: files) {
+        if (currentFile.path.equals(path)) {
+          file = currentFile;
+          break;
+        }
+      }
       if (file == null) {
         file = new MockFile(path.toString(), (int) blockSize, new byte[0]);
         files.add(file);
@@ -871,55 +850,37 @@ public class TestInputOutputFormat {
     public FSDataOutputStream append(Path path, int bufferSize,
                                      Progressable progressable
                                      ) throws IOException {
-      checkAccess();
       return create(path, FsPermission.getDefault(), true, bufferSize,
           (short) 3, 256 * 1024, progressable);
     }
 
     @Override
     public boolean rename(Path path, Path path2) throws IOException {
-      checkAccess();
       return false;
     }
 
     @Override
     public boolean delete(Path path) throws IOException {
-      checkAccess();
       return false;
     }
 
     @Override
     public boolean delete(Path path, boolean b) throws IOException {
-      checkAccess();
       return false;
     }
 
     @Override
     public FileStatus[] listStatus(Path path) throws IOException {
-      checkAccess();
       path = path.makeQualified(this);
       List<FileStatus> result = new ArrayList<FileStatus>();
       String pathname = path.toString();
       String pathnameAsDir = pathname + "/";
       Set<String> dirs = new TreeSet<String>();
-      MockFile file = findFile(path);
-      if (file != null) {
-        return new FileStatus[]{createStatus(file)};
-      }
-      findMatchingFiles(files, pathnameAsDir, dirs, result);
-      findMatchingFiles(globalFiles, pathnameAsDir, dirs, result);
-      // for each directory add it once
-      for(String dir: dirs) {
-        result.add(createDirectory(new MockPath(this, pathnameAsDir + dir)));
-      }
-      return result.toArray(new FileStatus[result.size()]);
-    }
-
-    private void findMatchingFiles(
-        List<MockFile> files, String pathnameAsDir, Set<String> dirs, List<FileStatus> result) {
-      for (MockFile file: files) {
+      for(MockFile file: files) {
         String filename = file.path.toString();
-        if (filename.startsWith(pathnameAsDir)) {
+        if (pathname.equals(filename)) {
+          return new FileStatus[]{createStatus(file)};
+        } else if (filename.startsWith(pathnameAsDir)) {
           String tail = filename.substring(pathnameAsDir.length());
           int nextSlash = tail.indexOf('/');
           if (nextSlash > 0) {
@@ -929,6 +890,11 @@ public class TestInputOutputFormat {
           }
         }
       }
+      // for each directory add it once
+      for(String dir: dirs) {
+        result.add(createDirectory(new MockPath(this, pathnameAsDir + dir)));
+      }
+      return result.toArray(new FileStatus[result.size()]);
     }
 
     @Override
@@ -959,18 +925,12 @@ public class TestInputOutputFormat {
 
     @Override
     public FileStatus getFileStatus(Path path) throws IOException {
-      checkAccess();
       path = path.makeQualified(this);
       String pathnameAsDir = path.toString() + "/";
-      MockFile file = findFile(path);
-      if (file != null) return createStatus(file);
-      for (MockFile dir : files) {
-        if (dir.path.toString().startsWith(pathnameAsDir)) {
-          return createDirectory(path);
-        }
-      }
-      for (MockFile dir : globalFiles) {
-        if (dir.path.toString().startsWith(pathnameAsDir)) {
+      for(MockFile file: files) {
+        if (file.path.equals(path)) {
+          return createStatus(file);
+        } else if (file.path.toString().startsWith(pathnameAsDir)) {
           return createDirectory(path);
         }
       }
@@ -979,23 +939,23 @@ public class TestInputOutputFormat {
 
     @Override
     public BlockLocation[] getFileBlockLocations(FileStatus stat,
-                                                 long start, long len) throws IOException {
-      checkAccess();
+                                                 long start, long len) {
       List<BlockLocation> result = new ArrayList<BlockLocation>();
-      MockFile file = findFile(stat.getPath());
-      if (file != null) {
-        for(MockBlock block: file.blocks) {
-          if (OrcInputFormat.SplitGenerator.getOverlap(block.offset,
-              block.length, start, len) > 0) {
-            String[] topology = new String[block.hosts.length];
-            for(int i=0; i < topology.length; ++i) {
-              topology[i] = "/rack/ " + block.hosts[i];
+      for(MockFile file: files) {
+        if (file.path.equals(stat.getPath())) {
+          for(MockBlock block: file.blocks) {
+            if (OrcInputFormat.SplitGenerator.getOverlap(block.offset,
+                block.length, start, len) > 0) {
+              String[] topology = new String[block.hosts.length];
+              for(int i=0; i < topology.length; ++i) {
+                topology[i] = "/rack/ " + block.hosts[i];
+              }
+              result.add(new BlockLocation(block.hosts, block.hosts,
+                  topology, block.offset, block.length));
             }
-            result.add(new BlockLocation(block.hosts, block.hosts,
-                topology, block.offset, block.length));
           }
+          return result.toArray(new BlockLocation[result.size()]);
         }
-        return result.toArray(new BlockLocation[result.size()]);
       }
       return new BlockLocation[0];
     }
@@ -1012,14 +972,6 @@ public class TestInputOutputFormat {
       }
       buffer.append("]}");
       return buffer.toString();
-    }
-
-    public static void addGlobalFile(MockFile mockFile) {
-      globalFiles.add(mockFile);
-    }
-
-    public static void clearGlobalFiles() {
-      globalFiles.clear();
     }
   }
 
@@ -1101,7 +1053,7 @@ public class TestInputOutputFormat {
     OrcInputFormat.SplitGenerator splitter =
         new OrcInputFormat.SplitGenerator(new OrcInputFormat.SplitInfo(context, fs,
             AcidUtils.createOriginalObj(null, fs.getFileStatus(new Path("/a/file"))), null, true,
-            new ArrayList<AcidInputFormat.DeltaMetaData>(), true, null, null), null);
+            new ArrayList<AcidInputFormat.DeltaMetaData>(), true, null, null));
     OrcSplit result = splitter.createSplit(0, 200, null);
     assertEquals(0, result.getStart());
     assertEquals(200, result.getLength());
@@ -1142,7 +1094,7 @@ public class TestInputOutputFormat {
     OrcInputFormat.SplitGenerator splitter =
         new OrcInputFormat.SplitGenerator(new OrcInputFormat.SplitInfo(context, fs,
             AcidUtils.createOriginalObj(null, fs.getFileStatus(new Path("/a/file"))), null, true,
-            new ArrayList<AcidInputFormat.DeltaMetaData>(), true, null, null), null);
+            new ArrayList<AcidInputFormat.DeltaMetaData>(), true, null, null));
     List<OrcSplit> results = splitter.call();
     OrcSplit result = results.get(0);
     assertEquals(3, result.getStart());
@@ -1165,7 +1117,7 @@ public class TestInputOutputFormat {
     context = new OrcInputFormat.Context(conf);
     splitter = new OrcInputFormat.SplitGenerator(new OrcInputFormat.SplitInfo(context, fs,
       AcidUtils.createOriginalObj(null, fs.getFileStatus(new Path("/a/file"))), null, true,
-        new ArrayList<AcidInputFormat.DeltaMetaData>(), true, null, null), null);
+        new ArrayList<AcidInputFormat.DeltaMetaData>(), true, null, null));
     results = splitter.call();
     for(int i=0; i < stripeSizes.length; ++i) {
       assertEquals("checking stripe " + i + " size",
@@ -1193,7 +1145,7 @@ public class TestInputOutputFormat {
     OrcInputFormat.SplitGenerator splitter =
         new OrcInputFormat.SplitGenerator(new OrcInputFormat.SplitInfo(context, fs,
             fs.getFileStatus(new Path("/a/file")), null, true,
-            new ArrayList<AcidInputFormat.DeltaMetaData>(), true, null, null), null);
+            new ArrayList<AcidInputFormat.DeltaMetaData>(), true, null, null));
     List<OrcSplit> results = splitter.call();
     OrcSplit result = results.get(0);
     assertEquals(3, results.size());
@@ -1216,7 +1168,7 @@ public class TestInputOutputFormat {
     splitter = new OrcInputFormat.SplitGenerator(new OrcInputFormat.SplitInfo(context, fs,
         fs.getFileStatus(new Path("/a/file")), null, true,
         new ArrayList<AcidInputFormat.DeltaMetaData>(),
-        true, null, null), null);
+        true, null, null));
     results = splitter.call();
     assertEquals(5, results.size());
     for (int i = 0; i < stripeSizes.length; ++i) {
@@ -1236,7 +1188,7 @@ public class TestInputOutputFormat {
     splitter = new OrcInputFormat.SplitGenerator(new OrcInputFormat.SplitInfo(context, fs,
         fs.getFileStatus(new Path("/a/file")), null, true,
         new ArrayList<AcidInputFormat.DeltaMetaData>(),
-        true, null, null), null);
+        true, null, null));
     results = splitter.call();
     assertEquals(1, results.size());
     result = results.get(0);
@@ -2088,7 +2040,12 @@ public class TestInputOutputFormat {
   @Test
   public void testSplitEliminationNullStats() throws Exception {
     Properties properties = new Properties();
-    StructObjectInspector inspector = createSoi();
+    StructObjectInspector inspector;
+    synchronized (TestOrcFile.class) {
+      inspector = (StructObjectInspector)
+          ObjectInspectorFactory.getReflectionObjectInspector(SimpleRow.class,
+              ObjectInspectorFactory.ObjectInspectorOptions.JAVA);
+    }
     SerDe serde = new OrcSerde();
     OutputFormat<?, ?> outFormat = new OrcOutputFormat();
     conf.setInt("mapred.max.split.size", 50);
@@ -2121,60 +2078,4 @@ public class TestInputOutputFormat {
     assertEquals(0, splits.length);
   }
 
-  @Test
-  public void testDoAs() throws Exception {
-    conf.setInt(ConfVars.HIVE_ORC_COMPUTE_SPLITS_NUM_THREADS.varname, 1);
-    conf.set(ConfVars.HIVE_ORC_SPLIT_STRATEGY.varname, "ETL");
-    conf.setBoolean(ConfVars.HIVE_IN_TEST.varname, true);
-    conf.setClass("fs.mock.impl", MockFileSystem.class, FileSystem.class);
-    String badUser = UserGroupInformation.getCurrentUser().getShortUserName() + "-foo";
-    MockFileSystem.setBlockedUgi(badUser);
-    MockFileSystem.clearGlobalFiles();
-    OrcInputFormat.Context.resetThreadPool(); // We need the size above to take effect.
-    try {
-      // OrcInputFormat will get a mock fs from FileSystem.get; add global files.
-      MockFileSystem.addGlobalFile(new MockFile("mock:/ugi/1/file", 10000,
-          createMockOrcFile(197, 300, 600), new MockBlock("host1-1", "host1-2", "host1-3")));
-      MockFileSystem.addGlobalFile(new MockFile("mock:/ugi/2/file", 10000,
-          createMockOrcFile(197, 300, 600), new MockBlock("host1-1", "host1-2", "host1-3")));
-      FileInputFormat.setInputPaths(conf, "mock:/ugi/1");
-      UserGroupInformation ugi = UserGroupInformation.createUserForTesting(badUser, new String[0]);
-      assertEquals(0, OrcInputFormat.Context.getCurrentThreadPoolSize());
-      try {
-        ugi.doAs(new PrivilegedExceptionAction<Void>() {
-          @Override
-          public Void run() throws Exception {
-            OrcInputFormat.generateSplitsInfo(conf);
-            return null;
-          }
-        });
-        fail("Didn't throw");
-      } catch (Exception ex) {
-        Throwable cause = ex;
-        boolean found = false;
-        while (cause != null) {
-          if (cause instanceof MockFileSystem.MockAccessDenied) {
-            found = true; // Expected.
-            break;
-          }
-          cause = cause.getCause();
-        }
-        if (!found) throw ex; // Unexpected.
-      }
-      assertEquals(1, OrcInputFormat.Context.getCurrentThreadPoolSize());
-      FileInputFormat.setInputPaths(conf, "mock:/ugi/2");
-      List<OrcSplit> splits = OrcInputFormat.generateSplitsInfo(conf);
-      assertEquals(1, splits.size());
-    } finally {
-      MockFileSystem.clearGlobalFiles();
-    }
-  }
-
-
-  private StructObjectInspector createSoi() {
-    synchronized (TestOrcFile.class) {
-      return (StructObjectInspector)ObjectInspectorFactory.getReflectionObjectInspector(
-          SimpleRow.class, ObjectInspectorFactory.ObjectInspectorOptions.JAVA);
-    }
-  }
 }
