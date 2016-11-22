@@ -68,6 +68,7 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Order;
 import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
+import org.apache.hadoop.hive.ql.Context;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.QueryProperties;
 import org.apache.hadoop.hive.ql.exec.AbstractMapJoinOperator;
@@ -634,17 +635,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     this.ast = newAST;
   }
 
-  /**
-   * Goes though the tabref tree and finds the alias for the table. Once found,
-   * it records the table name-> alias association in aliasToTabs. It also makes
-   * an association from the alias to the table AST in parse info.
-   *
-   * @return the alias of the table
-   */
-  private String processTable(QB qb, ASTNode tabref) throws SemanticException {
-    // For each table reference get the table name
-    // and the alias (if alias is not present, the table name
-    // is used as an alias)
+  int[] findTabRefIdxs(ASTNode tabref) {
+    assert tabref.getType() == HiveParser.TOK_TABREF;
     int aliasIndex = 0;
     int propsIndex = -1;
     int tsampleIndex = -1;
@@ -661,10 +653,11 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         aliasIndex = index;
       }
     }
-
+    return new int[] {aliasIndex, propsIndex, tsampleIndex, ssampleIndex};
+  }
+  String findSimpleTableName(ASTNode tabref, int aliasIndex) {
+    assert tabref.getType() == HiveParser.TOK_TABREF;
     ASTNode tableTree = (ASTNode) (tabref.getChild(0));
-
-    String tabIdName = getUnescapedName(tableTree).toLowerCase();
 
     String alias;
     if (aliasIndex != 0) {
@@ -673,6 +666,30 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     else {
       alias = getUnescapedUnqualifiedTableName(tableTree);
     }
+    return alias;
+  }
+  /**
+   * Goes though the tabref tree and finds the alias for the table. Once found,
+   * it records the table name-> alias association in aliasToTabs. It also makes
+   * an association from the alias to the table AST in parse info.
+   *
+   * @return the alias of the table
+   */
+  private String processTable(QB qb, ASTNode tabref) throws SemanticException {
+    // For each table reference get the table name
+    // and the alias (if alias is not present, the table name
+    // is used as an alias)
+    int[] indexes = findTabRefIdxs(tabref);
+    int aliasIndex = indexes[0];
+    int propsIndex = indexes[1];
+    int tsampleIndex = indexes[2];
+    int ssampleIndex = indexes[3];
+
+    ASTNode tableTree = (ASTNode) (tabref.getChild(0));
+
+    String tabIdName = getUnescapedName(tableTree).toLowerCase();
+
+    String alias = findSimpleTableName(tabref, aliasIndex);
 
     if (propsIndex >= 0) {
       Tree propsAST = tabref.getChild(propsIndex);
@@ -1200,7 +1217,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         doPhase1GetColumnAliasesFromSelect(ast, qbp);
         qbp.setAggregationExprsForClause(ctx_1.dest, aggregations);
         qbp.setDistinctFuncExprsForClause(ctx_1.dest,
-        doPhase1GetDistinctFuncExprs(aggregations));
+          doPhase1GetDistinctFuncExprs(aggregations));
         break;
 
       case HiveParser.TOK_WHERE:
@@ -1215,7 +1232,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         qbp.addInsertIntoTable(tab_name);
 
       case HiveParser.TOK_DESTINATION:
-        ctx_1.dest = "insclause-" + ctx_1.nextNum;
+        ctx_1.dest = this.ctx.getDestNamePrefix(ast).toString() + ctx_1.nextNum;
         ctx_1.nextNum++;
         boolean isTmpFileDest = false;
         if (ast.getChildCount() > 0 && ast.getChild(0) instanceof ASTNode) {
@@ -1224,6 +1241,13 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
               && ch.getChildCount() > 0 && ch.getChild(0) instanceof ASTNode) {
             ch = (ASTNode)ch.getChild(0);
             isTmpFileDest = ch.getToken().getType() == HiveParser.TOK_TMP_FILE;
+          } else {
+            if (ast.getToken().getType() == HiveParser.TOK_DESTINATION
+              && ast.getChild(0).getType() == HiveParser.TOK_TAB) {
+              String fullTableName = getUnescapedName((ASTNode) ast.getChild(0).getChild(0),
+                SessionState.get().getCurrentDatabase());
+              qbp.getInsertOverwriteTables().put(fullTableName, ast);
+            }
           }
         }
 
@@ -1633,24 +1657,6 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           }
         }
 
-        // Disallow INSERT INTO on bucketized tables
-        boolean isAcid = AcidUtils.isAcidTable(tab);
-        boolean isTableWrittenTo = qb.getParseInfo().isInsertIntoTable(tab.getDbName(), tab.getTableName());
-        if (isTableWrittenTo &&
-            tab.getNumBuckets() > 0 && !isAcid) {
-          throw new SemanticException(ErrorMsg.INSERT_INTO_BUCKETIZED_TABLE.
-              getMsg("Table: " + tab_name));
-        }
-        // Disallow update and delete on non-acid tables
-        if ((updating() || deleting()) && !isAcid && isTableWrittenTo) {
-          //isTableWrittenTo: delete from acidTbl where a in (select id from nonAcidTable)
-          //so only assert this if we are actually writing to this table
-          // Whether we are using an acid compliant transaction manager has already been caught in
-          // UpdateDeleteSemanticAnalyzer, so if we are updating or deleting and getting nonAcid
-          // here, it means the table itself doesn't support it.
-          throw new SemanticException(ErrorMsg.ACID_OP_ON_NONACID_TABLE, tab_name);
-        }
-
         // We check offline of the table, as if people only select from an
         // non-existing partition of an offline table, the partition won't
         // be added to inputs and validate() won't have the information to
@@ -1785,6 +1791,21 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
                 .getMsg(ast, "The class is " + outputFormatClass.toString()));
           }
 
+          boolean isTableWrittenTo = qb.getParseInfo().isInsertIntoTable(ts.tableHandle.getDbName(),
+            ts.tableHandle.getTableName());
+          isTableWrittenTo |= (qb.getParseInfo().getInsertOverwriteTables().
+            get(getUnescapedName((ASTNode) ast.getChild(0), ts.tableHandle.getDbName())) != null);
+          assert isTableWrittenTo :
+            "Inconsistent data structure detected: we are writing to " + ts.tableHandle  + " in " +
+              name + " but it's not in isInsertIntoTable() or getInsertOverwriteTables()";
+          // Disallow update and delete on non-acid tables
+          boolean isAcid = AcidUtils.isAcidTable(ts.tableHandle);
+          if ((updating(name) || deleting(name)) && !isAcid) {
+            // Whether we are using an acid compliant transaction manager has already been caught in
+            // UpdateDeleteSemanticAnalyzer, so if we are updating or deleting and getting nonAcid
+            // here, it means the table itself doesn't support it.
+            throw new SemanticException(ErrorMsg.ACID_OP_ON_NONACID_TABLE, ts.tableName);
+          }
           // TableSpec ts is got from the query (user specified),
           // which means the user didn't specify partitions in their query,
           // but whether the table itself is partitioned is not know.
@@ -6138,7 +6159,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     if ((dest_tab.getNumBuckets() > 0) &&
         (conf.getBoolVar(HiveConf.ConfVars.HIVEENFORCEBUCKETING))) {
       enforceBucketing = true;
-      if (updating() || deleting()) {
+      if (updating(dest) || deleting(dest)) {
         partnCols = getPartitionColsFromBucketColsForUpdateDelete(input, true);
       } else {
         partnCols = getPartitionColsFromBucketCols(dest, qb, dest_tab, table_desc, input, true);
@@ -6184,7 +6205,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         order.append(sortOrder == BaseSemanticAnalyzer.HIVE_COLUMN_ORDER_ASC ? '+' : '-');
       }
       input = genReduceSinkPlan(input, partnCols, sortCols, order.toString(),  maxReducers,
-        (AcidUtils.isAcidTable(dest_tab) ? getAcidType() : AcidUtils.Operation.NOT_ACID));
+        (AcidUtils.isAcidTable(dest_tab) ? getAcidType(dest) : AcidUtils.Operation.NOT_ACID));
       reduceSinkOperatorsAddedByEnforceBucketingSorting.add((ReduceSinkOperator)input.getParentOperators().get(0));
       ctx.setMultiFileSpray(multiFileSpray);
       ctx.setNumFiles(numFiles);
@@ -6202,7 +6223,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     if ((dest_tab.getNumBuckets() > 0) &&
         (conf.getBoolVar(HiveConf.ConfVars.HIVEENFORCEBUCKETING))) {
       enforceBucketing = true;
-      if (updating() || deleting()) {
+      if (updating(dest) || deleting(dest)) {
         partnColsNoConvert = getPartitionColsFromBucketColsForUpdateDelete(input, false);
       } else {
         partnColsNoConvert = getPartitionColsFromBucketCols(dest, qb, dest_tab, table_desc, input,
@@ -6355,7 +6376,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       if (!isNonNativeTable) {
         AcidUtils.Operation acidOp = AcidUtils.Operation.NOT_ACID;
         if (destTableIsAcid) {
-          acidOp = getAcidType(table_desc.getOutputFileFormatClass());
+          acidOp = getAcidType(table_desc.getOutputFileFormatClass(), dest);
           checkAcidConstraints(qb, table_desc, dest_tab);
         }
         ltd = new LoadTableDesc(queryTmpdir, table_desc, dpCtx, acidOp);
@@ -6375,7 +6396,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       // in the case of DP, we will register WriteEntity in MoveTask when the
       // list of dynamically created partitions are known.
       if ((dpCtx == null || dpCtx.getNumDPCols() == 0)) {
-        output = new WriteEntity(dest_tab, determineWriteType(ltd, isNonNativeTable));
+        output = new WriteEntity(dest_tab,  determineWriteType(ltd, isNonNativeTable, dest));
         if (!outputs.add(output)) {
           throw new SemanticException(ErrorMsg.OUTPUT_SPECIFIED_MULTIPLE_TIMES
               .getMsg(dest_tab.getTableName()));
@@ -6384,7 +6405,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       if ((dpCtx != null) && (dpCtx.getNumDPCols() >= 0)) {
         // No static partition specified
         if (dpCtx.getNumSPCols() == 0) {
-          output = new WriteEntity(dest_tab, determineWriteType(ltd, isNonNativeTable), false);
+          output = new WriteEntity(dest_tab, determineWriteType(ltd, isNonNativeTable, dest), false);
+          output.setDynamicPartitionWrite(true);
           outputs.add(output);
         }
         // part of the partition specified
@@ -6398,7 +6420,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
                 new DummyPartition(dest_tab, dest_tab.getDbName()
                     + "@" + dest_tab.getTableName() + "@" + ppath,
                     partSpec);
-            output = new WriteEntity(p, WriteEntity.WriteType.INSERT, false);
+            output = new WriteEntity(p, getWriteType(dest), false);
+            output.setDynamicPartitionWrite(true);
             outputs.add(output);
           } catch (HiveException e) {
             throw new SemanticException(e.getMessage(), e);
@@ -6462,7 +6485,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           dest_part.isStoredAsSubDirectories(), conf);
       AcidUtils.Operation acidOp = AcidUtils.Operation.NOT_ACID;
       if (destTableIsAcid) {
-        acidOp = getAcidType(table_desc.getOutputFileFormatClass());
+        acidOp = getAcidType(table_desc.getOutputFileFormatClass(), dest);
         checkAcidConstraints(qb, table_desc, dest_tab);
       }
       ltd = new LoadTableDesc(queryTmpdir, table_desc, dest_part.getSpec(), acidOp);
@@ -6471,9 +6494,9 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       ltd.setLbCtx(lbCtx);
 
       loadTableWork.add(ltd);
-      if (!outputs.add(new WriteEntity(dest_part, (ltd.getReplace() ?
-          WriteEntity.WriteType.INSERT_OVERWRITE :
-          WriteEntity.WriteType.INSERT)))) {
+
+      if (!outputs.add(new WriteEntity(dest_part,
+        determineWriteType(ltd, dest_tab.isNonNative(), dest)))) {
         throw new SemanticException(ErrorMsg.OUTPUT_SPECIFIED_MULTIPLE_TIMES
             .getMsg(dest_tab.getTableName() + "@" + dest_part.getName()));
       }
@@ -6604,7 +6627,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
 
     ArrayList<ColumnInfo> vecCol = new ArrayList<ColumnInfo>();
 
-    if (updating() || deleting()) {
+    if (updating(dest) || deleting(dest)) {
       vecCol.add(new ColumnInfo(VirtualColumn.ROWID.getName(), VirtualColumn.ROWID.getTypeInfo(),
           "", true));
     } else {
@@ -6652,13 +6675,14 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       rsCtx.getNumFiles(),
       rsCtx.getTotalFiles(),
       rsCtx.getPartnCols(),
-      dpCtx);
+      dpCtx,
+      dest_path);
 
     // If this is an insert, update, or delete on an ACID table then mark that so the
     // FileSinkOperator knows how to properly write to it.
     if (destTableIsAcid) {
-      AcidUtils.Operation wt = updating() ? AcidUtils.Operation.UPDATE :
-          (deleting() ? AcidUtils.Operation.DELETE : AcidUtils.Operation.INSERT);
+      AcidUtils.Operation wt = updating(dest) ? AcidUtils.Operation.UPDATE :
+          (deleting(dest) ? AcidUtils.Operation.DELETE : AcidUtils.Operation.INSERT);
       fileSinkDesc.setWriteType(wt);
       acidFileSinks.add(fileSinkDesc);
     }
@@ -6791,8 +6815,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     if (dynPart && dpCtx != null) {
       outColumnCnt += dpCtx.getNumDPCols();
     }
-
-    if (deleting()) {
+//todo: this looks different than current 'master'!!!!!!!!
+    if (deleting(dest)) {
       // Figure out if we have partition columns in the list or not.  If so,
       // add them into the mapping.  Partition columns will be located after the row id.
       if (rowFields.size() > 1) {
@@ -6800,7 +6824,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         // input to the partition columns.
         dpCtx.mapInputToDP(rowFields.subList(1, rowFields.size()));
       }
-    } else if (updating()) {
+    } else if (updating(dest)) {
       // In this case we expect the number of in fields to exceed the number of out fields by one
       // (for the ROW__ID virtual column).  If there are more columns than this,
       // then the extras are for dynamic partitioning
@@ -6832,18 +6856,18 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         MetadataTypedColumnsetSerDe.class);
     boolean isLazySimpleSerDe = table_desc.getDeserializerClass().equals(
         LazySimpleSerDe.class);
-    if (!isMetaDataSerDe && !deleting()) {
+    if (!isMetaDataSerDe && !deleting(dest)) {
 
       // If we're updating, add the ROW__ID expression, then make the following column accesses
       // offset by 1 so that we don't try to convert the ROW__ID
-      if (updating()) {
+      if (updating(dest)) {
         expressions.add(new ExprNodeColumnDesc(rowFields.get(0).getType(),
             rowFields.get(0).getInternalName(), "", true));
       }
 
       // here only deals with non-partition columns. We deal with partition columns next
       for (int i = 0; i < columnNumber; i++) {
-        int rowFieldsOffset = updating() ? i + 1 : i;
+        int rowFieldsOffset = updating(dest) ? i + 1 : i;
         ObjectInspector tableFieldOI = tableFields.get(i)
             .getFieldObjectInspector();
         TypeInfo tableFieldTypeInfo = TypeInfoUtils
@@ -6881,7 +6905,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     // deal with dynamic partition columns: convert ExprNodeDesc type to String??
     if (dynPart && dpCtx != null && dpCtx.getNumDPCols() > 0) {
       // DP columns starts with tableFields.size()
-      for (int i = tableFields.size() + (updating() ? 1 : 0); i < rowFields.size(); ++i) {
+      for (int i = tableFields.size() + (updating(dest) ? 1 : 0); i < rowFields.size(); ++i) {
         TypeInfo rowFieldTypeInfo = rowFields.get(i).getType();
         ExprNodeDesc column = new ExprNodeColumnDesc(
             rowFieldTypeInfo, rowFields.get(i).getInternalName(), "", false);
@@ -10117,7 +10141,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
   }
 
   /**
-   * Planner specific stuff goen in here.
+   * Planner specific stuff goes in here.
    */
   static class PlannerContext {
     protected ASTNode   child;
@@ -12493,13 +12517,16 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     }
   }
 
-  private WriteEntity.WriteType determineWriteType(LoadTableDesc ltd, boolean isNonNativeTable) {
+  private WriteEntity.WriteType determineWriteType(LoadTableDesc ltd, boolean isNonNativeTable, String dest) {
     // Don't know the characteristics of non-native tables,
     // and don't have a rational way to guess, so assume the most
     // conservative case.
     if (isNonNativeTable) return WriteEntity.WriteType.INSERT_OVERWRITE;
-    else return (ltd.getReplace() ? WriteEntity.WriteType.INSERT_OVERWRITE :
-        WriteEntity.WriteType.INSERT);
+    else return (ltd.getReplace() ? WriteEntity.WriteType.INSERT_OVERWRITE : getWriteType(dest));
+  }
+  private WriteEntity.WriteType getWriteType(String dest) {
+    return updating(dest) ? WriteEntity.WriteType.UPDATE :
+      (deleting(dest) ? WriteEntity.WriteType.DELETE : WriteEntity.WriteType.INSERT);
   }
 
   // Even if the table is of Acid type, if we aren't working with an Acid compliant TxnManager
@@ -12524,28 +12551,28 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
 
   // Note that this method assumes you have already decided this is an Acid table.  It cannot
   // figure out if a table is Acid or not.
-  private AcidUtils.Operation getAcidType() {
-    return deleting() ? AcidUtils.Operation.DELETE :
-        (updating() ? AcidUtils.Operation.UPDATE :
+  private AcidUtils.Operation getAcidType(String destination) {
+    return deleting(destination) ? AcidUtils.Operation.DELETE :
+        (updating(destination) ? AcidUtils.Operation.UPDATE :
             AcidUtils.Operation.INSERT);
   }
 
-  private AcidUtils.Operation getAcidType(Class<? extends OutputFormat> of) {
+  private AcidUtils.Operation getAcidType(Class<? extends OutputFormat> of, String dest) {
     if (SessionState.get() == null || !SessionState.get().getTxnMgr().supportsAcid()) {
       return AcidUtils.Operation.NOT_ACID;
     } else if (isAcidOutputFormat(of)) {
-      return getAcidType();
+      return getAcidType(dest);
     } else {
       return AcidUtils.Operation.NOT_ACID;
     }
   }
 
-  protected boolean updating() {
-    return false;
+  protected boolean updating(String destination) {
+    return destination.startsWith(Context.DestClausePrefix.UPDATE.toString());
   }
 
-  protected boolean deleting() {
-    return false;
+  protected boolean deleting(String destination) {
+    return destination.startsWith(Context.DestClausePrefix.DELETE.toString());
   }
 
   // Make sure the proper transaction manager that supports ACID is being used

@@ -853,7 +853,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
         );
     if (HiveUtils.getIndexHandler(conf, crtIndex.getIndexTypeHandlerClass()).usesIndexTable()) {
           Table indexTable = db.getTable(indexTableName);
-          work.getOutputs().add(new WriteEntity(indexTable, WriteEntity.WriteType.DDL_NO_LOCK));
+          addIfAbsentByName(new WriteEntity(indexTable, WriteEntity.WriteType.DDL_NO_LOCK));
     }
     return 0;
   }
@@ -949,7 +949,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
   private int addPartitions(Hive db, AddPartitionDesc addPartitionDesc) throws HiveException {
     List<Partition> parts = db.createPartitions(addPartitionDesc);
     for (Partition part : parts) {
-      work.getOutputs().add(new WriteEntity(part, WriteEntity.WriteType.INSERT));
+      addIfAbsentByName(new WriteEntity(part, WriteEntity.WriteType.INSERT));
     }
     return 0;
   }
@@ -983,7 +983,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
         .getPartition(tbl, renamePartitionDesc.getNewPartSpec(), false);
     work.getInputs().add(new ReadEntity(oldPart));
     // We've already obtained a lock on the table, don't lock the partition too
-    work.getOutputs().add(new WriteEntity(newPart, WriteEntity.WriteType.DDL_NO_LOCK));
+    addIfAbsentByName(new WriteEntity(newPart, WriteEntity.WriteType.DDL_NO_LOCK));
     return 0;
   }
 
@@ -1075,7 +1075,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
 
     work.getInputs().add(new ReadEntity(tbl));
     // We've already locked the table as the input, don't relock it as the output.
-    work.getOutputs().add(new WriteEntity(tbl, WriteEntity.WriteType.DDL_NO_LOCK));
+    addIfAbsentByName(new WriteEntity(tbl, WriteEntity.WriteType.DDL_NO_LOCK));
 
     return 0;
   }
@@ -1101,7 +1101,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
         throw new HiveException("Uable to update table");
       }
       work.getInputs().add(new ReadEntity(tbl));
-      work.getOutputs().add(new WriteEntity(tbl, WriteEntity.WriteType.DDL_NO_LOCK));
+      addIfAbsentByName(new WriteEntity(tbl, WriteEntity.WriteType.DDL_NO_LOCK));
     } else {
       Partition part = db.getPartition(tbl, touchDesc.getPartSpec(), false);
       if (part == null) {
@@ -1113,7 +1113,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
         throw new HiveException(e);
       }
       work.getInputs().add(new ReadEntity(part));
-      work.getOutputs().add(new WriteEntity(part, WriteEntity.WriteType.DDL_NO_LOCK));
+      addIfAbsentByName(new WriteEntity(part, WriteEntity.WriteType.DDL_NO_LOCK));
     }
     return 0;
   }
@@ -3507,13 +3507,45 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
     if (allPartitions != null ) {
       for (Partition tmpPart: allPartitions) {
         work.getInputs().add(new ReadEntity(tmpPart));
-        work.getOutputs().add(new WriteEntity(tmpPart, WriteEntity.WriteType.DDL_NO_LOCK));
+        addIfAbsentByName(new WriteEntity(tmpPart, WriteEntity.WriteType.DDL_NO_LOCK));
       }
     } else {
       work.getInputs().add(new ReadEntity(oldTbl));
-      work.getOutputs().add(new WriteEntity(tbl, WriteEntity.WriteType.DDL_NO_LOCK));
+      addIfAbsentByName(new WriteEntity(tbl, WriteEntity.WriteType.DDL_NO_LOCK));
     }
     return 0;
+  }
+  /**
+   * There are many places where "duplicate" Read/WriteEnity objects are added.  The way this was
+   * initially implemented, the duplicate just replaced the previous object.
+   * (work.getOutputs() is a Set and WriteEntity#equals() relies on name)
+   * This may be benign for ReadEntity and perhaps was benign for WriteEntity before WriteType was
+   * added. Now that WriteEntity has a WriteType it replaces it with one with possibly different
+   * {@link org.apache.hadoop.hive.ql.hooks.WriteEntity.WriteType}.  It's hard to imagine
+   * how this is desirable.
+   *
+   * As of HIVE-14993, WriteEntity with different WriteType must be considered different.
+   * So WriteEntity create in DDLTask cause extra output in golden files, but only because
+   * DDLTask sets a different WriteType for the same Entity.
+   *
+   * In the spirit of bug-for-bug compatibility, this method ensures we only add new
+   * WriteEntity if it's really new.
+   *
+   * @return {@code true} if item was added
+   */
+  static boolean addIfAbsentByName(WriteEntity newWriteEntity, Set<WriteEntity> outputs) {
+    for(WriteEntity writeEntity : outputs) {
+      if(writeEntity.getName().equalsIgnoreCase(newWriteEntity.getName())) {
+        LOG.debug("Ignoring request to add " + newWriteEntity.toStringDetail() + " because " +
+          writeEntity.toStringDetail() + " is present");
+        return false;
+      }
+    }
+    outputs.add(newWriteEntity);
+    return true;
+  }
+  private boolean addIfAbsentByName(WriteEntity newWriteEntity) {
+    return addIfAbsentByName(newWriteEntity, work.getOutputs());
   }
 
   private boolean isSchemaEvolutionEnabled(Table tbl) {
@@ -3903,7 +3935,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
     for (Partition partition : droppedParts) {
       console.printInfo("Dropped the partition " + partition.getName());
       // We have already locked the table, don't lock the partitions.
-      work.getOutputs().add(new WriteEntity(partition, WriteEntity.WriteType.DDL_NO_LOCK));
+      addIfAbsentByName(new WriteEntity(partition, WriteEntity.WriteType.DDL_NO_LOCK));
     };
   }
 
@@ -3998,7 +4030,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
     db.dropTable(dropTbl.getTableName(), dropTbl.getIfPurge());
     if (tbl != null) {
       // We have already locked the table in DDLSemanticAnalyzer, don't do it again here
-      work.getOutputs().add(new WriteEntity(tbl, WriteEntity.WriteType.DDL_NO_LOCK));
+      addIfAbsentByName(new WriteEntity(tbl, WriteEntity.WriteType.DDL_NO_LOCK));
     }
   }
 
@@ -4313,7 +4345,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
         );
       }
     }
-    work.getOutputs().add(new WriteEntity(tbl, WriteEntity.WriteType.DDL_NO_LOCK));
+    addIfAbsentByName(new WriteEntity(tbl, WriteEntity.WriteType.DDL_NO_LOCK));
     return 0;
   }
 
@@ -4458,7 +4490,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
 
     // create the table
     db.createTable(tbl, crtTbl.getIfNotExists());
-    work.getOutputs().add(new WriteEntity(tbl, WriteEntity.WriteType.DDL_NO_LOCK));
+    addIfAbsentByName(new WriteEntity(tbl, WriteEntity.WriteType.DDL_NO_LOCK));
     return 0;
   }
 
@@ -4494,7 +4526,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
       } catch (InvalidOperationException e) {
         throw new HiveException(e);
       }
-      work.getOutputs().add(new WriteEntity(oldview, WriteEntity.WriteType.DDL_NO_LOCK));
+      addIfAbsentByName(new WriteEntity(oldview, WriteEntity.WriteType.DDL_NO_LOCK));
     } else {
       // create new view
       Table tbl = db.newTable(crtView.getViewName());
@@ -4516,7 +4548,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
       }
 
       db.createTable(tbl, crtView.getIfNotExists());
-      work.getOutputs().add(new WriteEntity(tbl, WriteEntity.WriteType.DDL_NO_LOCK));
+      addIfAbsentByName(new WriteEntity(tbl, WriteEntity.WriteType.DDL_NO_LOCK));
     }
     return 0;
   }

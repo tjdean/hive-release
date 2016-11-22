@@ -7674,6 +7674,7 @@ class LockComponent:
    - partitionname
    - operationType
    - isAcid
+   - isDynamicPartitionWrite
   """
 
   thrift_spec = (
@@ -7685,9 +7686,10 @@ class LockComponent:
     (5, TType.STRING, 'partitionname', None, None, ), # 5
     (6, TType.I32, 'operationType', None,     5, ), # 6
     (7, TType.BOOL, 'isAcid', None, False, ), # 7
+    (8, TType.BOOL, 'isDynamicPartitionWrite', None, False, ), # 8
   )
 
-  def __init__(self, type=None, level=None, dbname=None, tablename=None, partitionname=None, operationType=thrift_spec[6][4], isAcid=thrift_spec[7][4],):
+  def __init__(self, type=None, level=None, dbname=None, tablename=None, partitionname=None, operationType=thrift_spec[6][4], isAcid=thrift_spec[7][4], isDynamicPartitionWrite=thrift_spec[8][4],):
     self.type = type
     self.level = level
     self.dbname = dbname
@@ -7695,6 +7697,7 @@ class LockComponent:
     self.partitionname = partitionname
     self.operationType = operationType
     self.isAcid = isAcid
+    self.isDynamicPartitionWrite = isDynamicPartitionWrite
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -7740,6 +7743,11 @@ class LockComponent:
           self.isAcid = iprot.readBool()
         else:
           iprot.skip(ftype)
+      elif fid == 8:
+        if ftype == TType.BOOL:
+          self.isDynamicPartitionWrite = iprot.readBool()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -7778,6 +7786,10 @@ class LockComponent:
       oprot.writeFieldBegin('isAcid', TType.BOOL, 7)
       oprot.writeBool(self.isAcid)
       oprot.writeFieldEnd()
+    if self.isDynamicPartitionWrite is not None:
+      oprot.writeFieldBegin('isDynamicPartitionWrite', TType.BOOL, 8)
+      oprot.writeBool(self.isDynamicPartitionWrite)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -7800,6 +7812,7 @@ class LockComponent:
     value = (value * 31) ^ hash(self.partitionname)
     value = (value * 31) ^ hash(self.operationType)
     value = (value * 31) ^ hash(self.isAcid)
+    value = (value * 31) ^ hash(self.isDynamicPartitionWrite)
     return value
 
   def __repr__(self):

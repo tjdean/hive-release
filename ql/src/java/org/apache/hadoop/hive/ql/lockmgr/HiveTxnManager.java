@@ -18,7 +18,6 @@
 package org.apache.hadoop.hive.ql.lockmgr;
 
 import org.apache.hadoop.hive.common.ValidTxnList;
-import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.ql.Context;
 import org.apache.hadoop.hive.ql.QueryPlan;
 
@@ -145,7 +144,7 @@ public interface HiveTxnManager {
    * @return true if this transaction manager does ACID
    */
   boolean supportsAcid();
-
+  
   /**
    * This behaves exactly as
    * https://docs.oracle.com/javase/6/docs/api/java/sql/Connection.html#getAutoCommit()
@@ -157,4 +156,10 @@ public interface HiveTxnManager {
    * if {@code isTxnOpen()}, returns the currently active transaction ID
    */
   long getCurrentTxnId();
+  /**
+   * Should be though of more as a unique write operation ID in a given txn (at QueryPlan level).
+   * Each statement writing data within a multi statement txn should have a unique WriteId.
+   * Even a single statement, (e.g. Merge, multi-insert may generates several writes).
+   */
+  int getWriteIdAndIncrement();
 }

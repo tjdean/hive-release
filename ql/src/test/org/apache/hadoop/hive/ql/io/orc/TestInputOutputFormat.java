@@ -58,14 +58,12 @@ import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatchCtx;
 import org.apache.hadoop.hive.ql.io.AcidInputFormat;
 import org.apache.hadoop.hive.ql.io.AcidOutputFormat;
-import org.apache.hadoop.hive.ql.io.AcidUtils;
 import org.apache.hadoop.hive.ql.io.CombineHiveInputFormat;
 import org.apache.hadoop.hive.ql.io.HiveInputFormat;
 import org.apache.hadoop.hive.ql.io.HiveOutputFormat;
 import org.apache.hadoop.hive.ql.io.IOConstants;
 import org.apache.hadoop.hive.ql.io.InputFormatChecker;
 import org.apache.hadoop.hive.ql.io.orc.OrcInputFormat.SplitStrategy;
-import org.apache.hadoop.hive.ql.io.orc.TestOrcRawRecordMerger.MyRow;
 import org.apache.hadoop.hive.ql.io.sarg.PredicateLeaf;
 import org.apache.hadoop.hive.ql.io.sarg.SearchArgument;
 import org.apache.hadoop.hive.ql.io.sarg.SearchArgumentFactory;
@@ -1274,7 +1272,7 @@ public class TestInputOutputFormat {
     OrcInputFormat.SplitGenerator splitter =
         new OrcInputFormat.SplitGenerator(new OrcInputFormat.SplitInfo(context, fs,
             fs.getFileStatus(new Path("/a/file")), null, null, true,
-            new ArrayList<Long>(), true, null, null), null);
+            new ArrayList<AcidInputFormat.DeltaMetaData>(), true, null, null), null);
     OrcSplit result = splitter.createSplit(0, 200, null);
     assertEquals(0, result.getStart());
     assertEquals(200, result.getLength());
@@ -1315,7 +1313,7 @@ public class TestInputOutputFormat {
     OrcInputFormat.SplitGenerator splitter =
         new OrcInputFormat.SplitGenerator(new OrcInputFormat.SplitInfo(context, fs,
             fs.getFileStatus(new Path("/a/file")), null, null, true,
-            new ArrayList<Long>(), true, null, null), null);
+            new ArrayList<AcidInputFormat.DeltaMetaData>(), true, null, null), null);
     List<OrcSplit> results = splitter.call();
     OrcSplit result = results.get(0);
     assertEquals(3, result.getStart());
@@ -1337,7 +1335,7 @@ public class TestInputOutputFormat {
     conf.setInt(OrcInputFormat.MAX_SPLIT_SIZE, 0);
     context = new OrcInputFormat.Context(conf);
     splitter = new OrcInputFormat.SplitGenerator(new OrcInputFormat.SplitInfo(context, fs,
-      fs.getFileStatus(new Path("/a/file")), null, null, true, new ArrayList<Long>(),
+      fs.getFileStatus(new Path("/a/file")), null, null, true, new ArrayList<AcidInputFormat.DeltaMetaData>(),
         true, null, null), null);
     results = splitter.call();
     for(int i=0; i < stripeSizes.length; ++i) {
@@ -1366,7 +1364,7 @@ public class TestInputOutputFormat {
     OrcInputFormat.SplitGenerator splitter =
         new OrcInputFormat.SplitGenerator(new OrcInputFormat.SplitInfo(context, fs,
             fs.getFileStatus(new Path("/a/file")), null, null, true,
-            new ArrayList<Long>(), true, null, null), null);
+            new ArrayList<AcidInputFormat.DeltaMetaData>(), true, null, null), null);
     List<OrcSplit> results = splitter.call();
     OrcSplit result = results.get(0);
     assertEquals(3, results.size());
@@ -1388,7 +1386,7 @@ public class TestInputOutputFormat {
     context = new OrcInputFormat.Context(conf);
     splitter = new OrcInputFormat.SplitGenerator(new OrcInputFormat.SplitInfo(context, fs,
         fs.getFileStatus(new Path("/a/file")), null, null, true,
-        new ArrayList<Long>(),
+        new ArrayList<AcidInputFormat.DeltaMetaData>(),
         true, null, null), null);
     results = splitter.call();
     assertEquals(5, results.size());
@@ -1408,7 +1406,7 @@ public class TestInputOutputFormat {
     context = new OrcInputFormat.Context(conf);
     splitter = new OrcInputFormat.SplitGenerator(new OrcInputFormat.SplitInfo(context, fs,
         fs.getFileStatus(new Path("/a/file")), null, null, true,
-        new ArrayList<Long>(),
+        new ArrayList<AcidInputFormat.DeltaMetaData>(),
         true, null, null), null);
     results = splitter.call();
     assertEquals(1, results.size());
@@ -1943,7 +1941,7 @@ public class TestInputOutputFormat {
     Path partDir = new Path(conf.get("mapred.input.dir"));
     OrcRecordUpdater writer = new OrcRecordUpdater(partDir,
         new AcidOutputFormat.Options(conf).maximumTransactionId(10)
-            .writingBase(true).bucket(0).inspector(inspector));
+            .writingBase(true).bucket(0).inspector(inspector).finalDestination(partDir));
     for(int i=0; i < 100; ++i) {
       BigRow row = new BigRow(i);
       writer.insert(10, row);
@@ -2106,7 +2104,7 @@ public class TestInputOutputFormat {
     // write a base file in partition 0
     OrcRecordUpdater writer = new OrcRecordUpdater(partDir[0],
         new AcidOutputFormat.Options(conf).maximumTransactionId(10)
-            .writingBase(true).bucket(0).inspector(inspector));
+            .writingBase(true).bucket(0).inspector(inspector).finalDestination(partDir[0]));
     for(int i=0; i < 10; ++i) {
       writer.insert(10, new MyRow(i, 2 * i));
     }
@@ -2119,7 +2117,7 @@ public class TestInputOutputFormat {
     // write a delta file in partition 0
     writer = new OrcRecordUpdater(partDir[0],
         new AcidOutputFormat.Options(conf).maximumTransactionId(10)
-            .writingBase(true).bucket(1).inspector(inspector));
+            .writingBase(true).bucket(1).inspector(inspector).finalDestination(partDir[0]));
     for(int i=10; i < 20; ++i) {
       writer.insert(10, new MyRow(i, 2*i));
     }
@@ -3241,8 +3239,8 @@ public class TestInputOutputFormat {
       assertTrue(split.toString().contains("hasBase=true"));
       // NOTE: don't be surprised if deltas value is different
       // in older release deltas=2 as min and max transaction are added separately to delta list.
-      // in newer release since both of them are put together deltas=1
-      assertTrue(split.toString().contains("deltas=2"));
+      // in newer release since both of them are put together deltas=1 (as of HIVE-13985/BUG-59914 it's 1)
+      assertTrue(split.toString().contains("deltas=1"));
       if (split instanceof OrcSplit) {
         assertFalse("No footer serialize test for ACID reader, hasFooter is not expected in" +
                 " orc splits.", ((OrcSplit) split).hasFooter());
@@ -3319,8 +3317,8 @@ public class TestInputOutputFormat {
       assertTrue(split.toString().contains("hasBase=true"));
       // NOTE: don't be surprised if deltas value is different
       // in older release deltas=2 as min and max transaction are added separately to delta list.
-      // in newer release since both of them are put together deltas=1
-      assertTrue(split.toString().contains("deltas=2"));
+      // in newer release since both of them are put together deltas=1 (as of HIVE-13985/BUG-59914 it's 1)
+      assertTrue(split.toString().contains("deltas=1"));
       if (split instanceof OrcSplit) {
         assertTrue("Footer serialize test for ACID reader, hasFooter is not expected in" +
                 " orc splits.", ((OrcSplit) split).hasFooter());

@@ -63,6 +63,7 @@ public class QBParseInfo {
   private final Set<String> destGroupingSets;
   private final Map<String, ASTNode> destToHaving;
   private final HashSet<String> insertIntoTables;
+  private final Map<String, ASTNode> insertOverwriteTables;
 
   private boolean isAnalyzeCommand; // used for the analyze command (statistics)
   private boolean isNoScanAnalyzeCommand; // used for the analyze command (statistics) (noscan)
@@ -130,6 +131,7 @@ public class QBParseInfo {
     destToOrderby = new HashMap<String, ASTNode>();
     destToLimit = new HashMap<String, Integer>();
     insertIntoTables = new HashSet<String>();
+    insertOverwriteTables = new HashMap<String, ASTNode>();
     destRollups = new HashSet<String>();
     destCubes = new HashSet<String>();
     destGroupingSets = new HashSet<String>();
@@ -627,6 +629,12 @@ public class QBParseInfo {
    */
   public void setPartialScanAnalyzeCommand(boolean isPartialScanAnalyzeCommand) {
     this.isPartialScanAnalyzeCommand = isPartialScanAnalyzeCommand;
+  }
+  /**
+   * See also {@link #isInsertIntoTable(String)}
+   */
+  public Map<String, ASTNode> getInsertOverwriteTables() {
+    return insertOverwriteTables;
   }
 }
 

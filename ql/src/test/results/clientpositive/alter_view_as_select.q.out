@@ -58,7 +58,6 @@ POSTHOOK: type: CREATEVIEW
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:tv
 POSTHOOK: Output: tv@testView
-POSTHOOK: Output: tv@testview
 PREHOOK: query: DESCRIBE FORMATTED tv.testView
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: tv@testview
@@ -108,7 +107,6 @@ POSTHOOK: type: CREATEVIEW
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:tv
 POSTHOOK: Output: tv@testView
-POSTHOOK: Output: tv@testview
 PREHOOK: query: DESCRIBE FORMATTED tv.testView
 PREHOOK: type: DESCTABLE
 PREHOOK: Input: tv@testview

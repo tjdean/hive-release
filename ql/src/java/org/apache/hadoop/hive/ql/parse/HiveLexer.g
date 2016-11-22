@@ -309,6 +309,8 @@ KW_HOUR: 'HOUR';
 KW_MINUTE: 'MINUTE';
 KW_SECOND: 'SECOND';
 KW_ABORT: 'ABORT';
+KW_MERGE: 'MERGE';
+KW_MATCHED: 'MATCHED';
 
 // Operators
 // NOTE: if you add a new function/operator, add it to sysFuncNames so that describe function _FUNC_ will work.

@@ -43,22 +43,28 @@ public class TestAcidUtils {
     Path p = new Path("/tmp");
     Configuration conf = new Configuration();
     AcidOutputFormat.Options options = new AcidOutputFormat.Options(conf)
-        .setOldStyle(true).bucket(1);
+      .setOldStyle(true).bucket(1);
     assertEquals("/tmp/000001_0",
-        AcidUtils.createFilename(p, options).toString());
+      AcidUtils.createFilename(p, options).toString());
     options.bucket(123);
     assertEquals("/tmp/000123_0",
-        AcidUtils.createFilename(p, options).toString());
+      AcidUtils.createFilename(p, options).toString());
     options.bucket(23)
-        .minimumTransactionId(100)
-        .maximumTransactionId(200)
-        .writingBase(true)
-        .setOldStyle(false);
+      .minimumTransactionId(100)
+      .maximumTransactionId(200)
+      .writingBase(true)
+      .setOldStyle(false);
     assertEquals("/tmp/base_0000200/bucket_00023",
-        AcidUtils.createFilename(p, options).toString());
+      AcidUtils.createFilename(p, options).toString());
     options.writingBase(false);
+    assertEquals("/tmp/delta_0000100_0000200_0000/bucket_00023",
+      AcidUtils.createFilename(p, options).toString());
+    options.statementId(-1);
     assertEquals("/tmp/delta_0000100_0000200/bucket_00023",
-        AcidUtils.createFilename(p, options).toString());
+      AcidUtils.createFilename(p, options).toString());
+    options.statementId(7);
+    assertEquals("/tmp/delta_0000100_0000200_0007/bucket_00023",
+      AcidUtils.createFilename(p, options).toString());
   }
   @Test
   public void testCreateFilenameLargeIds() throws Exception {
@@ -76,7 +82,7 @@ public class TestAcidUtils {
     assertEquals("/tmp/base_1234567890/bucket_00023",
       AcidUtils.createFilename(p, options).toString());
     options.writingBase(false);
-    assertEquals("/tmp/delta_1234567880_1234567890/bucket_00023",
+    assertEquals("/tmp/delta_1234567880_1234567890_0000/bucket_00023",
       AcidUtils.createFilename(p, options).toString());
   }
   
@@ -340,7 +346,6 @@ public class TestAcidUtils {
         new MockFile("mock:/tbl/part1/delta_40_60/bucket_0", 500, new byte[0]),
         new MockFile("mock:/tbl/part1/delta_0060_60/bucket_0", 500, new byte[0]),
         new MockFile("mock:/tbl/part1/delta_052_55/bucket_0", 500, new byte[0]),
-        new MockFile("mock:/tbl/part1/delta_40_60/bucket_0", 500, new byte[0]),
         new MockFile("mock:/tbl/part1/base_50/bucket_0", 500, new byte[0]));
     Path part = new MockPath(fs, "mock:/tbl/part1");
     AcidUtils.Directory dir =
@@ -358,6 +363,45 @@ public class TestAcidUtils {
     assertEquals("mock:/tbl/part1/delta_0000063_63", delts.get(3).getPath().toString());
   }
 
+  /**
+   * Hive 1.3.0 delta dir naming scheme which supports multi-statement txns
+   * @throws Exception
+   */
+  @Test
+  public void testOverlapingDelta2() throws Exception {
+    Configuration conf = new Configuration();
+    MockFileSystem fs = new MockFileSystem(conf,
+      new MockFile("mock:/tbl/part1/delta_0000063_63_0/bucket_0", 500, new byte[0]),
+      new MockFile("mock:/tbl/part1/delta_000062_62_0/bucket_0", 500, new byte[0]),
+      new MockFile("mock:/tbl/part1/delta_000062_62_3/bucket_0", 500, new byte[0]),
+      new MockFile("mock:/tbl/part1/delta_00061_61_0/bucket_0", 500, new byte[0]),
+      new MockFile("mock:/tbl/part1/delta_40_60/bucket_0", 500, new byte[0]),
+      new MockFile("mock:/tbl/part1/delta_0060_60_1/bucket_0", 500, new byte[0]),
+      new MockFile("mock:/tbl/part1/delta_0060_60_4/bucket_0", 500, new byte[0]),
+      new MockFile("mock:/tbl/part1/delta_0060_60_7/bucket_0", 500, new byte[0]),
+      new MockFile("mock:/tbl/part1/delta_052_55/bucket_0", 500, new byte[0]),
+      new MockFile("mock:/tbl/part1/delta_058_58/bucket_0", 500, new byte[0]),
+      new MockFile("mock:/tbl/part1/base_50/bucket_0", 500, new byte[0]));
+    Path part = new MockPath(fs, "mock:/tbl/part1");
+    AcidUtils.Directory dir =
+      AcidUtils.getAcidState(part, conf, new ValidReadTxnList("100:" + Long.MAX_VALUE + ":"));
+    assertEquals("mock:/tbl/part1/base_50", dir.getBaseDirectory().toString());
+    List<FileStatus> obsolete = dir.getObsolete();
+    assertEquals(5, obsolete.size());
+    assertEquals("mock:/tbl/part1/delta_052_55", obsolete.get(0).getPath().toString());
+    assertEquals("mock:/tbl/part1/delta_058_58", obsolete.get(1).getPath().toString());
+    assertEquals("mock:/tbl/part1/delta_0060_60_1", obsolete.get(2).getPath().toString());
+    assertEquals("mock:/tbl/part1/delta_0060_60_4", obsolete.get(3).getPath().toString());
+    assertEquals("mock:/tbl/part1/delta_0060_60_7", obsolete.get(4).getPath().toString());
+    List<AcidUtils.ParsedDelta> delts = dir.getCurrentDirectories();
+    assertEquals(5, delts.size());
+    assertEquals("mock:/tbl/part1/delta_40_60", delts.get(0).getPath().toString());
+    assertEquals("mock:/tbl/part1/delta_00061_61_0", delts.get(1).getPath().toString());
+    assertEquals("mock:/tbl/part1/delta_000062_62_0", delts.get(2).getPath().toString());
+    assertEquals("mock:/tbl/part1/delta_000062_62_3", delts.get(3).getPath().toString());
+    assertEquals("mock:/tbl/part1/delta_0000063_63_0", delts.get(4).getPath().toString());
+  }
+
   @Test
   public void deltasWithOpenTxnInRead() throws Exception {
     Configuration conf = new Configuration();
@@ -366,6 +410,27 @@ public class TestAcidUtils {
         new MockFile("mock:/tbl/part1/delta_2_5/bucket_0", 500, new byte[0]));
     Path part = new MockPath(fs, "mock:/tbl/part1");
     AcidUtils.Directory dir = AcidUtils.getAcidState(part, conf, new ValidReadTxnList("100:4:4"));
+    List<AcidUtils.ParsedDelta> delts = dir.getCurrentDirectories();
+    assertEquals(2, delts.size());
+    assertEquals("mock:/tbl/part1/delta_1_1", delts.get(0).getPath().toString());
+    assertEquals("mock:/tbl/part1/delta_2_5", delts.get(1).getPath().toString());
+  }
+
+  /**
+   * @since 1.3.0
+   * @throws Exception
+   */
+  @Test
+  public void deltasWithOpenTxnInRead2() throws Exception {
+    Configuration conf = new Configuration();
+    MockFileSystem fs = new MockFileSystem(conf,
+      new MockFile("mock:/tbl/part1/delta_1_1/bucket_0", 500, new byte[0]),
+      new MockFile("mock:/tbl/part1/delta_2_5/bucket_0", 500, new byte[0]),
+      new MockFile("mock:/tbl/part1/delta_4_4_1/bucket_0", 500, new byte[0]),
+      new MockFile("mock:/tbl/part1/delta_4_4_3/bucket_0", 500, new byte[0]),
+      new MockFile("mock:/tbl/part1/delta_101_101_1/bucket_0", 500, new byte[0]));
+    Path part = new MockPath(fs, "mock:/tbl/part1");
+    AcidUtils.Directory dir = AcidUtils.getAcidState(part, conf, new ValidReadTxnList("100:4"));
     List<AcidUtils.ParsedDelta> delts = dir.getCurrentDirectories();
     assertEquals(2, delts.size());
     assertEquals("mock:/tbl/part1/delta_1_1", delts.get(0).getPath().toString());

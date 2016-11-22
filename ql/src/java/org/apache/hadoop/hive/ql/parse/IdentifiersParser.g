@@ -19,7 +19,7 @@ parser grammar IdentifiersParser;
 options
 {
 output=AST;
-ASTLabelType=CommonTree;
+ASTLabelType=ASTNode;
 backtrack=false;
 k=3;
 }
@@ -315,7 +315,7 @@ intervalQualifiers
 
 expression
 @init { gParent.pushMsg("expression specification", state); }
-@after { gParent.popMsg(state); }
+@after { $expression.tree.matchedText = $expression.text; gParent.popMsg(state); }
     :
     precedenceOrExpression
     ;
@@ -389,6 +389,7 @@ precedencePlusOperator
     ;
 
 precedencePlusExpression
+@after { $precedencePlusExpression.tree.matchedText = $precedencePlusExpression.text; }
     :
     precedenceStarExpression (precedencePlusOperator^ precedenceStarExpression)*
     ;
@@ -651,6 +652,8 @@ nonReserved
     | KW_STREAMTABLE | KW_STRING | KW_STRUCT | KW_TABLES | KW_TBLPROPERTIES | KW_TEMPORARY | KW_TERMINATED
     | KW_TINYINT | KW_TOUCH | KW_TRANSACTIONS | KW_UNARCHIVE | KW_UNDO | KW_UNIONTYPE | KW_UNLOCK | KW_UNSET
     | KW_UNSIGNED | KW_URI | KW_USE | KW_UTC | KW_UTCTIMESTAMP | KW_VALUE_TYPE | KW_VIEW | KW_WHILE | KW_YEAR
+    | KW_MERGE
+    | KW_MATCHED
     ;
 
 //The following SQL2011 reserved keywords are used as cast function name only, it is a subset of the sql11ReservedKeywordsUsedAsIdentifier.

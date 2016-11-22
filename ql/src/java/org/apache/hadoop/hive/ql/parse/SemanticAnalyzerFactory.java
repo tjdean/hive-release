@@ -279,6 +279,7 @@ public final class SemanticAnalyzerFactory {
 
       case HiveParser.TOK_UPDATE_TABLE:
       case HiveParser.TOK_DELETE_FROM:
+      case HiveParser.TOK_MERGE:
         return new UpdateDeleteSemanticAnalyzer(conf);
 
       default: {

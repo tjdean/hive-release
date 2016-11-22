@@ -46,6 +46,10 @@ import java.util.Map;
 
 /**
  * Tests for the worker thread and its MR jobs.
+ * todo: most delta files in this test suite use txn id range, i.e. [N,N+M]                                                                                                 
+ * That means that they all look like they were created by compaction or by streaming api.                                                                                  
+ * Delta files created by SQL should have [N,N] range (and a suffix in v1.3 and later)                                                                                      
+ * Need to change some of these to have better test coverage.
  */
 public class TestWorker extends CompactorTest {
   static final private String CLASS_NAME = TestWorker.class.getName();
@@ -295,7 +299,7 @@ public class TestWorker extends CompactorTest {
     // Find the new delta file and make sure it has the right contents
     boolean sawNewDelta = false;
     for (int i = 0; i < stat.length; i++) {
-      if (stat[i].getPath().getName().equals("delta_0000021_0000024")) {
+      if (stat[i].getPath().getName().equals(makeDeltaDirNameCompacted(21, 24))) {
         sawNewDelta = true;
         FileStatus[] buckets = fs.listStatus(stat[i].getPath());
         Assert.assertEquals(2, buckets.length);
@@ -310,6 +314,10 @@ public class TestWorker extends CompactorTest {
     Assert.assertTrue(sawNewDelta);
   }
 
+  /**
+   * todo: fix https://issues.apache.org/jira/browse/HIVE-9995
+   * @throws Exception
+   */
   @Test
   public void minorWithOpenInMiddle() throws Exception {
     LOG.debug("Starting minorWithOpenInMiddle");
@@ -335,15 +343,16 @@ public class TestWorker extends CompactorTest {
     // There should still now be 5 directories in the location
     FileSystem fs = FileSystem.get(conf);
     FileStatus[] stat = fs.listStatus(new Path(t.getSd().getLocation()));
-    Assert.assertEquals(5, stat.length);
+//    boolean is130 = this instanceof TestWorker2;
+//    Assert.assertEquals(is130 ? 5 : 4, stat.length);
+    Assert.assertEquals(4, stat.length);
 
     // Find the new delta file and make sure it has the right contents
     Arrays.sort(stat);
     Assert.assertEquals("base_20", stat[0].getPath().getName());
-    Assert.assertEquals("delta_0000021_0000022", stat[1].getPath().getName());
-    Assert.assertEquals("delta_21_22", stat[2].getPath().getName());
-    Assert.assertEquals("delta_23_25", stat[3].getPath().getName());
-    Assert.assertEquals("delta_26_27", stat[4].getPath().getName());
+    Assert.assertEquals(makeDeltaDirNameCompacted(21, 22), stat[1].getPath().getName());
+    Assert.assertEquals(makeDeltaDirName(23, 25), stat[2].getPath().getName());
+    Assert.assertEquals(makeDeltaDirName(26, 27), stat[3].getPath().getName());
   }
 
   @Test
@@ -376,10 +385,10 @@ public class TestWorker extends CompactorTest {
     // Find the new delta file and make sure it has the right contents
     Arrays.sort(stat);
     Assert.assertEquals("base_20", stat[0].getPath().getName());
-    Assert.assertEquals("delta_0000021_0000027", stat[1].getPath().getName());
-    Assert.assertEquals("delta_21_22", stat[2].getPath().getName());
-    Assert.assertEquals("delta_23_25", stat[3].getPath().getName());
-    Assert.assertEquals("delta_26_27", stat[4].getPath().getName());
+    Assert.assertEquals(makeDeltaDirName(21, 22), stat[1].getPath().getName());
+    Assert.assertEquals(makeDeltaDirNameCompacted(21, 27), stat[2].getPath().getName());
+    Assert.assertEquals(makeDeltaDirName(23, 25), stat[3].getPath().getName());
+    Assert.assertEquals(makeDeltaDirName(26, 27), stat[4].getPath().getName());
   }
 
   @Test
@@ -412,7 +421,7 @@ public class TestWorker extends CompactorTest {
     // Find the new delta file and make sure it has the right contents
     boolean sawNewDelta = false;
     for (int i = 0; i < stat.length; i++) {
-      if (stat[i].getPath().getName().equals("delta_0000021_0000024")) {
+      if (stat[i].getPath().getName().equals(makeDeltaDirNameCompacted(21, 24))) {
         sawNewDelta = true;
         FileStatus[] buckets = fs.listStatus(stat[i].getPath());
         Assert.assertEquals(2, buckets.length);
@@ -455,7 +464,7 @@ public class TestWorker extends CompactorTest {
     // Find the new delta file and make sure it has the right contents
     boolean sawNewDelta = false;
     for (int i = 0; i < stat.length; i++) {
-      if (stat[i].getPath().getName().equals("delta_0000001_0000004")) {
+      if (stat[i].getPath().getName().equals(makeDeltaDirNameCompacted(1, 4))) {
         sawNewDelta = true;
         FileStatus[] buckets = fs.listStatus(stat[i].getPath());
         Assert.assertEquals(2, buckets.length);
@@ -562,34 +571,34 @@ public class TestWorker extends CompactorTest {
     // Find the new delta file and make sure it has the right contents
     BitSet matchesFound = new BitSet(9);
     for (int i = 0; i < stat.length; i++) {
-      if(stat[i].getPath().getName().equals("delta_21_21")) {
+      if(stat[i].getPath().getName().equals(makeDeltaDirName(21,21))) {
         matchesFound.set(0);
       }
-      else if(stat[i].getPath().getName().equals("delta_23_23")) {
+      else if(stat[i].getPath().getName().equals(makeDeltaDirName(23, 23))) {
         matchesFound.set(1);
       }
-      else if(stat[i].getPath().getName().equals("delta_25_29")) {
+      else if(stat[i].getPath().getName().equals(makeDeltaDirNameCompacted(25, 29))) {
         matchesFound.set(2);
       }
-      else if(stat[i].getPath().getName().equals("delta_31_32")) {
+      else if(stat[i].getPath().getName().equals(makeDeltaDirNameCompacted(31, 32))) {
         matchesFound.set(3);
       }
-      else if(stat[i].getPath().getName().equals("delta_31_33")) {
+      else if(stat[i].getPath().getName().equals(makeDeltaDirNameCompacted(31, 33))) {
         matchesFound.set(4);
       }
-      else if(stat[i].getPath().getName().equals("delta_35_35")) {
+      else if(stat[i].getPath().getName().equals(makeDeltaDirName(35, 35))) {
         matchesFound.set(5);
       }
-      else if(stat[i].getPath().getName().equals(makeDeltaDirName(21, 23))) {
+      else if(stat[i].getPath().getName().equals(makeDeltaDirNameCompacted(21, 23))) {
         matchesFound.set(6);
       }
-      else if(stat[i].getPath().getName().equals(makeDeltaDirName(25, 33))) {
+      else if(stat[i].getPath().getName().equals(makeDeltaDirNameCompacted(25, 33))) {
         matchesFound.set(7);
       }
       switch (type) {
         //yes, both do set(8)
         case MINOR:
-          if(stat[i].getPath().getName().equals(makeDeltaDirName(21,35))) {
+          if(stat[i].getPath().getName().equals(makeDeltaDirNameCompacted(21,35))) {
             matchesFound.set(8);
           }
           break;
@@ -776,7 +785,7 @@ public class TestWorker extends CompactorTest {
     // Find the new delta file and make sure it has the right contents
     boolean sawNewDelta = false;
     for (int i = 0; i < stat.length; i++) {
-      if (stat[i].getPath().getName().equals("delta_0000021_0000024")) {
+      if (stat[i].getPath().getName().equals(makeDeltaDirNameCompacted(21, 24))) {
         sawNewDelta = true;
         FileStatus[] buckets = fs.listStatus(stat[i].getPath());
         Assert.assertEquals(2, buckets.length);
@@ -875,9 +884,9 @@ public class TestWorker extends CompactorTest {
     Arrays.sort(stat);
     Assert.assertEquals("base_0000022", stat[0].getPath().getName());
     Assert.assertEquals("base_20", stat[1].getPath().getName());
-    Assert.assertEquals("delta_21_22", stat[2].getPath().getName());
-    Assert.assertEquals("delta_23_25", stat[3].getPath().getName());
-    Assert.assertEquals("delta_26_27", stat[4].getPath().getName());
+    Assert.assertEquals(makeDeltaDirName(21, 22), stat[2].getPath().getName());
+    Assert.assertEquals(makeDeltaDirName(23, 25), stat[3].getPath().getName());
+    Assert.assertEquals(makeDeltaDirName(26, 27), stat[4].getPath().getName());
   }
 
   @Test
@@ -911,9 +920,13 @@ public class TestWorker extends CompactorTest {
     Arrays.sort(stat);
     Assert.assertEquals("base_0000027", stat[0].getPath().getName());
     Assert.assertEquals("base_20", stat[1].getPath().getName());
-    Assert.assertEquals("delta_21_22", stat[2].getPath().getName());
-    Assert.assertEquals("delta_23_25", stat[3].getPath().getName());
-    Assert.assertEquals("delta_26_27", stat[4].getPath().getName());
+    Assert.assertEquals(makeDeltaDirName(21, 22), stat[2].getPath().getName());
+    Assert.assertEquals(makeDeltaDirName(23, 25), stat[3].getPath().getName());
+    Assert.assertEquals(makeDeltaDirName(26, 27), stat[4].getPath().getName());
+  }
+  @Override
+  boolean useHive130DeltaDirName() {
+    return false;
   }
 
   @Test

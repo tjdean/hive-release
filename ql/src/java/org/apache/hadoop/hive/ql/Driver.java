@@ -1069,9 +1069,10 @@ public class Driver implements CommandProcessor {
         // Set the transaction id in all of the acid file sinks
           for (FileSinkDesc desc : acidSinks) {
             desc.setTransactionId(txnMgr.getCurrentTxnId());
+            //it's possible to have > 1 FileSink writing to the same table/partition
+            //e.g. Merge stmt, multi-insert stmt when mixing DP and SP writes
+            desc.setStatementId(txnMgr.getWriteIdAndIncrement());
           }
-        // TODO Once we move to cross query transactions we need to add the open transaction to
-        // our list of valid transactions.  We don't have a way to do that right now.
       }
 
       txnMgr.acquireLocks(plan, ctx, userFromUGI);

@@ -11052,6 +11052,11 @@ void LockComponent::__set_isAcid(const bool val) {
 __isset.isAcid = true;
 }
 
+void LockComponent::__set_isDynamicPartitionWrite(const bool val) {
+  this->isDynamicPartitionWrite = val;
+__isset.isDynamicPartitionWrite = true;
+}
+
 uint32_t LockComponent::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
@@ -11138,6 +11143,14 @@ uint32_t LockComponent::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 8:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->isDynamicPartitionWrite);
+          this->__isset.isDynamicPartitionWrite = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -11193,6 +11206,11 @@ uint32_t LockComponent::write(::apache::thrift::protocol::TProtocol* oprot) cons
     xfer += oprot->writeBool(this->isAcid);
     xfer += oprot->writeFieldEnd();
   }
+  if (this->__isset.isDynamicPartitionWrite) {
+    xfer += oprot->writeFieldBegin("isDynamicPartitionWrite", ::apache::thrift::protocol::T_BOOL, 8);
+    xfer += oprot->writeBool(this->isDynamicPartitionWrite);
+    xfer += oprot->writeFieldEnd();
+  }
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -11207,6 +11225,7 @@ void swap(LockComponent &a, LockComponent &b) {
   swap(a.partitionname, b.partitionname);
   swap(a.operationType, b.operationType);
   swap(a.isAcid, b.isAcid);
+  swap(a.isDynamicPartitionWrite, b.isDynamicPartitionWrite);
   swap(a.__isset, b.__isset);
 }
 
@@ -11218,6 +11237,7 @@ LockComponent::LockComponent(const LockComponent& other509) {
   partitionname = other509.partitionname;
   operationType = other509.operationType;
   isAcid = other509.isAcid;
+  isDynamicPartitionWrite = other509.isDynamicPartitionWrite;
   __isset = other509.__isset;
 }
 LockComponent& LockComponent::operator=(const LockComponent& other510) {
@@ -11228,6 +11248,7 @@ LockComponent& LockComponent::operator=(const LockComponent& other510) {
   partitionname = other510.partitionname;
   operationType = other510.operationType;
   isAcid = other510.isAcid;
+  isDynamicPartitionWrite = other510.isDynamicPartitionWrite;
   __isset = other510.__isset;
   return *this;
 }
@@ -11241,6 +11262,7 @@ void LockComponent::printTo(std::ostream& out) const {
   out << ", " << "partitionname="; (__isset.partitionname ? (out << to_string(partitionname)) : (out << "<null>"));
   out << ", " << "operationType="; (__isset.operationType ? (out << to_string(operationType)) : (out << "<null>"));
   out << ", " << "isAcid="; (__isset.isAcid ? (out << to_string(isAcid)) : (out << "<null>"));
+  out << ", " << "isDynamicPartitionWrite="; (__isset.isDynamicPartitionWrite ? (out << to_string(isDynamicPartitionWrite)) : (out << "<null>"));
   out << ")";
 }
 

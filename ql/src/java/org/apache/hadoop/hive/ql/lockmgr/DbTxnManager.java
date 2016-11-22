@@ -64,6 +64,14 @@ public class DbTxnManager extends HiveTxnManagerImpl {
   private DbLockManager lockMgr = null;
   private SynchronizedMetaStoreClient client = null;
   private long txnId = 0;
+  /**
+   * assigns a unique monotonically increasing ID to each statement
+   * which is part of an open transaction.  This is used by storage
+   * layer (see {@link org.apache.hadoop.hive.ql.io.AcidUtils#deltaSubdir(long, long, int)})
+   * to keep apart multiple writes of the same data within the same transaction
+   * Also see {@link org.apache.hadoop.hive.ql.io.AcidOutputFormat.Options}
+   */
+  private int statementId = -1;
 
   // QueryId for the query in current transaction
   private String queryId;
@@ -130,6 +138,7 @@ public class DbTxnManager extends HiveTxnManagerImpl {
     init();
     try {
       txnId = client.openTxn(user);
+      statementId = 0;
       LOG.debug("Opened " + JavaUtils.txnIdToString(txnId));
       return txnId;
     } catch (TException e) {
@@ -306,6 +315,7 @@ public class DbTxnManager extends HiveTxnManagerImpl {
       if(t != null && AcidUtils.isAcidTable(t)) {
         compBuilder.setIsAcid(true);
       }
+      compBuilder.setIsDynamicPartitionWrite(output.isDynamicPartitionWrite());
       LockComponent comp = compBuilder.build();
       LOG.debug("Adding lock component to lock request " + comp.toString());
       rqstBuilder.addLockComponent(comp);
@@ -319,7 +329,7 @@ public class DbTxnManager extends HiveTxnManagerImpl {
       return null;
     }
 
-    List<HiveLock> locks = new ArrayList<HiveLock>(1); 
+    List<HiveLock> locks = new ArrayList<HiveLock>(1);
     LockState lockState = lockMgr.lock(rqstBuilder.build(), queryId, isBlocking, locks);
     ctx.setHiveLocks(locks);
     return lockState;
@@ -373,6 +383,7 @@ public class DbTxnManager extends HiveTxnManagerImpl {
           e);
     } finally {
       txnId = 0;
+      statementId = -1;
     }
   }
 
@@ -395,6 +406,7 @@ public class DbTxnManager extends HiveTxnManagerImpl {
           e);
     } finally {
       txnId = 0;
+      statementId = -1;
     }
   }
 
@@ -490,6 +502,11 @@ public class DbTxnManager extends HiveTxnManagerImpl {
     LOG.info("Started heartbeat with delay/interval = " + initialDelay + "/" + heartbeatInterval +
         " " + TimeUnit.MILLISECONDS + " for query: " + queryId);
     return heartbeater;
+  }
+  @Override
+  public int getWriteIdAndIncrement() {
+    assert isTxnOpen();
+    return statementId++;
   }
 
   private void stopHeartbeat() throws LockException {

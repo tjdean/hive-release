@@ -33,6 +33,7 @@ public class ASTNode extends CommonTree implements Node,Serializable {
   private static final long serialVersionUID = 1L;
 
   private transient ASTNodeOrigin origin;
+  transient String matchedText;
 
   public ASTNode() {
   }
@@ -125,5 +126,12 @@ public class ASTNode extends CommonTree implements Node,Serializable {
       }
     }
     return sb;
+  }
+  /**
+   * The string that generated this node.
+   * Only set for a node if parser grammar sets it for a particular rule
+   */
+  public String getMatchedText() {
+    return matchedText;
   }
 }

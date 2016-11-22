@@ -143,7 +143,7 @@ public class TestCleaner extends CompactorTest {
     boolean sawBase = false, sawDelta = false;
     for (Path p : paths) {
       if (p.getName().equals("base_20")) sawBase = true;
-      else if (p.getName().equals("delta_21_24")) sawDelta = true;
+      else if (p.getName().equals(makeDeltaDirName(21, 24))) sawDelta = true;
       else Assert.fail("Unexpected file " + p.getName());
     }
     Assert.assertTrue(sawBase);
@@ -182,7 +182,7 @@ public class TestCleaner extends CompactorTest {
     boolean sawBase = false, sawDelta = false;
     for (Path path : paths) {
       if (path.getName().equals("base_20")) sawBase = true;
-      else if (path.getName().equals("delta_21_24")) sawDelta = true;
+      else if (path.getName().equals(makeDeltaDirNameCompacted(21, 24))) sawDelta = true;
       else Assert.fail("Unexpected file " + path.getName());
     }
     Assert.assertTrue(sawBase);
@@ -497,5 +497,9 @@ public class TestCleaner extends CompactorTest {
     ShowCompactResponse rsp = txnHandler.showCompact(new ShowCompactRequest());
     Assert.assertEquals(1, rsp.getCompactsSize());
     Assert.assertTrue(TxnStore.SUCCEEDED_RESPONSE.equals(rsp.getCompacts().get(0).getState()));
+  }
+  @Override
+  boolean useHive130DeltaDirName() {
+    return false;
   }
 }
