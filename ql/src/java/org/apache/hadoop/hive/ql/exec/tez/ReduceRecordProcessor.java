@@ -119,9 +119,13 @@ public class ReduceRecordProcessor  extends RecordProcessor{
 
     connectOps.clear();
     ReduceWork redWork = reduceWork;
+    l4j.info("Main work is " + reduceWork.getName());
     tagToReducerMap.put(redWork.getTag(), redWork);
     if (mergeWorkList != null) {
       for (BaseWork mergeWork : mergeWorkList) {
+        if (l4j.isDebugEnabled()) {
+          l4j.debug("Additional work " + mergeWork.getName());
+        }
         ReduceWork mergeReduceWork = (ReduceWork) mergeWork;
         reducer = mergeReduceWork.getReducer();
         DummyStoreOperator dummyStoreOp = getJoinParentOp(reducer);
@@ -176,7 +180,7 @@ public class ReduceRecordProcessor  extends RecordProcessor{
       // Initialization isn't finished until all parents of all operators
       // are initialized. For broadcast joins that means initializing the
       // dummy parent operators as well.
-      List<HashTableDummyOperator> dummyOps = redWork.getDummyOps();
+      List<HashTableDummyOperator> dummyOps = reduceWork.getDummyOps();
       if (dummyOps != null) {
         for (HashTableDummyOperator dummyOp : dummyOps) {
           dummyOp.initialize(jconf, null);
