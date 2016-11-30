@@ -10000,6 +10000,16 @@ void TxnInfo::__set_metaInfo(const std::string& val) {
 __isset.metaInfo = true;
 }
 
+void TxnInfo::__set_startedTime(const int64_t val) {
+  this->startedTime = val;
+__isset.startedTime = true;
+}
+
+void TxnInfo::__set_lastHeartbeatTime(const int64_t val) {
+  this->lastHeartbeatTime = val;
+__isset.lastHeartbeatTime = true;
+}
+
 uint32_t TxnInfo::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
@@ -10083,6 +10093,22 @@ uint32_t TxnInfo::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 8:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->startedTime);
+          this->__isset.startedTime = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 9:
+        if (ftype == ::apache::thrift::protocol::T_I64) {
+          xfer += iprot->readI64(this->lastHeartbeatTime);
+          this->__isset.lastHeartbeatTime = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -10139,6 +10165,16 @@ uint32_t TxnInfo::write(::apache::thrift::protocol::TProtocol* oprot) const {
     xfer += oprot->writeString(this->metaInfo);
     xfer += oprot->writeFieldEnd();
   }
+  if (this->__isset.startedTime) {
+    xfer += oprot->writeFieldBegin("startedTime", ::apache::thrift::protocol::T_I64, 8);
+    xfer += oprot->writeI64(this->startedTime);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.lastHeartbeatTime) {
+    xfer += oprot->writeFieldBegin("lastHeartbeatTime", ::apache::thrift::protocol::T_I64, 9);
+    xfer += oprot->writeI64(this->lastHeartbeatTime);
+    xfer += oprot->writeFieldEnd();
+  }
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -10153,6 +10189,8 @@ void swap(TxnInfo &a, TxnInfo &b) {
   swap(a.agentInfo, b.agentInfo);
   swap(a.heartbeatCount, b.heartbeatCount);
   swap(a.metaInfo, b.metaInfo);
+  swap(a.startedTime, b.startedTime);
+  swap(a.lastHeartbeatTime, b.lastHeartbeatTime);
   swap(a.__isset, b.__isset);
 }
 
@@ -10164,6 +10202,8 @@ TxnInfo::TxnInfo(const TxnInfo& other465) {
   agentInfo = other465.agentInfo;
   heartbeatCount = other465.heartbeatCount;
   metaInfo = other465.metaInfo;
+  startedTime = other465.startedTime;
+  lastHeartbeatTime = other465.lastHeartbeatTime;
   __isset = other465.__isset;
 }
 TxnInfo& TxnInfo::operator=(const TxnInfo& other466) {
@@ -10174,6 +10214,8 @@ TxnInfo& TxnInfo::operator=(const TxnInfo& other466) {
   agentInfo = other466.agentInfo;
   heartbeatCount = other466.heartbeatCount;
   metaInfo = other466.metaInfo;
+  startedTime = other466.startedTime;
+  lastHeartbeatTime = other466.lastHeartbeatTime;
   __isset = other466.__isset;
   return *this;
 }
@@ -10187,6 +10229,8 @@ void TxnInfo::printTo(std::ostream& out) const {
   out << ", " << "agentInfo="; (__isset.agentInfo ? (out << to_string(agentInfo)) : (out << "<null>"));
   out << ", " << "heartbeatCount="; (__isset.heartbeatCount ? (out << to_string(heartbeatCount)) : (out << "<null>"));
   out << ", " << "metaInfo="; (__isset.metaInfo ? (out << to_string(metaInfo)) : (out << "<null>"));
+  out << ", " << "startedTime="; (__isset.startedTime ? (out << to_string(startedTime)) : (out << "<null>"));
+  out << ", " << "lastHeartbeatTime="; (__isset.lastHeartbeatTime ? (out << to_string(lastHeartbeatTime)) : (out << "<null>"));
   out << ")";
 }
 
