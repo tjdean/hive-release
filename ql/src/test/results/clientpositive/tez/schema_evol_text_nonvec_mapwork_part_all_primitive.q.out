@@ -2530,23 +2530,23 @@ Stage-0
          Reducer 2
          File Output Operator [FS_4]
             compressed:false
-            Statistics:Num rows: 6 Data size: 792 Basic stats: COMPLETE Column stats: NONE
+            Statistics:Num rows: 6 Data size: 809 Basic stats: COMPLETE Column stats: NONE
             table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Select Operator [SEL_3]
             |  outputColumnNames:["_col0","_col1","_col2","_col3","_col4","_col5","_col6","_col7","_col8","_col9","_col10","_col11","_col12","_col13","_col14"]
-            |  Statistics:Num rows: 6 Data size: 792 Basic stats: COMPLETE Column stats: NONE
+            |  Statistics:Num rows: 6 Data size: 809 Basic stats: COMPLETE Column stats: NONE
             |<-Map 1 [SIMPLE_EDGE]
                Reduce Output Operator [RS_2]
                   key expressions:_col0 (type: int)
                   sort order:+
-                  Statistics:Num rows: 6 Data size: 792 Basic stats: COMPLETE Column stats: NONE
+                  Statistics:Num rows: 6 Data size: 809 Basic stats: COMPLETE Column stats: NONE
                   value expressions:_col1 (type: int), _col2 (type: timestamp), _col3 (type: timestamp), _col4 (type: timestamp), _col5 (type: timestamp), _col6 (type: timestamp), _col7 (type: timestamp), _col8 (type: timestamp), _col9 (type: timestamp), _col10 (type: timestamp), _col11 (type: timestamp), _col12 (type: timestamp), _col13 (type: timestamp), _col14 (type: string)
                   Select Operator [SEL_1]
                      outputColumnNames:["_col0","_col1","_col2","_col3","_col4","_col5","_col6","_col7","_col8","_col9","_col10","_col11","_col12","_col13","_col14"]
-                     Statistics:Num rows: 6 Data size: 792 Basic stats: COMPLETE Column stats: NONE
+                     Statistics:Num rows: 6 Data size: 809 Basic stats: COMPLETE Column stats: NONE
                      TableScan [TS_0]
                         alias:part_change_various_various_timestamp
-                        Statistics:Num rows: 6 Data size: 792 Basic stats: COMPLETE Column stats: NONE
+                        Statistics:Num rows: 6 Data size: 809 Basic stats: COMPLETE Column stats: NONE
 
 PREHOOK: query: select insert_num,part,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,b from part_change_various_various_timestamp order by insert_num
 PREHOOK: type: QUERY
