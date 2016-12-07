@@ -133,7 +133,7 @@ STAGE PLANS:
             alias: la
             Statistics: Num rows: 1 Data size: 14 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: (((loan_id is not null and aid is not null) and pi_id is not null) and (loan_id = 4436)) (type: boolean)
+              predicate: (aid is not null and pi_id is not null and (loan_id = 4436)) (type: boolean)
               Statistics: Num rows: 1 Data size: 14 Basic stats: COMPLETE Column stats: NONE
               Reduce Output Operator
                 key expressions: 4436 (type: int)

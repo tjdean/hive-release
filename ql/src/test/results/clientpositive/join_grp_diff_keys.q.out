@@ -59,7 +59,7 @@ STAGE PLANS:
             alias: foo
             Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
             Filter Operator
-              predicate: ((id is not null and line_id is not null) and (orders <> 'blah')) (type: boolean)
+              predicate: (id is not null and line_id is not null and (orders <> 'blah')) (type: boolean)
               Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
               Reduce Output Operator
                 key expressions: id (type: int), line_id (type: int)

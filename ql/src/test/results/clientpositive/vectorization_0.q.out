@@ -1025,6 +1025,7 @@ STAGE PLANS:
                     sort order: 
                     Statistics: Num rows: 1 Data size: 20 Basic stats: COMPLETE Column stats: NONE
                     value expressions: _col0 (type: struct<count:bigint,sum:double,input:bigint>), _col1 (type: struct<count:bigint,sum:double,variance:double>), _col2 (type: struct<count:bigint,sum:double,variance:double>), _col3 (type: bigint), _col4 (type: double), _col5 (type: tinyint)
+      Execution mode: vectorized
       Reduce Operator Tree:
         Group By Operator
           aggregations: avg(VALUE._col0), stddev_pop(VALUE._col1), var_samp(VALUE._col2), count(VALUE._col3), sum(VALUE._col4), min(VALUE._col5)
