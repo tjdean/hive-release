@@ -70,4 +70,14 @@ public class HashTableDummyOperator extends Operator<HashTableDummyDesc> impleme
     return OperatorType.HASHTABLEDUMMY;
   }
 
+  @Override
+  public boolean equals(Object obj) {
+    return super.equals(obj) || (obj instanceof HashTableDummyOperator)
+        && (((HashTableDummyOperator)obj).operatorId == operatorId);
+  }
+  
+  @Override
+  public int hashCode() {
+    return operatorId.hashCode();
+  }
 }

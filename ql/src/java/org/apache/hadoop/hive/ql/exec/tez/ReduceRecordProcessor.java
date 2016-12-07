@@ -19,6 +19,7 @@ package org.apache.hadoop.hive.ql.exec.tez;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -119,9 +120,23 @@ public class ReduceRecordProcessor  extends RecordProcessor{
 
     connectOps.clear();
     ReduceWork redWork = reduceWork;
+    l4j.info("Main work is " + reduceWork.getName());
+    List<HashTableDummyOperator> workOps = reduceWork.getDummyOps();
+    HashSet<HashTableDummyOperator> dummyOps = workOps == null ? null : new HashSet<>(workOps);
     tagToReducerMap.put(redWork.getTag(), redWork);
     if (mergeWorkList != null) {
       for (BaseWork mergeWork : mergeWorkList) {
+        if (l4j.isDebugEnabled()) {
+          l4j.debug("Additional work " + mergeWork.getName());
+        }
+        workOps = mergeWork.getDummyOps();
+        if (workOps != null) {
+          if (dummyOps == null) {
+            dummyOps = new HashSet<>(workOps);
+          } else {
+            dummyOps.addAll(workOps);
+          }
+        }
         ReduceWork mergeReduceWork = (ReduceWork) mergeWork;
         reducer = mergeReduceWork.getReducer();
         DummyStoreOperator dummyStoreOp = getJoinParentOp(reducer);
@@ -176,7 +191,6 @@ public class ReduceRecordProcessor  extends RecordProcessor{
       // Initialization isn't finished until all parents of all operators
       // are initialized. For broadcast joins that means initializing the
       // dummy parent operators as well.
-      List<HashTableDummyOperator> dummyOps = redWork.getDummyOps();
       if (dummyOps != null) {
         for (HashTableDummyOperator dummyOp : dummyOps) {
           dummyOp.initialize(jconf, null);
