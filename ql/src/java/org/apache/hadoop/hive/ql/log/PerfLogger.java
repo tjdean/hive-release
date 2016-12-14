@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hive.ql.log;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.common.metrics.common.Metrics;
@@ -266,6 +267,14 @@ public class PerfLogger {
       LOG.warn("Error cleaning up metrics", e);
     }
     openScopes.clear();
+  }
+
+  public ImmutableMap<String, Long> getStartTimes() {
+    return ImmutableMap.copyOf(startTimes);
+  }
+
+  public ImmutableMap<String, Long> getEndTimes() {
+    return ImmutableMap.copyOf(endTimes);
   }
 
 }

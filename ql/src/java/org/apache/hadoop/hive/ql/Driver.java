@@ -23,6 +23,7 @@ import java.io.DataInput;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -1423,7 +1424,8 @@ public class Driver implements CommandProcessor {
 
       SessionState ss = SessionState.get();
       HookContext hookContext = new HookContext(plan, conf, ctx.getPathToCS(), ss.getUserName(),
-          ss.getUserIpAddress(), operationId);
+          ss.getUserIpAddress(), InetAddress.getLocalHost().getHostAddress(), operationId, ss.getSessionId(),
+          Thread.currentThread().getName(), ss.isHiveServerQuery(), perfLogger);
       hookContext.setHookType(HookContext.HookType.PRE_EXEC_HOOK);
 
       for (Hook peh : getHooks(HiveConf.ConfVars.PREEXECHOOKS)) {
