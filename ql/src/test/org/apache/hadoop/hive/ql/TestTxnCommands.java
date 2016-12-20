@@ -579,8 +579,8 @@ public class TestTxnCommands {
    */
   @Test
   public void testQuotedIdentifier() throws Exception {
-    String target = "`aci/d_u/ami`";
-    String src = "`src/name`";
+    String target = "acid_uami";
+    String src = "srcname";
     runStatementOnDriver("drop table if exists " + target);
     runStatementOnDriver("drop table if exists " + src);
     runStatementOnDriver("create table " + target + "(i int," +
@@ -606,8 +606,8 @@ public class TestTxnCommands {
   }
   @Test
   public void testQuotedIdentifier2() throws Exception {
-    String target = "`aci/d_u/ami`";
-    String src = "`src/name`";
+    String target = "acid_uami";
+    String src = "srcname";
     runStatementOnDriver("drop table if exists " + target);
     runStatementOnDriver("drop table if exists " + src);
     runStatementOnDriver("create table " + target + "(i int," +
