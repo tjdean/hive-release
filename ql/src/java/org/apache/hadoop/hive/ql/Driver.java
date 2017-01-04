@@ -1064,7 +1064,7 @@ public class Driver implements CommandProcessor {
         if(txnMgr.isTxnOpen()) {
           throw new RuntimeException("Already have an open transaction txnid:" + txnMgr.getCurrentTxnId());
         }
-        txnMgr.openTxn(userFromUGI);
+        txnMgr.openTxn(ctx, userFromUGI);
         LOG.debug("Setting current transaction to " + txnMgr.getCurrentTxnId());
 
         // Set the transaction id in all of the acid file sinks
