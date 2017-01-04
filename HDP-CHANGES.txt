@@ -22,6 +22,7 @@ IMPROVEMENTS
 
 BUG FIXES
 
+    HIVE-15376: Improve heartbeater scheduling for transactions
     HIVE-15588: Vectorization: Fix deallocation of scratch columns in VectorUDFCoalesce, etc to prevent wrong reuse
     HIVE-15338: Wrong result from vectorized DATEDIFF with scalar parameter of type DATE/TIMESTAMP
     HIVE-12594: X lock on partition should not conflict with S lock on DB
