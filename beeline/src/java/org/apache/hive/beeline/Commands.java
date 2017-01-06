@@ -56,7 +56,7 @@ import java.util.TreeSet;
 
 import org.apache.hadoop.hive.common.cli.ShellCmdExecutor;
 import org.apache.hive.jdbc.HiveStatement;
-
+import org.apache.hive.jdbc.logs.BeelineInPlaceUpdateStream;
 
 public class Commands {
   private final BeeLine beeLine;
@@ -860,6 +860,11 @@ public class Commands {
                 logThread = new Thread(createLogRunnable(stmnt));
                 logThread.setDaemon(true);
                 logThread.start();
+                if (stmnt instanceof HiveStatement) {
+                  ((HiveStatement) stmnt).setInPlaceUpdateStream(
+                      new BeelineInPlaceUpdateStream(beeLine.getErrorStream())
+                  );
+                }
                 hasResults = stmnt.execute(sql);
                 logThread.interrupt();
                 logThread.join(DEFAULT_QUERY_PROGRESS_THREAD_TIMEOUT);

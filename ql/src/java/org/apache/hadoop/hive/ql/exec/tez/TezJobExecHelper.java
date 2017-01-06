@@ -37,7 +37,7 @@ public class TezJobExecHelper {
 
       // we have tez installed
       ClassLoader classLoader = TezJobExecHelper.class.getClassLoader();
-      Method method = classLoader.loadClass("org.apache.hadoop.hive.ql.exec.tez.TezJobMonitor")
+      Method method = classLoader.loadClass("org.apache.hadoop.hive.ql.exec.tez.monitoring.TezJobMonitor")
         .getMethod("killRunningJobs");
       method.invoke(null, null);
     }

@@ -26,6 +26,7 @@ public class OperationStatus {
 
   private final OperationState state;
   private final HiveSQLException operationException;
+  private JobProgressUpdate jobProgressUpdate;
 
   public OperationStatus(OperationState state, HiveSQLException operationException) {
     this.state = state;
@@ -40,4 +41,11 @@ public class OperationStatus {
     return operationException;
   }
 
+  void setJobProgressUpdate(JobProgressUpdate jobProgressUpdate){
+    this.jobProgressUpdate = jobProgressUpdate;
+  }
+
+  public JobProgressUpdate jobProgressUpdate(){
+    return jobProgressUpdate;
+  }
 }

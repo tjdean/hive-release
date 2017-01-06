@@ -45,11 +45,14 @@ import org.apache.hive.service.cli.FetchType;
 import org.apache.hive.service.cli.GetInfoType;
 import org.apache.hive.service.cli.GetInfoValue;
 import org.apache.hive.service.cli.HiveSQLException;
+import org.apache.hive.service.cli.JobProgressUpdate;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.OperationStatus;
+import org.apache.hive.service.cli.ProgressMonitorStatusMapper;
 import org.apache.hive.service.cli.RowSet;
 import org.apache.hive.service.cli.SessionHandle;
 import org.apache.hive.service.cli.TableSchema;
+import org.apache.hive.service.cli.TezProgressMonitorStatusMapper;
 import org.apache.hive.service.cli.session.SessionManager;
 import org.apache.hive.service.server.HiveServer2;
 import org.apache.thrift.TException;
@@ -628,7 +631,7 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
     TGetOperationStatusResp resp = new TGetOperationStatusResp();
     try {
       OperationStatus operationStatus = cliService.getOperationStatus(
-          new OperationHandle(req.getOperationHandle()));
+          new OperationHandle(req.getOperationHandle()), req.isGetProgressUpdate());
       resp.setOperationState(operationStatus.getState().toTOperationState());
       HiveSQLException opException = operationStatus.getOperationException();
       if (opException != null) {
@@ -637,6 +640,20 @@ public abstract class ThriftCLIService extends AbstractService implements TCLISe
         resp.setErrorMessage(opException.getMessage());
       }
       resp.setStatus(OK_STATUS);
+      JobProgressUpdate progressUpdate = operationStatus.jobProgressUpdate();
+      ProgressMonitorStatusMapper mapper = ProgressMonitorStatusMapper.DEFAULT;
+      if ("tez".equals(hiveConf.getVar(ConfVars.HIVE_EXECUTION_ENGINE))) {
+        mapper = new TezProgressMonitorStatusMapper();
+      }
+
+      resp.setProgressUpdateResponse(new TProgressUpdateResp(
+          progressUpdate.headers(),
+          progressUpdate.rows(),
+          progressUpdate.progressedPercentage,
+          mapper.forStatus(progressUpdate.status),
+          progressUpdate.footerSummary,
+          progressUpdate.startTimeMillis
+      ));
     } catch (Exception e) {
       LOG.warn("Error getting operation status: ", e);
       resp.setStatus(HiveSQLException.toTStatus(e));

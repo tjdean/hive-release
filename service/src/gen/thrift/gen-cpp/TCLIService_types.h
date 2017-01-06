@@ -174,6 +174,16 @@ struct TFetchOrientation {
 
 extern const std::map<int, const char*> _TFetchOrientation_VALUES_TO_NAMES;
 
+struct TJobExecutionStatus {
+  enum type {
+    IN_PROGRESS = 0,
+    COMPLETE = 1,
+    NOT_AVAILABLE = 2
+  };
+};
+
+extern const std::map<int, const char*> _TJobExecutionStatus_VALUES_TO_NAMES;
+
 typedef int32_t TTypeEntryPtr;
 
 typedef std::string TIdentifier;
@@ -329,6 +339,8 @@ class TCancelDelegationTokenResp;
 class TRenewDelegationTokenReq;
 
 class TRenewDelegationTokenResp;
+
+class TProgressUpdateResp;
 
 typedef struct _TTypeQualifierValue__isset {
   _TTypeQualifierValue__isset() : i32Value(false), stringValue(false) {}
@@ -3376,23 +3388,36 @@ inline std::ostream& operator<<(std::ostream& out, const TGetFunctionsResp& obj)
   return out;
 }
 
+typedef struct _TGetOperationStatusReq__isset {
+  _TGetOperationStatusReq__isset() : getProgressUpdate(false) {}
+  bool getProgressUpdate :1;
+} _TGetOperationStatusReq__isset;
 
 class TGetOperationStatusReq {
  public:
 
   TGetOperationStatusReq(const TGetOperationStatusReq&);
   TGetOperationStatusReq& operator=(const TGetOperationStatusReq&);
-  TGetOperationStatusReq() {
+  TGetOperationStatusReq() : getProgressUpdate(0) {
   }
 
   virtual ~TGetOperationStatusReq() throw();
   TOperationHandle operationHandle;
+  bool getProgressUpdate;
+
+  _TGetOperationStatusReq__isset __isset;
 
   void __set_operationHandle(const TOperationHandle& val);
+
+  void __set_getProgressUpdate(const bool val);
 
   bool operator == (const TGetOperationStatusReq & rhs) const
   {
     if (!(operationHandle == rhs.operationHandle))
+      return false;
+    if (__isset.getProgressUpdate != rhs.__isset.getProgressUpdate)
+      return false;
+    else if (__isset.getProgressUpdate && !(getProgressUpdate == rhs.getProgressUpdate))
       return false;
     return true;
   }
@@ -3417,11 +3442,12 @@ inline std::ostream& operator<<(std::ostream& out, const TGetOperationStatusReq&
 }
 
 typedef struct _TGetOperationStatusResp__isset {
-  _TGetOperationStatusResp__isset() : operationState(false), sqlState(false), errorCode(false), errorMessage(false) {}
+  _TGetOperationStatusResp__isset() : operationState(false), sqlState(false), errorCode(false), errorMessage(false), progressUpdateResponse(false) {}
   bool operationState :1;
   bool sqlState :1;
   bool errorCode :1;
   bool errorMessage :1;
+  bool progressUpdateResponse :1;
 } _TGetOperationStatusResp__isset;
 
 class TGetOperationStatusResp {
@@ -3438,6 +3464,7 @@ class TGetOperationStatusResp {
   std::string sqlState;
   int32_t errorCode;
   std::string errorMessage;
+  TProgressUpdateResp progressUpdateResponse;
 
   _TGetOperationStatusResp__isset __isset;
 
@@ -3450,6 +3477,8 @@ class TGetOperationStatusResp {
   void __set_errorCode(const int32_t val);
 
   void __set_errorMessage(const std::string& val);
+
+  void __set_progressUpdateResponse(const TProgressUpdateResp& val);
 
   bool operator == (const TGetOperationStatusResp & rhs) const
   {
@@ -3470,6 +3499,10 @@ class TGetOperationStatusResp {
     if (__isset.errorMessage != rhs.__isset.errorMessage)
       return false;
     else if (__isset.errorMessage && !(errorMessage == rhs.errorMessage))
+      return false;
+    if (__isset.progressUpdateResponse != rhs.__isset.progressUpdateResponse)
+      return false;
+    else if (__isset.progressUpdateResponse && !(progressUpdateResponse == rhs.progressUpdateResponse))
       return false;
     return true;
   }
@@ -4140,6 +4173,71 @@ class TRenewDelegationTokenResp {
 void swap(TRenewDelegationTokenResp &a, TRenewDelegationTokenResp &b);
 
 inline std::ostream& operator<<(std::ostream& out, const TRenewDelegationTokenResp& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+
+class TProgressUpdateResp {
+ public:
+
+  TProgressUpdateResp(const TProgressUpdateResp&);
+  TProgressUpdateResp& operator=(const TProgressUpdateResp&);
+  TProgressUpdateResp() : progressedPercentage(0), status((TJobExecutionStatus::type)0), footerSummary(), startTime(0) {
+  }
+
+  virtual ~TProgressUpdateResp() throw();
+  std::vector<std::string>  headerNames;
+  std::vector<std::vector<std::string> >  rows;
+  double progressedPercentage;
+  TJobExecutionStatus::type status;
+  std::string footerSummary;
+  int64_t startTime;
+
+  void __set_headerNames(const std::vector<std::string> & val);
+
+  void __set_rows(const std::vector<std::vector<std::string> > & val);
+
+  void __set_progressedPercentage(const double val);
+
+  void __set_status(const TJobExecutionStatus::type val);
+
+  void __set_footerSummary(const std::string& val);
+
+  void __set_startTime(const int64_t val);
+
+  bool operator == (const TProgressUpdateResp & rhs) const
+  {
+    if (!(headerNames == rhs.headerNames))
+      return false;
+    if (!(rows == rhs.rows))
+      return false;
+    if (!(progressedPercentage == rhs.progressedPercentage))
+      return false;
+    if (!(status == rhs.status))
+      return false;
+    if (!(footerSummary == rhs.footerSummary))
+      return false;
+    if (!(startTime == rhs.startTime))
+      return false;
+    return true;
+  }
+  bool operator != (const TProgressUpdateResp &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const TProgressUpdateResp & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(TProgressUpdateResp &a, TProgressUpdateResp &b);
+
+inline std::ostream& operator<<(std::ostream& out, const TProgressUpdateResp& obj)
 {
   obj.printTo(out);
   return out;

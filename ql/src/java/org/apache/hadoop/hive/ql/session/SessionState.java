@@ -72,6 +72,7 @@ import org.apache.hadoop.hive.ql.lockmgr.HiveTxnManager;
 import org.apache.hadoop.hive.ql.lockmgr.LockException;
 import org.apache.hadoop.hive.ql.lockmgr.TxnManagerFactory;
 import org.apache.hadoop.hive.ql.log.PerfLogger;
+import org.apache.hadoop.hive.common.log.ProgressMonitor;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.HiveUtils;
@@ -184,6 +185,7 @@ public class SessionState {
   private HiveAuthorizationProvider authorizer;
 
   private HiveAuthorizer authorizerV2;
+  private volatile ProgressMonitor progressMonitor;
 
   public enum AuthorizationMode{V1, V2};
 
@@ -1532,6 +1534,7 @@ public class SessionState {
 
     dropSessionPaths(conf);
     unCacheDataNucleusClassLoaders();
+    progressMonitor = null;
   }
 
   private void unCacheDataNucleusClassLoaders() {
@@ -1687,6 +1690,15 @@ public class SessionState {
   public String getReloadableAuxJars() {
     return StringUtils.join(preReloadableAuxJars, ',');
   }
+
+  public void updateProgressMonitor(ProgressMonitor progressMonitor) {
+    this.progressMonitor = progressMonitor;
+  }
+
+  public ProgressMonitor getProgressMonitor() {
+    return progressMonitor;
+  }
+
 }
 
 class ResourceMaps {

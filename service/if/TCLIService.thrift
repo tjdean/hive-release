@@ -968,6 +968,8 @@ struct TGetFunctionsResp {
 struct TGetOperationStatusReq {
   // Session to run this request against
   1: required TOperationHandle operationHandle
+  // optional arguments to get progress information
+  2: optional bool getProgressUpdate
 }
 
 struct TGetOperationStatusResp {
@@ -983,6 +985,8 @@ struct TGetOperationStatusResp {
 
   // Error message
   5: optional string errorMessage
+
+  6: optional TProgressUpdateResp progressUpdateResponse
 }
 
 
@@ -1136,6 +1140,21 @@ struct TRenewDelegationTokenReq {
 struct TRenewDelegationTokenResp {
   // status of the request
   1: required TStatus status
+}
+
+enum TJobExecutionStatus {
+    IN_PROGRESS,
+    COMPLETE,
+    NOT_AVAILABLE
+}
+
+struct TProgressUpdateResp {
+  1: required list<string> headerNames
+  2: required list<list<string>> rows
+  3: required double progressedPercentage
+  4: required TJobExecutionStatus status
+  5: required string footerSummary
+  6: required i64 startTime
 }
 
 service TCLIService {
