@@ -133,7 +133,6 @@ STAGE PLANS:
                         serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
       Local Work:
         Map Reduce Local Work
-      Execution mode: vectorized
 
   Stage: Stage-0
     Fetch Operator
