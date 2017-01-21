@@ -47,6 +47,7 @@ public class VectorMapJoinOuterFilteredOperator extends VectorMapJoinBaseOperato
   private transient VectorExtractRowDynBatch vectorExtractRowDynBatch;
 
   protected transient Object[] singleRow;
+  protected transient int savePosBigTable;
 
   public VectorMapJoinOuterFilteredOperator() {
     super();
@@ -63,6 +64,7 @@ public class VectorMapJoinOuterFilteredOperator extends VectorMapJoinBaseOperato
   public Collection<Future<?>> initializeOp(Configuration hconf) throws HiveException {
 
     final int posBigTable = conf.getPosBigTable();
+    savePosBigTable = posBigTable;
 
     // We need a input object inspector that is for the row we will extract out of the
     // vectorized row batch, not for example, an original inspector for an ORC table, etc.
@@ -91,7 +93,7 @@ public class VectorMapJoinOuterFilteredOperator extends VectorMapJoinBaseOperato
 
     if (firstBatch) {
       vectorExtractRowDynBatch = new VectorExtractRowDynBatch();
-      vectorExtractRowDynBatch.init((StructObjectInspector) inputObjInspectors[0], vContext.getProjectedColumns());
+      vectorExtractRowDynBatch.init((StructObjectInspector) inputObjInspectors[savePosBigTable], vContext.getProjectedColumns());
 
       singleRow = new Object[vectorExtractRowDynBatch.getCount()];
 
