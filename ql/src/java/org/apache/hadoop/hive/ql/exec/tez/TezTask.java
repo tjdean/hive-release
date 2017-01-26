@@ -212,7 +212,16 @@ public class TezTask extends Task<TezWork> {
         LOG.error("Failed to get counters: " + err, err);
         counters = null;
       }
-      TezSessionPoolManager.getInstance().returnSession(session);
+      finally {
+        // We return this to the pool even if it's unusable; reopen is supposed to handle this.
+        try {
+          TezSessionPoolManager.getInstance()
+              .returnSession(session);
+        } catch (Exception e) {
+          LOG.error("Failed to return session: " + session + " to pool", e);
+          throw e;
+        }
+      }
 
       if (LOG.isInfoEnabled() && counters != null
           && (conf.getBoolVar(conf, HiveConf.ConfVars.TEZ_EXEC_SUMMARY) ||
