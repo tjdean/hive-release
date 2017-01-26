@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.metastore.txn;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.hadoop.hive.common.classification.InterfaceAudience;
 import org.apache.hadoop.hive.common.classification.InterfaceStability;
+import org.apache.hadoop.hive.common.classification.RetrySemantics;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.AbortTxnRequest;
 import org.apache.hadoop.hive.metastore.api.AbortTxnsRequest;
@@ -97,6 +98,7 @@ public interface TxnStore {
    * @return information about open transactions
    * @throws MetaException
    */
+  @RetrySemantics.ReadOnly
   public GetOpenTxnsInfoResponse getOpenTxnsInfo() throws MetaException;
 
   /**
@@ -104,12 +106,14 @@ public interface TxnStore {
    * @return list of open transactions, as well as a high water mark.
    * @throws MetaException
    */
+  @RetrySemantics.ReadOnly
   public GetOpenTxnsResponse getOpenTxns() throws MetaException;
 
   /**
    * Get the count for open transactions.
    * @throws MetaException
    */
+  @RetrySemantics.ReadOnly
   public void countOpenTxns() throws MetaException;
 
   /**
@@ -118,6 +122,7 @@ public interface TxnStore {
    * @return information on opened transactions
    * @throws MetaException
    */
+  @RetrySemantics.Idempotent
   public OpenTxnsResponse openTxns(OpenTxnRequest rqst) throws MetaException;
 
   /**
@@ -126,6 +131,7 @@ public interface TxnStore {
    * @throws NoSuchTxnException
    * @throws MetaException
    */
+  @RetrySemantics.Idempotent
   public void abortTxn(AbortTxnRequest rqst) throws NoSuchTxnException, MetaException, TxnAbortedException;
 
   /**
@@ -134,6 +140,7 @@ public interface TxnStore {
    * @throws NoSuchTxnException
    * @throws MetaException
    */
+  @RetrySemantics.Idempotent
   public void abortTxns(AbortTxnsRequest rqst) throws NoSuchTxnException, MetaException;
 
   /**
@@ -143,6 +150,7 @@ public interface TxnStore {
    * @throws TxnAbortedException
    * @throws MetaException
    */
+  @RetrySemantics.Idempotent
   public void commitTxn(CommitTxnRequest rqst)
     throws NoSuchTxnException, TxnAbortedException,  MetaException;
 
@@ -155,6 +163,7 @@ public interface TxnStore {
    * @throws TxnAbortedException
    * @throws MetaException
    */
+  @RetrySemantics.CannotRetry
   public LockResponse lock(LockRequest rqst)
     throws NoSuchTxnException, TxnAbortedException, MetaException;
 
@@ -168,6 +177,7 @@ public interface TxnStore {
    * @throws TxnAbortedException
    * @throws MetaException
    */
+  @RetrySemantics.SafeToRetry
   public LockResponse checkLock(CheckLockRequest rqst)
     throws NoSuchTxnException, NoSuchLockException, TxnAbortedException, MetaException;
 
@@ -180,6 +190,7 @@ public interface TxnStore {
    * @throws TxnOpenException
    * @throws MetaException
    */
+  @RetrySemantics.Idempotent
   public void unlock(UnlockRequest rqst)
     throws NoSuchLockException, TxnOpenException, MetaException;
 
@@ -189,6 +200,7 @@ public interface TxnStore {
    * @return lock information.
    * @throws MetaException
    */
+  @RetrySemantics.ReadOnly
   public ShowLocksResponse showLocks(ShowLocksRequest rqst) throws MetaException;
 
   /**
@@ -199,6 +211,7 @@ public interface TxnStore {
    * @throws TxnAbortedException
    * @throws MetaException
    */
+  @RetrySemantics.SafeToRetry
   public void heartbeat(HeartbeatRequest ids)
     throws NoSuchTxnException,  NoSuchLockException, TxnAbortedException, MetaException;
 
@@ -208,6 +221,7 @@ public interface TxnStore {
    * @return info on txns that were heartbeated
    * @throws MetaException
    */
+  @RetrySemantics.SafeToRetry
   public HeartbeatTxnRangeResponse heartbeatTxnRange(HeartbeatTxnRangeRequest rqst)
     throws MetaException;
 
@@ -218,6 +232,7 @@ public interface TxnStore {
    * @return id of the compaction that has been started or existing id if this resource is already scheduled
    * @throws MetaException
    */
+  @RetrySemantics.Idempotent
   public CompactionResponse compact(CompactionRequest rqst) throws MetaException;
 
   /**
@@ -226,6 +241,7 @@ public interface TxnStore {
    * @return compaction information
    * @throws MetaException
    */
+  @RetrySemantics.ReadOnly
   public ShowCompactResponse showCompact(ShowCompactRequest rqst) throws MetaException;
 
   /**
@@ -235,6 +251,7 @@ public interface TxnStore {
    * @throws TxnAbortedException
    * @throws MetaException
    */
+  @RetrySemantics.SafeToRetry
   public void addDynamicPartitions(AddDynamicPartitions rqst)
       throws NoSuchTxnException,  TxnAbortedException, MetaException;
 
@@ -246,11 +263,13 @@ public interface TxnStore {
    * @param partitionIterator partition iterator
    * @throws MetaException
    */
+  @RetrySemantics.Idempotent
   public void cleanupRecords(HiveObjectType type, Database db, Table table,
                              Iterator<Partition> partitionIterator) throws MetaException;
   /**
    * Timeout transactions and/or locks.  This should only be called by the compactor.
    */
+  @RetrySemantics.Idempotent
   public void performTimeOuts();
 
   /**
@@ -262,6 +281,7 @@ public interface TxnStore {
    * @return list of CompactionInfo structs.  These will not have id, type,
    * or runAs set since these are only potential compactions not actual ones.
    */
+  @RetrySemantics.ReadOnly
   public Set<CompactionInfo> findPotentialCompactions(int maxAborted) throws MetaException;
 
   /**
@@ -270,6 +290,7 @@ public interface TxnStore {
    * @param cq_id id of this entry in the queue
    * @param user user to run the jobs as
    */
+  @RetrySemantics.Idempotent
   public void setRunAs(long cq_id, String user) throws MetaException;
 
   /**
@@ -278,6 +299,7 @@ public interface TxnStore {
    * @param workerId id of the worker calling this, will be recorded in the db
    * @return an info element for this compaction request, or null if there is no work to do now.
    */
+  @RetrySemantics.ReadOnly
   public CompactionInfo findNextToCompact(String workerId) throws MetaException;
 
   /**
@@ -285,6 +307,7 @@ public interface TxnStore {
    * and put it in the ready to clean state.
    * @param info info on the compaction entry to mark as compacted.
    */
+  @RetrySemantics.SafeToRetry
   public void markCompacted(CompactionInfo info) throws MetaException;
 
   /**
@@ -292,6 +315,7 @@ public interface TxnStore {
    * be cleaned.
    * @return information on the entry in the queue.
    */
+  @RetrySemantics.ReadOnly
   public List<CompactionInfo> findReadyToClean() throws MetaException;
 
   /**
@@ -300,6 +324,7 @@ public interface TxnStore {
    * 
    * @param info info on the compaction entry to remove
    */
+  @RetrySemantics.CannotRetry
   public void markCleaned(CompactionInfo info) throws MetaException;
 
   /**
@@ -309,6 +334,7 @@ public interface TxnStore {
    * @param info information on the compaction that failed.
    * @throws MetaException
    */
+  @RetrySemantics.CannotRetry
   public void markFailed(CompactionInfo info) throws MetaException;
 
   /**
@@ -316,6 +342,7 @@ public interface TxnStore {
    * txns exist can be that now work was done in this txn (e.g. Streaming opened TransactionBatch and
    * abandoned it w/o doing any work) or due to {@link #markCleaned(CompactionInfo)} being called.
    */
+  @RetrySemantics.SafeToRetry
   public void cleanEmptyAbortedTxns() throws MetaException;
 
   /**
@@ -327,6 +354,7 @@ public interface TxnStore {
    * @param hostname Name of this host.  It is assumed this prefixes the thread's worker id,
    *                 so that like hostname% will match the worker id.
    */
+  @RetrySemantics.Idempotent
   public void revokeFromLocalWorkers(String hostname) throws MetaException;
 
   /**
@@ -338,6 +366,7 @@ public interface TxnStore {
    * @param timeout number of milliseconds since start time that should elapse before a worker is
    *                declared dead.
    */
+  @RetrySemantics.Idempotent
   public void revokeTimedoutWorkers(long timeout) throws MetaException;
 
   /**
@@ -346,11 +375,13 @@ public interface TxnStore {
    * table level stats are examined.
    * @throws MetaException
    */
+  @RetrySemantics.ReadOnly
   public List<String> findColumnsWithStats(CompactionInfo ci) throws MetaException;
 
   /**
    * Record the highest txn id that the {@code ci} compaction job will pay attention to.
    */
+  @RetrySemantics.Idempotent
   public void setCompactionHighestTxnId(CompactionInfo ci, long highestTxnId) throws MetaException;
 
   /**
@@ -361,12 +392,14 @@ public interface TxnStore {
    * it's not recent.
    * @throws MetaException
    */
+  @RetrySemantics.SafeToRetry
   public void purgeCompactionHistory() throws MetaException;
 
   /**
    * WriteSet tracking is used to ensure proper transaction isolation.  This method deletes the 
    * transaction metadata once it becomes unnecessary.  
    */
+  @RetrySemantics.SafeToRetry
   public void performWriteSetGC();
 
   /**
@@ -377,6 +410,7 @@ public interface TxnStore {
    * @return true if it is ok to compact, false if there have been too many failures.
    * @throws MetaException
    */
+  @RetrySemantics.ReadOnly
   public boolean checkFailedCompactions(CompactionInfo ci) throws MetaException;
 
   @VisibleForTesting
@@ -385,6 +419,7 @@ public interface TxnStore {
   @VisibleForTesting
   long setTimeout(long milliseconds);
 
+  @RetrySemantics.Idempotent
   public MutexAPI getMutexAPI();
 
   /**
@@ -410,7 +445,7 @@ public interface TxnStore {
     public void acquireLock(String key, LockHandle handle) throws MetaException;
     public static interface LockHandle {
       /**
-       * Releases all locks associcated with this handle.
+       * Releases all locks associated with this handle.
        */
       public void releaseLocks();
     }
@@ -421,5 +456,6 @@ public interface TxnStore {
    * it calls this to update the metadata.
    * @param id {@link CompactionInfo#id}
    */
+  @RetrySemantics.Idempotent
   public void setHadoopJobId(String hadoopJobId, long id);
 }

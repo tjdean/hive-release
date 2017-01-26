@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.metastore.txn;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.apache.hadoop.hive.common.classification.RetrySemantics;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.CompactionType;
 import org.apache.hadoop.hive.metastore.api.MetaException;
@@ -56,6 +57,8 @@ class CompactionTxnHandler extends TxnHandler {
    * @return list of CompactionInfo structs.  These will not have id, type,
    * or runAs set since these are only potential compactions not actual ones.
    */
+  @Override
+  @RetrySemantics.ReadOnly
   public Set<CompactionInfo> findPotentialCompactions(int maxAborted) throws MetaException {
     Connection dbConn = null;
     Set<CompactionInfo> response = new HashSet<CompactionInfo>();
@@ -118,6 +121,8 @@ class CompactionTxnHandler extends TxnHandler {
    * @param cq_id id of this entry in the queue
    * @param user user to run the jobs as
    */
+  @Override
+  @RetrySemantics.Idempotent
   public void setRunAs(long cq_id, String user) throws MetaException {
     try {
       Connection dbConn = null;
@@ -155,6 +160,8 @@ class CompactionTxnHandler extends TxnHandler {
    * @param workerId id of the worker calling this, will be recorded in the db
    * @return an info element for this compaction request, or null if there is no work to do now.
    */
+  @Override
+  @RetrySemantics.SafeToRetry
   public CompactionInfo findNextToCompact(String workerId) throws MetaException {
     try {
       Connection dbConn = null;
@@ -226,6 +233,8 @@ class CompactionTxnHandler extends TxnHandler {
    * and put it in the ready to clean state.
    * @param info info on the compaction entry to mark as compacted.
    */
+  @Override
+  @RetrySemantics.SafeToRetry
   public void markCompacted(CompactionInfo info) throws MetaException {
     try {
       Connection dbConn = null;
@@ -265,6 +274,8 @@ class CompactionTxnHandler extends TxnHandler {
    * be cleaned.
    * @return information on the entry in the queue.
    */
+  @Override
+  @RetrySemantics.ReadOnly
   public List<CompactionInfo> findReadyToClean() throws MetaException {
     Connection dbConn = null;
     List<CompactionInfo> rc = new ArrayList<CompactionInfo>();
@@ -318,6 +329,8 @@ class CompactionTxnHandler extends TxnHandler {
    * 
    * @param info info on the compaction entry to remove
    */
+  @Override
+  @RetrySemantics.CannotRetry
   public void markCleaned(CompactionInfo info) throws MetaException {
     try {
       Connection dbConn = null;
@@ -431,6 +444,8 @@ class CompactionTxnHandler extends TxnHandler {
    * txns exist can be that now work was done in this txn (e.g. Streaming opened TransactionBatch and
    * abandoned it w/o doing any work) or due to {@link #markCleaned(CompactionInfo)} being called.
    */
+  @Override
+  @RetrySemantics.SafeToRetry
   public void cleanEmptyAbortedTxns() throws MetaException {
     try {
       Connection dbConn = null;
@@ -495,6 +510,8 @@ class CompactionTxnHandler extends TxnHandler {
    * @param hostname Name of this host.  It is assumed this prefixes the thread's worker id,
    *                 so that like hostname% will match the worker id.
    */
+  @Override
+  @RetrySemantics.Idempotent
   public void revokeFromLocalWorkers(String hostname) throws MetaException {
     try {
       Connection dbConn = null;
@@ -537,6 +554,8 @@ class CompactionTxnHandler extends TxnHandler {
    * @param timeout number of milliseconds since start time that should elapse before a worker is
    *                declared dead.
    */
+  @Override
+  @RetrySemantics.Idempotent
   public void revokeTimedoutWorkers(long timeout) throws MetaException {
     try {
       Connection dbConn = null;
@@ -577,6 +596,8 @@ class CompactionTxnHandler extends TxnHandler {
    * table level stats are examined.
    * @throws MetaException
    */
+  @Override
+  @RetrySemantics.ReadOnly
   public List<String> findColumnsWithStats(CompactionInfo ci) throws MetaException {
     Connection dbConn = null;
     Statement stmt = null;
@@ -633,6 +654,8 @@ class CompactionTxnHandler extends TxnHandler {
    * Record the highest txn id that the {@code ci} compaction job will pay attention to.
    * This is the highest resolved txn id, i.e. such that there are no open txns with lower ids.
    */
+  @Override
+  @RetrySemantics.Idempotent
   public void setCompactionHighestTxnId(CompactionInfo ci, long highestTxnId) throws MetaException {
     Connection dbConn = null;
     Statement stmt = null;
@@ -698,6 +721,8 @@ class CompactionTxnHandler extends TxnHandler {
    * it's not recent.
    * @throws MetaException
    */
+  @Override
+  @RetrySemantics.SafeToRetry
   public void purgeCompactionHistory() throws MetaException {
     Connection dbConn = null;
     Statement stmt = null;
@@ -764,7 +789,7 @@ class CompactionTxnHandler extends TxnHandler {
    * this ensures that the number of failed compaction entries retained is > than number of failed
    * compaction threshold which prevents new compactions from being scheduled.
    */
-  public int getFailedCompactionRetention() {
+  private int getFailedCompactionRetention() {
     int failedThreshold = conf.getIntVar(HiveConf.ConfVars.COMPACTOR_INITIATOR_FAILED_THRESHOLD);
     int failedRetention = conf.getIntVar(HiveConf.ConfVars.COMPACTOR_HISTORY_RETENTION_FAILED);
     if(failedRetention < failedThreshold) {
@@ -785,6 +810,8 @@ class CompactionTxnHandler extends TxnHandler {
    * That would be a meta operations, i.e. first find all partitions for this table (which have 
    * txn info) and schedule each compaction separately.  This avoids complications in this logic.
    */
+  @Override
+  @RetrySemantics.ReadOnly
   public boolean checkFailedCompactions(CompactionInfo ci) throws MetaException {
     Connection dbConn = null;
     Statement stmt = null;
@@ -831,6 +858,8 @@ class CompactionTxnHandler extends TxnHandler {
    * If there is no entry in compaction_queue, it means Initiator failed to even schedule a compaction,
    * which we record as ATTEMPTED_STATE entry in history.
    */
+  @Override
+  @RetrySemantics.CannotRetry
   public void markFailed(CompactionInfo ci) throws MetaException {//todo: this should not throw
     //todo: this should take "comment" as parameter to set in CC_META_INFO to provide some context for the failure
     try {
@@ -896,6 +925,7 @@ class CompactionTxnHandler extends TxnHandler {
     }
   }
   @Override
+  @RetrySemantics.Idempotent
   public void setHadoopJobId(String hadoopJobId, long id) {
     try {
       Connection dbConn = null;

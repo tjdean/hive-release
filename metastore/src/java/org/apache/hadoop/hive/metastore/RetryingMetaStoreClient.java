@@ -19,6 +19,7 @@
 package org.apache.hadoop.hive.metastore;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -31,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.common.classification.InterfaceAudience.Public;
+import org.apache.hadoop.hive.common.classification.RetrySemantics;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.annotation.NoReconnect;
 import org.apache.hadoop.hive.metastore.api.MetaException;
@@ -147,6 +149,15 @@ public class RetryingMetaStoreClient implements InvocationHandler {
     TException caughtException = null;
 
     boolean allowReconnect = ! method.isAnnotationPresent(NoReconnect.class);
+    boolean allowRetry = true;
+    Annotation[] directives = method.getDeclaredAnnotations();
+    if(directives != null) {
+      for(Annotation a : directives) {
+        if(a instanceof RetrySemantics.CannotRetry) {
+          allowRetry = false;
+        }
+      }
+    }
 
     while (true) {
       try {
@@ -188,7 +199,7 @@ public class RetryingMetaStoreClient implements InvocationHandler {
         caughtException = e;
       }
 
-      if (retriesMade >= retryLimit || base.isLocalMetaStore()) {
+      if (retriesMade >= retryLimit || base.isLocalMetaStore() || !allowRetry) {
         throw caughtException;
       }
       retriesMade++;
