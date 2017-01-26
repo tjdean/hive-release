@@ -23,6 +23,7 @@ IMPROVEMENTS
 BUG FIXES
 
     HIVE-15338: Wrong result from vectorized DATEDIFF with scalar parameter of type DATE/TIMESTAMP
+    HIVE-12594: X lock on partition should not conflict with S lock on DB
     HIVE-15327: Outerjoin might produce wrong result depending on joinEmitInterval value
     HIVE-15236: timestamp and date comparison should happen in timestamp
     HIVE-13539: HiveHFileOutputFormat searching the wrong directory for HFiles
