@@ -22,7 +22,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FileChecksum;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
@@ -68,7 +67,6 @@ public class EximUtil {
   public static final String METADATA_NAME = "_metadata";
   public static final String FILES_NAME = "_files";
   public static final String DATA_PATH_NAME = "data";
-  public static final String URI_FRAGMENT_SEPARATOR = "#";
 
   private static Log LOG = LogFactory.getLog(EximUtil.class);
 
@@ -390,21 +388,6 @@ public class EximUtil {
         }
       }
     };
-  }
-
-  public static String getCMEncodedFileName(String fileURIStr, String fileChecksum) {
-    // The checksum is set as the fragment portion of the file uri
-    return fileURIStr + URI_FRAGMENT_SEPARATOR + fileChecksum;
-  }
-
-  public static String getCMDecodedFileName(String encodedFileURIStr) {
-    String[] uriAndFragment = encodedFileURIStr.split(URI_FRAGMENT_SEPARATOR);
-    return uriAndFragment[0];
-  }
-
-  public static FileChecksum getCMDecodedChecksum(String encodedFileURIStr) {
-    // TODO: Implement this as part of HIVE-15490
-    return null;
   }
 
 }
