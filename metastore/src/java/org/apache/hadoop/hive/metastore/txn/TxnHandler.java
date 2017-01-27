@@ -669,7 +669,6 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
          */
         lockHandle = lockTransactionRecord(stmt, txnid, TXN_OPEN);
         if(lockHandle == null) {
-          shouldNeverHappen(txnid);
           //if here, txn was not found (in expected state)
           TxnStatus actualTxnStatus = findTxnState(txnid, stmt);
           if(actualTxnStatus == TxnStatus.COMMITTED) {
@@ -681,6 +680,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
             return;
           }
           raiseTxnUnexpectedState(actualTxnStatus, txnid);
+          shouldNeverHappen(txnid);
           //dbConn is rolled back in finally{}
         }
         String conflictSQLSuffix = "from TXN_COMPONENTS where tc_txnid=" + txnid + " and tc_operation_type IN(" +
