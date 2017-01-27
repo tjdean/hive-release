@@ -38,8 +38,18 @@
         <exclude>org.apache.hive.hcatalog:*</exclude>
         <exclude>org.slf4j:*</exclude>
         <exclude>commons-configuration:commons-configuration</exclude>
+        <exclude>org.apache.hive:hive-jdbc:*:standalone</exclude>
         <exclude>org.apache.hive:hive-testutils</exclude>
       </excludes>
+    </dependencySet>
+    <dependencySet>
+      <outputDirectory>jdbc/</outputDirectory>
+      <unpack>false</unpack>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useStrictFiltering>true</useStrictFiltering>
+      <includes>
+        <include>org.apache.hive:hive-jdbc:*:standalone</include>
+      </includes>
     </dependencySet>
     <dependencySet>
       <outputDirectory>hcatalog/share/hcatalog</outputDirectory>

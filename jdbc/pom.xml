@@ -189,13 +189,11 @@
               <artifactSet>
                 <excludes>
                   <exclude>org.apache.commons:commons-compress</exclude>
-                  <exclude>commons-configuration:commons-configuration</exclude>
                   <exclude>org.apache.hadoop:hadoop-yarn*</exclude>
                   <exclude>org.apache.hadoop:hadoop-mapreduce*</exclude>
                   <exclude>org.apache.hadoop:hadoop-hdfs</exclude>
                   <exclude>org.apache.hadoop:hadoop-client</exclude>
                   <exclude>org.apache.hadoop:hadoop-annotations</exclude>
-                  <exclude>org.apache.hadoop:hadoop-auth</exclude>
                   <exclude>org.apache.hive:hive-ant</exclude>
                   <exclude>org.apache.ant:*</exclude>
                   <exclude>junit:*</exclude>
@@ -216,6 +214,40 @@
                   <exclude>log4j:*</exclude>
                 </excludes>
               </artifactSet>
+              <relocations>
+                <relocation>
+                  <pattern>org.apache.http</pattern>
+                  <shadedPattern>org.apache.hive.org.apache.http</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache.thrift</pattern>
+                  <shadedPattern>org.apache.hive.org.apache.thrift</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.google.common</pattern>
+                  <shadedPattern>org.apache.hive.com.google.common</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache.commons</pattern>
+                  <shadedPattern>org.apache.hive.org.apache.commons</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache.log4j</pattern>
+                  <shadedPattern>org.apache.hive.org.apache.log4j</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.slf4j</pattern>
+                  <shadedPattern>org.apache.hive.org.slf4j</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>com.facebook</pattern>
+                  <shadedPattern>org.apache.hive.com.facebook</shadedPattern>
+                </relocation>
+                <relocation>
+                  <pattern>org.apache.hadoop</pattern>
+                  <shadedPattern>org.apache.hive.org.apache.hadoop</shadedPattern>
+                </relocation>
+              </relocations>
             </configuration>
           </execution>
         </executions>
