@@ -774,10 +774,10 @@ STAGE PLANS:
             Map Operator Tree:
                 TableScan
                   alias: srcpart_date_hour
-                  filterExpr: (((ds is not null and hr is not null) and (date = '2008-04-08')) and (hour = 11)) (type: boolean)
+                  filterExpr: (ds is not null and hr is not null and (date = '2008-04-08') and (hour = 11)) (type: boolean)
                   Statistics: Num rows: 4 Data size: 108 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
-                    predicate: (((ds is not null and hr is not null) and (date = '2008-04-08')) and (hour = 11)) (type: boolean)
+                    predicate: (ds is not null and hr is not null and (date = '2008-04-08') and (hour = 11)) (type: boolean)
                     Statistics: Num rows: 1 Data size: 27 Basic stats: COMPLETE Column stats: NONE
                     Reduce Output Operator
                       key expressions: ds (type: string), hr (type: string)
@@ -904,10 +904,10 @@ STAGE PLANS:
             Map Operator Tree:
                 TableScan
                   alias: srcpart_date_hour
-                  filterExpr: (((ds is not null and hr is not null) and (date = '2008-04-08')) and (hour = 11)) (type: boolean)
+                  filterExpr: (ds is not null and hr is not null and (date = '2008-04-08') and (hour = 11)) (type: boolean)
                   Statistics: Num rows: 4 Data size: 108 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
-                    predicate: (((ds is not null and hr is not null) and (date = '2008-04-08')) and (hour = 11)) (type: boolean)
+                    predicate: (ds is not null and hr is not null and (date = '2008-04-08') and (hour = 11)) (type: boolean)
                     Statistics: Num rows: 1 Data size: 27 Basic stats: COMPLETE Column stats: NONE
                     Reduce Output Operator
                       key expressions: ds (type: string), hr (type: string)
@@ -2050,10 +2050,10 @@ STAGE PLANS:
             Map Operator Tree:
                 TableScan
                   alias: srcpart_date_hour
-                  filterExpr: (((ds is not null and hr is not null) and (date = '2008-04-08')) and (hour = 11)) (type: boolean)
+                  filterExpr: (ds is not null and hr is not null and (date = '2008-04-08') and (hour = 11)) (type: boolean)
                   Statistics: Num rows: 4 Data size: 108 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
-                    predicate: (((ds is not null and hr is not null) and (date = '2008-04-08')) and (hour = 11)) (type: boolean)
+                    predicate: (ds is not null and hr is not null and (date = '2008-04-08') and (hour = 11)) (type: boolean)
                     Statistics: Num rows: 1 Data size: 27 Basic stats: COMPLETE Column stats: NONE
                     Reduce Output Operator
                       key expressions: ds (type: string), hr (type: string)
@@ -2445,7 +2445,6 @@ STAGE PLANS:
             Map Operator Tree:
                 TableScan
                   alias: srcpart
-                  filterExpr: (hr = 11) (type: boolean)
                   Statistics: Num rows: 1000 Data size: 10624 Basic stats: COMPLETE Column stats: NONE
                   Reduce Output Operator
                     key expressions: ds (type: string)
@@ -2486,10 +2485,10 @@ STAGE PLANS:
             Map Operator Tree:
                 TableScan
                   alias: srcpart_hour
-                  filterExpr: ((hr is not null and (hour = 11)) and (hr = 11)) (type: boolean)
+                  filterExpr: ((hour = 11) and (hr = 11)) (type: boolean)
                   Statistics: Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
-                    predicate: ((hr is not null and (hour = 11)) and (hr = 11)) (type: boolean)
+                    predicate: ((hour = 11) and (hr = 11)) (type: boolean)
                     Statistics: Num rows: 1 Data size: 5 Basic stats: COMPLETE Column stats: NONE
                     Reduce Output Operator
                       key expressions: hr (type: string)
@@ -2608,10 +2607,10 @@ STAGE PLANS:
             Map Operator Tree:
                 TableScan
                   alias: srcpart
-                  filterExpr: ((ds is not null and hr is not null) and (hr = 13)) (type: boolean)
+                  filterExpr: (ds is not null and (hr = 13)) (type: boolean)
                   Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
                   Filter Operator
-                    predicate: ((ds is not null and hr is not null) and (hr = 13)) (type: boolean)
+                    predicate: (ds is not null and (hr = 13)) (type: boolean)
                     Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
                     Reduce Output Operator
                       key expressions: ds (type: string)
@@ -3727,10 +3726,10 @@ STAGE PLANS:
             Map Operator Tree:
                 TableScan
                   alias: srcpart_date_hour
-                  filterExpr: (((ds is not null and hr is not null) and (date = '2008-04-08')) and (hour = 11)) (type: boolean)
+                  filterExpr: (ds is not null and hr is not null and (date = '2008-04-08') and (hour = 11)) (type: boolean)
                   Statistics: Num rows: 4 Data size: 108 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
-                    predicate: (((ds is not null and hr is not null) and (date = '2008-04-08')) and (hour = 11)) (type: boolean)
+                    predicate: (ds is not null and hr is not null and (date = '2008-04-08') and (hour = 11)) (type: boolean)
                     Statistics: Num rows: 1 Data size: 27 Basic stats: COMPLETE Column stats: NONE
                     Reduce Output Operator
                       key expressions: ds (type: string), hr (type: string)
@@ -4537,7 +4536,6 @@ STAGE PLANS:
             Map Operator Tree:
                 TableScan
                   alias: srcpart
-                  filterExpr: (hr = 11) (type: boolean)
                   Statistics: Num rows: 1000 Data size: 10624 Basic stats: COMPLETE Column stats: NONE
                   Map Join Operator
                     condition map:
@@ -4602,10 +4600,10 @@ STAGE PLANS:
             Map Operator Tree:
                 TableScan
                   alias: srcpart_hour
-                  filterExpr: ((hr is not null and (hour = 11)) and (hr = 11)) (type: boolean)
+                  filterExpr: ((hour = 11) and (hr = 11)) (type: boolean)
                   Statistics: Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
-                    predicate: ((hr is not null and (hour = 11)) and (hr = 11)) (type: boolean)
+                    predicate: ((hour = 11) and (hr = 11)) (type: boolean)
                     Statistics: Num rows: 1 Data size: 5 Basic stats: COMPLETE Column stats: NONE
                     Reduce Output Operator
                       key expressions: hr (type: string)
@@ -4690,10 +4688,10 @@ STAGE PLANS:
             Map Operator Tree:
                 TableScan
                   alias: srcpart
-                  filterExpr: ((ds is not null and hr is not null) and (hr = 13)) (type: boolean)
+                  filterExpr: (ds is not null and (hr = 13)) (type: boolean)
                   Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
                   Filter Operator
-                    predicate: ((ds is not null and hr is not null) and (hr = 13)) (type: boolean)
+                    predicate: (ds is not null and (hr = 13)) (type: boolean)
                     Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
                     Reduce Output Operator
                       key expressions: ds (type: string)
@@ -5068,10 +5066,10 @@ STAGE PLANS:
             Map Operator Tree:
                 TableScan
                   alias: srcpart_date_hour
-                  filterExpr: (((ds is not null and UDFToDouble(hr) is not null) and (hour = 11)) and ((date = '2008-04-08') or (date = '2008-04-09'))) (type: boolean)
+                  filterExpr: (ds is not null and UDFToDouble(hr) is not null and (hour = 11) and ((date = '2008-04-08') or (date = '2008-04-09'))) (type: boolean)
                   Statistics: Num rows: 4 Data size: 108 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
-                    predicate: (((ds is not null and UDFToDouble(hr) is not null) and (hour = 11)) and ((date = '2008-04-08') or (date = '2008-04-09'))) (type: boolean)
+                    predicate: (ds is not null and UDFToDouble(hr) is not null and (hour = 11) and ((date = '2008-04-08') or (date = '2008-04-09'))) (type: boolean)
                     Statistics: Num rows: 1 Data size: 27 Basic stats: COMPLETE Column stats: NONE
                     Reduce Output Operator
                       key expressions: ds (type: string), UDFToDouble(hr) (type: double)

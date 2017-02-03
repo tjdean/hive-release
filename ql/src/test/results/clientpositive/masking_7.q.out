@@ -80,7 +80,7 @@ STAGE PLANS:
             alias: src
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((((UDFToInteger(key) % 2) = 0) and (UDFToInteger(key) < 10)) and (UDFToInteger(key) > 0)) (type: boolean)
+              predicate: (((UDFToInteger(key) % 2) = 0) and (UDFToInteger(key) < 10) and (UDFToInteger(key) > 0)) (type: boolean)
               Statistics: Num rows: 27 Data size: 286 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: UDFToInteger(key) (type: int), reverse(value) (type: string), '12' (type: string), ROW__ID (type: struct<transactionid:bigint,bucketid:int,rowid:bigint>)
@@ -203,7 +203,7 @@ STAGE PLANS:
             alias: src
             Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((((UDFToInteger(key) % 2) = 0) and (UDFToInteger(key) < 10)) and (UDFToInteger(key) > 0)) (type: boolean)
+              predicate: (((UDFToInteger(key) % 2) = 0) and (UDFToInteger(key) < 10) and (UDFToInteger(key) > 0)) (type: boolean)
               Statistics: Num rows: 27 Data size: 286 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: UDFToInteger(key) (type: int), '12' (type: string), ROW__ID (type: struct<transactionid:bigint,bucketid:int,rowid:bigint>), '12' (type: string), '12' (type: string), '12' (type: string), '12' (type: string), '12' (type: string), '12' (type: string), '12' (type: string), '12' (type: string), '12' (type: string), '12' (type: string)

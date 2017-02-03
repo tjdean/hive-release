@@ -353,7 +353,7 @@ STAGE PLANS:
             alias: wide_tbl
             Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
             Filter Operator
-              predicate: ((((UDFToLong(col2) is not null and col4 is not null) and col5 is not null) and (col4 = 'string1')) and (col5 = 'string1')) (type: boolean)
+              predicate: (UDFToLong(col2) is not null and (col4 = 'string1') and (col5 = 'string1')) (type: boolean)
               Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
               Reduce Output Operator
                 key expressions: UDFToLong(col2) (type: bigint), 'string1' (type: string), 'string1' (type: string)
@@ -391,7 +391,7 @@ STAGE PLANS:
             alias: tbl5_0
             Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
             Filter Operator
-              predicate: (((col1 = 'string0') and (col4 = 'string1')) and (col5 = 'string1')) (type: boolean)
+              predicate: ((col1 = 'string0') and (col4 = 'string1') and (col5 = 'string1')) (type: boolean)
               Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
               Reduce Output Operator
                 key expressions: col2 (type: string), col4 (type: string), col5 (type: string)
@@ -478,7 +478,7 @@ STAGE PLANS:
             alias: tbl4_0
             Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
             Filter Operator
-              predicate: (((col1 = 'string0') and (col4 = 'string1')) and (col5 = 'string1')) (type: boolean)
+              predicate: ((col1 = 'string0') and (col4 = 'string1') and (col5 = 'string1')) (type: boolean)
               Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
               Reduce Output Operator
                 key expressions: col2 (type: string), col4 (type: string), col5 (type: string)
@@ -515,7 +515,7 @@ STAGE PLANS:
             alias: tbl5_1
             Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
             Filter Operator
-              predicate: (((col1 = 'string0') and (col4 = 'string1')) and (col5 = 'string1')) (type: boolean)
+              predicate: ((col1 = 'string0') and (col4 = 'string1') and (col5 = 'string1')) (type: boolean)
               Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
               Reduce Output Operator
                 key expressions: col2 (type: string), col4 (type: string), col5 (type: string)
@@ -552,7 +552,7 @@ STAGE PLANS:
             alias: tbl5_2
             Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
             Filter Operator
-              predicate: (((col1 = 'string0') and (col4 = 'string1')) and (col5 = 'string1')) (type: boolean)
+              predicate: ((col1 = 'string0') and (col4 = 'string1') and (col5 = 'string1')) (type: boolean)
               Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
               Reduce Output Operator
                 key expressions: col2 (type: string), col4 (type: string), col5 (type: string)
@@ -589,7 +589,7 @@ STAGE PLANS:
             alias: tbl5_3
             Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
             Filter Operator
-              predicate: (((col1 = 'string0') and (col4 = 'string1')) and (col5 = 'string1')) (type: boolean)
+              predicate: ((col1 = 'string0') and (col4 = 'string1') and (col5 = 'string1')) (type: boolean)
               Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
               Reduce Output Operator
                 key expressions: col2 (type: string), col4 (type: string), col5 (type: string)
@@ -626,7 +626,7 @@ STAGE PLANS:
             alias: tbl5_4
             Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
             Filter Operator
-              predicate: (((col1 = 'string0') and (col4 = 'string1')) and (col5 = 'string1')) (type: boolean)
+              predicate: ((col1 = 'string0') and (col4 = 'string1') and (col5 = 'string1')) (type: boolean)
               Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
               Reduce Output Operator
                 key expressions: col2 (type: string), col4 (type: string), col5 (type: string)
@@ -663,7 +663,7 @@ STAGE PLANS:
             alias: tbl5_5
             Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
             Filter Operator
-              predicate: (((col1 = 'string0') and (col4 = 'string1')) and (col5 = 'string1')) (type: boolean)
+              predicate: ((col1 = 'string0') and (col4 = 'string1') and (col5 = 'string1')) (type: boolean)
               Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
               Reduce Output Operator
                 key expressions: col2 (type: string), col4 (type: string), col5 (type: string)
@@ -700,7 +700,7 @@ STAGE PLANS:
             alias: tbl5_6
             Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
             Filter Operator
-              predicate: (((col1 = 'string0') and (col4 = 'string1')) and (col5 = 'string1')) (type: boolean)
+              predicate: ((col1 = 'string0') and (col4 = 'string1') and (col5 = 'string1')) (type: boolean)
               Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
               Reduce Output Operator
                 key expressions: col2 (type: string), col4 (type: string), col5 (type: string)
@@ -737,7 +737,7 @@ STAGE PLANS:
             alias: tbl5_7
             Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
             Filter Operator
-              predicate: (((col1 = 'string0') and (col4 = 'string1')) and (col5 = 'string1')) (type: boolean)
+              predicate: ((col1 = 'string0') and (col4 = 'string1') and (col5 = 'string1')) (type: boolean)
               Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
               Reduce Output Operator
                 key expressions: col2 (type: string), col4 (type: string), col5 (type: string)
@@ -774,7 +774,7 @@ STAGE PLANS:
             alias: tbl5_8
             Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
             Filter Operator
-              predicate: (((col1 = 'string0') and (col4 = 'string1')) and (col5 = 'string1')) (type: boolean)
+              predicate: ((col1 = 'string0') and (col4 = 'string1') and (col5 = 'string1')) (type: boolean)
               Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
               Reduce Output Operator
                 key expressions: col2 (type: string), col4 (type: string), col5 (type: string)
@@ -810,7 +810,7 @@ STAGE PLANS:
             alias: tbl5_9
             Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
             Filter Operator
-              predicate: (((col1 = 'string0') and (col4 = 'string1')) and (col5 = 'string1')) (type: boolean)
+              predicate: ((col1 = 'string0') and (col4 = 'string1') and (col5 = 'string1')) (type: boolean)
               Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: NONE
               Reduce Output Operator
                 key expressions: col2 (type: string), col4 (type: string), col5 (type: string)

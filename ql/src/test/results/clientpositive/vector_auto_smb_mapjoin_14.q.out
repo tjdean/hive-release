@@ -573,7 +573,7 @@ STAGE PLANS:
             alias: a
             Statistics: Num rows: 10 Data size: 930 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: (((key < 8) and (key < 6)) and key is not null) (type: boolean)
+              predicate: ((key < 8) and (key < 6)) (type: boolean)
               Statistics: Num rows: 1 Data size: 93 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: key (type: int)
@@ -694,7 +694,7 @@ STAGE PLANS:
             alias: a
             Statistics: Num rows: 10 Data size: 930 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: (((key < 8) and (key < 6)) and key is not null) (type: boolean)
+              predicate: ((key < 8) and (key < 6)) (type: boolean)
               Statistics: Num rows: 1 Data size: 93 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: key (type: int)
@@ -1208,7 +1208,7 @@ STAGE PLANS:
             alias: a
             Statistics: Num rows: 10 Data size: 930 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: (((key < 8) and (key < 6)) and key is not null) (type: boolean)
+              predicate: ((key < 8) and (key < 6)) (type: boolean)
               Statistics: Num rows: 1 Data size: 93 Basic stats: COMPLETE Column stats: NONE
               Select Operator
                 expressions: key (type: int)

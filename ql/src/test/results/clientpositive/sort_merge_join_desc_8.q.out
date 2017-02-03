@@ -195,8 +195,8 @@ STAGE PLANS:
             alias: b
             Statistics: Num rows: 500 Data size: 6312 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((key is not null and value2 is not null) and (key < 10)) (type: boolean)
-              Statistics: Num rows: 41 Data size: 517 Basic stats: COMPLETE Column stats: NONE
+              predicate: (value2 is not null and (key < 10)) (type: boolean)
+              Statistics: Num rows: 83 Data size: 1047 Basic stats: COMPLETE Column stats: NONE
               HashTable Sink Operator
                 keys:
                   0 key (type: string), value2 (type: string)
@@ -209,15 +209,15 @@ STAGE PLANS:
             alias: a
             Statistics: Num rows: 500 Data size: 10218 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((key is not null and value2 is not null) and (key < 10)) (type: boolean)
-              Statistics: Num rows: 41 Data size: 837 Basic stats: COMPLETE Column stats: NONE
+              predicate: (value2 is not null and (key < 10)) (type: boolean)
+              Statistics: Num rows: 83 Data size: 1696 Basic stats: COMPLETE Column stats: NONE
               Map Join Operator
                 condition map:
                      Inner Join 0 to 1
                 keys:
                   0 key (type: string), value2 (type: string)
                   1 key (type: string), value2 (type: string)
-                Statistics: Num rows: 45 Data size: 920 Basic stats: COMPLETE Column stats: NONE
+                Statistics: Num rows: 91 Data size: 1865 Basic stats: COMPLETE Column stats: NONE
                 Group By Operator
                   aggregations: count()
                   mode: hash
