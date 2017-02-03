@@ -576,7 +576,7 @@ Stage-0
                            outputColumnNames:["_col0"]
                            Statistics:Num rows: 1 Data size: 93 Basic stats: COMPLETE Column stats: NONE
                            Filter Operator [FIL_19]
-                              predicate:(((key < 8) and (key < 6)) and key is not null) (type: boolean)
+                              predicate:((key < 8) and (key < 6)) (type: boolean)
                               Statistics:Num rows: 1 Data size: 93 Basic stats: COMPLETE Column stats: NONE
                               TableScan [TS_0]
                                  alias:a
@@ -689,7 +689,7 @@ Stage-0
                      |     outputColumnNames:["_col0"]
                      |     Statistics:Num rows: 1 Data size: 93 Basic stats: COMPLETE Column stats: NONE
                      |     Filter Operator [FIL_24]
-                     |        predicate:(((key < 8) and (key < 6)) and key is not null) (type: boolean)
+                     |        predicate:((key < 8) and (key < 6)) (type: boolean)
                      |        Statistics:Num rows: 1 Data size: 93 Basic stats: COMPLETE Column stats: NONE
                      |        TableScan [TS_5]
                      |           alias:a
@@ -698,7 +698,7 @@ Stage-0
                            outputColumnNames:["_col0"]
                            Statistics:Num rows: 1 Data size: 93 Basic stats: COMPLETE Column stats: NONE
                            Filter Operator [FIL_23]
-                              predicate:(((key < 8) and (key < 6)) and key is not null) (type: boolean)
+                              predicate:((key < 8) and (key < 6)) (type: boolean)
                               Statistics:Num rows: 1 Data size: 93 Basic stats: COMPLETE Column stats: NONE
                               TableScan [TS_0]
                                  alias:a
@@ -1194,7 +1194,7 @@ Stage-0
                            outputColumnNames:["_col0"]
                            Statistics:Num rows: 1 Data size: 93 Basic stats: COMPLETE Column stats: NONE
                            Filter Operator [FIL_20]
-                              predicate:(((key < 8) and (key < 6)) and key is not null) (type: boolean)
+                              predicate:((key < 8) and (key < 6)) (type: boolean)
                               Statistics:Num rows: 1 Data size: 93 Basic stats: COMPLETE Column stats: NONE
                               TableScan [TS_0]
                                  alias:a

@@ -811,7 +811,7 @@ STAGE PLANS:
             alias: bigtbl
             Statistics: Num rows: 5000 Data size: 72180 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((key1 is not null and value is not null) and key2 is not null) (type: boolean)
+              predicate: (key1 is not null and value is not null and key2 is not null) (type: boolean)
               Statistics: Num rows: 625 Data size: 9022 Basic stats: COMPLETE Column stats: NONE
               Map Join Operator
                 condition map:
@@ -1280,7 +1280,7 @@ STAGE PLANS:
             alias: bigtbl
             Statistics: Num rows: 5000 Data size: 72180 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((key1 is not null and value is not null) and key2 is not null) (type: boolean)
+              predicate: (key1 is not null and value is not null and key2 is not null) (type: boolean)
               Statistics: Num rows: 625 Data size: 9022 Basic stats: COMPLETE Column stats: NONE
               HashTable Sink Operator
                 keys:
@@ -1324,7 +1324,7 @@ STAGE PLANS:
             alias: bigtbl
             Statistics: Num rows: 5000 Data size: 72180 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((key1 is not null and value is not null) and key2 is not null) (type: boolean)
+              predicate: (key1 is not null and value is not null and key2 is not null) (type: boolean)
               Statistics: Num rows: 625 Data size: 9022 Basic stats: COMPLETE Column stats: NONE
               Reduce Output Operator
                 key expressions: key1 (type: string)
@@ -1605,7 +1605,7 @@ STAGE PLANS:
             alias: bigtbl
             Statistics: Num rows: 5000 Data size: 72180 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((key1 is not null and value is not null) and key2 is not null) (type: boolean)
+              predicate: (key1 is not null and value is not null and key2 is not null) (type: boolean)
               Statistics: Num rows: 625 Data size: 9022 Basic stats: COMPLETE Column stats: NONE
               Map Join Operator
                 condition map:
@@ -1887,7 +1887,7 @@ STAGE PLANS:
             alias: bigtbl
             Statistics: Num rows: 5000 Data size: 72180 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((key1 is not null and value is not null) and key2 is not null) (type: boolean)
+              predicate: (key1 is not null and value is not null and key2 is not null) (type: boolean)
               Statistics: Num rows: 625 Data size: 9022 Basic stats: COMPLETE Column stats: NONE
               Map Join Operator
                 condition map:
@@ -2223,7 +2223,7 @@ STAGE PLANS:
             alias: bigtbl
             Statistics: Num rows: 5000 Data size: 72180 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((key1 is not null and value is not null) and key2 is not null) (type: boolean)
+              predicate: (key1 is not null and value is not null and key2 is not null) (type: boolean)
               Statistics: Num rows: 625 Data size: 9022 Basic stats: COMPLETE Column stats: NONE
               Map Join Operator
                 condition map:
@@ -2692,7 +2692,7 @@ STAGE PLANS:
             alias: bigtbl
             Statistics: Num rows: 5000 Data size: 72180 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((key1 is not null and value is not null) and key2 is not null) (type: boolean)
+              predicate: (key1 is not null and value is not null and key2 is not null) (type: boolean)
               Statistics: Num rows: 625 Data size: 9022 Basic stats: COMPLETE Column stats: NONE
               HashTable Sink Operator
                 keys:
@@ -2736,7 +2736,7 @@ STAGE PLANS:
             alias: bigtbl
             Statistics: Num rows: 5000 Data size: 72180 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
-              predicate: ((key1 is not null and value is not null) and key2 is not null) (type: boolean)
+              predicate: (key1 is not null and value is not null and key2 is not null) (type: boolean)
               Statistics: Num rows: 625 Data size: 9022 Basic stats: COMPLETE Column stats: NONE
               Reduce Output Operator
                 key expressions: key1 (type: string)
