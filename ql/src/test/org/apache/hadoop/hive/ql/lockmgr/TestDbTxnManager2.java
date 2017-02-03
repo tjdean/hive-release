@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hive.ql.lockmgr;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.hive.metastore.api.AddDynamicPartitions;
 import org.apache.hadoop.hive.metastore.api.DataOperationType;
 import org.apache.hadoop.hive.metastore.txn.TxnStore;
@@ -126,9 +127,9 @@ public class TestDbTxnManager2 {
     txnMgr.acquireLocks(driver.getPlan(), ctx, "three");
     locks = getLocks();
     Assert.assertEquals("Unexpected lock count", 3, locks.size());
-    checkLock(LockType.SHARED_READ, LockState.ACQUIRED, "default", "T", null, locks.get(0));
-    checkLock(LockType.SHARED_READ, LockState.ACQUIRED, "default", "S", null, locks.get(1));
-    checkLock(LockType.SHARED_READ, LockState.ACQUIRED, "default", "R", null, locks.get(2));
+    checkLock(LockType.SHARED_READ, LockState.ACQUIRED, "default", "T", null, locks);
+    checkLock(LockType.SHARED_READ, LockState.ACQUIRED, "default", "S", null, locks);
+    checkLock(LockType.SHARED_READ, LockState.ACQUIRED, "default", "R", null, locks);
   }
   @Test
   public void createTable() throws Exception {
@@ -659,6 +660,25 @@ public class TestDbTxnManager2 {
     checkLock(LockType.SHARED_READ, LockState.ACQUIRED, "default", "tab_not_acid", "np=blah", locks.get(4));
     checkLock(LockType.SHARED_READ, LockState.ACQUIRED, "default", "tab_not_acid", "np=doh", locks.get(5));
     checkLock(LockType.EXCLUSIVE, LockState.WAITING, "default", "tab_not_acid", "np=doh", locks.get(6));
+
+    // Test strict locking mode, i.e. backward compatible locking mode for non-ACID resources.
+    // With non-strict mode, INSERT got SHARED_READ lock, instead of EXCLUSIVE with ACID semantics
+    conf.setBoolVar(HiveConf.ConfVars.HIVE_TXN_STRICT_LOCKING_MODE, false);
+    HiveTxnManager txnMgr3 = TxnManagerFactory.getTxnManagerFactory().getTxnManager(conf);
+    txnMgr3.openTxn("T3");
+    checkCmdOnDriver(driver.compileAndRespond("insert into tab_not_acid partition(np='blah') values(7,8)"));
+    ((DbTxnManager)txnMgr3).acquireLocks(driver.getPlan(), ctx, "T3", false);
+    locks = getLocks(txnMgr3);
+    Assert.assertEquals("Unexpected lock count", 8, locks.size());
+    checkLock(LockType.SHARED_READ, LockState.ACQUIRED, "default", "tab_acid", null, locks);
+    checkLock(LockType.SHARED_READ, LockState.ACQUIRED, "default", "tab_acid", "p=bar", locks);
+    checkLock(LockType.SHARED_READ, LockState.ACQUIRED, "default", "tab_acid", "p=foo", locks);
+    checkLock(LockType.SHARED_READ, LockState.ACQUIRED, "default", "tab_not_acid", null, locks);
+    checkLock(LockType.SHARED_READ, LockState.ACQUIRED, "default", "tab_not_acid", "np=blah", locks);
+    checkLock(LockType.SHARED_READ, LockState.ACQUIRED, "default", "tab_not_acid", "np=doh", locks);
+    checkLock(LockType.EXCLUSIVE, LockState.WAITING, "default", "tab_not_acid", "np=doh", locks);
+    checkLock(LockType.SHARED_READ, LockState.ACQUIRED, "default", "tab_not_acid", "np=blah", locks);
+    conf.setBoolVar(HiveConf.ConfVars.HIVE_TXN_STRICT_LOCKING_MODE, true);
   }
 
   public static void checkLock(LockType expectedType, LockState expectedState, String expectedDb, String expectedTable, String expectedPartition, ShowLocksResponseElement actual) {
@@ -668,6 +688,23 @@ public class TestDbTxnManager2 {
     Assert.assertEquals(actual.toString(), normalizeCase(expectedTable), normalizeCase(actual.getTablename()));
     Assert.assertEquals(actual.toString(), normalizeCase(expectedPartition), normalizeCase(actual.getPartname()));
   }
+
+   public static ShowLocksResponseElement checkLock(LockType expectedType, LockState expectedState, String expectedDb,
+                                                    String expectedTable, String expectedPartition, List<ShowLocksResponseElement> actuals) {
+     for (ShowLocksResponseElement actual : actuals) {
+       if (expectedType == actual.getType() && expectedState == actual.getState()
+         && StringUtils.equals(normalizeCase(expectedDb), normalizeCase(actual.getDbname()))
+         && StringUtils.equals(normalizeCase(expectedTable), normalizeCase(actual.getTablename()))
+         && StringUtils.equals(
+         normalizeCase(expectedPartition), normalizeCase(actual.getPartname()))) {
+         return actual;
+       }
+     }
+     Assert.fail("Could't find {" + expectedType + ", " + expectedState + ", " + expectedDb
+       + ", " + expectedTable  + ", " + expectedPartition + "} in " + actuals);
+     throw new IllegalStateException("How did it get here?!");
+   }
+
 
   @Test
   public void testShowLocksFilterOptions() throws Exception {
