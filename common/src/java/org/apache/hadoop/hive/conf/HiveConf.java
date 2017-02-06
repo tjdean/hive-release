@@ -1625,6 +1625,10 @@ public class HiveConf extends Configuration {
       new TimeValidator(TimeUnit.MILLISECONDS), "Time interval describing how often the reaper runs"),
     WRITE_SET_REAPER_INTERVAL("hive.writeset.reaper.interval", "60s",
       new TimeValidator(TimeUnit.MILLISECONDS), "Frequency of WriteSet reaper runs"),
+    
+    MERGE_CARDINALITY_VIOLATION_CHECK("hive.merge.cardinality.check", false,
+      "Set to true to ensure that each SQL Merge statement ensures that for each row in the target\n" +
+        "table there is at most 1 matching row in the source table per SQL Specification."),
 
     // For HBase storage handler
     HIVE_HBASE_WAL_ENABLED("hive.hbase.wal.enabled", true,
