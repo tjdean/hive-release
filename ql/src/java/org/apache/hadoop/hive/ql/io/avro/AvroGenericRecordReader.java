@@ -32,6 +32,7 @@ import org.apache.avro.mapred.FsInput;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.plan.MapWork;
 import org.apache.hadoop.hive.ql.plan.PartitionDesc;
@@ -142,13 +143,14 @@ public class AvroGenericRecordReader implements
     return null;
   }
 
-  private boolean pathIsInPartition(Path split, String partitionPath) {
+  private boolean pathIsInPartition(Path split, String partitionPathString) {
     boolean schemeless = split.toUri().getScheme() == null;
+    Path partitionPath = new Path(partitionPathString);
     if (schemeless) {
-      String schemelessPartitionPath = new Path(partitionPath).toUri().getPath();
-      return split.toString().startsWith(schemelessPartitionPath);
+      Path pathNoSchema = Path.getPathWithoutSchemeAndAuthority(partitionPath);
+      return FileUtils.isPathWithinSubtree(split,pathNoSchema);
     } else {
-      return split.toString().startsWith(partitionPath);
+      return FileUtils.isPathWithinSubtree(split,partitionPath);
     }
   }
 
