@@ -350,7 +350,6 @@ public class TestTxnCommands {
     List<String> rs4 = runStatementOnDriver("select a,b from " + Table.ACIDTBL + " order by a,b");
     Assert.assertEquals("Wrong data after commit", stringifyValues(updatedData2), rs4);
   }
-  @Ignore("HIVE-11077")
   @Test
   public void testMergeOnTezEdges() throws Exception {
     String query = "merge into " + Table.ACIDTBL +
@@ -382,6 +381,7 @@ public class TestTxnCommands {
       }
     }
   }
+  @Ignore("HIVE-11077")
   @Test
   public void testMultipleDelete() throws Exception {
     int[][] rows1 = {{1,2},{3,4},{5,6},{7,8}};
