@@ -31,7 +31,9 @@ import org.apache.hadoop.hive.ql.util.JavaDataModel;
 import org.apache.hadoop.hive.serde2.io.DoubleWritable;
 import org.apache.hadoop.hive.serde2.io.HiveDecimalWritable;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.objectinspector.PrimitiveObjectInspector;
+import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils.ObjectInspectorCopyOption;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.DecimalTypeInfo;
@@ -116,7 +118,7 @@ public class GenericUDAFSum extends AbstractGenericUDAFResolver {
    *
    */
   public static class GenericUDAFSumHiveDecimal extends GenericUDAFEvaluator {
-    private PrimitiveObjectInspector inputOI;
+    private PrimitiveObjectInspector inputOI, outputOI;
     private HiveDecimalWritable result;
 
     @Override
