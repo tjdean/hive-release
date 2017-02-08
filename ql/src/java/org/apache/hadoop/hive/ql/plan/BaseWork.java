@@ -33,7 +33,6 @@ import org.apache.hadoop.hive.ql.exec.Operator;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatchCtx;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.hive.ql.plan.Explain.Level;
-import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 
 
 /**
@@ -154,8 +153,9 @@ public abstract class BaseWork extends AbstractOperatorDesc {
     return returnSet;
   }
 
-  // -----------------------------------------------------------------------------------------------
-
+  /*
+   * The vectorization context for creating the VectorizedRowBatch for the node.
+   */
   public VectorizedRowBatchCtx getVectorizedRowBatchCtx() {
     return vectorizedRowBatchCtx;
   }
@@ -163,8 +163,6 @@ public abstract class BaseWork extends AbstractOperatorDesc {
   public void setVectorizedRowBatchCtx(VectorizedRowBatchCtx vectorizedRowBatchCtx) {
     this.vectorizedRowBatchCtx = vectorizedRowBatchCtx;
   }
-
-  // -----------------------------------------------------------------------------------------------
 
   /**
    * @return the mapredLocalWork
