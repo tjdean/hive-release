@@ -6775,9 +6775,9 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     if (table.getSortCols() != null && table.getSortCols().size() > 0) {
       throw new SemanticException(ErrorMsg.ACID_NO_SORTED_BUCKETS, table.getTableName());
     }
-
-
-
+    if(!conf.getBoolVar(ConfVars.HIVEENFORCEBUCKETING)) {
+      throw new SemanticException(ErrorMsg.MUST_ENFORCE_BUCKETING, tableName);
+    }
   }
 
   /**
