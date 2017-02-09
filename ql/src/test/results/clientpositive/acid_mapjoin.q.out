@@ -64,10 +64,10 @@ STAGE PLANS:
         acid2 
           TableScan
             alias: acid2
-            Statistics: Num rows: 162 Data size: 648 Basic stats: COMPLETE Column stats: NONE
+            Statistics: Num rows: 214 Data size: 858 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
               predicate: key is not null (type: boolean)
-              Statistics: Num rows: 81 Data size: 324 Basic stats: COMPLETE Column stats: NONE
+              Statistics: Num rows: 107 Data size: 429 Basic stats: COMPLETE Column stats: NONE
               HashTable Sink Operator
                 keys:
                   0 key (type: int)
@@ -78,17 +78,17 @@ STAGE PLANS:
       Map Operator Tree:
           TableScan
             alias: acid1
-            Statistics: Num rows: 162 Data size: 651 Basic stats: COMPLETE Column stats: NONE
+            Statistics: Num rows: 321 Data size: 1287 Basic stats: COMPLETE Column stats: NONE
             Filter Operator
               predicate: key is not null (type: boolean)
-              Statistics: Num rows: 81 Data size: 325 Basic stats: COMPLETE Column stats: NONE
+              Statistics: Num rows: 161 Data size: 645 Basic stats: COMPLETE Column stats: NONE
               Map Join Operator
                 condition map:
                      Inner Join 0 to 1
                 keys:
                   0 key (type: int)
                   1 key (type: int)
-                Statistics: Num rows: 89 Data size: 357 Basic stats: COMPLETE Column stats: NONE
+                Statistics: Num rows: 177 Data size: 709 Basic stats: COMPLETE Column stats: NONE
                 Group By Operator
                   aggregations: count()
                   mode: hash
