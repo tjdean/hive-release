@@ -203,6 +203,7 @@ public class TestStreaming {
     }
     conf.setBoolVar(HiveConf.ConfVars.METASTORE_EXECUTE_SET_UGI, true);
     conf.setBoolVar(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY, true);
+    conf.setBoolVar(HiveConf.ConfVars.HIVEENFORCEBUCKETING, true);
     dbFolder.create();
 
 

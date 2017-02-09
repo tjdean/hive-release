@@ -4,6 +4,7 @@ set hive.auto.convert.join.noconditionaltask.size=10000;
 
 set hive.support.concurrency=true;
 set hive.txn.manager=org.apache.hadoop.hive.ql.lockmgr.DbTxnManager;
+set hive.enforce.bucketing=true;
 
 drop table if exists acid1;
 drop table if exists acid2;

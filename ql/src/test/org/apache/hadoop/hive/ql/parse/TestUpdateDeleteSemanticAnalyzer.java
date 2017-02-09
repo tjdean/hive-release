@@ -228,6 +228,7 @@ public class TestUpdateDeleteSemanticAnalyzer {
         "org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory");
     conf.setVar(HiveConf.ConfVars.DYNAMICPARTITIONINGMODE, "nonstrict");
     TxnDbUtil.setConfValues(conf);
+    conf.setBoolVar(HiveConf.ConfVars.HIVEENFORCEBUCKETING, true);
   }
 
   public void cleanupTables() throws HiveException {

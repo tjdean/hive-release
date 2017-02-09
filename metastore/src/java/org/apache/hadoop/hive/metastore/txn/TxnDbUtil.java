@@ -59,7 +59,6 @@ public final class TxnDbUtil {
   public static void setConfValues(HiveConf conf) {
     conf.setVar(HiveConf.ConfVars.HIVE_TXN_MANAGER, TXN_MANAGER);
     conf.setBoolVar(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY, true);
-    conf.setBoolVar(HiveConf.ConfVars.HIVEENFORCEBUCKETING, true);
   }
 
   public static void prepDb() throws Exception {

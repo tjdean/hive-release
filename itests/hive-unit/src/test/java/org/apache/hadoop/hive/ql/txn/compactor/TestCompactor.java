@@ -99,6 +99,7 @@ public class TestCompactor {
     hiveConf.setVar(HiveConf.ConfVars.HIVEINPUTFORMAT, HiveInputFormat.class.getName());
     hiveConf.setVar(HiveConf.ConfVars.DYNAMICPARTITIONINGMODE, "nonstrict");
     //"org.apache.hadoop.hive.ql.io.HiveInputFormat"
+    hiveConf.setBoolVar(HiveConf.ConfVars.HIVEENFORCEBUCKETING, true);
 
     TxnDbUtil.setConfValues(hiveConf);
     TxnDbUtil.cleanDb();
@@ -857,7 +858,7 @@ public class TestCompactor {
         "'transactional'='true'," +
         "'compactor.mapreduce.map.memory.mb'='2048'," + // 2048 MB memory for compaction map job
         "'compactorthreshold.hive.compactor.delta.num.threshold'='4'," +  // minor compaction if more than 4 delta dirs
-        "'compactorthreshold.hive.compactor.delta.pct.threshold'='0.5'" + // major compaction if more than 50%
+        "'compactorthreshold.hive.compactor.delta.pct.threshold'='0.49'" + // major compaction if more than 49%
         ")", driver);
 
     // Insert 5 rows to both tables
@@ -929,19 +930,15 @@ public class TestCompactor {
     conf.setFloatVar(HiveConf.ConfVars.HIVE_COMPACTOR_DELTA_PCT_THRESHOLD, 0.8f);
     runInitiator(conf);
     rsp = txnHandler.showCompact(new ShowCompactRequest());
-    Assert.assertEquals(4, rsp.getCompacts().size());
-    // CompactionTxnHandler.findPotentialCompactions is using a Set to store CompactionInfo's, so order is unpredictable
-    Assert.assertTrue(rsp.getCompacts().get(0).getTablename().matches("ttp[12]"));
-    Assert.assertEquals(TxnStore.INITIATED_RESPONSE, rsp.getCompacts().get(0).getState());
-    Assert.assertTrue(rsp.getCompacts().get(1).getTablename().matches("ttp[12]"));
-    Assert.assertEquals(TxnStore.INITIATED_RESPONSE, rsp.getCompacts().get(1).getState());
+    Assert.assertEquals(3, rsp.getCompacts().size());
+    Assert.assertEquals("ttp2", rsp.getCompacts().get(0).getTablename());
 
     // Finish the scheduled compaction for ttp2
-    runWorker(conf);
+//    runWorker(conf);
     runWorker(conf);
     runCleaner(conf);
     rsp = txnHandler.showCompact(new ShowCompactRequest());
-    Assert.assertEquals(4, rsp.getCompacts().size());
+    Assert.assertEquals(3, rsp.getCompacts().size());
     Assert.assertEquals("ttp2", rsp.getCompacts().get(0).getTablename());
     Assert.assertEquals(TxnStore.SUCCEEDED_RESPONSE, rsp.getCompacts().get(0).getState());
 
@@ -953,7 +950,7 @@ public class TestCompactor {
         "'tblprops.orc.compress.size'='8192')", driver);
 
     rsp = txnHandler.showCompact(new ShowCompactRequest());
-    Assert.assertEquals(5, rsp.getCompacts().size());
+    Assert.assertEquals(4, rsp.getCompacts().size());
     Assert.assertEquals("ttp2", rsp.getCompacts().get(0).getTablename());
     Assert.assertEquals(TxnStore.INITIATED_RESPONSE, rsp.getCompacts().get(0).getState());
 
