@@ -22,6 +22,9 @@ IMPROVEMENTS
 
 BUG FIXES
 
+<<<<<<< HEAD
+=======
+    HIVE-13936:Add streaming support for row_number
     HIVE-15002 : HiveSessionImpl#executeStatementInternal may leave locks in an inconsistent state (Zoltan Haindrich via Thejas Nair)
     HIVE-15437: avro tables join fails when - tbl join tbl_postfix (Yongzhi Chen, reviewed by Chaoyu Tang)
   HDP-2.5.3:
