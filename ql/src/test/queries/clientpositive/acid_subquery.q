@@ -2,6 +2,7 @@ set hive.exec.dynamic.partition.mode=nonstrict;
 set hive.support.concurrency=true;
 set hive.txn.manager=org.apache.hadoop.hive.ql.lockmgr.DbTxnManager;
 set hive.merge.cardinality.check=true;
+set hive.enforce.bucketing=true;
 
 
 drop table if exists target;

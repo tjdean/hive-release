@@ -93,6 +93,7 @@ public class TestHiveAuthorizerCheckInvocation {
     conf.setBoolVar(ConfVars.HIVE_SERVER2_ENABLE_DOAS, false);
     conf.setBoolVar(ConfVars.HIVE_SUPPORT_CONCURRENCY, true);
     conf.setVar(ConfVars.HIVE_TXN_MANAGER, DbTxnManager.class.getName());
+    conf.setBoolVar(HiveConf.ConfVars.HIVEENFORCEBUCKETING, true);
 
     SessionState.start(conf);
     driver = new Driver(conf);
