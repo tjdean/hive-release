@@ -539,6 +539,33 @@ public class VectorizedBatchUtil {
     return ObjectInspectorFactory.getStandardStructObjectInspector(columnNames,oids);
   }
 
+  public static PrimitiveTypeInfo[] primitiveTypeInfosFromStructObjectInspector(
+      StructObjectInspector structObjectInspector) throws HiveException {
+
+    List<? extends StructField> fields = structObjectInspector.getAllStructFieldRefs();
+    PrimitiveTypeInfo[] result = new PrimitiveTypeInfo[fields.size()];
+
+    int i = 0;
+    for(StructField field : fields) {
+      TypeInfo typeInfo = TypeInfoUtils.getTypeInfoFromTypeString(
+          field.getFieldObjectInspector().getTypeName());
+      result[i++] =  (PrimitiveTypeInfo) typeInfo;
+    }
+    return result;
+  }
+
+  public static PrimitiveTypeInfo[] primitiveTypeInfosFromTypeNames(
+      String[] typeNames) throws HiveException {
+
+    PrimitiveTypeInfo[] result = new PrimitiveTypeInfo[typeNames.length];
+
+    for(int i = 0; i < typeNames.length; i++) {
+      TypeInfo typeInfo = TypeInfoUtils.getTypeInfoFromTypeString(typeNames[i]);
+      result[i] =  (PrimitiveTypeInfo) typeInfo;
+    }
+    return result;
+  }
+
   public static String[] columnNamesFromStructObjectInspector(
       StructObjectInspector structObjectInspector) throws HiveException {
 
