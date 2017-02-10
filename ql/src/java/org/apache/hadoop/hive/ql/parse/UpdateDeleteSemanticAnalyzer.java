@@ -870,7 +870,7 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
     catch(HiveException|MetaException e) {
       throw new SemanticException(e.getMessage(), e);
     }
-    return false;
+    return true;
   }
   /**
    * @param onClauseAsString - because there is no clone() and we need to use in multiple places
