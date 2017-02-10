@@ -36,6 +36,7 @@ import org.apache.hadoop.hive.ql.io.HiveOutputFormat;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer;
 import org.apache.hadoop.hive.ql.parse.ParseUtils;
+import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
@@ -79,6 +80,7 @@ public class CreateTableDesc extends DDLDesc implements Serializable {
   boolean isStoredAsSubDirectories = false;
   boolean isTemporary = false;
   private boolean replaceMode = false;
+  private ReplicationSpec replicationSpec = null;
   private boolean isCTAS = false;
 
   public CreateTableDesc() {
@@ -586,6 +588,25 @@ public class CreateTableDesc extends DDLDesc implements Serializable {
    */
   public boolean getReplaceMode() {
     return replaceMode;
+  }
+
+  /**
+   * @param replicationSpec Sets the replication spec governing this create.
+   * This parameter will have meaningful values only for creates happening as a result of a replication.
+   */
+  public void setReplicationSpec(ReplicationSpec replicationSpec) {
+    this.replicationSpec = replicationSpec;
+  }
+
+  /**
+   * @return what kind of replication scope this drop is running under.
+   * This can result in a "CREATE/REPLACE IF NEWER THAN" kind of semantic
+   */
+  public ReplicationSpec getReplicationSpec(){
+    if (replicationSpec == null){
+      this.replicationSpec = new ReplicationSpec();
+    }
+    return this.replicationSpec;
   }
 
   public boolean isCTAS() {

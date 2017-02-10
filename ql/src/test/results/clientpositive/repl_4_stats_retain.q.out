@@ -331,7 +331,7 @@ STAGE DEPENDENCIES:
 
 STAGE PLANS:
   Stage: Stage-1
-    Copy
+    Copy for Replication
 #### A masked pattern was here ####
 
   Stage: Stage-3
@@ -445,7 +445,7 @@ STAGE DEPENDENCIES:
 
 STAGE PLANS:
   Stage: Stage-1
-    Copy
+    Copy for Replication
 #### A masked pattern was here ####
 
   Stage: Stage-3

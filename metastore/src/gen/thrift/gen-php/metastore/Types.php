@@ -14381,6 +14381,10 @@ class InsertEventRequestData {
    * @var string[]
    */
   public $filesAdded = null;
+  /**
+   * @var string[]
+   */
+  public $filesAddedChecksum = null;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -14393,11 +14397,22 @@ class InsertEventRequestData {
             'type' => TType::STRING,
             ),
           ),
+        2 => array(
+          'var' => 'filesAddedChecksum',
+          'type' => TType::LST,
+          'etype' => TType::STRING,
+          'elem' => array(
+            'type' => TType::STRING,
+            ),
+          ),
         );
     }
     if (is_array($vals)) {
       if (isset($vals['filesAdded'])) {
         $this->filesAdded = $vals['filesAdded'];
+      }
+      if (isset($vals['filesAddedChecksum'])) {
+        $this->filesAddedChecksum = $vals['filesAddedChecksum'];
       }
     }
   }
@@ -14438,6 +14453,23 @@ class InsertEventRequestData {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 2:
+          if ($ftype == TType::LST) {
+            $this->filesAddedChecksum = array();
+            $_size473 = 0;
+            $_etype476 = 0;
+            $xfer += $input->readListBegin($_etype476, $_size473);
+            for ($_i477 = 0; $_i477 < $_size473; ++$_i477)
+            {
+              $elem478 = null;
+              $xfer += $input->readString($elem478);
+              $this->filesAddedChecksum []= $elem478;
+            }
+            $xfer += $input->readListEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -14459,9 +14491,26 @@ class InsertEventRequestData {
       {
         $output->writeListBegin(TType::STRING, count($this->filesAdded));
         {
-          foreach ($this->filesAdded as $iter473)
+          foreach ($this->filesAdded as $iter479)
           {
-            $xfer += $output->writeString($iter473);
+            $xfer += $output->writeString($iter479);
+          }
+        }
+        $output->writeListEnd();
+      }
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->filesAddedChecksum !== null) {
+      if (!is_array($this->filesAddedChecksum)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('filesAddedChecksum', TType::LST, 2);
+      {
+        $output->writeListBegin(TType::STRING, count($this->filesAddedChecksum));
+        {
+          foreach ($this->filesAddedChecksum as $iter480)
+          {
+            $xfer += $output->writeString($iter480);
           }
         }
         $output->writeListEnd();
@@ -14679,14 +14728,14 @@ class FireEventRequest {
         case 5:
           if ($ftype == TType::LST) {
             $this->partitionVals = array();
-            $_size474 = 0;
-            $_etype477 = 0;
-            $xfer += $input->readListBegin($_etype477, $_size474);
-            for ($_i478 = 0; $_i478 < $_size474; ++$_i478)
+            $_size481 = 0;
+            $_etype484 = 0;
+            $xfer += $input->readListBegin($_etype484, $_size481);
+            for ($_i485 = 0; $_i485 < $_size481; ++$_i485)
             {
-              $elem479 = null;
-              $xfer += $input->readString($elem479);
-              $this->partitionVals []= $elem479;
+              $elem486 = null;
+              $xfer += $input->readString($elem486);
+              $this->partitionVals []= $elem486;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -14737,9 +14786,9 @@ class FireEventRequest {
       {
         $output->writeListBegin(TType::STRING, count($this->partitionVals));
         {
-          foreach ($this->partitionVals as $iter480)
+          foreach ($this->partitionVals as $iter487)
           {
-            $xfer += $output->writeString($iter480);
+            $xfer += $output->writeString($iter487);
           }
         }
         $output->writeListEnd();

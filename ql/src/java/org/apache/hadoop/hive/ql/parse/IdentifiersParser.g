@@ -653,6 +653,7 @@ nonReserved
     | KW_UNSIGNED | KW_URI | KW_USE | KW_UTC | KW_UTCTIMESTAMP | KW_VALUE_TYPE | KW_VIEW | KW_WHILE | KW_YEAR
     | KW_MERGE
     | KW_MATCHED
+    | KW_REPL | KW_DUMP | KW_BATCH | KW_STATUS
     ;
 
 //The following SQL2011 reserved keywords are used as cast function name only, it is a subset of the sql11ReservedKeywordsUsedAsIdentifier.

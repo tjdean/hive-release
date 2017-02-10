@@ -1766,4 +1766,19 @@ public class MetaStoreUtils {
     return new URLClassLoader(curPath.toArray(new URL[0]), loader);
   }
 
+  public static String encodeTableName(String name) {
+    // The encoding method is simple, e.g., replace
+    // all the special characters with the corresponding number in ASCII.
+    // Note that unicode is not supported in table names. And we have explicit
+    // checks for it.
+    String ret = "";
+    for (char ch : name.toCharArray()) {
+      if (Character.isLetterOrDigit(ch) || ch == '_') {
+        ret += ch;
+      } else {
+        ret += "-" + (int) ch + "-";
+      }
+    }
+    return ret;
+  }
 }

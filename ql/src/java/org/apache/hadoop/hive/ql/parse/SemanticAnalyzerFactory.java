@@ -114,6 +114,9 @@ public final class SemanticAnalyzerFactory {
     commandType.put(HiveParser.TOK_SHOW_COMPACTIONS, HiveOperation.SHOW_COMPACTIONS);
     commandType.put(HiveParser.TOK_SHOW_TRANSACTIONS, HiveOperation.SHOW_TRANSACTIONS);
     commandType.put(HiveParser.TOK_ABORT_TRANSACTIONS, HiveOperation.ABORT_TRANSACTIONS);
+    commandType.put(HiveParser.TOK_REPL_DUMP, HiveOperation.EXPORT); // piggyback on EXPORT security handling for now
+    commandType.put(HiveParser.TOK_REPL_LOAD, HiveOperation.IMPORT); // piggyback on IMPORT security handling for now
+    commandType.put(HiveParser.TOK_REPL_STATUS, HiveOperation.SHOW_TBLPROPERTIES); // TODO : also actually DESCDATABASE
   }
 
   static {
@@ -281,7 +284,12 @@ public final class SemanticAnalyzerFactory {
       case HiveParser.TOK_DELETE_FROM:
       case HiveParser.TOK_MERGE:
         return new UpdateDeleteSemanticAnalyzer(conf);
-
+      case HiveParser.TOK_REPL_DUMP:
+        return new ReplicationSemanticAnalyzer(conf);
+      case HiveParser.TOK_REPL_LOAD:
+        return new ReplicationSemanticAnalyzer(conf);
+      case HiveParser.TOK_REPL_STATUS:
+        return new ReplicationSemanticAnalyzer(conf);
       default: {
         SemanticAnalyzer semAnalyzer = HiveConf
             .getBoolVar(conf, HiveConf.ConfVars.HIVE_CBO_ENABLED) ? new CalcitePlanner(conf)

@@ -435,6 +435,8 @@ public enum ErrorMsg {
   CANNOT_CHANGE_COLUMN_TYPE(10312, "Changing from type {0} to {1} is not supported for column {2}. SerDe may be incompatible", true),
   REPLACE_CANNOT_DROP_COLUMNS(10313, "Replacing columns cannot drop columns for table {0}. SerDe may be incompatible", true),
   REPLACE_UNSUPPORTED_TYPE_CONVERSION(10314, "Replacing columns with unsupported type conversion (from {0} to {1}) for column {2}. SerDe may be incompatible", true),
+  ERROR_SERIALIZE_METASTORE(10319, "Error while serializing the metastore objects"),
+  IO_ERROR(10320, "Error while peforming IO operation "),
   ACID_NOT_ENOUGH_HISTORY(10327, "Not enough history available for ({0},{1}).  " +
     "Oldest available base: {2}", true),
   UPDATE_DELETE_VIEW(10402, "You cannot update or delete records in a view"),
