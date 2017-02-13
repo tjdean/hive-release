@@ -22,6 +22,8 @@ IMPROVEMENTS
 
 BUG FIXES
 
+    HIVE-12968: genNotNullFilterForJoinSourcePlan: needs to merge predicates into the multi-AND
+    HIVE-12664 : Bug in reduce deduplication optimization causing ArrayOutOfBoundException (Johan Gustavsson via Ashutosh Chauhan)
     HIVE-14924: MSCK REPAIR table with single threaded is throwing null pointer exception (Pengcheng Xiong, reviewed by Ashutosh Chauhan)
     HIVE-13936:Add streaming support for row_number
     HIVE-15589 : Flaky org.apache.hadoop.hive.ql.lockmgr.TestDbTxnManager.testHeartbeater (Wei Zheng)
