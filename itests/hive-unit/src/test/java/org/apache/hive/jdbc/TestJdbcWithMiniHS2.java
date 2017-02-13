@@ -88,7 +88,6 @@ public class TestJdbcWithMiniHS2 {
   @BeforeClass
   public static void setupBeforeClass() throws Exception {
     HiveConf conf = new HiveConf();
-    conf.setVar(HiveConf.ConfVars.METASTORE_RAW_STORE_IMPL, ObjectStore.class.getName());
     dataFileDir = conf.get("test.data.files").replace('\\', '/').replace("c:", "");
     kvDataFilePath = new Path(dataFileDir, "kv1.txt");
     try {
