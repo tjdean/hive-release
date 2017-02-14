@@ -297,6 +297,9 @@ public class TezJobMonitor {
   /**
    * killRunningJobs tries to terminate execution of all
    * currently running tez queries. No guarantees, best effort only.
+   *
+   * {@link org.apache.hadoop.hive.ql.exec.tez.TezJobExecHelper#killRunningJobs()} makes use of
+   * this method via reflection.
    */
   public static void killRunningJobs() {
     synchronized (shutdownList) {
