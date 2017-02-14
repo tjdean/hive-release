@@ -94,3 +94,6 @@ select percentile_approx(case when key < 100 then cast('NaN' as double) else key
 explain
 select percentile_approx(key, 0.5) from bucket;
 select percentile_approx(key, 0.5) between 255.0 and 257.0 from bucket;
+
+-- test where number of elements is zero
+select percentile_approx(key, 0.50) from bucket where key > 10000;
