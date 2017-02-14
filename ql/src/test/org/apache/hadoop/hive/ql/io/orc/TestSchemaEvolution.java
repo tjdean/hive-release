@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hive.ql.io.orc;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -102,5 +103,16 @@ public class TestSchemaEvolution {
         .addField("f6", TypeDescription.createChar().withMaxLength(80));
     SchemaEvolution both2diffChar = new SchemaEvolution(fileStruct2, readerStruct2diffChar, null);
     assertTrue(both2diffChar.hasConversion());
+  }
+
+  @Test
+  public void ensureFileIncluded() throws IOException {
+    TypeDescription file = TypeDescription.fromString("struct<x:int,y:int>");
+    SchemaEvolution evolution = new SchemaEvolution(file, null);
+    boolean[] include = evolution.getFileIncluded();
+    assertEquals(3, include.length);
+    for(int i=0; i < include.length; ++i) {
+      assertTrue("element " + i, include[i]);
+    }
   }
 }
