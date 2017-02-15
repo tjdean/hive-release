@@ -476,7 +476,6 @@ public class DbNotificationListener extends MetaStoreEventListener {
   }
 
   private void process(NotificationEvent event) {
-    event.setMessageFormat(msgFactory.getMessageFormat());
     if (rs != null) {
       synchronized(NOTIFICATION_TBL_LOCK) {
         LOG.debug("DbNotif:Enqueueing : " + event.getEventId() + ":" + event.getMessage());
