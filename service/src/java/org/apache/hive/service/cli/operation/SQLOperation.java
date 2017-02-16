@@ -265,8 +265,7 @@ public class SQLOperation extends ExecuteStatementOperation {
           } catch (Exception e) {
             setOperationException(new HiveSQLException(e));
             LOG.error("Error running hive query as user : " + currentUGI.getShortUserName(), e);
-          }
-          finally {
+          } finally {
             /**
              * We'll cache the ThreadLocal RawStore object for this background thread for an orderly cleanup
              * when this thread is garbage collected later.
