@@ -194,7 +194,7 @@ public class RetryingMetaStoreClient implements InvocationHandler {
         } else {
           throw e.getCause();
         }
-      } catch (MetaException e) {
+      } catch (MetaException e) {//todo: this 'if' seems bogus
         if (e.getMessage().matches("(?s).*(IO|TTransport)Exception.*"));
         caughtException = e;
       }
@@ -203,8 +203,8 @@ public class RetryingMetaStoreClient implements InvocationHandler {
         throw caughtException;
       }
       retriesMade++;
-      LOG.warn("MetaStoreClient lost connection. Attempting to reconnect.",
-          caughtException);
+      LOG.warn("MetaStoreClient lost connection. Attempting to reconnect (" + retriesMade + " of " +
+          retryLimit + ") after " + retryDelaySeconds + "s. " + method.getName(), caughtException);
       Thread.sleep(retryDelaySeconds * 1000);
     }
     return ret;
