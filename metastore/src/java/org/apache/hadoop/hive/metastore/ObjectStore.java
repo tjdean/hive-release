@@ -7373,6 +7373,7 @@ public class ObjectStore implements RawStore, Configurable {
     dbEntry.setDbName(entry.getDbName());
     dbEntry.setTableName(entry.getTableName());
     dbEntry.setMessage(entry.getMessage());
+    dbEntry.setMessageFormat(entry.getMessageFormat());
     return dbEntry;
   }
 
@@ -7384,6 +7385,7 @@ public class ObjectStore implements RawStore, Configurable {
     event.setDbName(dbEvent.getDbName());
     event.setTableName(dbEvent.getTableName());
     event.setMessage((dbEvent.getMessage()));
+    event.setMessageFormat(dbEvent.getMessageFormat());
     return event;
   }
 
