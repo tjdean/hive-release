@@ -106,14 +106,14 @@ Stage-0
          File Output Operator [FS_7]
             compressed:false
             Statistics:Num rows: 3 Data size: 3 Basic stats: COMPLETE Column stats: NONE
-            table:{"input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat","serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"}
+            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Select Operator [SEL_6]
                outputColumnNames:["_col0","_col1","_col2"]
                Statistics:Num rows: 3 Data size: 3 Basic stats: COMPLETE Column stats: NONE
                Map Join Operator [MAPJOIN_10]
                |  condition map:[{"":"Left Outer Join0 to 1"}]
                |  HybridGraceHashJoin:true
-               |  keys:{"Map 2":"member (type: bigint)","Map 1":"_col0 (type: bigint)"}
+               |  keys:{"Map 1":"_col0 (type: bigint)","Map 2":"member (type: bigint)"}
                |  outputColumnNames:["_col0","_col5","_col6"]
                |  Statistics:Num rows: 3 Data size: 3 Basic stats: COMPLETE Column stats: NONE
                |<-Map 1 [BROADCAST_EDGE]
