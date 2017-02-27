@@ -1484,7 +1484,7 @@ class TGetOperationStatusResp
   SQLSTATE = 3
   ERRORCODE = 4
   ERRORMESSAGE = 5
-  PROGRESSUPDATERESPONSE = 6
+  PROGRESSUPDATERESPONSE = 10
 
   FIELDS = {
     STATUS => {:type => ::Thrift::Types::STRUCT, :name => 'status', :class => ::TStatus},

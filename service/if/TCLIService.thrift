@@ -986,7 +986,7 @@ struct TGetOperationStatusResp {
   // Error message
   5: optional string errorMessage
 
-  6: optional TProgressUpdateResp progressUpdateResponse
+  10: optional TProgressUpdateResp progressUpdateResponse
 }
 
 

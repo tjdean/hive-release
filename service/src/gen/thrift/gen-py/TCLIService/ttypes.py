@@ -5691,7 +5691,11 @@ class TGetOperationStatusResp:
     (3, TType.STRING, 'sqlState', None, None, ), # 3
     (4, TType.I32, 'errorCode', None, None, ), # 4
     (5, TType.STRING, 'errorMessage', None, None, ), # 5
-    (6, TType.STRUCT, 'progressUpdateResponse', (TProgressUpdateResp, TProgressUpdateResp.thrift_spec), None, ), # 6
+    None, # 6
+    None, # 7
+    None, # 8
+    None, # 9
+    (10, TType.STRUCT, 'progressUpdateResponse', (TProgressUpdateResp, TProgressUpdateResp.thrift_spec), None, ), # 10
   )
 
   def __init__(self, status=None, operationState=None, sqlState=None, errorCode=None, errorMessage=None, progressUpdateResponse=None,):
@@ -5737,7 +5741,7 @@ class TGetOperationStatusResp:
           self.errorMessage = iprot.readString()
         else:
           iprot.skip(ftype)
-      elif fid == 6:
+      elif fid == 10:
         if ftype == TType.STRUCT:
           self.progressUpdateResponse = TProgressUpdateResp()
           self.progressUpdateResponse.read(iprot)
@@ -5774,7 +5778,7 @@ class TGetOperationStatusResp:
       oprot.writeString(self.errorMessage)
       oprot.writeFieldEnd()
     if self.progressUpdateResponse is not None:
-      oprot.writeFieldBegin('progressUpdateResponse', TType.STRUCT, 6)
+      oprot.writeFieldBegin('progressUpdateResponse', TType.STRUCT, 10)
       self.progressUpdateResponse.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()

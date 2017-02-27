@@ -311,7 +311,15 @@ public class HiveStatement implements java.sql.Statement {
 
   void waitForOperationToComplete() throws SQLException {
     TGetOperationStatusReq statusReq = new TGetOperationStatusReq(stmtHandle);
-    statusReq.setGetProgressUpdate(inPlaceUpdateStream != InPlaceUpdateStream.NO_OP);
+    boolean shouldGetProgressUpdate = inPlaceUpdateStream != InPlaceUpdateStream.NO_OP;
+    LOG.debug("requesting progress response :" +shouldGetProgressUpdate );
+    statusReq.setGetProgressUpdate(shouldGetProgressUpdate);
+    if (!shouldGetProgressUpdate) {
+      /**
+       * progress bar is completed if there is nothing we want to request in the first place.
+       */
+      inPlaceUpdateStream.getEventNotifier().progressBarCompleted();
+    }
     TGetOperationStatusResp statusResp;
 
     // Poll on the operation status, till the operation is complete
@@ -357,6 +365,7 @@ public class HiveStatement implements java.sql.Statement {
         throw new SQLException(e.toString(), "08S01", e);
       }
     }
+    inPlaceUpdateStream.getEventNotifier().progressBarCompleted();
   }
 
   private void checkConnection(String action) throws SQLException {

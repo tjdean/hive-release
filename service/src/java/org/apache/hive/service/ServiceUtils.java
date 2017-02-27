@@ -17,6 +17,8 @@
  */
 package org.apache.hive.service;
 
+import org.apache.hadoop.hive.conf.HiveConf;
+
 public class ServiceUtils {
 
   /*
@@ -41,4 +43,10 @@ public class ServiceUtils {
     }
     return endIdx;
   }
+
+  public static boolean canProvideProgressLog(HiveConf hiveConf) {
+    return "tez".equals(hiveConf.getVar(HiveConf.ConfVars.HIVE_EXECUTION_ENGINE))
+        && hiveConf.getBoolVar(HiveConf.ConfVars.HIVE_SERVER2_INPLACE_PROGRESS);
+  }
+
 }

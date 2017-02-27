@@ -57,6 +57,7 @@ import java.util.TreeSet;
 import org.apache.hadoop.hive.common.cli.ShellCmdExecutor;
 import org.apache.hive.jdbc.HiveStatement;
 import org.apache.hive.jdbc.logs.BeelineInPlaceUpdateStream;
+import org.apache.hive.jdbc.logs.InPlaceUpdateStream;
 
 public class Commands {
   private final BeeLine beeLine;
@@ -857,12 +858,14 @@ public class Commands {
               if (beeLine.getOpts().isSilent()) {
                 hasResults = stmnt.execute(sql);
               } else {
-                logThread = new Thread(createLogRunnable(stmnt));
+                InPlaceUpdateStream.EventNotifier eventNotifier =
+                    new InPlaceUpdateStream.EventNotifier();
+                logThread = new Thread(createLogRunnable(stmnt, eventNotifier));
                 logThread.setDaemon(true);
                 logThread.start();
                 if (stmnt instanceof HiveStatement) {
                   ((HiveStatement) stmnt).setInPlaceUpdateStream(
-                      new BeelineInPlaceUpdateStream(beeLine.getErrorStream())
+                      new BeelineInPlaceUpdateStream(beeLine.getErrorStream(), eventNotifier)
                   );
                 }
                 hasResults = stmnt.execute(sql);
@@ -918,28 +921,34 @@ public class Commands {
     return true;
   }
 
-  private Runnable createLogRunnable(Statement statement) {
+  private Runnable createLogRunnable(Statement statement,
+      final InPlaceUpdateStream.EventNotifier notifier) {
     if (statement instanceof HiveStatement) {
       final HiveStatement hiveStatement = (HiveStatement) statement;
 
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          while (hiveStatement.hasMoreLogs()) {
-            try {
-              // fetch the log periodically and output to beeline console
-              for (String log : hiveStatement.getQueryLog()) {
-                beeLine.info(log);
+          try {
+            while (hiveStatement.hasMoreLogs()) {
+              if (notifier.canOutputOperationLogs()) {
+                // fetch the log periodically and output to beeline console
+                List<String> queryLogs = hiveStatement.getQueryLog();
+                for (String log : queryLogs) {
+                  beeLine.info(log);
+                }
+                if (!queryLogs.isEmpty()) {
+                  notifier.operationLogShowedToUser();
+                }
               }
               Thread.sleep(DEFAULT_QUERY_PROGRESS_INTERVAL);
-            } catch (SQLException e) {
-              beeLine.error(new SQLWarning(e));
-              return;
-            } catch (InterruptedException e) {
-              beeLine.debug("Getting log thread is interrupted, since query is done!");
-              showRemainingLogsIfAny(hiveStatement);
-              return;
             }
+          } catch (SQLException e) {
+            beeLine.error(new SQLWarning(e));
+          } catch (InterruptedException e) {
+            beeLine.debug("Getting log thread is interrupted, since query is done!");
+          } finally {
+            showRemainingLogsIfAny(hiveStatement);
           }
         }
       };

@@ -43,7 +43,7 @@ public class TGetOperationStatusResp implements org.apache.thrift.TBase<TGetOper
   private static final org.apache.thrift.protocol.TField SQL_STATE_FIELD_DESC = new org.apache.thrift.protocol.TField("sqlState", org.apache.thrift.protocol.TType.STRING, (short)3);
   private static final org.apache.thrift.protocol.TField ERROR_CODE_FIELD_DESC = new org.apache.thrift.protocol.TField("errorCode", org.apache.thrift.protocol.TType.I32, (short)4);
   private static final org.apache.thrift.protocol.TField ERROR_MESSAGE_FIELD_DESC = new org.apache.thrift.protocol.TField("errorMessage", org.apache.thrift.protocol.TType.STRING, (short)5);
-  private static final org.apache.thrift.protocol.TField PROGRESS_UPDATE_RESPONSE_FIELD_DESC = new org.apache.thrift.protocol.TField("progressUpdateResponse", org.apache.thrift.protocol.TType.STRUCT, (short)6);
+  private static final org.apache.thrift.protocol.TField PROGRESS_UPDATE_RESPONSE_FIELD_DESC = new org.apache.thrift.protocol.TField("progressUpdateResponse", org.apache.thrift.protocol.TType.STRUCT, (short)10);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -69,7 +69,7 @@ public class TGetOperationStatusResp implements org.apache.thrift.TBase<TGetOper
     SQL_STATE((short)3, "sqlState"),
     ERROR_CODE((short)4, "errorCode"),
     ERROR_MESSAGE((short)5, "errorMessage"),
-    PROGRESS_UPDATE_RESPONSE((short)6, "progressUpdateResponse");
+    PROGRESS_UPDATE_RESPONSE((short)10, "progressUpdateResponse");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -94,7 +94,7 @@ public class TGetOperationStatusResp implements org.apache.thrift.TBase<TGetOper
           return ERROR_CODE;
         case 5: // ERROR_MESSAGE
           return ERROR_MESSAGE;
-        case 6: // PROGRESS_UPDATE_RESPONSE
+        case 10: // PROGRESS_UPDATE_RESPONSE
           return PROGRESS_UPDATE_RESPONSE;
         default:
           return null;
@@ -792,7 +792,7 @@ public class TGetOperationStatusResp implements org.apache.thrift.TBase<TGetOper
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 6: // PROGRESS_UPDATE_RESPONSE
+          case 10: // PROGRESS_UPDATE_RESPONSE
             if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
               struct.progressUpdateResponse = new TProgressUpdateResp();
               struct.progressUpdateResponse.read(iprot);

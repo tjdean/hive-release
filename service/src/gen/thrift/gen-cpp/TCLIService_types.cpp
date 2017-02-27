@@ -7742,7 +7742,7 @@ uint32_t TGetOperationStatusResp::read(::apache::thrift::protocol::TProtocol* ip
           xfer += iprot->skip(ftype);
         }
         break;
-      case 6:
+      case 10:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->progressUpdateResponse.read(iprot);
           this->__isset.progressUpdateResponse = true;
@@ -7794,7 +7794,7 @@ uint32_t TGetOperationStatusResp::write(::apache::thrift::protocol::TProtocol* o
     xfer += oprot->writeFieldEnd();
   }
   if (this->__isset.progressUpdateResponse) {
-    xfer += oprot->writeFieldBegin("progressUpdateResponse", ::apache::thrift::protocol::T_STRUCT, 6);
+    xfer += oprot->writeFieldBegin("progressUpdateResponse", ::apache::thrift::protocol::T_STRUCT, 10);
     xfer += this->progressUpdateResponse.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
