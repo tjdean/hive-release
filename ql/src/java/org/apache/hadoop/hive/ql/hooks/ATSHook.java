@@ -41,12 +41,16 @@ import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.exec.tez.TezTask;
 import org.apache.hadoop.hive.ql.log.PerfLogger;
 import org.apache.hadoop.hive.ql.plan.ExplainWork;
+import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.StringUtils;
+import org.apache.hadoop.yarn.api.records.timeline.TimelineDomain;
 import org.apache.hadoop.yarn.api.records.timeline.TimelineEntity;
 import org.apache.hadoop.yarn.api.records.timeline.TimelineEvent;
 import org.apache.hadoop.yarn.client.api.TimelineClient;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.hive.common.util.ShutdownHookManager;
+import org.apache.tez.dag.api.TezConfiguration;
 import org.json.JSONObject;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -64,6 +68,9 @@ public class ATSHook implements ExecuteWithHookContext {
   private static TimelineClient timelineClient;
   private enum EntityTypes { HIVE_QUERY_ID };
   private enum EventTypes { QUERY_SUBMITTED, QUERY_COMPLETED };
+  private static final String ATS_DOMAIN_PREFIX = "hive_";
+  private static boolean defaultATSDomainCreated = false;
+  private static final String DEFAULT_ATS_DOMAIN = "hive_default_ats";
 
   private enum OtherInfoTypes {
     QUERY, STATUS, TEZ, MAPRED, INVOKER_INFO, SESSION_ID, THREAD_NAME, LOG_TRACE_ID, VERSION,
@@ -107,9 +114,81 @@ public class ATSHook implements ExecuteWithHookContext {
     LOG.info("Created ATS Hook");
   }
 
+  private void createTimelineDomain(String domainId, String readers, String writers) throws Exception {
+    TimelineDomain timelineDomain = new TimelineDomain();
+    timelineDomain.setId(domainId);
+    timelineDomain.setReaders(readers);
+    timelineDomain.setWriters(writers);
+    timelineClient.putDomain(timelineDomain);
+    LOG.info("ATS domain created:" + domainId + "(" + readers + "," + writers + ")");
+  }
+
+  private String createOrGetDomain(final HookContext hookContext) throws Exception {
+    final String domainId;
+    String domainReaders = null;
+    String domainWriters = null;
+    boolean create = false;
+    if (SessionState.get() != null) {
+      if (SessionState.get().getATSDomainId() == null) {
+        domainId = ATS_DOMAIN_PREFIX + hookContext.getSessionId();
+        // Create session domain if not present
+        if (SessionState.get().getATSDomainId() == null) {
+          String requestuser = hookContext.getUserName();
+          if (hookContext.getUserName() == null ){
+            requestuser = hookContext.getUgi().getShortUserName() ;
+          }
+          boolean addHs2User =
+              HiveConf.getBoolVar(hookContext.getConf(), ConfVars.HIVETEZHS2USERACCESS);
+
+          UserGroupInformation loginUserUgi = UserGroupInformation.getLoginUser();
+          String loginUser =
+              loginUserUgi == null ? null : loginUserUgi.getShortUserName();
+
+          // In Tez, TEZ_AM_VIEW_ACLS/TEZ_AM_MODIFY_ACLS is used as the base for Tez ATS ACLS,
+          // so if exists, honor it. So we get the same ACLS for Tez ATS entries and
+          // Hive entries
+          domainReaders = Utilities.getAclStringWithHiveModification(hookContext.getConf(),
+              TezConfiguration.TEZ_AM_VIEW_ACLS, addHs2User, requestuser, loginUser);
+
+          domainWriters = Utilities.getAclStringWithHiveModification(hookContext.getConf(),
+              TezConfiguration.TEZ_AM_MODIFY_ACLS, addHs2User, requestuser, loginUser);
+          SessionState.get().setATSDomainId(domainId);
+          create = true;
+        }
+      } else {
+        domainId = SessionState.get().getATSDomainId();
+      }
+    } else {
+      // SessionState is null, this is unlikely to happen, just in case
+      if (!defaultATSDomainCreated) {
+        domainReaders = domainWriters = UserGroupInformation.getCurrentUser().getShortUserName();
+        defaultATSDomainCreated = true;
+        create = true;
+      }
+      domainId = DEFAULT_ATS_DOMAIN;
+    }
+    if (create) {
+      final String readers = domainReaders;
+      final String writers = domainWriters;
+      // executor is single thread, so we can guarantee
+      // domain created before any ATS entries
+      executor.submit(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            createTimelineDomain(domainId, readers, writers);
+          } catch (Exception e) {
+            LOG.warn("Failed to create ATS domain " + domainId, e);
+          }
+        }
+      });
+    }
+    return domainId;
+  }
   @Override
   public void run(final HookContext hookContext) throws Exception {
     final long currentTime = System.currentTimeMillis();
+
     final HiveConf conf = new HiveConf(hookContext.getConf());
 
     final Map<String, Long> durations = new HashMap<String, Long>();
@@ -117,6 +196,7 @@ public class ATSHook implements ExecuteWithHookContext {
       durations.put(key, hookContext.getPerfLogger().getDuration(key));
     }
 
+    final String domainId = createOrGetDomain(hookContext);
     executor.submit(new Runnable() {
         @Override
         public void run() {
@@ -162,13 +242,13 @@ public class ATSHook implements ExecuteWithHookContext {
                       user, requestuser, numMrJobs, numTezJobs, opId,
                       hookContext.getIpAddress(), hiveInstanceAddress, hiveInstanceType,
                       sessionID/*logID*/, hookContext.getThreadId(), plan.getUserProvidedContext(), executionMode,
-                      tablesRead, tablesWritten, conf));
+                      tablesRead, tablesWritten, conf, domainId));
               break;
             case POST_EXEC_HOOK:
-              fireAndForget(conf, createPostHookEvent(queryId, currentTime, user, requestuser, true, opId, durations));
+              fireAndForget(conf, createPostHookEvent(queryId, currentTime, user, requestuser, true, opId, durations, domainId));
               break;
             case ON_FAILURE_HOOK:
-              fireAndForget(conf, createPostHookEvent(queryId, currentTime, user, requestuser , false, opId, durations));
+              fireAndForget(conf, createPostHookEvent(queryId, currentTime, user, requestuser , false, opId, durations, domainId));
               break;
             default:
               //ignore
@@ -212,7 +292,8 @@ public class ATSHook implements ExecuteWithHookContext {
       long startTime, String user, String requestuser, int numMrJobs, int numTezJobs, String opId,
       String clientIpAddress, String hiveInstanceAddress, String hiveInstanceType,
       String sessionID /*String logID*/, String threadId, String logTraceId, String executionMode,
-      List<String> tablesRead, List<String> tablesWritten, HiveConf conf) throws Exception {
+      List<String> tablesRead, List<String> tablesWritten, HiveConf conf,
+      String domainId) throws Exception {
 
     JSONObject queryObj = new JSONObject();
     queryObj.put("queryText", query);
@@ -271,12 +352,13 @@ public class ATSHook implements ExecuteWithHookContext {
     if ((logTraceId != null) && (logTraceId.equals("") == false)) {
       atsEntity.addOtherInfo(OtherInfoTypes.LOG_TRACE_ID.name(), logTraceId);
     }
+    atsEntity.setDomainId(domainId);
 
     return atsEntity;
   }
 
   TimelineEntity createPostHookEvent(String queryId, long stopTime, String user, String requestuser, boolean success,
-      String opId, Map<String, Long> durations) throws Exception {
+      String opId, Map<String, Long> durations, String domainId) throws Exception {
     LOG.info("Received post-hook notification for :" + queryId);
 
     TimelineEntity atsEntity = new TimelineEntity();
@@ -301,6 +383,7 @@ public class ATSHook implements ExecuteWithHookContext {
       perfObj.put(entry.getKey(), entry.getValue());
     }
     atsEntity.addOtherInfo(OtherInfoTypes.PERF.name(), perfObj.toString());
+    atsEntity.setDomainId(domainId);
 
     return atsEntity;
   }

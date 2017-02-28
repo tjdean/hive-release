@@ -282,6 +282,8 @@ public class SessionState {
 
   private List<String> forwardedAddresses;
 
+  private String atsDomainId;
+
   /**
    * Get the lineage state stored in this session.
    *
@@ -1116,6 +1118,14 @@ public class SessionState {
               + org.apache.hadoop.util.StringUtils.stringifyException(e));
       return false;
     }
+  }
+
+  public String getATSDomainId() {
+    return atsDomainId;
+  }
+
+  public void setATSDomainId(String domainId) {
+    this.atsDomainId = domainId;
   }
 
   /**
