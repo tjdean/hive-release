@@ -12,16 +12,16 @@ select x from (select * from (select value as x from src order by x limit 5)a un
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@src
 #### A masked pattern was here ####
-NULL
-NULL
-NULL
-NULL
-NULL
 val_0
 val_0
 val_0
 val_10
 val_100
+NULL
+NULL
+NULL
+NULL
+NULL
 PREHOOK: query: -- HIVE-4837
 select * from (select * from (select cast(null as string) as N from src1 group by key)a UNION ALL select * from (select cast(null as string) as N from src1 group by key)b ) a
 PREHOOK: type: QUERY
@@ -64,3 +64,15 @@ NULL
 NULL
 NULL
 NULL
+PREHOOK: query: -- HIVE-16050
+select null as c1 UNION ALL select 1 as c1
+PREHOOK: type: QUERY
+PREHOOK: Input: _dummy_database@_dummy_table
+#### A masked pattern was here ####
+POSTHOOK: query: -- HIVE-16050
+select null as c1 UNION ALL select 1 as c1
+POSTHOOK: type: QUERY
+POSTHOOK: Input: _dummy_database@_dummy_table
+#### A masked pattern was here ####
+NULL
+1
