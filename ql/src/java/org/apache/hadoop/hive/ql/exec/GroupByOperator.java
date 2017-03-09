@@ -33,6 +33,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 
+import com.google.common.math.IntMath;
+
 import javolution.util.FastBitSet;
 
 import org.apache.hadoop.conf.Configuration;
@@ -166,14 +168,18 @@ public class GroupByOperator extends Operator<GroupByDesc> {
    */
   protected transient int numEntriesHashTable;
 
-  public static FastBitSet groupingSet2BitSet(int value) {
+  /**
+   * This method returns the big-endian representation of value.
+   * @param value
+   * @param length
+   * @return
+   */
+  public static FastBitSet groupingSet2BitSet(int value, int length) {
     FastBitSet bits = new FastBitSet();
-    int index = 0;
-    while (value != 0) {
+    for (int index = length - 1; index >= 0; index--) {
       if (value % 2 != 0) {
         bits.set(index);
       }
-      ++index;
       value = value >>> 1;
     }
     return bits;
@@ -217,7 +223,7 @@ public class GroupByOperator extends Operator<GroupByDesc> {
       for (Integer groupingSet: groupingSets) {
         // Create the mapping corresponding to the grouping set
         newKeysGroupingSets[pos] = new Text(String.valueOf(groupingSet));
-        groupingSetsBitSet[pos] = groupingSet2BitSet(groupingSet);
+        groupingSetsBitSet[pos] = groupingSet2BitSet(groupingSet, groupingSetsPosition);
         pos++;
       }
     }
@@ -749,8 +755,8 @@ public class GroupByOperator extends Operator<GroupByDesc> {
 
           FastBitSet bitset = groupingSetsBitSet[groupingSetPos];
           // Some keys need to be left to null corresponding to that grouping set.
-          for (int keyPos = bitset.nextSetBit(0); keyPos >= 0;
-            keyPos = bitset.nextSetBit(keyPos+1)) {
+          for (int keyPos = bitset.nextClearBit(0); keyPos < groupingSetsPosition;
+                  keyPos = bitset.nextClearBit(keyPos+1)) {
             newKeysArray[keyPos] = cloneNewKeysArray[keyPos];
           }
 
