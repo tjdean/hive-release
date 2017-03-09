@@ -63,6 +63,7 @@ public class SampleTezSessionState extends TezSessionState {
     UserGroupInformation ugi = Utils.getUGI();
     user = ugi.getShortUserName();
     this.doAsEnabled = conf.getBoolVar(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS);
+    setOpen(true);
   }
 
   @Override
