@@ -51,6 +51,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -1359,6 +1360,7 @@ public class HiveConnection implements java.sql.Connection {
 
   private static class SynchronizedHandler implements InvocationHandler {
     private final TCLIService.Iface client;
+    private final ReentrantLock lock = new ReentrantLock(true);
 
     SynchronizedHandler(TCLIService.Iface client) {
       this.client = client;
@@ -1368,9 +1370,8 @@ public class HiveConnection implements java.sql.Connection {
     public Object invoke(Object proxy, Method method, Object [] args)
         throws Throwable {
       try {
-        synchronized (client) {
-          return method.invoke(client, args);
-        }
+        lock.lock();
+        return method.invoke(client, args);
       } catch (InvocationTargetException e) {
         // all IFace APIs throw TException
         if (e.getTargetException() instanceof TException) {
@@ -1382,6 +1383,8 @@ public class HiveConnection implements java.sql.Connection {
         }
       } catch (Exception e) {
         throw new TException("Error in calling method " + method.getName(), e);
+      } finally {
+        lock.unlock();
       }
     }
   }
