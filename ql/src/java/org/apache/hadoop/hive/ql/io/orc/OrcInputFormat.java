@@ -19,6 +19,7 @@
 package org.apache.hadoop.hive.ql.io.orc;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,8 +84,10 @@ import org.apache.hadoop.util.StringUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.Weigher;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
 
 /**
  * A MapReduce/Hive input format for ORC files.
@@ -484,14 +487,13 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
       numBuckets =
           Math.max(conf.getInt(hive_metastoreConstants.BUCKET_COUNT, 0), 0);
       LOG.debug("Number of buckets specified by conf file is " + numBuckets);
-      int cacheStripeDetailsSize = HiveConf.getIntVar(conf,
-          ConfVars.HIVE_ORC_CACHE_STRIPE_DETAILS_SIZE);
-      int numThreads = HiveConf.getIntVar(conf,
-          ConfVars.HIVE_ORC_COMPUTE_SPLITS_NUM_THREADS);
-      boolean useSoftReference = HiveConf.getBoolVar(conf,
-              ConfVars.HIVE_ORC_CACHE_USE_SOFT_REFERENCES);
+      long cacheMemSize = HiveConf.getIntVar(
+          conf, ConfVars.HIVE_ORC_CACHE_STRIPE_DETAILS_MEMORY_SIZE);
+      int numThreads = HiveConf.getIntVar(conf, ConfVars.HIVE_ORC_COMPUTE_SPLITS_NUM_THREADS);
+      boolean useSoftReference = HiveConf.getBoolVar(
+          conf, ConfVars.HIVE_ORC_CACHE_USE_SOFT_REFERENCES);
 
-      cacheStripeDetails = (cacheStripeDetailsSize > 0);
+      cacheStripeDetails = (cacheMemSize > 0);
 
       this.etlFileThreshold = minSplits <= 0 ? DEFAULT_ETL_FILE_THRESHOLD : minSplits;
 
@@ -506,7 +508,14 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
           CacheBuilder builder = CacheBuilder.newBuilder()
                   .initialCapacity(DEFAULT_CACHE_INITIAL_CAPACITY)
                   .concurrencyLevel(numThreads)
-                  .maximumSize(cacheStripeDetailsSize);
+                  .maximumWeight(cacheMemSize)
+                  .weigher(new Weigher<Path, OrcTail>() {
+                    @Override
+                    public int weigh(Path key, OrcTail value) {
+                      return value.getSerializedTail().remaining() + 100;
+                    }
+                  });
+
           if (useSoftReference) {
             builder = builder.softValues();
           }
