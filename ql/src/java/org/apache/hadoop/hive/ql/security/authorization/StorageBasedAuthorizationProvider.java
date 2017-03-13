@@ -361,22 +361,19 @@ public class StorageBasedAuthorizationProvider extends HiveAuthorizationProvider
 
     final FileSystem fs = path.getFileSystem(conf);
 
-    FileStatus pathStatus = FileUtils.getFileStatusOrNull(fs, path);
-    if (pathStatus != null) {
-      checkPermissions(fs, pathStatus, actions, authenticator.getUserName());
+    if (fs.exists(path)) {
+      checkPermissions(fs, path, actions, authenticator.getUserName());
     } else if (path.getParent() != null) {
       // find the ancestor which exists to check its permissions
       Path par = path.getParent();
-      FileStatus parStatus = null;
       while (par != null) {
-        parStatus = FileUtils.getFileStatusOrNull(fs, par);
-        if (parStatus != null) {
+        if (fs.exists(par)) {
           break;
         }
         par = par.getParent();
       }
 
-      checkPermissions(fs, parStatus, actions, authenticator.getUserName());
+      checkPermissions(fs, par, actions, authenticator.getUserName());
     }
   }
 
@@ -385,20 +382,18 @@ public class StorageBasedAuthorizationProvider extends HiveAuthorizationProvider
    * does not exists, it returns.
    */
   @SuppressWarnings("deprecation")
-  protected static void checkPermissions(final FileSystem fs, final FileStatus stat,
+  protected static void checkPermissions(final FileSystem fs, final Path path,
       final EnumSet<FsAction> actions, String user) throws IOException,
       AccessControlException, HiveException {
 
-    if (stat == null) {
+    try {
+      FileStatus stat = fs.getFileStatus(path);
+      for (FsAction action : actions) {
+        FileUtils.checkFileAccessWithImpersonation(fs, stat, action, user);
+      }
+    } catch (FileNotFoundException fnfe) {
       // File named by path doesn't exist; nothing to validate.
       return;
-    }
-    FsAction checkActions = FsAction.NONE;
-    for (FsAction action : actions) {
-      checkActions = checkActions.or(action);
-    }
-    try {
-      FileUtils.checkFileAccessWithImpersonation(fs, stat, checkActions, user);
     } catch (org.apache.hadoop.fs.permission.AccessControlException ace) {
       // Older hadoop version will throw this @deprecated Exception.
       throw accessControlException(ace);

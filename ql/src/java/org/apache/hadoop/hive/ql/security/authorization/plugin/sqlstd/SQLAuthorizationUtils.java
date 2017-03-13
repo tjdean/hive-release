@@ -401,10 +401,12 @@ public class SQLAuthorizationUtils {
             filePath.toString());
         addPrivilegesFromFS(userName, availPrivs, fs, fileMatches, true);
       } else {
-        FileStatus fileStatus = FileUtils.getFileStatusOrNull(fs, filePath);
+        Path p = FileUtils.getPathOrParentThatExists(fs, filePath);
+        FileStatus fileStatus = fs.getFileStatus(p);
         boolean pickParent = (fileStatus == null); // did we find the file/dir itself?
         if (pickParent){
-          fileStatus = FileUtils.getPathOrParentThatExists(fs, filePath.getParent());
+          p = FileUtils.getPathOrParentThatExists(fs, filePath.getParent());
+          fileStatus = fs.getFileStatus(p);
         }
         Path path = fileStatus.getPath();
         if (pickParent){
