@@ -1046,7 +1046,7 @@ sub wrongExecutionMode($$)
 sub  setLocationPermGroup{
   my ($self, $job_info, $testCmd, $log) = @_;
   my $location = $job_info->{'location'};
-  $location =~ /hdfs.*:\d+(\/.*)\/(.*)/;  
+  $location =~ /hdfs:\/\/[^\/]*(\/.*)\/(.*)/;
   my $dir = $1;
   my $file = $2;
 
