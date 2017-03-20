@@ -314,10 +314,18 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
   }
 
-  public static class HMSHandler extends FacebookBase implements
-      IHMSHandler {
+  /**
+   * An ugly interface because everything about this file is ugly. RawStore is threadlocal so this
+   * thread-local disease propagates everywhere, and FileMetadataManager cannot just get a RawStore
+   * or handlers to use; it will need to have this method to make thread-local handlers and a
+   * thread-local RawStore.
+   */
+  public interface ThreadLocalRawStore {
+    RawStore getMS() throws MetaException;
+  }
+
+  public static class HMSHandler extends FacebookBase implements IHMSHandler, ThreadLocalRawStore {
     public static final Log LOG = HiveMetaStore.LOG;
-    private String rawStoreClassName;
     private final HiveConf hiveConf; // stores datastore (jpox) properties,
                                      // right now they come from jpox.properties
 
@@ -495,7 +503,6 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public void init() throws MetaException {
-      rawStoreClassName = hiveConf.getVar(HiveConf.ConfVars.METASTORE_RAW_STORE_IMPL);
       initListeners = MetaStoreUtils.getMetaStoreListeners(
           MetaStoreInitListener.class, hiveConf,
           hiveConf.getVar(HiveConf.ConfVars.METASTORE_INIT_HOOKS));
@@ -590,7 +597,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       }
     }
 
-    private String addPrefix(String s) {
+    private static String addPrefix(String s) {
       return threadLocalId.get() + ": " + s;
     }
 
@@ -664,9 +671,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     @InterfaceAudience.LimitedPrivate({"HCATALOG"})
     @InterfaceStability.Evolving
     public RawStore getMS() throws MetaException {
+      Configuration conf = getConf();
+      return getMSForConf(conf);
+    }
+
+    public static RawStore getMSForConf(Configuration conf) throws MetaException {
       RawStore ms = threadLocalMS.get();
       if (ms == null) {
-        ms = newRawStore();
+        ms = newRawStoreForConf(conf);
         ms.verifySchema();
         threadLocalMS.set(ms);
         ms = threadLocalMS.get();
@@ -683,11 +695,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       return txn;
     }
 
-    private RawStore newRawStore() throws MetaException {
-      LOG.info(addPrefix("Opening raw store with implemenation class:"
-          + rawStoreClassName));
-      Configuration conf = getConf();
-
+    private static RawStore newRawStoreForConf(Configuration conf) throws MetaException {
+      HiveConf hiveConf = new HiveConf(conf, HiveConf.class);
+      String rawStoreClassName = hiveConf.getVar(HiveConf.ConfVars.METASTORE_RAW_STORE_IMPL);
+      LOG.info(addPrefix("Opening raw store with implementation class:" + rawStoreClassName));
       return RawStoreProxy.getProxy(hiveConf, conf, rawStoreClassName, threadLocalId.get());
     }
 
