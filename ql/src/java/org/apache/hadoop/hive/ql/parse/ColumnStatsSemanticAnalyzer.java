@@ -299,6 +299,10 @@ public class ColumnStatsSemanticAnalyzer extends SemanticAnalyzer {
     return colTypes;
   }
 
+  private String escapeBackTicks(String colName) {
+    return colName.replaceAll("`", "``");
+  }
+
   private String genRewrittenQuery(List<String> colNames, int numBitVectors, Map<String,String> partSpec,
     boolean isPartitionStats) throws SemanticException{
     StringBuilder rewrittenQueryBuilder = new StringBuilder("select ");
@@ -309,7 +313,7 @@ public class ColumnStatsSemanticAnalyzer extends SemanticAnalyzer {
         rewrittenQueryBuilder.append(" , ");
       }
       rewrittenQueryBuilder.append("compute_stats(`");
-      rewrittenQueryBuilder.append(colNames.get(i));
+      rewrittenQueryBuilder.append(escapeBackTicks(colNames.get(i)));
       rewrittenQueryBuilder.append("` , ");
       rewrittenQueryBuilder.append(numBitVectors);
       rewrittenQueryBuilder.append(" )");
