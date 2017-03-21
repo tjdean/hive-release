@@ -207,9 +207,6 @@ public class EximUtil {
           ErrorMsg.OFFLINE_TABLE_OR_PARTITION.getMsg(":Table "
               + table.getTableName()));
     }
-    if (table.isView()) {
-      throw new SemanticException(ErrorMsg.DML_AGAINST_VIEW.getMsg());
-    }
     if (table.isNonNative()) {
       throw new SemanticException(ErrorMsg.EXIM_FOR_NON_NATIVE.getMsg());
     }
