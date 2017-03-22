@@ -38,6 +38,8 @@ import org.apache.tez.dag.api.client.DAGClient;
 import org.apache.tez.dag.api.client.DAGStatus;
 import org.apache.tez.dag.api.client.Progress;
 import org.apache.tez.dag.api.client.StatusGetOpts;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -125,10 +127,17 @@ public class TezJobMonitor {
 
   private UpdateFunction updateFunction() {
     UpdateFunction logToFileFunction = new UpdateFunction() {
+      private final Logger LOGGER = LoggerFactory.getLogger(UpdateFunction.class);
+      private boolean hiveServer2InPlaceProgressEnabled =
+          SessionState.get().getConf().getBoolVar(HiveConf.ConfVars.HIVE_SERVER2_INPLACE_PROGRESS);
       @Override
       public void update(DAGStatus status, Map<String, Progress> vertexProgressMap, String report) {
         SessionState.get().updateProgressMonitor(progressMonitor(status, vertexProgressMap));
-        console.printInfo(report);
+        if (hiveServer2InPlaceProgressEnabled) {
+          LOGGER.info(report);
+        } else {
+          console.printInfo(report);
+        }
       }
     };
     UpdateFunction inPlaceUpdateFunction = new UpdateFunction() {

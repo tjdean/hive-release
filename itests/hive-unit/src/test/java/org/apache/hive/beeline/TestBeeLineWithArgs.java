@@ -639,6 +639,14 @@ public class TestBeeLineWithArgs {
     testScriptFile(SCRIPT_TEXT, EXPECTED_PATTERN, true, getBaseArgs(miniHS2.getBaseJdbcURL()));
   }
 
+  @Test
+  public void testQueryProgressForEUnExpectedPattern() throws Throwable {
+    final String SCRIPT_TEXT = "set hive.support.concurrency = false;\n" +
+        "select count(*) from " + tableName + ";\n";
+    final String UN_EXPECTED_PATTERN = "(?=Reducer 2\\:).*(?=Map 1\\:)";
+    testScriptFile(SCRIPT_TEXT, UN_EXPECTED_PATTERN, false, getBaseArgs(miniHS2.getBaseJdbcURL()));
+  }
+
   /**
    * Test Beeline could show the query progress for time-consuming query when hive.exec.parallel
    * is true
