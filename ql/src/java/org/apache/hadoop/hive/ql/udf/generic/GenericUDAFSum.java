@@ -211,7 +211,7 @@ public class GenericUDAFSum extends AbstractGenericUDAFResolver {
       BoundaryDef end = wFrmDef.getEnd();
 
       return new GenericUDAFStreamingEvaluator.SumAvgEnhancer<HiveDecimalWritable, HiveDecimal>(
-          this, start.getAmt(), end.getAmt()) {
+          this, start.getDirection(), start.getAmt(), end.getDirection(), end.getAmt()) {
 
         @Override
         protected HiveDecimalWritable getNextResult(
@@ -219,10 +219,8 @@ public class GenericUDAFSum extends AbstractGenericUDAFResolver {
             throws HiveException {
           SumHiveDecimalAgg myagg = (SumHiveDecimalAgg) ss.wrappedBuf;
           HiveDecimal r = myagg.empty ? null : myagg.sum;
-          if (ss.numPreceding != BoundarySpec.UNBOUNDED_AMOUNT
-              && (ss.numRows - ss.numFollowing) >= (ss.numPreceding + 1)) {
-            HiveDecimal d = (HiveDecimal) ss.intermediateVals.remove(0);
-            d = d == null ? HiveDecimal.ZERO : d;
+          HiveDecimal d = ss.retrieveNextIntermediateValue();
+          if (d != null ) {
             r = r == null ? null : r.subtract(d);
           }
 
@@ -330,7 +328,7 @@ public class GenericUDAFSum extends AbstractGenericUDAFResolver {
       BoundaryDef end = wFrmDef.getEnd();
 
       return new GenericUDAFStreamingEvaluator.SumAvgEnhancer<DoubleWritable, Double>(this,
-          start.getAmt(), end.getAmt()) {
+          start.getDirection(), start.getAmt(), end.getDirection(), end.getAmt()) {
 
         @Override
         protected DoubleWritable getNextResult(
@@ -338,10 +336,8 @@ public class GenericUDAFSum extends AbstractGenericUDAFResolver {
             throws HiveException {
           SumDoubleAgg myagg = (SumDoubleAgg) ss.wrappedBuf;
           Double r = myagg.empty ? null : myagg.sum;
-          if (ss.numPreceding != BoundarySpec.UNBOUNDED_AMOUNT
-              && (ss.numRows - ss.numFollowing) >= (ss.numPreceding + 1)) {
-            Double d = (Double) ss.intermediateVals.remove(0);
-            d = d == null ? 0.0 : d;
+          Double d = ss.retrieveNextIntermediateValue();
+          if (d != null) {
             r = r == null ? null : r - d;
           }
 
@@ -448,7 +444,7 @@ public class GenericUDAFSum extends AbstractGenericUDAFResolver {
       BoundaryDef end = wFrmDef.getEnd();
 
       return new GenericUDAFStreamingEvaluator.SumAvgEnhancer<LongWritable, Long>(this,
-          start.getAmt(), end.getAmt()) {
+          start.getDirection(), start.getAmt(), end.getDirection(), end.getAmt()) {
 
         @Override
         protected LongWritable getNextResult(
@@ -456,10 +452,8 @@ public class GenericUDAFSum extends AbstractGenericUDAFResolver {
             throws HiveException {
           SumLongAgg myagg = (SumLongAgg) ss.wrappedBuf;
           Long r = myagg.empty ? null : myagg.sum;
-          if (ss.numPreceding != BoundarySpec.UNBOUNDED_AMOUNT
-              && (ss.numRows - ss.numFollowing) >= (ss.numPreceding + 1)) {
-            Long d = (Long) ss.intermediateVals.remove(0);
-            d = d == null ? 0 : d;
+          Long d = ss.retrieveNextIntermediateValue();
+          if (d != null) {
             r = r == null ? null : r - d;
           }
 
