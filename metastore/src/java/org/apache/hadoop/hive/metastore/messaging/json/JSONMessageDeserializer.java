@@ -38,6 +38,7 @@ import org.apache.hadoop.hive.metastore.messaging.MessageDeserializer;
 import org.apache.hadoop.hive.metastore.messaging.UpdateTableColumnStatMessage;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.SerializationConfig;
 
 /**
  * MessageDeserializer implementation, for deserializing from JSON strings.
@@ -48,6 +49,9 @@ public class JSONMessageDeserializer extends MessageDeserializer {
 
   static {
     mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    mapper.configure(SerializationConfig.Feature.AUTO_DETECT_GETTERS, false);
+    mapper.configure(SerializationConfig.Feature.AUTO_DETECT_IS_GETTERS, false);
+    mapper.configure(SerializationConfig.Feature.AUTO_DETECT_FIELDS, false);
   }
 
   @Override
