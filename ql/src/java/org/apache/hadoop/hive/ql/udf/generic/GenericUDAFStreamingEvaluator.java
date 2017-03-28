@@ -22,9 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.hive.ql.metadata.HiveException;
-import org.apache.hadoop.hive.ql.parse.WindowingSpec;
 import org.apache.hadoop.hive.ql.parse.WindowingSpec.BoundarySpec;
-import org.apache.hadoop.hive.ql.plan.ptf.BoundaryDef;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDAFEvaluator.AggregationBuffer;
 import org.apache.hadoop.hive.ql.util.JavaDataModel;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspector;
@@ -34,109 +32,28 @@ public abstract class GenericUDAFStreamingEvaluator<T1> extends
     GenericUDAFEvaluator implements ISupportStreamingModeForWindowing {
 
   protected final GenericUDAFEvaluator wrappedEval;
-  protected final WindowingSpec.Direction startDirection;
-  protected final int startAmt;
-  protected final int startRelativeOffset;
-  protected final WindowingSpec.Direction endDirection;
-  protected final int endAmt;
-  protected final int endRelativeOffset;
-  protected final int windowSize;
+  protected final int numPreceding;
+  protected final int numFollowing;
 
   public GenericUDAFStreamingEvaluator(GenericUDAFEvaluator wrappedEval,
-      WindowingSpec.Direction startDirection, int startAmt,
-      WindowingSpec.Direction endDirection, int endAmt) {
+      int numPreceding, int numFollowing) {
     this.wrappedEval = wrappedEval;
-    this.startDirection = startDirection;
-    this.startAmt = startAmt;
-    this.endDirection = endDirection;
-    this.endAmt = endAmt;
+    this.numPreceding = numPreceding;
+    this.numFollowing = numFollowing;
     this.mode = wrappedEval.mode;
-
-    // Calculate window size
-    if (startDirection == endDirection) {
-      windowSize =  Math.abs(endAmt - startAmt) + 1;
-    } else {
-      windowSize =  startAmt + endAmt + 1;
-    }
-
-    // Calculate relative offset
-    switch(startDirection) {
-    case PRECEDING:
-      startRelativeOffset = -startAmt;
-      break;
-    case FOLLOWING:
-      startRelativeOffset = startAmt;
-      break;
-    default:
-      startRelativeOffset = 0;
-    }
-    switch(endDirection) {
-    case PRECEDING:
-      endRelativeOffset = -endAmt;
-      break;
-    case FOLLOWING:
-      endRelativeOffset = endAmt;
-      break;
-    default:
-      endRelativeOffset = 0;
-    } 
-  }
-
-  public int getWindowSize() {
-    return windowSize;
   }
 
   class StreamingState extends AbstractAggregationBuffer {
     final AggregationBuffer wrappedBuf;
-    protected final WindowingSpec.Direction startDirection;
-    protected final int startAmt;
-    protected final int startRelativeOffset;
-    protected final WindowingSpec.Direction endDirection;
-    protected final int endAmt;
-    protected final int endRelativeOffset;
-    protected final int windowSize;
-
+    final int numPreceding;
+    final int numFollowing;
     final List<T1> results;
     int numRows;
 
-    StreamingState(
-        WindowingSpec.Direction startDirection, int startAmt,
-        WindowingSpec.Direction endDirection, int endAmt,
-        AggregationBuffer buf) {
+    StreamingState(int numPreceding, int numFollowing, AggregationBuffer buf) {
       this.wrappedBuf = buf;
-      this.startDirection = startDirection;
-      this.startAmt = startAmt;
-      this.endDirection = endDirection;
-      this.endAmt = endAmt;
-
-      // Calculate window size
-      if (startDirection == endDirection) {
-        windowSize =  Math.abs(endAmt - startAmt) + 1;
-      } else {
-        windowSize =  startAmt + endAmt + 1;
-      }
-
-      // Calculate relative offset
-      switch(startDirection) {
-      case PRECEDING:
-        startRelativeOffset = -startAmt;
-        break;
-      case FOLLOWING:
-        startRelativeOffset = startAmt;
-        break;
-      default:
-        startRelativeOffset = 0;
-      }
-      switch(endDirection) {
-      case PRECEDING:
-        endRelativeOffset = -endAmt;
-        break;
-      case FOLLOWING:
-        endRelativeOffset = endAmt;
-        break;
-      default:
-        endRelativeOffset = 0;
-      }
+      this.numPreceding = numPreceding;
+      this.numFollowing = numFollowing;
       results = new ArrayList<T1>();
       numRows = 0;
     }
@@ -144,16 +61,6 @@ public abstract class GenericUDAFStreamingEvaluator<T1> extends
     protected void reset() {
       results.clear();
       numRows = 0;
-    }
-
-    /**
-     * For the cases "X preceding and Y preceding" or the number of processed rows
-     * is more than the size of FOLLOWING window, we are able to generate a PTF result
-     * for a previous row.
-     * @return
-     */
-    public boolean hasResultReady() {
-      return this.numRows >= endRelativeOffset;
     }
   }
 
@@ -198,21 +105,18 @@ public abstract class GenericUDAFStreamingEvaluator<T1> extends
   public static abstract class SumAvgEnhancer<T1, T2> extends
       GenericUDAFStreamingEvaluator<T1> {
 
-    public SumAvgEnhancer(GenericUDAFEvaluator wrappedEval, WindowingSpec.Direction startDirection, int startAmt,
-          WindowingSpec.Direction endDirection, int endAmt) {
-      super(wrappedEval, startDirection, startAmt,
-             endDirection, endAmt);
+    public SumAvgEnhancer(GenericUDAFEvaluator wrappedEval, int numPreceding,
+        int numFollowing) {
+      super(wrappedEval, numPreceding, numFollowing);
     }
 
     class SumAvgStreamingState extends StreamingState {
 
-      final List<T2> intermediateVals;  // Keep track of S[0..x]
+      final List<T2> intermediateVals;
 
-      SumAvgStreamingState(WindowingSpec.Direction startDirection, int startAmt,
-              WindowingSpec.Direction endDirection, int endAmt,
+      SumAvgStreamingState(int numPreceding, int numFollowing,
           AggregationBuffer buf) {
-        super(startDirection, startAmt,
-             endDirection, endAmt, buf);
+        super(numPreceding, numFollowing, buf);
         intermediateVals = new ArrayList<T2>();
       }
 
@@ -225,7 +129,7 @@ public abstract class GenericUDAFStreamingEvaluator<T1> extends
         if (underlying == -1) {
           return -1;
         }
-        if (startAmt == BoundarySpec.UNBOUNDED_AMOUNT) {
+        if (numPreceding == BoundarySpec.UNBOUNDED_AMOUNT) {
           return -1;
         }
         /*
@@ -234,7 +138,8 @@ public abstract class GenericUDAFStreamingEvaluator<T1> extends
          * of underlying * wdwSz sz of intermediates = sz of underlying * wdwSz
          */
 
-        return underlying + (underlying * windowSize) + (underlying * windowSize)
+        int wdwSz = numPreceding + numFollowing + 1;
+        return underlying + (underlying * wdwSz) + (underlying * wdwSz)
             + (3 * JavaDataModel.PRIMITIVES1);
       }
 
@@ -242,27 +147,12 @@ public abstract class GenericUDAFStreamingEvaluator<T1> extends
         intermediateVals.clear();
         super.reset();
       }
-
-      /**
-       * Retrieve the next stored intermediate result, i.e.,
-       * Get S[x-1] in the computation of S[x..y] = S[y] - S[x-1].
-       */
-      public T2 retrieveNextIntermediateValue() {
-        if (startAmt != BoundarySpec.UNBOUNDED_AMOUNT
-            && !intermediateVals.isEmpty()
-            && this.numRows >= windowSize) {
-          return this.intermediateVals.remove(0);
-        }
-
-        return null;
-      }
     }
 
     @Override
     public AggregationBuffer getNewAggregationBuffer() throws HiveException {
       AggregationBuffer underlying = wrappedEval.getNewAggregationBuffer();
-      return new SumAvgStreamingState(startDirection, startAmt,
-              endDirection, endAmt, underlying);
+      return new SumAvgStreamingState(numPreceding, numFollowing, underlying);
     }
 
     @Override
@@ -272,19 +162,10 @@ public abstract class GenericUDAFStreamingEvaluator<T1> extends
 
       wrappedEval.iterate(ss.wrappedBuf, parameters);
 
-      // We need to insert 'null' before processing first row for the case: X preceding and y preceding
-      if (ss.numRows == 0) {
-        for (int i = ss.endRelativeOffset; i < 0; i++) {
-          ss.results.add(null);
-        }
-      }
-
-      // Generate the result for the windowing ending at the current row
-      if (ss.hasResultReady()) {
+      if (ss.numRows >= ss.numFollowing) {
         ss.results.add(getNextResult(ss));
       }
-      if (ss.startAmt != BoundarySpec.UNBOUNDED_AMOUNT
-          && ss.numRows + 1 >= ss.startRelativeOffset) {
+      if (ss.numPreceding != BoundarySpec.UNBOUNDED_AMOUNT) {
         ss.intermediateVals.add(getCurrentIntermediateResult(ss));
       }
 
@@ -296,19 +177,8 @@ public abstract class GenericUDAFStreamingEvaluator<T1> extends
       SumAvgStreamingState ss = (SumAvgStreamingState) agg;
       Object o = wrappedEval.terminate(ss.wrappedBuf);
 
-      // After all the rows are processed, continue to generate results for the rows that results haven't generated.
-      // For the case: X following and Y following, process first Y-X results and then insert X nulls.
-      // For the case X preceding and Y following, process Y results.
-      for (int i = Math.max(0, ss.startRelativeOffset); i < ss.endRelativeOffset; i++) {
-        if (ss.hasResultReady()) {
-          ss.results.add(getNextResult(ss));
-        }
-        ss.numRows++;
-      }
-      for (int i = 0; i < ss.startRelativeOffset; i++) {
-        if (ss.hasResultReady()) {
-          ss.results.add(null);
-        }
+      for (int i = 0; i < ss.numFollowing; i++) {
+        ss.results.add(getNextResult(ss));
         ss.numRows++;
       }
       return o;
