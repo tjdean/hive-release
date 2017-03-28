@@ -25,6 +25,7 @@ import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.exec.WindowFunctionDescription;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
+import org.apache.hadoop.hive.ql.parse.WindowingSpec;
 import org.apache.hadoop.hive.ql.parse.WindowingSpec.BoundarySpec;
 import org.apache.hadoop.hive.ql.plan.ptf.BoundaryDef;
 import org.apache.hadoop.hive.ql.plan.ptf.WindowFrameDef;
@@ -143,7 +144,7 @@ public class GenericUDAFLastValue extends AbstractGenericUDAFResolver {
     public GenericUDAFEvaluator getWindowingEvaluator(WindowFrameDef wFrmDef) {
       BoundaryDef start = wFrmDef.getStart();
       BoundaryDef end = wFrmDef.getEnd();
-      return new LastValStreamingFixedWindow(this, start.getAmt(), end.getAmt());
+      return new LastValStreamingFixedWindow(this, start.getDirection(), start.getAmt(), end.getDirection(), end.getAmt());
     }
   }
 
@@ -154,8 +155,12 @@ public class GenericUDAFLastValue extends AbstractGenericUDAFResolver {
       private Object lastValue;
       private int lastIdx;
 
-      public State(int numPreceding, int numFollowing, AggregationBuffer buf) {
-        super(numPreceding, numFollowing, buf);
+      public State(
+          WindowingSpec.Direction startDirection, int startAmt,
+          WindowingSpec.Direction endDirection, int endAmt,
+          AggregationBuffer buf) {
+        super(startDirection, startAmt,
+              endDirection, endAmt, buf);
         lastValue = null;
         lastIdx = -1;
       }
@@ -179,9 +184,11 @@ public class GenericUDAFLastValue extends AbstractGenericUDAFResolver {
       }
     }
 
-    public LastValStreamingFixedWindow(GenericUDAFEvaluator wrappedEval, int numPreceding,
-      int numFollowing) {
-      super(wrappedEval, numPreceding, numFollowing);
+    public LastValStreamingFixedWindow(GenericUDAFEvaluator wrappedEval,
+        WindowingSpec.Direction startDirection, int startAmt,
+        WindowingSpec.Direction endDirection, int endAmt) {
+      super(wrappedEval,
+          startDirection, startAmt, endDirection, endAmt);
     }
 
     @Override
@@ -192,7 +199,8 @@ public class GenericUDAFLastValue extends AbstractGenericUDAFResolver {
     @Override
     public AggregationBuffer getNewAggregationBuffer() throws HiveException {
       AggregationBuffer underlying = wrappedEval.getNewAggregationBuffer();
-      return new State(numPreceding, numFollowing, underlying);
+      return new State(startDirection, startAmt,
+          endDirection, endAmt, underlying);
     }
 
     protected ObjectInspector inputOI() {
@@ -210,6 +218,11 @@ public class GenericUDAFLastValue extends AbstractGenericUDAFResolver {
        */
       if (lb.firstRow) {
         wrappedEval.iterate(lb, parameters);
+
+        // We need to insert 'null' before processing first row for the case: X preceding and y preceding
+        for (int i = s.endRelativeOffset; i < 0; i++) {
+          s.results.add(null);
+        }
       }
 
       Object o = ObjectInspectorUtils.copyToStandardObject(parameters[0], inputOI(),
@@ -219,14 +232,14 @@ public class GenericUDAFLastValue extends AbstractGenericUDAFResolver {
         s.lastValue = o;
         s.lastIdx = s.numRows;
       } else if (lb.skipNulls && s.lastIdx != -1) {
-        if (s.numPreceding != BoundarySpec.UNBOUNDED_AMOUNT
-            && s.numRows > s.lastIdx + s.numPreceding + s.numFollowing) {
+        if (s.startAmt != BoundarySpec.UNBOUNDED_AMOUNT
+            && s.numRows >= s.lastIdx + s.windowSize) {
           s.lastValue = null;
           s.lastIdx = -1;
         }
       }
 
-      if (s.numRows >= (s.numFollowing)) {
+      if (s.numRows >= s.endRelativeOffset) {
         s.results.add(s.lastValue);
       }
       s.numRows++;
@@ -238,15 +251,27 @@ public class GenericUDAFLastValue extends AbstractGenericUDAFResolver {
       LastValueBuffer lb = (LastValueBuffer) s.wrappedBuf;
 
       if (lb.skipNulls && s.lastIdx != -1) {
-        if (s.numPreceding != BoundarySpec.UNBOUNDED_AMOUNT
-            && s.numRows > s.lastIdx + s.numPreceding + s.numFollowing) {
+        if (s.startAmt != BoundarySpec.UNBOUNDED_AMOUNT
+            && s.numRows >= s.lastIdx + s.windowSize) {
           s.lastValue = null;
           s.lastIdx = -1;
         }
       }
 
-      for (int i = 0; i < s.numFollowing; i++) {
-        s.results.add(s.lastValue);
+      // After all the rows are processed, continue to generate results for the rows that results haven't generated.
+      // For the case: X following and Y following, process first Y-X results and then insert X nulls.
+      // For the case X preceding and Y following, process Y results.
+      for (int i = Math.max(0, s.startRelativeOffset); i < s.endRelativeOffset; i++) {
+        if (s.hasResultReady()) {
+          s.results.add(s.lastValue);
+        }
+        s.numRows++;
+      }
+      for (int i = 0; i < s.startRelativeOffset; i++) {
+        if (s.hasResultReady()) {
+          s.results.add(null);
+        }
+        s.numRows++;
       }
 
       return null;

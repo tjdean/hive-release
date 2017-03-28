@@ -28,6 +28,7 @@ import org.apache.hadoop.hive.ql.exec.UDFArgumentTypeException;
 import org.apache.hadoop.hive.ql.exec.WindowFunctionDescription;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
+import org.apache.hadoop.hive.ql.parse.WindowingSpec;
 import org.apache.hadoop.hive.ql.parse.WindowingSpec.BoundarySpec;
 import org.apache.hadoop.hive.ql.plan.ptf.BoundaryDef;
 import org.apache.hadoop.hive.ql.plan.ptf.WindowFrameDef;
@@ -156,7 +157,7 @@ public class GenericUDAFFirstValue extends AbstractGenericUDAFResolver {
     public GenericUDAFEvaluator getWindowingEvaluator(WindowFrameDef wFrmDef) {
       BoundaryDef start = wFrmDef.getStart();
       BoundaryDef end = wFrmDef.getEnd();
-      return new FirstValStreamingFixedWindow(this, start.getAmt(), end.getAmt());
+      return new FirstValStreamingFixedWindow(this, start.getDirection(), start.getAmt(), end.getDirection(), end.getAmt());
     }
 
   }
@@ -178,9 +179,13 @@ public class GenericUDAFFirstValue extends AbstractGenericUDAFResolver {
 
       private final Deque<ValIndexPair> valueChain;
 
-      public State(int numPreceding, int numFollowing, AggregationBuffer buf) {
-        super(numPreceding, numFollowing, buf);
-        valueChain = new ArrayDeque<ValIndexPair>(numPreceding + numFollowing + 1);
+      public State(
+          WindowingSpec.Direction startDirection, int startAmt,
+          WindowingSpec.Direction endDirection, int endAmt,
+          AggregationBuffer buf) {
+        super(startDirection, startAmt,
+              endDirection, endAmt, buf);
+        valueChain = new ArrayDeque<ValIndexPair>(startAmt == BoundarySpec.UNBOUNDED_AMOUNT ? 1 : windowSize);
       }
 
       @Override
@@ -192,7 +197,7 @@ public class GenericUDAFFirstValue extends AbstractGenericUDAFResolver {
         if (underlying == -1) {
           return -1;
         }
-        if (numPreceding == BoundarySpec.UNBOUNDED_AMOUNT) {
+        if (startAmt == BoundarySpec.UNBOUNDED_AMOUNT) {
           return -1;
         }
         /*
@@ -201,9 +206,8 @@ public class GenericUDAFFirstValue extends AbstractGenericUDAFResolver {
          * underlying * wdwSz sz of maxChain = sz of underlying * wdwSz
          */
 
-        int wdwSz = numPreceding + numFollowing + 1;
-        return underlying + (underlying * wdwSz) + (underlying * wdwSz) + (3
-                                                                           * JavaDataModel.PRIMITIVES1);
+        return underlying + (underlying * getWindowSize()) + (underlying * getWindowSize())
+            + (3 * JavaDataModel.PRIMITIVES1);
       }
 
       protected void reset() {
@@ -212,9 +216,11 @@ public class GenericUDAFFirstValue extends AbstractGenericUDAFResolver {
       }
     }
 
-    public FirstValStreamingFixedWindow(GenericUDAFEvaluator wrappedEval, int numPreceding,
-      int numFollowing) {
-      super(wrappedEval, numPreceding, numFollowing);
+    public FirstValStreamingFixedWindow(GenericUDAFEvaluator wrappedEval,
+        WindowingSpec.Direction startDirection, int startAmt,
+        WindowingSpec.Direction endDirection, int endAmt) {
+      super(wrappedEval,
+          startDirection, startAmt, endDirection, endAmt);
     }
 
     @Override
@@ -225,7 +231,8 @@ public class GenericUDAFFirstValue extends AbstractGenericUDAFResolver {
     @Override
     public AggregationBuffer getNewAggregationBuffer() throws HiveException {
       AggregationBuffer underlying = wrappedEval.getNewAggregationBuffer();
-      return new State(numPreceding, numFollowing, underlying);
+      return new State(startDirection, startAmt,
+          endDirection, endAmt, underlying);
     }
 
     protected ObjectInspector inputOI() {
@@ -243,6 +250,11 @@ public class GenericUDAFFirstValue extends AbstractGenericUDAFResolver {
        */
       if (fb.firstRow) {
         wrappedEval.iterate(fb, parameters);
+
+        // We need to insert 'null' before processing first row for the case: X preceding and y preceding
+        for (int i = s.endRelativeOffset; i < 0; i++) {
+          s.results.add(null);
+        }
       }
 
       Object o = ObjectInspectorUtils.copyToStandardObject(parameters[0], inputOI(),
@@ -252,7 +264,7 @@ public class GenericUDAFFirstValue extends AbstractGenericUDAFResolver {
        * add row to chain. except in case of UNB preceding: - only 1 firstVal
        * needs to be tracked.
        */
-      if (s.numPreceding != BoundarySpec.UNBOUNDED_AMOUNT || s.valueChain.isEmpty()) {
+      if (s.startAmt != BoundarySpec.UNBOUNDED_AMOUNT || s.valueChain.isEmpty()) {
         /*
          * add value to chain if it is not null or if skipNulls is false.
          */
@@ -261,7 +273,7 @@ public class GenericUDAFFirstValue extends AbstractGenericUDAFResolver {
         }
       }
 
-      if (s.numRows >= (s.numFollowing)) {
+      if (s.hasResultReady()) {
         /*
          * if skipNulls is true and there are no rows in valueChain => all rows
          * in partition are null so far; so add null in o/p
@@ -276,8 +288,8 @@ public class GenericUDAFFirstValue extends AbstractGenericUDAFResolver {
 
       if (s.valueChain.size() > 0) {
         int fIdx = (Integer) s.valueChain.getFirst().idx;
-        if (s.numPreceding != BoundarySpec.UNBOUNDED_AMOUNT
-            && s.numRows > fIdx + s.numPreceding + s.numFollowing) {
+        if (s.startAmt != BoundarySpec.UNBOUNDED_AMOUNT
+            && s.numRows >= fIdx + s.windowSize) {
           s.valueChain.removeFirst();
         }
       }
@@ -286,21 +298,32 @@ public class GenericUDAFFirstValue extends AbstractGenericUDAFResolver {
     @Override
     public Object terminate(AggregationBuffer agg) throws HiveException {
       State s = (State) agg;
-      FirstValueBuffer fb = (FirstValueBuffer) s.wrappedBuf;
-      ValIndexPair r = fb.skipNulls && s.valueChain.size() == 0 ? null : s.valueChain.getFirst();
+      ValIndexPair r = s.valueChain.size() == 0 ? null : s.valueChain.getFirst();
 
-      for (int i = 0; i < s.numFollowing; i++) {
-        s.results.add(r == null ? null : r.val);
+      // After all the rows are processed, continue to generate results for the rows that results haven't generated.
+      // For the case: X following and Y following, process first Y-X results and then insert X nulls.
+      // For the case X preceding and Y following, process Y results.
+      for (int i = Math.max(0, s.startRelativeOffset); i < s.endRelativeOffset; i++) {
+        if (s.hasResultReady()) {
+          s.results.add(r == null ? null : r.val);
+        }
         s.numRows++;
         if (r != null) {
           int fIdx = (Integer) r.idx;
-          if (s.numPreceding != BoundarySpec.UNBOUNDED_AMOUNT
-              && s.numRows > fIdx + s.numPreceding + s.numFollowing
+          if (s.startAmt != BoundarySpec.UNBOUNDED_AMOUNT
+              && s.numRows >= fIdx + s.windowSize
               && !s.valueChain.isEmpty()) {
             s.valueChain.removeFirst();
             r = !s.valueChain.isEmpty() ? s.valueChain.getFirst() : r;
           }
         }
+      }
+
+      for (int i = 0; i < s.startRelativeOffset; i++) {
+        if (s.hasResultReady()) {
+          s.results.add(null);
+        }
+        s.numRows++;
       }
 
       return null;
