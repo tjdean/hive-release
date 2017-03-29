@@ -1,12 +1,3 @@
-
-
-
-
-
-
-
-
-
 Changes only in Hortonworks git repo and not in released hive-1.2.1
 ===================================================================
 NEW FEATURES
