@@ -81,6 +81,9 @@ import org.apache.hadoop.hive.serde2.Deserializer;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 import org.apache.hadoop.mapred.JobConf;
 
+import com.google.common.collect.Lists;
+
+
 /**
  * Operator factory for predicate pushdown processing of operator graph Each
  * operator determines the pushdown predicates by walking the expression tree.
@@ -104,9 +107,12 @@ public final class OpProcFactory {
     }
     if (current.getNumChild() > 1) {
       // ppd for multi-insert query is not yet implemented
-      // no-op for leafs
-      for (Operator<?> child : current.getChildOperators()) {
-        removeCandidates(child, owi); // remove candidated filters on this branch
+      // we assume that nothing can is pushed beyond this operator
+      List<Operator<? extends OperatorDesc>> children =
+              Lists.newArrayList(current.getChildOperators());
+      for (Operator<?> child : children) {
+        ExprWalkerInfo childInfo = owi.getPrunedPreds(child);
+        createFilter(child, childInfo, owi);
       }
       return null;
     }
@@ -115,12 +121,37 @@ public final class OpProcFactory {
 
   private static void removeCandidates(Operator<?> operator, OpWalkerInfo owi) {
     if (operator instanceof FilterOperator) {
+      if (owi.getCandidateFilterOps().contains(operator)) {
+        removeOperator(operator);
+      }
       owi.getCandidateFilterOps().remove(operator);
     }
     if (operator.getChildOperators() != null) {
-      for (Operator<?> child : operator.getChildOperators()) {
+      List<Operator<? extends OperatorDesc>> children =
+              Lists.newArrayList(operator.getChildOperators());
+      for (Operator<?> child : children) {
         removeCandidates(child, owi);
       }
+    }
+  }
+
+  private static void removeAllCandidates(OpWalkerInfo owi) {
+    for (FilterOperator operator : owi.getCandidateFilterOps()) {
+      removeOperator(operator);
+    }
+    owi.getCandidateFilterOps().clear();
+  }
+
+  private static void removeOperator(Operator<? extends OperatorDesc> operator) {
+    List<Operator<? extends OperatorDesc>> children = operator.getChildOperators();
+    List<Operator<? extends OperatorDesc>> parents = operator.getParentOperators();
+    for (Operator<? extends OperatorDesc> parent : parents) {
+      parent.getChildOperators().addAll(children);
+      parent.removeChild(operator);
+    }
+    for (Operator<? extends OperatorDesc> child : children) {
+      child.getParentOperators().addAll(parents);
+      child.removeParent(operator);
     }
   }
 
@@ -392,6 +423,12 @@ public final class OpProcFactory {
       OpWalkerInfo owi = (OpWalkerInfo) procCtx;
       TableScanOperator tsOp = (TableScanOperator) nd;
       mergeWithChildrenPred(tsOp, owi, null, null);
+      if (HiveConf.getBoolVar(owi.getParseContext().getConf(),
+          HiveConf.ConfVars.HIVEPPDREMOVEDUPLICATEFILTERS)) {
+        // remove all the candidate filter operators
+        // when we get to the TS
+        removeAllCandidates(owi);
+      }
       ExprWalkerInfo pushDownPreds = owi.getPrunedPreds(tsOp);
       return createFilter(tsOp, pushDownPreds, owi);
     }
@@ -966,20 +1003,9 @@ public final class OpProcFactory {
     if (HiveConf.getBoolVar(owi.getParseContext().getConf(),
         HiveConf.ConfVars.HIVEPPDREMOVEDUPLICATEFILTERS)) {
       // remove the candidate filter ops
-      for (FilterOperator fop : owi.getCandidateFilterOps()) {
-        List<Operator<? extends OperatorDesc>> children = fop.getChildOperators();
-        List<Operator<? extends OperatorDesc>> parents = fop.getParentOperators();
-        for (Operator<? extends OperatorDesc> parent : parents) {
-          parent.getChildOperators().addAll(children);
-          parent.removeChild(fop);
-        }
-        for (Operator<? extends OperatorDesc> child : children) {
-          child.getParentOperators().addAll(parents);
-          child.removeParent(fop);
-        }
-      }
-      owi.getCandidateFilterOps().clear();
+      removeCandidates(op, owi);
     }
+
     // push down current ppd context to newly added filter
     ExprWalkerInfo walkerInfo = owi.getPrunedPreds(op);
     if (walkerInfo != null) {
