@@ -558,6 +558,12 @@
          <version>${hadoop-23.version}</version>
          <optional>true</optional>
        </dependency>
+        <dependency>
+          <groupId>org.hamcrest</groupId>
+          <artifactId>hamcrest-all</artifactId>
+          <version>${hamcrest.version}</version>
+          <scope>test</scope>
+        </dependency>
       </dependencies>
     </profile>
     <profile>

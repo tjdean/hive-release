@@ -131,6 +131,7 @@
     <hadoop-20S.version>1.2.1</hadoop-20S.version>
     <hadoop-23.version>2.7.3.2.6.0.2-SNAPSHOT</hadoop-23.version>
     <hadoop.bin.path>${basedir}/${hive.path.to.root}/testutils/hadoop</hadoop.bin.path>
+    <hamcrest.version>1.1</hamcrest.version>
     <hbase.hadoop1.version>0.98.9-hadoop1</hbase.hadoop1.version>
     <hbase.hadoop2.version>1.1.2.2.6.0.2-SNAPSHOT</hbase.hadoop2.version>
     <hikaricp.version>2.5.1</hikaricp.version>
