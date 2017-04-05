@@ -18,6 +18,8 @@
 
 package org.apache.hadoop.hive.ql.plan;
 
+import com.google.common.collect.ImmutableList;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -63,6 +65,9 @@ public class AlterTableDesc extends DDLDesc implements Serializable {
     private final String name;
     private AlterTableTypes(String name) { this.name = name; }
     public String getName() { return name; }
+
+    public static final List<AlterTableTypes> nonNativeTableAllowedTypes = 
+        ImmutableList.of(ADDPROPS, DROPPROPS); 
   }
 
   public static enum ProtectModeType {
