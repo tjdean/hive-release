@@ -35,6 +35,8 @@ import org.apache.hadoop.hive.ql.parse.ParseUtils;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.plan.Explain.Level;
 
+import com.google.common.collect.ImmutableList;
+
 /**
  * AlterTableDesc.
  *
@@ -63,6 +65,9 @@ public class AlterTableDesc extends DDLDesc implements Serializable {
     private final String name;
     private AlterTableTypes(String name) { this.name = name; }
     public String getName() { return name; }
+
+    public static final List<AlterTableTypes> nonNativeTableAllowedTypes = 
+        ImmutableList.of(ADDPROPS, DROPPROPS); 
   }
 
   public static enum ProtectModeType {
