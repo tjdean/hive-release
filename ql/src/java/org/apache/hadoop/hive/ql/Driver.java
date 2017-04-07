@@ -963,7 +963,8 @@ public class Driver implements CommandProcessor {
       new HiveLockObjectData(plan.getQueryId(),
                              String.valueOf(System.currentTimeMillis()),
                              "IMPLICIT",
-                             plan.getQueryStr());
+                             plan.getQueryStr(),
+                             conf);
     if (d != null) {
       locks.add(new HiveLockObj(new HiveLockObject(d.getName(), lockData), mode));
       return locks;
