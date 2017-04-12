@@ -23,6 +23,15 @@ IMPROVEMENTS
 BUG FIXES
   HDP-2.5.5:
 
+    HIVE-16086: Fix HiveMetaStoreChecker.checkPartitionDirsSingleThreaded method
+    HIVE-16014: HiveMetastoreChecker should use hive.metastore.fshandler.threads instead of hive.mv.files.thread for pool size
+    HIVE-15879: Fix HiveMetaStoreChecker.checkPartitionDirs method
+    HIVE-15291: Comparison of timestamp fails if only date part is provided
+    HIVE-16050: Regression: Union of null with non-null 
+    HIVE-11935: Race condition in HiveMetaStoreClient: isCompatibleWith and close
+    HIVE-15279: map join dummy operators are not set up correctly in certain cases with merge join
+    HIVE-15278: PTF+MergeJoin = NPE
+    HIVE-15848: count or sum distinct incorrect when hive.optimize.reducededuplication set to true
     HIVE-13872: Vectorization: Fix cross-product reduce sink serialization
     HIVE-15542: NPE in StatsUtils::getColStatistics when all values in DATE column are NULL
     HIVE-11616: DelegationTokenSecretManager reuses the same objectstore, which has concurrency issues
