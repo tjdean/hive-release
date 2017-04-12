@@ -19,6 +19,7 @@ IMPROVEMENTS
     HIVE-11037 : HiveOnTez: make explain user level = true as default
     HIVE-14922 : Add perf logging for post job completion steps
     HIVE-14762 : Add logging while removing scratch space
+    HIVE-15323 : allow the user to turn off reduce-side SMB  join
 
 BUG FIXES
   HDP-2.5.5:
