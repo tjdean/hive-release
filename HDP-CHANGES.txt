@@ -21,7 +21,23 @@ IMPROVEMENTS
     HIVE-14762 : Add logging while removing scratch space
 
 BUG FIXES
+  HDP-2.5.5:
 
+    HIVE-13872: Vectorization: Fix cross-product reduce sink serialization
+    HIVE-15542: NPE in StatsUtils::getColStatistics when all values in DATE column are NULL
+    HIVE-11616: DelegationTokenSecretManager reuses the same objectstore, which has concurrency issues
+    HIVE-15124: Fix OrcInputFormat to use reader's schema for include boolean array
+    HIVE-15872: The PERCENTILE_APPROX UDAF does not work with empty set
+    HIVE-15803: msck can hang when nested partitions are present
+    HIVE-13836: DbNotifications giving an error = Invalid state. Transaction has already started
+    HIVE-16114: NullPointerException in TezSessionPoolManager when getting the session
+    HIVE-16175: Possible race condition in InstanceCache
+    HIVE-15792: Hive should raise SemanticException when LPAD/RPAD pad character's length is 0
+    HIVE-15181: buildQueryWithINClause didn't properly handle multiples of ConfVars.METASTORE_DIRECT_SQL_MAX_ELEMENTS_IN_CLAUSE
+    HIVE-14210: ExecDriver should call jobclient.close() to trigger cleanup
+    HIVE-16225: Memory leak in webhcat service (FileSystem CACHE entries)
+    HIVE-15947: Enhance Templeton service job operations reliability
+    HIVE-12958: Make embedded Jetty server more configurable
     HIVE-15376: Improve heartbeater scheduling for transactions
     HIVE-15588: Vectorization: Fix deallocation of scratch columns in VectorUDFCoalesce, etc to prevent wrong reuse
     HIVE-15338: Wrong result from vectorized DATEDIFF with scalar parameter of type DATE/TIMESTAMP
@@ -48,6 +64,7 @@ BUG FIXES
     HIVE-14928 Analyze table no scan mess up schema (Jimmy Xiang, reviewed by Prasanth Jayachandran)
     HIVE-15002 : HiveSessionImpl#executeStatementInternal may leave locks in an inconsistent state (Zoltan Haindrich via Thejas Nair)
     HIVE-15437: avro tables join fails when - tbl join tbl_postfix (Yongzhi Chen, reviewed by Chaoyu Tang)
+
   HDP-2.5.3:
     HIVE-14595: TimestampWritable::setTimestamp gives wrong result when 2nd VInt exists
     HIVE-12065: FS stats collection may generate incorrect stats for multi-insert query
