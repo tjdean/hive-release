@@ -108,6 +108,8 @@ POSTHOOK: type: CREATEVIEW
 POSTHOOK: Input: default@src
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@lv_noalias
+POSTHOOK: Lineage: lv_noalias.key SIMPLE [(src)src.FieldSchema(name:INPUT__FILE__NAME, type:string, comment:), ]
+POSTHOOK: Lineage: lv_noalias.value SIMPLE [(src)src.FieldSchema(name:ROW__ID, type:struct<transactionId:bigint,bucketId:int,rowId:bigint>, comment:), ]
 PREHOOK: query: explain select * from lv_noalias a join lv_noalias b on a.key=b.key
 PREHOOK: type: QUERY
 POSTHOOK: query: explain select * from lv_noalias a join lv_noalias b on a.key=b.key

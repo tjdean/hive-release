@@ -38,6 +38,13 @@ POSTHOOK: Input: default@invites
 POSTHOOK: Input: default@invites2
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@v
+<<<<<<< HEAD
+=======
+POSTHOOK: Lineage: v.bar SIMPLE [(invites)invites.FieldSchema(name:bar, type:string, comment:null), ]
+POSTHOOK: Lineage: v.ds SIMPLE [(invites2)invites2.FieldSchema(name:ds, type:string, comment:null), ]
+POSTHOOK: Lineage: v.foo SIMPLE [(invites2)invites2.FieldSchema(name:foo, type:int, comment:null), ]
+Warning: Shuffle Join JOIN[8][tables = [$hdt$_0, $hdt$_1]] in Work 'Reducer 2' is a cross product
+>>>>>>> c7ac340... HIVE-15646: Column level lineage is not available for table Views (Pengcheng Xiong, reviewed by Ashutosh Chauhan)
 PREHOOK: query: explain select * from v where ds='2011-09-01'
 PREHOOK: type: QUERY
 POSTHOOK: query: explain select * from v where ds='2011-09-01'
