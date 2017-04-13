@@ -2801,6 +2801,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           Warehouse.makePartName(partitionKeysPresent, partValsPresent));
       Path destPath = new Path(destinationTable.getSd().getLocation(),
           Warehouse.makePartName(partitionKeysPresent, partValsPresent));
+
+      List<Partition> destPartitions = new ArrayList<Partition>();
       try {
         for (Partition partition: partitionsToExchange) {
           Partition destPartition = new Partition(partition);
@@ -2810,6 +2812,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
               Warehouse.makePartName(destinationTable.getPartitionKeys(), partition.getValues()));
           destPartition.getSd().setLocation(destPartitionPath.toString());
           ms.addPartition(destPartition);
+          destPartitions.add(destPartition);
           ms.dropPartition(partition.getDbName(), sourceTable.getTableName(),
             partition.getValues());
         }
@@ -2824,12 +2827,46 @@ public class HiveMetaStore extends ThriftHiveMetastore {
          * once https://issues.apache.org/jira/browse/HDFS-3370 is done
          */
         pathCreated = wh.renameDir(sourcePath, destPath);
+
+        // Setting success to false to make sure that if the listener fails, rollback happens.
+        success = false;
+
+        if (!transactionalListeners.isEmpty()) {
+          AddPartitionEvent addPartitionEvent =
+                  new AddPartitionEvent(destinationTable, destPartitions, true, this);
+          for (MetaStoreEventListener transactionalListener : transactionalListeners) {
+            transactionalListener.onAddPartition(addPartitionEvent);
+          }
+          for (Partition partition : partitionsToExchange) {
+            DropPartitionEvent dropPartitionEvent =
+                    new DropPartitionEvent(sourceTable, partition, true, true, this);
+            for (MetaStoreEventListener transactionalListener : transactionalListeners) {
+              transactionalListener.onDropPartition(dropPartitionEvent);
+            }
+          }
+        }
+
         success = ms.commitTransaction();
       } finally {
-        if (!success) {
+        if (!success || !pathCreated) {
           ms.rollbackTransaction();
           if (pathCreated) {
             wh.renameDir(destPath, sourcePath);
+          }
+        }
+
+        if (!listeners.isEmpty()) {
+          AddPartitionEvent addPartitionEvent = new AddPartitionEvent(destinationTable, destPartitions, success, this);
+          for (MetaStoreEventListener listener : listeners) {
+            listener.onAddPartition(addPartitionEvent);
+          }
+
+          for (Partition partition : partitionsToExchange) {
+            DropPartitionEvent dropPartitionEvent =
+                new DropPartitionEvent(sourceTable, partition, success, true, this);
+            for (MetaStoreEventListener listener : listeners) {
+              listener.onDropPartition(dropPartitionEvent);
+            }
           }
         }
       }
