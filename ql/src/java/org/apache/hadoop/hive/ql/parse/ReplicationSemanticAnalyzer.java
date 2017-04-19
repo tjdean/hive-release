@@ -177,10 +177,10 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
         BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(dumpFile)));
         String line = null;
         if ( (line = br.readLine()) != null){
-          String[] lineContents = line.split("\t", 4);
+          String[] lineContents = line.split("\t", 5);
           setDump(DUMPTYPE.valueOf(lineContents[0]), Long.valueOf(lineContents[1]), Long.valueOf(lineContents[2]),
               new Path(lineContents[3]));
-          setPayload(lineContents[3].equals(Utilities.nullStringOutput) ? null : lineContents[3]);
+          setPayload(lineContents[4].equals(Utilities.nullStringOutput) ? null : lineContents[4]);
         } else {
           throw new IOException("Unable to read valid values from dumpFile:"+dumpFile.toUri().toString());
         }
@@ -432,7 +432,6 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
         getNewEventOnlyReplicationSpec(ev.getEventId())
     );
     EventHandlerFactory.handlerFor(ev).handle(context);
-
   }
 
   public static void injectNextDumpDirForTest(String dumpdir){
