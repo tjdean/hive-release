@@ -969,7 +969,7 @@ public class DagUtils {
             + sleepInterval);
         boolean found = false;
         for (int i = 0; i < waitAttempts; i++) {
-          if (!checkPreExisting(src, dest, conf)) {
+          if (!checkPreExisting(srcFs, src, dest, conf)) {
             try {
               Thread.sleep(sleepInterval);
             } catch (InterruptedException interruptedException) {
