@@ -928,10 +928,9 @@ public class DagUtils {
    * @return true if the file names match else returns false.
    * @throws IOException when any file system related call fails
    */
-  private boolean checkPreExisting(Path src, Path dest, Configuration conf)
+  private boolean checkPreExisting(FileSystem sourceFS, Path src, Path dest, Configuration conf)
     throws IOException {
     FileSystem destFS = dest.getFileSystem(conf);
-    FileSystem sourceFS = src.getFileSystem(conf);
     FileStatus destStatus = FileUtils.getFileStatusOrNull(destFS, dest);
     if (destStatus != null) {
       return (sourceFS.getFileStatus(src).getLen() == destStatus.getLen());
@@ -951,7 +950,8 @@ public class DagUtils {
     throws IOException {
     FileSystem destFS = dest.getFileSystem(conf);
 
-    if (src != null && checkPreExisting(src, dest, conf) == false) {
+    FileSystem srcFs = FileSystem.getLocal(conf);
+    if (src != null && checkPreExisting(srcFs, src, dest, conf) == false) {
       // copy the src to the destination and create local resource.
       // do not overwrite.
       LOG.info("Localizing resource because it does not exist: " + src + " to dest: " + dest);
