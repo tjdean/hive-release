@@ -145,7 +145,12 @@ public enum ETypeConverter {
           Map<String, String> metadata = parent.getMetadata();
           //Current Hive parquet timestamp implementation stores it in UTC, but other components do not do that.
           //If this file written by current Hive implementation itself, we need to do the reverse conversion, else skip the conversion.
-          boolean skipConversion = Boolean.valueOf(metadata.get(HiveConf.ConfVars.HIVE_PARQUET_TIMESTAMP_SKIP_CONVERSION.varname));
+          boolean skipConversion;
+          if (metadata != null) {
+            skipConversion = Boolean.valueOf(metadata.get(HiveConf.ConfVars.HIVE_PARQUET_TIMESTAMP_SKIP_CONVERSION.varname));
+          } else {
+            skipConversion = HiveConf.ConfVars.HIVE_PARQUET_TIMESTAMP_SKIP_CONVERSION.defaultBoolVal;
+          }
           Timestamp ts = NanoTimeUtils.getTimestamp(nt, skipConversion);
           return new TimestampWritable(ts);
         }
