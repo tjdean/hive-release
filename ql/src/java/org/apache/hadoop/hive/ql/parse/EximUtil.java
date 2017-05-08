@@ -269,7 +269,7 @@ public class EximUtil {
     }
   }
 
-  static MetaData readMetaData(FileSystem fs, Path metadataPath)
+  public static MetaData readMetaData(FileSystem fs, Path metadataPath)
       throws IOException, SemanticException {
     String message = readAsString(fs, metadataPath);
     try {
