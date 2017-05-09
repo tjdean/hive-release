@@ -440,6 +440,7 @@ public enum ErrorMsg {
   REPLACE_UNSUPPORTED_TYPE_CONVERSION(10314, "Replacing columns with unsupported type conversion (from {0} to {1}) for column {2}. SerDe may be incompatible", true),
   ERROR_SERIALIZE_METASTORE(10319, "Error while serializing the metastore objects"),
   IO_ERROR(10320, "Error while peforming IO operation "),
+  ERROR_SERIALIZE_METADATA(10321, "Error while serializing the metadata"),
   ACID_NOT_ENOUGH_HISTORY(10327, "Not enough history available for ({0},{1}).  " +
     "Oldest available base: {2}", true),
   UPDATE_DELETE_VIEW(10402, "You cannot update or delete records in a view"),

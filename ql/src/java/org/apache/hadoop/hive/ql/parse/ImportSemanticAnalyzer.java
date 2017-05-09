@@ -25,7 +25,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -59,6 +58,7 @@ import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.InvalidTableException;
 import org.apache.hadoop.hive.ql.metadata.Table;
+import org.apache.hadoop.hive.ql.parse.repl.load.MetaData;
 import org.apache.hadoop.hive.ql.plan.AddPartitionDesc;
 import org.apache.hadoop.hive.ql.plan.CopyWork;
 import org.apache.hadoop.hive.ql.plan.ImportTableDesc;
@@ -188,7 +188,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     FileSystem fs = FileSystem.get(fromURI, x.getConf());
     x.getInputs().add(toReadEntity(fromPath, x.getConf()));
 
-    EximUtil.ReadMetaData rv = new EximUtil.ReadMetaData();
+    MetaData rv = new MetaData();
     try {
       rv =  EximUtil.readMetaData(fs, new Path(fromPath, EximUtil.METADATA_NAME));
     } catch (IOException e) {
