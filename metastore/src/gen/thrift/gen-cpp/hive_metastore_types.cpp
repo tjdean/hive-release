@@ -14517,6 +14517,11 @@ InsertEventRequestData::~InsertEventRequestData() throw() {
 }
 
 
+void InsertEventRequestData::__set_replace(const bool val) {
+  this->replace = val;
+__isset.replace = true;
+}
+
 void InsertEventRequestData::__set_filesAdded(const std::vector<std::string> & val) {
   this->filesAdded = val;
 }
@@ -14549,6 +14554,14 @@ uint32_t InsertEventRequestData::read(::apache::thrift::protocol::TProtocol* ipr
     switch (fid)
     {
       case 1:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->replace);
+          this->__isset.replace = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 2:
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->filesAdded.clear();
@@ -14568,7 +14581,7 @@ uint32_t InsertEventRequestData::read(::apache::thrift::protocol::TProtocol* ipr
           xfer += iprot->skip(ftype);
         }
         break;
-      case 2:
+      case 3:
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->filesAddedChecksum.clear();
@@ -14607,7 +14620,12 @@ uint32_t InsertEventRequestData::write(::apache::thrift::protocol::TProtocol* op
   apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
   xfer += oprot->writeStructBegin("InsertEventRequestData");
 
-  xfer += oprot->writeFieldBegin("filesAdded", ::apache::thrift::protocol::T_LIST, 1);
+  if (this->__isset.replace) {
+    xfer += oprot->writeFieldBegin("replace", ::apache::thrift::protocol::T_BOOL, 1);
+    xfer += oprot->writeBool(this->replace);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldBegin("filesAdded", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, static_cast<uint32_t>(this->filesAdded.size()));
     std::vector<std::string> ::const_iterator _iter619;
@@ -14620,7 +14638,7 @@ uint32_t InsertEventRequestData::write(::apache::thrift::protocol::TProtocol* op
   xfer += oprot->writeFieldEnd();
 
   if (this->__isset.filesAddedChecksum) {
-    xfer += oprot->writeFieldBegin("filesAddedChecksum", ::apache::thrift::protocol::T_LIST, 2);
+    xfer += oprot->writeFieldBegin("filesAddedChecksum", ::apache::thrift::protocol::T_LIST, 3);
     {
       xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, static_cast<uint32_t>(this->filesAddedChecksum.size()));
       std::vector<std::string> ::const_iterator _iter620;
@@ -14639,17 +14657,20 @@ uint32_t InsertEventRequestData::write(::apache::thrift::protocol::TProtocol* op
 
 void swap(InsertEventRequestData &a, InsertEventRequestData &b) {
   using ::std::swap;
+  swap(a.replace, b.replace);
   swap(a.filesAdded, b.filesAdded);
   swap(a.filesAddedChecksum, b.filesAddedChecksum);
   swap(a.__isset, b.__isset);
 }
 
 InsertEventRequestData::InsertEventRequestData(const InsertEventRequestData& other621) {
+  replace = other621.replace;
   filesAdded = other621.filesAdded;
   filesAddedChecksum = other621.filesAddedChecksum;
   __isset = other621.__isset;
 }
 InsertEventRequestData& InsertEventRequestData::operator=(const InsertEventRequestData& other622) {
+  replace = other622.replace;
   filesAdded = other622.filesAdded;
   filesAddedChecksum = other622.filesAddedChecksum;
   __isset = other622.__isset;
@@ -14658,7 +14679,8 @@ InsertEventRequestData& InsertEventRequestData::operator=(const InsertEventReque
 void InsertEventRequestData::printTo(std::ostream& out) const {
   using ::apache::thrift::to_string;
   out << "InsertEventRequestData(";
-  out << "filesAdded=" << to_string(filesAdded);
+  out << "replace="; (__isset.replace ? (out << to_string(replace)) : (out << "<null>"));
+  out << ", " << "filesAdded=" << to_string(filesAdded);
   out << ", " << "filesAddedChecksum="; (__isset.filesAddedChecksum ? (out << to_string(filesAddedChecksum)) : (out << "<null>"));
   out << ")";
 }

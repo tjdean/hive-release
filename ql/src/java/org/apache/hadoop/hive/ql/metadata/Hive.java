@@ -1471,7 +1471,7 @@ public class Hive {
       alterPartitionSpecInMemory(tbl, partSpec, newTPart.getTPartition(), inheritTableSpecs, newPartPath.toString());
       validatePartition(newTPart);
       if ((null != newFiles) || replace) {
-        fireInsertEvent(tbl, partSpec, newFiles);
+        fireInsertEvent(tbl, partSpec, replace, newFiles);
       } else {
         LOG.debug("No new files were created, and is not a replace. Skipping generating INSERT event.");
       }
@@ -1784,7 +1784,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
       throw new HiveException(e);
     }
 
-    fireInsertEvent(tbl, null, newFiles);
+    fireInsertEvent(tbl, null, replace, newFiles);
   }
 
   /**
@@ -2009,7 +2009,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
         }
         else {
           alterPartitionSpec(tbl, partSpec, tpart, inheritTableSpecs, partPath);
-          fireInsertEvent(tbl, partSpec, newFiles);
+          fireInsertEvent(tbl, partSpec, true, newFiles);
         }
       }
       if (tpart == null) {
@@ -2059,7 +2059,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
     tpart.getSd().setLocation(partPath);
   }
 
-  private void fireInsertEvent(Table tbl, Map<String, String> partitionSpec, List<Path> newFiles)
+  private void fireInsertEvent(Table tbl, Map<String, String> partitionSpec, boolean replace, List<Path> newFiles)
       throws HiveException {
     if (conf.getBoolVar(ConfVars.FIRE_EVENTS_FOR_DML)) {
       LOG.debug("Firing dml insert event");
@@ -2071,6 +2071,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
         FileSystem fileSystem = tbl.getDataLocation().getFileSystem(conf);
         FireEventRequestData data = new FireEventRequestData();
         InsertEventRequestData insertData = new InsertEventRequestData();
+        insertData.setReplace(replace);
         data.setInsertData(insertData);
         if (newFiles != null && newFiles.size() > 0) {
           for (Path p : newFiles) {
