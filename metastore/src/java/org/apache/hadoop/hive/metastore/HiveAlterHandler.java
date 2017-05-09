@@ -257,7 +257,7 @@ public class HiveAlterHandler implements AlterHandler {
       // now finally call alter table
       msdb.alterTable(dbname, name, newt);
       if (transactionalListeners != null && transactionalListeners.size() > 0) {
-        AlterTableEvent alterTableEvent = new AlterTableEvent(oldt, newt, true, handler);
+        AlterTableEvent alterTableEvent = new AlterTableEvent(oldt, newt, false,true, handler);
         alterTableEvent.setEnvironmentContext(environmentContext);
         for (MetaStoreEventListener transactionalListener : transactionalListeners) {
           transactionalListener.onAlterTable(alterTableEvent);
@@ -395,7 +395,7 @@ public class HiveAlterHandler implements AlterHandler {
         msdb.alterPartition(dbname, name, new_part.getValues(), new_part);
         if (transactionalListeners != null && transactionalListeners.size() > 0) {
           AlterPartitionEvent alterPartitionEvent =
-              new AlterPartitionEvent(oldPart, new_part, tbl, true, handler);
+              new AlterPartitionEvent(oldPart, new_part, tbl, false, true, handler);
           alterPartitionEvent.setEnvironmentContext(environmentContext);
           for (MetaStoreEventListener transactionalListener : transactionalListeners) {
             transactionalListener.onAlterPartition(alterPartitionEvent);
@@ -513,7 +513,7 @@ public class HiveAlterHandler implements AlterHandler {
 
       if (transactionalListeners != null && transactionalListeners.size() > 0) {
         AlterPartitionEvent alterPartitionEvent =
-            new AlterPartitionEvent(oldPart, new_part, tbl, true, handler);
+            new AlterPartitionEvent(oldPart, new_part, tbl, false, true, handler);
         alterPartitionEvent.setEnvironmentContext(environmentContext);
         for (MetaStoreEventListener transactionalListener : transactionalListeners) {
           transactionalListener.onAlterPartition(alterPartitionEvent);
@@ -548,7 +548,7 @@ public class HiveAlterHandler implements AlterHandler {
             msdb.alterPartition(dbname, name, new_part.getValues(), oldPart);
             if (transactionalListeners != null && transactionalListeners.size() > 0) {
               AlterPartitionEvent alterPartitionEvent =
-                  new AlterPartitionEvent(new_part, oldPart, tbl, true, handler);
+                  new AlterPartitionEvent(new_part, oldPart, tbl, false, true, handler);
               alterPartitionEvent.setEnvironmentContext(environmentContext);
               for (MetaStoreEventListener transactionalListener : transactionalListeners) {
                 transactionalListener.onAlterPartition(alterPartitionEvent);
@@ -634,7 +634,7 @@ public class HiveAlterHandler implements AlterHandler {
 
         if (transactionalListeners != null && transactionalListeners.size() > 0) {
           AlterPartitionEvent alterPartitionEvent = new AlterPartitionEvent(oldPart, newPart, tbl,
-              true, handler);
+              false, true, handler);
           for (MetaStoreEventListener transactionalListener : transactionalListeners) {
             transactionalListener.onAlterPartition(alterPartitionEvent);
           }
