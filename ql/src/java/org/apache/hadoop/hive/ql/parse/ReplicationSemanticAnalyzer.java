@@ -99,6 +99,9 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
   private static String testInjectDumpDir = null; // unit tests can overwrite this to affect default dump behaviour
   private static final String dumpSchema = "dump_dir,last_repl_id#string,string";
 
+  private static final String FUNCTIONS_ROOT_DIR_NAME = "_functions";
+  private static final String FUNCTION_METADATA_DIR_NAME = "_metadata";
+  private final static Logger REPL_STATE_LOG = LoggerFactory.getLogger("ReplState");
 
   ReplicationSemanticAnalyzer(HiveConf conf) throws SemanticException {
     super(conf);
@@ -186,6 +189,7 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
         // bootstrap case
         Long bootDumpBeginReplId = db.getMSC().getCurrentNotificationEventId().getEventId();
         for (String dbName : matchesDb(dbNameOrPattern)) {
+          REPL_STATE_LOG.info("Repl Dump: Started analyzing Repl Dump for DB: " + dbName + ", Dump Type: BOOTSTRAP");
           LOG.debug("ReplicationSemanticAnalyzer: analyzeReplDump dumping db: " + dbName);
           Path dbRoot = dumpDbMetadata(dbName, dumpRoot);
           dumpFunctionMetadata(dbName, dumpRoot);
@@ -194,6 +198,8 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
                 + " to db root " + dbRoot.toUri());
             dumpTbl(ast, dbName, tblName, dbRoot);
           }
+          REPL_STATE_LOG.info("Repl Dump: Completed analyzing Repl Dump for DB: " + dbName + " and created "
+                  + rootTasks.size() + " COPY tasks to dump metadata and data");
         }
         Long bootDumpEndReplId = db.getMSC().getCurrentNotificationEventId().getEventId();
         LOG.info("Bootstrap object dump phase took from " + bootDumpBeginReplId + " to " + bootDumpEndReplId);
@@ -258,12 +264,18 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
             evFetcher, eventFrom, maxEventLimit, evFilter);
 
         lastReplId = eventTo;
+        REPL_STATE_LOG.info("Repl Dump: Started Repl Dump for DB: "
+                        + ((null != dbNameOrPattern && !dbNameOrPattern.isEmpty()) ? dbNameOrPattern : "?")
+                        + ", Dump Type: INCREMENTAL");
         while (evIter.hasNext()){
           NotificationEvent ev = evIter.next();
           lastReplId = ev.getEventId();
           Path evRoot = new Path(dumpRoot, String.valueOf(lastReplId));
           dumpEvent(ev, evRoot, cmRoot);
         }
+
+        REPL_STATE_LOG.info("Repl Dump: Completed Repl Dump for DB: " +
+                ((null != dbNameOrPattern && !dbNameOrPattern.isEmpty()) ? dbNameOrPattern : "?"));
 
         LOG.info("Done dumping events, preparing to return " + dumpRoot.toUri() + "," + lastReplId);
         Utils.writeOutput(
@@ -294,6 +306,9 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
         getNewEventOnlyReplicationSpec(ev.getEventId())
     );
     EventHandlerFactory.handlerFor(ev).handle(context);
+    REPL_STATE_LOG.info("Repl Dump: Dumped event with ID: " + String.valueOf(ev.getEventId())
+                    + ", Type: " + ev.getEventType()
+                    + " and dumped metadata and data to path " + evRoot.toUri().toString());
   }
 
   public static void injectNextDumpDirForTest(String dumpdir){
@@ -333,16 +348,13 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
       Path dumpPath = new Path(dbRoot, EximUtil.METADATA_NAME);
       HiveWrapper.Tuple<Database> database = new HiveWrapper(db, dbName).database();
       EximUtil.createDbExportDump(fs, dumpPath, database.object, database.replicationSpec);
+      REPL_STATE_LOG.info("Repl Dump: Dumped DB metadata");
     } catch (Exception e) {
       // TODO : simple wrap & rethrow for now, clean up with error codes
       throw new SemanticException(e);
     }
     return dbRoot;
   }
-
-  private static final String FUNCTIONS_ROOT_DIR_NAME = "_functions";
-  private static final String FUNCTION_METADATA_DIR_NAME = "_metadata";
-  private final static Logger SESSION_STATE_LOG = LoggerFactory.getLogger("SessionState");
 
   private void dumpFunctionMetadata(String dbName, Path dumpRoot) throws SemanticException {
     Path functionsRoot = new Path(new Path(dumpRoot, dbName), FUNCTIONS_ROOT_DIR_NAME);
@@ -360,7 +372,7 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
           continue;
         }
         if (tuple.object.getResourceUris().isEmpty()) {
-          SESSION_STATE_LOG.warn(
+          REPL_STATE_LOG.warn(
               "Not replicating function: " + functionName + " as it seems to have been created "
                   + "without USING clause");
           continue;
@@ -372,6 +384,7 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
             functionMetadataRoot)) {
           new FunctionSerializer(tuple.object).writeTo(jsonWriter, tuple.replicationSpec);
         }
+        REPL_STATE_LOG.info("Repl Dump: Dumped metadata for function: " + functionName);
       }
     } catch (Exception e) {
       throw new SemanticException(e);
@@ -392,8 +405,11 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
     try {
       URI toURI = EximUtil.getValidatedURI(conf, tableRoot.toUri().toString());
       TableSpec ts = new TableSpec(db, conf, dbName + "." + tblName, null);
+
       ExportSemanticAnalyzer.prepareExport(ast, toURI, ts, getNewReplicationSpec(), db, conf, ctx,
           rootTasks, inputs, outputs, LOG);
+      REPL_STATE_LOG.info("Repl Dump: Analyzed dump for table/view: " + dbName + "." + tblName +
+                          " and created copy tasks to dump metadata and data to path " + toURI.toString());
     } catch (HiveException e) {
       // TODO : simple wrap & rethrow for now, clean up with error codes
       throw new SemanticException(e);
@@ -540,10 +556,14 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
         Task<? extends Serializable> taskChainTail = evTaskRoot;
 
         int evstage = 0;
+        int evIter = 0;
         Long lastEvid = null;
         Map<String,Long> dbsUpdated = new ReplicationSpec.ReplStateMap<String,Long>();
         Map<String,Long> tablesUpdated = new ReplicationSpec.ReplStateMap<String,Long>();
 
+        REPL_STATE_LOG.info("Repl Load: Started analyzing Repl load for DB: "
+                        + ((null != dbNameOrPattern && !dbNameOrPattern.isEmpty()) ? dbNameOrPattern : "?")
+                        + " from path " + loadPath.toUri().toString() + ", Dump Type: INCREMENTAL");
         for (FileStatus dir : dirsInLoadPath){
           LOG.debug("Loading event from " + dir.getPath().toUri() + " to " + dbNameOrPattern + "." + tblNameOrPattern);
           // event loads will behave similar to table loads, with one crucial difference
@@ -570,6 +590,11 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
           List<Task<? extends Serializable>> evTasks = analyzeEventLoad(
               dbNameOrPattern, tblNameOrPattern, locn, taskChainTail,
               dbsUpdated, tablesUpdated, eventDmd);
+          evIter++;
+          REPL_STATE_LOG.info("Repl Load: Analyzed load for event " + evIter + "/" + dirsInLoadPath.length +
+                              " with ID: " + dir.getPath().getName() +
+                              ", Type: " + eventDmd.getDumpType().toString() + ", Path: " + locn);
+
           LOG.debug("evstage#" + evstage + " got " + evTasks!=null ? evTasks.size() : 0 + " tasks");
           if ((evTasks != null) && (!evTasks.isEmpty())){
             Task<? extends Serializable> barrierTask = TaskFactory.get(new DependencyCollectionWork(), conf);
@@ -656,6 +681,9 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
           taskChainTail = updateReplIdTask;
         }
         rootTasks.add(evTaskRoot);
+        REPL_STATE_LOG.info("Repl Load: Completed analyzing Repl load for DB: "
+                        + ((null != dbNameOrPattern && !dbNameOrPattern.isEmpty()) ? dbNameOrPattern : "?")
+                        + " from path " + loadPath.toUri().toString() + " and created import (DDL/COPY/MOVE) tasks");
       }
 
     } catch (Exception e) {
@@ -741,6 +769,9 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
         dbName = dbObj.getName();
       }
 
+      REPL_STATE_LOG.info("Repl Load: Started analyzing Repl Load for DB: " + dbName +
+                          " from Dump Dir: " + dir.getPath().toUri().toString() + ", Dump Type: BOOTSTRAP");
+
       Task<? extends Serializable> dbRootTask = null;
       if (existEmptyDb(dbName)) {
         AlterDatabaseDesc alterDbDesc = new AlterDatabaseDesc(dbName, dbObj.getParameters());
@@ -765,6 +796,8 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
       for (FileStatus tableDir : Collections2.filter(Arrays.asList(dirsInDbPath), new TableDirPredicate())) {
         analyzeTableLoad(
             dbName, null, tableDir.getPath().toUri().toString(), dbRootTask, null, null);
+        REPL_STATE_LOG.info("Repl Load: Analyzed table/view/partition load from path " +
+                            tableDir.getPath().toUri().toString());
       }
 
       //Function load
@@ -774,8 +807,13 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
             Arrays.asList(fs.listStatus(functionMetaDataRoot, EximUtil.getDirectoryFilter(fs)));
         for (FileStatus functionDir : functionDirectories) {
           analyzeFunctionLoad(dbName, functionDir, dbRootTask);
+          REPL_STATE_LOG.info("Repl Load: Analyzed function load from path " +
+                              functionDir.getPath().toUri().toString());
         }
       }
+
+      REPL_STATE_LOG.info("Repl Load: Completed analyzing Repl Load for DB: " + dbName +
+                          " and created import (DDL/COPY/MOVE) tasks");
     } catch (Exception e) {
       throw new SemanticException(e);
     }
