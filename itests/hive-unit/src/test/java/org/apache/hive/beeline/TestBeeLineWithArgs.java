@@ -50,6 +50,9 @@ import org.junit.Test;
  *
  */
 public class TestBeeLineWithArgs {
+  private enum OutStream {
+    ERR, OUT, DEFAULT
+  }
   // Default location of HiveServer2
   private static final String tableName = "TestBeelineTable1";
   private static final String tableComment = "Test table comment";
@@ -129,13 +132,26 @@ public class TestBeeLineWithArgs {
    *
    * @return The stderr and stdout from running the script
    */
-  private String testCommandLineScript(List<String> argList, InputStream inputStream)
+  private String testCommandLineScript(List<String> argList, InputStream inputStream,
+      org.apache.hive.beeline.TestBeeLineWithArgs.OutStream streamType)
       throws Throwable {
     BeeLine beeLine = new BeeLine();
     ByteArrayOutputStream os = new ByteArrayOutputStream();
     PrintStream beelineOutputStream = new PrintStream(os);
-    beeLine.setOutputStream(beelineOutputStream);
-    beeLine.setErrorStream(beelineOutputStream);
+    switch (streamType) {
+    case OUT:
+      beeLine.setOutputStream(beelineOutputStream);
+      break;
+    case ERR:
+      beeLine.setErrorStream(beelineOutputStream);
+      break;
+    case DEFAULT:
+      beeLine.setOutputStream(beelineOutputStream);
+      beeLine.setErrorStream(beelineOutputStream);
+      break;
+    default:
+      throw new RuntimeException("Unexpected outstream type " + streamType);
+    }
     String[] args = argList.toArray(new String[argList.size()]);
     beeLine.begin(args, inputStream);
     String output = os.toString("UTF8");
@@ -155,7 +171,12 @@ public class TestBeeLineWithArgs {
    */
   private void testScriptFile(String scriptText, String expectedPattern,
       boolean shouldMatch, List<String> argList) throws Throwable {
-    testScriptFile(scriptText, expectedPattern, shouldMatch, argList, true, true);
+    testScriptFile(scriptText, expectedPattern, shouldMatch, argList, true, true, OutStream.DEFAULT);
+  }
+
+  private void testScriptFile(String scriptText, String expectedPattern,
+      boolean shouldMatch, List<String> argList, OutStream streamType) throws Throwable {
+    testScriptFile(scriptText, expectedPattern, shouldMatch, argList, true, true, streamType);
   }
 
   /**
@@ -171,7 +192,7 @@ public class TestBeeLineWithArgs {
    */
   private void testScriptFile(String scriptText, String expectedPattern,
       boolean shouldMatch, List<String> argList,
-      boolean testScript, boolean testInit) throws Throwable {
+      boolean testScript, boolean testInit, OutStream outStream) throws Throwable {
 
     // Put the script content in a temp file
     File scriptFile = File.createTempFile(this.getClass().getSimpleName(), "temp");
@@ -185,7 +206,8 @@ public class TestBeeLineWithArgs {
       copy.add("-f");
       copy.add(scriptFile.getAbsolutePath());
 
-      String output = testCommandLineScript(copy, null);
+      String output = testCommandLineScript(copy, null,
+          outStream);
       boolean matches = output.contains(expectedPattern);
       if (shouldMatch != matches) {
         //failed
@@ -202,7 +224,8 @@ public class TestBeeLineWithArgs {
       copy.add("-i");
       copy.add(scriptFile.getAbsolutePath());
 
-      String output = testCommandLineScript(copy, new StringBufferInputStream("!quit\n"));
+      String output = testCommandLineScript(copy, new StringBufferInputStream("!quit\n"),
+          outStream);
       boolean matches = output.contains(expectedPattern);
       if (shouldMatch != matches) {
         //failed
@@ -211,6 +234,32 @@ public class TestBeeLineWithArgs {
       }
     }
     scriptFile.delete();
+  }
+
+  /**
+   * Attempt to execute the enclosed query with the -e option to BeeLine
+   * Test for presence of an expected pattern
+   * in the output (stdout or stderr), fail if not found
+   * Print PASSED or FAILED
+   * @param expectedPattern Text to look for in command output/error
+   * @param shouldMatch true if the pattern should be found, false if it should not
+   * @throws Exception on command execution error
+   */
+  private void testCommandEnclosedQuery(String enclosedQuery, String expectedPattern,
+      boolean shouldMatch, List<String> argList) throws Throwable {
+
+    List<String> copy = new ArrayList<String>(argList);
+    copy.add("-e");
+    copy.add(enclosedQuery);
+
+    String output = testCommandLineScript(copy, null,
+        org.apache.hive.beeline.TestBeeLineWithArgs.OutStream.DEFAULT);
+    boolean matches = output.contains(expectedPattern);
+    if (shouldMatch != matches) {
+      //failed
+      fail("Output" + output + " should" +  (shouldMatch ? "" : " not") +
+          " contain " + expectedPattern);
+    }
   }
 
   /**
@@ -306,6 +355,15 @@ public class TestBeeLineWithArgs {
   }
 
   @Test
+  public void testTabInScriptFile() throws Throwable {
+    List<String> argList = getBaseArgs(miniHS2.getBaseJdbcURL());
+    final String SCRIPT_TEXT = "CREATE\tTABLE IF NOT EXISTS testTabInScriptFile\n(id\tint);\nSHOW TABLES;";
+    final String EXPECTED_PATTERN = "testTabInScriptFile";
+    testScriptFile(SCRIPT_TEXT, EXPECTED_PATTERN, true, argList, OutStream.ERR);
+    testScriptFile(SCRIPT_TEXT, EXPECTED_PATTERN, false, argList, OutStream.OUT);
+  }
+
+  @Test
   public void testBeelineShellCommand() throws Throwable {
     List<String> argList = getBaseArgs(miniHS2.getBaseJdbcURL());
     final String SCRIPT_TEXT = "!sh echo \"hello world.\" > hw.txt\n!sh cat hw.txt\n!rm hw.txt";
@@ -341,7 +399,7 @@ public class TestBeeLineWithArgs {
   public void testGetVariableValue() throws Throwable {
     final String SCRIPT_TEXT = "set env:TERM;";
     final String EXPECTED_PATTERN = "env:TERM";
-    testScriptFile(SCRIPT_TEXT, EXPECTED_PATTERN, true, getBaseArgs(miniHS2.getBaseJdbcURL()));
+    testScriptFile(SCRIPT_TEXT, EXPECTED_PATTERN, true, getBaseArgs(miniHS2.getBaseJdbcURL()), OutStream.ERR);
   }
 
   /**
@@ -564,7 +622,8 @@ public class TestBeeLineWithArgs {
     argList.add(scriptFile.getAbsolutePath());
 
     try {
-      String output = testCommandLineScript(argList, null);
+      String output = testCommandLineScript(argList, null,
+          org.apache.hive.beeline.TestBeeLineWithArgs.OutStream.DEFAULT);
       if (output.contains(EXPECTED_PATTERN)) {
         fail("Output: " + output +  " Negative pattern: " + EXPECTED_PATTERN);
       }
@@ -700,7 +759,7 @@ public class TestBeeLineWithArgs {
     };
     BeeLineOpts.setEnv(newEnv);
 
-    testScriptFile(SCRIPT_TEXT, EXPECTED_PATTERN, true, argList, true, false);
+    testScriptFile(SCRIPT_TEXT, EXPECTED_PATTERN, true, argList, true, false, OutStream.DEFAULT);
   }
 
   /**
@@ -716,7 +775,7 @@ public class TestBeeLineWithArgs {
         "create table reconnecttest (d int);\nshow tables;\n";
     final String EXPECTED_PATTERN = "reconnecttest";
 
-    testScriptFile(SCRIPT_TEXT, EXPECTED_PATTERN, true, argList, true, false);
+    testScriptFile(SCRIPT_TEXT, EXPECTED_PATTERN, true, argList, true, false, OutStream.DEFAULT);
 
   }
 
