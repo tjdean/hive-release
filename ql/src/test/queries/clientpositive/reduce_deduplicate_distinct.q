@@ -1,3 +1,5 @@
+set hive.explain.user=false;
+
 create table count_distinct_test(id int,key int,name int);
 
 insert into count_distinct_test values (1,1,2),(1,2,3),(1,3,2),(1,4,2),(1,5,3);
