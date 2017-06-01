@@ -141,7 +141,17 @@ public enum HiveOperationType {
   GET_SCHEMAS, // getSchemas()
   GET_TABLES, // getTables(String catalog, String schemaPattern, String tableNamePattern, String[] types)
   GET_TABLETYPES,// getTableTypes()
-  GET_TYPEINFO // getTypeInfo()
+  GET_TYPEINFO, // getTypeInfo()
   // ==== HiveServer2 metadata api types ends here ==== //
 
+  // dummy enums for operations added in hive2 
+  ALTERTABLE_DROPCONSTRAINT,
+  ALTERTABLE_ADDCONSTRAINT,
+  CACHE_METADATA,
+  SHOW_CREATEDATABASE,
+  START_TRANSACTION,
+  COMMIT,
+  ROLLBACK,
+  SET_AUTOCOMMIT,
+  ABORT_TRANSACTIONS,
 }

@@ -414,7 +414,28 @@ public class Operation2Privilege {
     op2Priv.put(HiveOperationType.GET_TYPEINFO, PrivRequirement.newIOPrivRequirement(null, null));
     op2Priv.put(HiveOperationType.GET_COLUMNS,
         PrivRequirement.newIOPrivRequirement(SEL_NOGRANT_AR, null));
-
+    op2Priv.put(HiveOperationType.ABORT_TRANSACTIONS, PrivRequirement.newIOPrivRequirement
+        (null, null));
+    op2Priv.put(HiveOperationType.ALTERTABLE_DROPCONSTRAINT, PrivRequirement.newIOPrivRequirement
+        (null, null));
+    op2Priv.put(HiveOperationType.ALTERTABLE_ADDCONSTRAINT, PrivRequirement.newIOPrivRequirement
+        (null, null));
+    op2Priv.put(HiveOperationType.CACHE_METADATA, PrivRequirement.newIOPrivRequirement
+        (null, null));
+    op2Priv.put(HiveOperationType.SHOW_CREATEDATABASE, PrivRequirement.newIOPrivRequirement
+        (null, null));
+    op2Priv.put(HiveOperationType.START_TRANSACTION, PrivRequirement.newIOPrivRequirement
+        (null, null));
+    op2Priv.put(HiveOperationType.COMMIT, PrivRequirement.newIOPrivRequirement
+        (null, null));
+    op2Priv.put(HiveOperationType.ROLLBACK, PrivRequirement.newIOPrivRequirement
+        (null, null));
+    op2Priv.put(HiveOperationType.SET_AUTOCOMMIT, PrivRequirement.newIOPrivRequirement
+        (null, null));
+    op2Priv.put(HiveOperationType.ALTERTABLE_EXCHANGEPARTITION, PrivRequirement.newIOPrivRequirement
+            (null, null));
+    op2Priv.put(HiveOperationType.RELOADFUNCTION, PrivRequirement.newIOPrivRequirement
+            (null, null));
   }
 
   /**
