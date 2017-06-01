@@ -337,3 +337,4 @@ INTERNAL FIXES (NO APACHE JIRA)
     BUG-48761 : Invalid caller context from Hive provided to HDFS
     BUG-48170: Hive queries after the metastore restart seems to be stuck with log message LockResponse(lockid:##, state:WAITING)
     BUG-50428: Schema and thrift changes needed for ACID in 2.4
+    BUG-83323: add dummy operations in hive1 HiveOperationType, for operations added in hive2
