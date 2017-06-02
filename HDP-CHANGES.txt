@@ -5,8 +5,60 @@ INCOMPATIBLE CHANGES
   HDP-2.5.0:
     HIVE-11118 : Load data query should validate file formats with destination tables
 
-NEW FEATURES
+NEW FEATURES & BUG FIXES
+  HDP-2.6.1:
+    HIVE-14204: Optimize loading dynamic partitions
+    HIVE-16673: Create table as select does not check ownership of the location
+    HIVE-12657: selectDistinctStar.q results differ with jdk 1.7 vs jdk 1.8
+    HIVE-15766: DBNotificationlistener leaks JDOPersistenceManager
+    HIVE-16710: Make MAX_MS_TYPENAME_LENGTH configurable
+    HIVE-16678: Truncate on temporary table fails with table not found error
+    HIVE-16269: enable incremental function dump to be loaded via repl load
+    HIVE-13652: Import table change order of dynamic partitions
+    HIVE-16530: Add HS2 operation logs and improve logs for REPL commands
+    HIVE-16567: parquet: tolerate when metadata is not set
+    HIVE-14743: ArrayIndexOutOfBoundsException - HBASE-backed views' query with JOINs
+    HIVE-16347: HiveMetastoreChecker should skip listing partitions which are not valid when hive.msck.path.validation is set to skip or ignore
+    HIVE-16299: MSCK REPAIR TABLE should enforce partition key order when adding unknown partitions
+    HIVE-16119: HiveMetaStoreChecker: remove singleThread logic duplication
+    HIVE-16427: Fix multi-insert query and write qtests
+    HIVE-16291: Hive fails when unions a parquet table with itself
+    HIVE-16290: Stats: StatsRulesProcFactory::evaluateComparator estimates are wrong when minValue == filterValue
+    HIVE-16060: GenericUDTFJSONTuple's json cache could overgrow beyond its limit
+    HIVE-16372: Enable DDL statement for non-native tables (add/remove table properties)
+    HIVE-15792: Hive should raise SemanticException when LPAD/RPAD pad character's length is 0
+    HIVE-11976: Extend CBO rules to being able to apply rules only once on a given operator
+    HIVE-16268: enable incremental repl dump to handle functions metadata
+    HIVE-16267: Enable bootstrap function metadata to be loaded in repl load
+    HIVE-16287: Alter table partition rename with location - moves partition back to hive warehouse
+    HIVE-15642: Replicate Insert Overwrites, Dynamic Partition Inserts and Loads
+    HIVE-16488: Support replicating into existing db if the db is empty
+    HIVE-16171: Support replication of truncate table
+    HIVE-16197: Incremental insert into a partitioned table doesn't get replicated
+    HIVE-15754: exchange partition is not generating notifications
+    HIVE-16254: metadata for values temporary tables for INSERTs are getting replicated during bootstrap
+    HIVE-16266: Enable function metadata to be written during bootstrap
+    HIVE-16186: REPL DUMP shows last event ID of the database even if we use LIMIT option
+    HIVE-16006: Incremental REPL LOAD Inserts doesn't operate on the target database if name differs from source database
+    HIVE-15556: Replicate views
+    HIVE-15993: Hive REPL STATUS is not returning last event ID
+    HIVE-16006: Incremental REPL LOAD Inserts doesn't operate on the target database if name differs from source database
+    HIVE-16321: Possible deadlock in metastore with Acid enabled
+    HIVE-16497: FileUtils. isActionPermittedForFileHierarchy, isOwnerOfFileHierarchy file system operations should be impersonated
+    HIVE-16461: DagUtils checks local resource size on the remote fs
+    HIVE-16461: DagUtils checks local resource size on the remote fs
+    HIVE-16473: Hive-on-Tez may fail to write to an HBase table
+    HIVE-16193: Hive show compactions not reflecting the correct status of the application
+    HIVE-15646: Column level lineage is not available for table Views
+    HIVE-16225: Memory leak in webhcat service (FileSystem CACHE entries)
+    HIVE-15947: Enhance Templeton service job operations reliability
+    HIVE-12958: Make embedded Jetty server more configurable
+    HIVE-14210: ExecDriver should call jobclient.close() to trigger cleanup
+    HIVE-16225: Memory leak in webhcat service (FileSystem CACHE entries)
+    HIVE-15947: Enhance Templeton service job operations reliability
+    HIVE-12958: Make embedded Jetty server more configurable
 
+NEW FEATURES   
   HDP-2.6.0:
     HIVE-15473: Progress Bar on Beeline client
     HIVE-15847: In Progress update refreshes seem slow
@@ -821,6 +873,9 @@ BUG FIXES
 
 
 INTERNAL FIXES (NO APACHE JIRA)
+  HDP-2.6.1:
+    BUG-79816: upgrade jackson.version
+
   HDP-2.6.0:
     BUG-77010: Remove relocation for hadoop related artifacts for JDBC standalone jar
     BUG-77709: Stop printing progress info from operation logs with beeline progress bar from hive1 HS2
