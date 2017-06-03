@@ -50,6 +50,7 @@ import org.apache.hadoop.hive.metastore.HiveMetaStore.HMSHandler;
 import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
 import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
+import org.apache.hadoop.hive.metastore.messaging.EventMessage;
 import org.apache.hadoop.ipc.RemoteException;
 import org.apache.hive.common.util.HiveStringUtils;
 
@@ -256,12 +257,11 @@ public class HiveAlterHandler implements AlterHandler {
       updateTableColumnStatsForAlterTable(msdb, oldt, newt);
       // now finally call alter table
       msdb.alterTable(dbname, name, newt);
-      if (transactionalListeners != null && transactionalListeners.size() > 0) {
-        AlterTableEvent alterTableEvent = new AlterTableEvent(oldt, newt, false,true, handler);
-        alterTableEvent.setEnvironmentContext(environmentContext);
-        for (MetaStoreEventListener transactionalListener : transactionalListeners) {
-          transactionalListener.onAlterTable(alterTableEvent);
-        }
+      if (transactionalListeners != null && !transactionalListeners.isEmpty()) {
+        MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                                              EventMessage.EventType.ALTER_TABLE,
+                                              new AlterTableEvent(oldt, newt, false, true, handler),
+                                              environmentContext);
       }
       // commit the changes
       success = msdb.commitTransaction();
@@ -393,13 +393,11 @@ public class HiveAlterHandler implements AlterHandler {
 
         updatePartColumnStats(msdb, dbname, name, new_part.getValues(), new_part);
         msdb.alterPartition(dbname, name, new_part.getValues(), new_part);
-        if (transactionalListeners != null && transactionalListeners.size() > 0) {
-          AlterPartitionEvent alterPartitionEvent =
-              new AlterPartitionEvent(oldPart, new_part, tbl, false, true, handler);
-          alterPartitionEvent.setEnvironmentContext(environmentContext);
-          for (MetaStoreEventListener transactionalListener : transactionalListeners) {
-            transactionalListener.onAlterPartition(alterPartitionEvent);
-          }
+        if (transactionalListeners != null && !transactionalListeners.isEmpty()) {
+          MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                                                EventMessage.EventType.ALTER_PARTITION,
+                                                new AlterPartitionEvent(oldPart, new_part, tbl, false, true, handler),
+                                                environmentContext);
         }
         success = msdb.commitTransaction();
       } catch (InvalidObjectException e) {
@@ -512,13 +510,11 @@ public class HiveAlterHandler implements AlterHandler {
         }
       }
 
-      if (transactionalListeners != null && transactionalListeners.size() > 0) {
-        AlterPartitionEvent alterPartitionEvent =
-            new AlterPartitionEvent(oldPart, new_part, tbl, false, true, handler);
-        alterPartitionEvent.setEnvironmentContext(environmentContext);
-        for (MetaStoreEventListener transactionalListener : transactionalListeners) {
-          transactionalListener.onAlterPartition(alterPartitionEvent);
-        }
+      if (transactionalListeners != null && !transactionalListeners.isEmpty()) {
+        MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                                              EventMessage.EventType.ALTER_PARTITION,
+                                              new AlterPartitionEvent(oldPart, new_part, tbl, false, true, handler),
+                                              environmentContext);
       }
 
       success = msdb.commitTransaction();
@@ -547,13 +543,11 @@ public class HiveAlterHandler implements AlterHandler {
           try {
             msdb.openTransaction();
             msdb.alterPartition(dbname, name, new_part.getValues(), oldPart);
-            if (transactionalListeners != null && transactionalListeners.size() > 0) {
-              AlterPartitionEvent alterPartitionEvent =
-                  new AlterPartitionEvent(new_part, oldPart, tbl, false, true, handler);
-              alterPartitionEvent.setEnvironmentContext(environmentContext);
-              for (MetaStoreEventListener transactionalListener : transactionalListeners) {
-                transactionalListener.onAlterPartition(alterPartitionEvent);
-              }
+            if (transactionalListeners != null && !transactionalListeners.isEmpty()) {
+              MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                                                    EventMessage.EventType.ALTER_PARTITION,
+                                                    new AlterPartitionEvent(new_part, oldPart, tbl, false, success, handler),
+                                                    environmentContext);
             }
 
             revertMetaDataTransaction = msdb.commitTransaction();
@@ -633,12 +627,10 @@ public class HiveAlterHandler implements AlterHandler {
                   + "when invoking MetaStoreEventListener for alterPartitions event.");
         }
 
-        if (transactionalListeners != null && transactionalListeners.size() > 0) {
-          AlterPartitionEvent alterPartitionEvent = new AlterPartitionEvent(oldPart, newPart, tbl,
-              false, true, handler);
-          for (MetaStoreEventListener transactionalListener : transactionalListeners) {
-            transactionalListener.onAlterPartition(alterPartitionEvent);
-          }
+        if (transactionalListeners != null && !transactionalListeners.isEmpty()) {
+          MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                                                EventMessage.EventType.ALTER_PARTITION,
+                                                new AlterPartitionEvent(oldPart, newPart, tbl, false, true, handler));
         }
       }
 
