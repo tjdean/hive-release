@@ -43,6 +43,7 @@ import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.metadata.InvalidTableException;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.parse.repl.DumpType;
 import org.apache.hadoop.hive.ql.parse.repl.dump.HiveWrapper;
@@ -409,6 +410,11 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
           rootTasks, inputs, outputs, LOG);
       REPL_STATE_LOG.info("Repl Dump: Analyzed dump for table/view: " + dbName + "." + tblName +
                           " and created copy tasks to dump metadata and data to path " + toURI.toString());
+    } catch (InvalidTableException te) {
+      // Bootstrap dump shouldn't fail if the table is dropped/renamed while dumping it.
+      // Just log a debug message and skip it.
+      LOG.debug(te.getMessage());
+      return null;
     } catch (HiveException e) {
       // TODO : simple wrap & rethrow for now, clean up with error codes
       throw new SemanticException(e);
