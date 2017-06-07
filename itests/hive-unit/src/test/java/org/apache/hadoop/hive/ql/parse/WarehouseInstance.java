@@ -28,8 +28,10 @@ import org.apache.hadoop.hive.ql.CommandNeedRetryException;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hive.hcatalog.api.repl.ReplicationV1CompatRule;
 import org.apache.hadoop.hive.shims.ShimLoader;
 import org.apache.hive.hcatalog.listener.DbNotificationListener;
+import org.junit.rules.TestRule;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,6 +43,7 @@ class WarehouseInstance {
   private Driver driver;
   private HiveMetaStoreClient client;
   private HiveConf hconf;
+  private ReplicationV1CompatRule bcompat = null;
 
   private final static String LISTENER_CLASS = DbNotificationListener.class.getCanonicalName();
 
@@ -52,6 +55,7 @@ class WarehouseInstance {
     this.driver = other.driver;
     this.client = other.client;
     this.hconf = other.hconf;
+    this.bcompat = other.bcompat;
   }
 
   WarehouseInstance() throws Exception {
@@ -92,6 +96,7 @@ class WarehouseInstance {
     driver = new Driver(hconf);
     SessionState.start(new CliSessionState(hconf));
     client = new HiveMetaStoreClient(hconf);
+    bcompat = new ReplicationV1CompatRule(client,hconf);
   }
 
   private int next = 0;
@@ -179,6 +184,14 @@ class WarehouseInstance {
     for (String s : getOutput()) {
       TestReplicationScenariosAcrossInstances.LOG.info(s);
     }
+  }
+
+  public TestRule getReplivationV1CompatRule(){
+    return bcompat;
+  }
+
+  public void doBackwardCompatibilityCheck(boolean eventsMustExist) {
+    bcompat.doBackwardCompatibilityCheck(eventsMustExist);
   }
 
   static class Tuple {
