@@ -26,6 +26,7 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.security.AccessControlException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -1177,6 +1178,44 @@ public class Hadoop23Shims extends HadoopShimsSecure {
     }
   }
 
+  private static final String DISTCP_OPTIONS_PREFIX = "distcp.options.";
+
+  List<String> constructDistCpParams(Path src, Path dst, Configuration conf) {
+    List<String> params = new ArrayList<String>();
+    for (Map.Entry<String,String> entry : conf.getPropsWithPrefix(DISTCP_OPTIONS_PREFIX).entrySet()){
+      String distCpOption = entry.getKey();
+      String distCpVal = entry.getValue();
+      params.add("-" + distCpOption);
+      if ((distCpVal != null) && (!distCpVal.isEmpty())){
+        params.add(distCpVal);
+      }
+    }
+    if (params.size() == 0){
+      // if no entries were added via conf, we initiate our defaults
+      params.add("-update");
+      params.add("-skipcrccheck");
+    }
+    params.add(src.toString());
+    params.add(dst.toString());
+    return params;
+  }
+
+  @Override
+  public boolean runDistCpAs(final Path src, final Path dst, final Configuration conf, String doAsUser) throws IOException {
+    UserGroupInformation proxyUser = UserGroupInformation.createProxyUser(
+        doAsUser, UserGroupInformation.getLoginUser());
+    try {
+      return proxyUser.doAs(new PrivilegedExceptionAction<Boolean>() {
+        @Override
+        public Boolean run() throws Exception {
+          return runDistCp(src, dst, conf);
+        }
+      });
+    } catch (InterruptedException e) {
+      throw new IOException(e);
+    }
+  }
+
   @Override
   public boolean runDistCp(Path src, Path dst, Configuration conf) throws IOException {
 
@@ -1184,11 +1223,20 @@ public class Hadoop23Shims extends HadoopShimsSecure {
     options.setSyncFolder(true);
     options.setSkipCRC(true);
     options.preserve(FileAttribute.BLOCKSIZE);
+
+    // Creates the command-line parameters for distcp
+    List<String> params = constructDistCpParams(src, dst, conf);
+
     try {
       conf.setBoolean("mapred.mapper.new-api", true);
       DistCp distcp = new DistCp(conf, options);
-      distcp.execute();
-      return true;
+      // HIVE-13704 states that we should use run() instead of execute() due to a hadoop known issue
+      // added by HADOOP-10459
+      if (distcp.run(params.toArray(new String[0])) == 0) {
+        return true;
+      } else {
+        return false;
+      }
     } catch (Exception e) {
       throw new IOException("Cannot execute DistCp process: " + e, e);
     } finally {
