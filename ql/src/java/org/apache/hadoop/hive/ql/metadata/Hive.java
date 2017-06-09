@@ -336,6 +336,9 @@ public class Hive {
       metaStoreClient.close();
       metaStoreClient = null;
     }
+    if (syncMetaStoreClient != null) {
+      syncMetaStoreClient.close();
+    }
     if (owner != null) {
       owner = null;
     }
@@ -1797,7 +1800,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
               partitionsMap.put(fullPartSpec, newPartition);
 
               // Add embedded rawstore, so we can cleanup later to avoid memory leak
-              if (metaStoreClient.isLocalMetaStore()) {
+              if (getMSC().isLocalMetaStore()) {
                 if (!rawStoreMap.containsKey(Thread.currentThread().getId())) {
                   rawStoreMap.put(Thread.currentThread().getId(), HiveMetaStore.HMSHandler.getRawStore());
                 }
