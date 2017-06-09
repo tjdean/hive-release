@@ -657,6 +657,11 @@ class ThriftHiveMetastoreHandler : virtual public ThriftHiveMetastoreIf {
     printf("fire_listener_event\n");
   }
 
+  void cm_recycle(CmRecycleResponse& _return, const CmRecycleRequest& request) {
+    // Your implementation goes here
+    printf("cm_recycle\n");
+  }
+
 };
 
 int main(int argc, char **argv) {

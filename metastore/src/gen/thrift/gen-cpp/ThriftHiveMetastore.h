@@ -149,6 +149,7 @@ class ThriftHiveMetastoreIf : virtual public  ::facebook::fb303::FacebookService
   virtual void get_next_notification(NotificationEventResponse& _return, const NotificationEventRequest& rqst) = 0;
   virtual void get_current_notificationEventId(CurrentNotificationEventId& _return) = 0;
   virtual void fire_listener_event(FireEventResponse& _return, const FireEventRequest& rqst) = 0;
+  virtual void cm_recycle(CmRecycleResponse& _return, const CmRecycleRequest& request) = 0;
 };
 
 class ThriftHiveMetastoreIfFactory : virtual public  ::facebook::fb303::FacebookServiceIfFactory {
@@ -580,6 +581,9 @@ class ThriftHiveMetastoreNull : virtual public ThriftHiveMetastoreIf , virtual p
     return;
   }
   void fire_listener_event(FireEventResponse& /* _return */, const FireEventRequest& /* rqst */) {
+    return;
+  }
+  void cm_recycle(CmRecycleResponse& /* _return */, const CmRecycleRequest& /* request */) {
     return;
   }
 };
@@ -16586,6 +16590,118 @@ class ThriftHiveMetastore_fire_listener_event_presult {
 
 };
 
+typedef struct _ThriftHiveMetastore_cm_recycle_args__isset {
+  _ThriftHiveMetastore_cm_recycle_args__isset() : request(false) {}
+  bool request :1;
+} _ThriftHiveMetastore_cm_recycle_args__isset;
+
+class ThriftHiveMetastore_cm_recycle_args {
+ public:
+
+  ThriftHiveMetastore_cm_recycle_args(const ThriftHiveMetastore_cm_recycle_args&);
+  ThriftHiveMetastore_cm_recycle_args& operator=(const ThriftHiveMetastore_cm_recycle_args&);
+  ThriftHiveMetastore_cm_recycle_args() {
+  }
+
+  virtual ~ThriftHiveMetastore_cm_recycle_args() throw();
+  CmRecycleRequest request;
+
+  _ThriftHiveMetastore_cm_recycle_args__isset __isset;
+
+  void __set_request(const CmRecycleRequest& val);
+
+  bool operator == (const ThriftHiveMetastore_cm_recycle_args & rhs) const
+  {
+    if (!(request == rhs.request))
+      return false;
+    return true;
+  }
+  bool operator != (const ThriftHiveMetastore_cm_recycle_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ThriftHiveMetastore_cm_recycle_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ThriftHiveMetastore_cm_recycle_pargs {
+ public:
+
+
+  virtual ~ThriftHiveMetastore_cm_recycle_pargs() throw();
+  const CmRecycleRequest* request;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ThriftHiveMetastore_cm_recycle_result__isset {
+  _ThriftHiveMetastore_cm_recycle_result__isset() : success(false), o1(false) {}
+  bool success :1;
+  bool o1 :1;
+} _ThriftHiveMetastore_cm_recycle_result__isset;
+
+class ThriftHiveMetastore_cm_recycle_result {
+ public:
+
+  ThriftHiveMetastore_cm_recycle_result(const ThriftHiveMetastore_cm_recycle_result&);
+  ThriftHiveMetastore_cm_recycle_result& operator=(const ThriftHiveMetastore_cm_recycle_result&);
+  ThriftHiveMetastore_cm_recycle_result() {
+  }
+
+  virtual ~ThriftHiveMetastore_cm_recycle_result() throw();
+  CmRecycleResponse success;
+  MetaException o1;
+
+  _ThriftHiveMetastore_cm_recycle_result__isset __isset;
+
+  void __set_success(const CmRecycleResponse& val);
+
+  void __set_o1(const MetaException& val);
+
+  bool operator == (const ThriftHiveMetastore_cm_recycle_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(o1 == rhs.o1))
+      return false;
+    return true;
+  }
+  bool operator != (const ThriftHiveMetastore_cm_recycle_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ThriftHiveMetastore_cm_recycle_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ThriftHiveMetastore_cm_recycle_presult__isset {
+  _ThriftHiveMetastore_cm_recycle_presult__isset() : success(false), o1(false) {}
+  bool success :1;
+  bool o1 :1;
+} _ThriftHiveMetastore_cm_recycle_presult__isset;
+
+class ThriftHiveMetastore_cm_recycle_presult {
+ public:
+
+
+  virtual ~ThriftHiveMetastore_cm_recycle_presult() throw();
+  CmRecycleResponse* success;
+  MetaException o1;
+
+  _ThriftHiveMetastore_cm_recycle_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 class ThriftHiveMetastoreClient : virtual public ThriftHiveMetastoreIf, public  ::facebook::fb303::FacebookServiceClient {
  public:
   ThriftHiveMetastoreClient(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> prot) :
@@ -16978,6 +17094,9 @@ class ThriftHiveMetastoreClient : virtual public ThriftHiveMetastoreIf, public  
   void fire_listener_event(FireEventResponse& _return, const FireEventRequest& rqst);
   void send_fire_listener_event(const FireEventRequest& rqst);
   void recv_fire_listener_event(FireEventResponse& _return);
+  void cm_recycle(CmRecycleResponse& _return, const CmRecycleRequest& request);
+  void send_cm_recycle(const CmRecycleRequest& request);
+  void recv_cm_recycle(CmRecycleResponse& _return);
 };
 
 class ThriftHiveMetastoreProcessor : public  ::facebook::fb303::FacebookServiceProcessor {
@@ -17115,6 +17234,7 @@ class ThriftHiveMetastoreProcessor : public  ::facebook::fb303::FacebookServiceP
   void process_get_next_notification(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_current_notificationEventId(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_fire_listener_event(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_cm_recycle(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
  public:
   ThriftHiveMetastoreProcessor(boost::shared_ptr<ThriftHiveMetastoreIf> iface) :
      ::facebook::fb303::FacebookServiceProcessor(iface),
@@ -17246,6 +17366,7 @@ class ThriftHiveMetastoreProcessor : public  ::facebook::fb303::FacebookServiceP
     processMap_["get_next_notification"] = &ThriftHiveMetastoreProcessor::process_get_next_notification;
     processMap_["get_current_notificationEventId"] = &ThriftHiveMetastoreProcessor::process_get_current_notificationEventId;
     processMap_["fire_listener_event"] = &ThriftHiveMetastoreProcessor::process_fire_listener_event;
+    processMap_["cm_recycle"] = &ThriftHiveMetastoreProcessor::process_cm_recycle;
   }
 
   virtual ~ThriftHiveMetastoreProcessor() {}
@@ -18496,6 +18617,16 @@ class ThriftHiveMetastoreMultiface : virtual public ThriftHiveMetastoreIf, publi
     return;
   }
 
+  void cm_recycle(CmRecycleResponse& _return, const CmRecycleRequest& request) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->cm_recycle(_return, request);
+    }
+    ifaces_[i]->cm_recycle(_return, request);
+    return;
+  }
+
 };
 
 // The 'concurrent' client is a thread safe client that correctly handles
@@ -18893,6 +19024,9 @@ class ThriftHiveMetastoreConcurrentClient : virtual public ThriftHiveMetastoreIf
   void fire_listener_event(FireEventResponse& _return, const FireEventRequest& rqst);
   int32_t send_fire_listener_event(const FireEventRequest& rqst);
   void recv_fire_listener_event(FireEventResponse& _return, const int32_t seqid);
+  void cm_recycle(CmRecycleResponse& _return, const CmRecycleRequest& request);
+  int32_t send_cm_recycle(const CmRecycleRequest& request);
+  void recv_cm_recycle(CmRecycleResponse& _return, const int32_t seqid);
 };
 
 #ifdef _WIN32

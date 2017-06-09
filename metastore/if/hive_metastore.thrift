@@ -766,6 +766,15 @@ struct FireEventResponse {
 }
     
 
+// Request type for cm_recycle
+struct CmRecycleRequest {
+  1: required string dataPath,
+  2: required bool purge
+}
+
+// Response type for cm_recycle
+struct CmRecycleResponse {
+}
 
 exception MetaException {
   1: string message
@@ -1246,6 +1255,9 @@ service ThriftHiveMetastore extends fb303.FacebookService
   NotificationEventResponse get_next_notification(1:NotificationEventRequest rqst) 
   CurrentNotificationEventId get_current_notificationEventId()
   FireEventResponse fire_listener_event(1:FireEventRequest rqst)
+
+  // Repl Change Management api
+  CmRecycleResponse cm_recycle(1:CmRecycleRequest request) throws(1:MetaException o1)
 }
 
 // * Note about the DDL_TIME: When creating or altering a table or a partition,

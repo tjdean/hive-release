@@ -88,6 +88,7 @@ import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.AggrStats;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
+import org.apache.hadoop.hive.metastore.api.CmRecycleRequest;
 import org.apache.hadoop.hive.metastore.api.ColumnStatistics;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsObj;
 import org.apache.hadoop.hive.metastore.api.CompactionResponse;
@@ -2974,6 +2975,22 @@ private void constructOneLBLocationMap(FileStatus fSta,
     }
   }
 
+  /**
+   * Recycles the files recursively from the input path to the cmroot directory either by copying or moving it.
+   *
+   * @param dataPath Path of the data files to be recycled to cmroot
+   * @param isPurge
+   *          When set to true files which needs to be recycled are not moved to Trash
+   */
+  public void recycleDirToCmPath(Path dataPath, boolean isPurge) throws HiveException {
+    try {
+      CmRecycleRequest request = new CmRecycleRequest(dataPath.toString(), isPurge);
+      getMSC().recycleDirToCmPath(request);
+    } catch (Exception e) {
+      throw new HiveException(e);
+    }
+  }
+
   //it is assumed that parent directory of the destf should already exist when this
   //method is called. when the replace value is true, this method works a little different
   //from mv command if the destf is a directory, it replaces the destf instead of moving under
@@ -3314,18 +3331,21 @@ private void constructOneLBLocationMap(FileStatus fSta,
         boolean oldPathDeleted = false;
         boolean isOldPathUnderDestf = false;
         try {
-          FileSystem fs2 = oldPath.getFileSystem(conf);
-          if (fs2.exists(oldPath)) {
+          FileSystem oldFs = oldPath.getFileSystem(conf);
+          if (oldFs.exists(oldPath)) {
             // Do not delete oldPath if:
             //  - destf is subdir of oldPath
-            //if ( !(fs2.equals(destf.getFileSystem(conf)) && FileUtils.isSubDir(oldPath, destf, fs2)))
-            isOldPathUnderDestf = FileUtils.isSubDir(oldPath, destf, fs2);
+            //if ( !(oldFs.equals(destf.getFileSystem(conf)) && FileUtils.isSubDir(oldPath, destf, oldFs)))
+            isOldPathUnderDestf = FileUtils.isSubDir(oldPath, destf, oldFs);
             if (isOldPathUnderDestf) {
               // if oldPath is destf or its subdir, its should definitely be deleted, otherwise its
               // existing content might result in incorrect (extra) data.
               // But not sure why we changed not to delete the oldPath in HIVE-8750 if it is
               // not the destf or its subdir?
-              oldPathDeleted = trashFilesUnderDir(fs2, oldPath, conf);
+              if (conf.getBoolVar(HiveConf.ConfVars.REPLCMENABLED)) {
+                recycleDirToCmPath(oldPath, false);
+              }
+              oldPathDeleted = trashFilesUnderDir(oldFs, oldPath, conf);
             }
           }
         } catch (IOException e) {
@@ -3338,7 +3358,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
             LOG.warn("Directory " + oldPath.toString() + " cannot be cleaned: " + e, e);
           }
         }
-        if (isOldPathUnderDestf && !oldPathDeleted) {
+        if (!oldPathDeleted) {
           throw new HiveException("Destination directory " + destf + " has not be cleaned up.");
         }
       }

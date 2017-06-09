@@ -2135,6 +2135,22 @@ module ThriftHiveMetastore
       raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'fire_listener_event failed: unknown result')
     end
 
+    def cm_recycle(request)
+      send_cm_recycle(request)
+      return recv_cm_recycle()
+    end
+
+    def send_cm_recycle(request)
+      send_message('cm_recycle', Cm_recycle_args, :request => request)
+    end
+
+    def recv_cm_recycle()
+      result = receive_message(Cm_recycle_result)
+      return result.success unless result.success.nil?
+      raise result.o1 unless result.o1.nil?
+      raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'cm_recycle failed: unknown result')
+    end
+
   end
 
   class Processor < ::FacebookService::Processor 
@@ -3755,6 +3771,17 @@ module ThriftHiveMetastore
       result = Fire_listener_event_result.new()
       result.success = @handler.fire_listener_event(args.rqst)
       write_result(result, oprot, 'fire_listener_event', seqid)
+    end
+
+    def process_cm_recycle(seqid, iprot, oprot)
+      args = read_args(iprot, Cm_recycle_args)
+      result = Cm_recycle_result.new()
+      begin
+        result.success = @handler.cm_recycle(args.request)
+      rescue ::MetaException => o1
+        result.o1 = o1
+      end
+      write_result(result, oprot, 'cm_recycle', seqid)
     end
 
   end
@@ -8588,6 +8615,40 @@ module ThriftHiveMetastore
 
     FIELDS = {
       SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => ::FireEventResponse}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Cm_recycle_args
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    REQUEST = 1
+
+    FIELDS = {
+      REQUEST => {:type => ::Thrift::Types::STRUCT, :name => 'request', :class => ::CmRecycleRequest}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Cm_recycle_result
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    SUCCESS = 0
+    O1 = 1
+
+    FIELDS = {
+      SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => ::CmRecycleResponse},
+      O1 => {:type => ::Thrift::Types::STRUCT, :name => 'o1', :class => ::MetaException}
     }
 
     def struct_fields; FIELDS; end

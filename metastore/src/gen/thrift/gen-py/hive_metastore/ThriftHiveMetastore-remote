@@ -151,6 +151,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print('  NotificationEventResponse get_next_notification(NotificationEventRequest rqst)')
   print('  CurrentNotificationEventId get_current_notificationEventId()')
   print('  FireEventResponse fire_listener_event(FireEventRequest rqst)')
+  print('  CmRecycleResponse cm_recycle(CmRecycleRequest request)')
   print('  string getName()')
   print('  string getVersion()')
   print('  fb_status getStatus()')
@@ -981,6 +982,12 @@ elif cmd == 'fire_listener_event':
     print('fire_listener_event requires 1 args')
     sys.exit(1)
   pp.pprint(client.fire_listener_event(eval(args[0]),))
+
+elif cmd == 'cm_recycle':
+  if len(args) != 1:
+    print('cm_recycle requires 1 args')
+    sys.exit(1)
+  pp.pprint(client.cm_recycle(eval(args[0]),))
 
 elif cmd == 'getName':
   if len(args) != 0:
