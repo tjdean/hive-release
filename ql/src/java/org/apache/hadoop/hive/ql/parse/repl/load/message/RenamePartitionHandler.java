@@ -59,8 +59,8 @@ public class RenamePartitionHandler extends AbstractMessageHandler {
           : new SemanticException("Error reading message members", e);
     }
 
-    RenamePartitionDesc renamePtnDesc =
-        new RenamePartitionDesc(tableName, oldPartSpec, newPartSpec);
+    RenamePartitionDesc renamePtnDesc = new RenamePartitionDesc(
+            tableName, oldPartSpec, newPartSpec, context.eventOnlyReplicationSpec());
     Task<DDLWork> renamePtnTask = TaskFactory.get(
         new DDLWork(readEntitySet, writeEntitySet, renamePtnDesc), context.hiveConf
     );

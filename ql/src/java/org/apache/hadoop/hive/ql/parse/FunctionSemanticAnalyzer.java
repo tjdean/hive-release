@@ -84,7 +84,7 @@ public class FunctionSemanticAnalyzer extends BaseSemanticAnalyzer {
     }
 
     CreateFunctionDesc desc =
-        new CreateFunctionDesc(functionName, isTemporaryFunction, className, resources);
+        new CreateFunctionDesc(functionName, isTemporaryFunction, className, resources, null);
     rootTasks.add(TaskFactory.get(new FunctionWork(desc), conf));
 
     addEntities(functionName, isTemporaryFunction, resources);
@@ -112,7 +112,7 @@ public class FunctionSemanticAnalyzer extends BaseSemanticAnalyzer {
     }
 
     boolean isTemporaryFunction = (ast.getFirstChildWithType(HiveParser.TOK_TEMPORARY) != null);
-    DropFunctionDesc desc = new DropFunctionDesc(functionName, isTemporaryFunction);
+    DropFunctionDesc desc = new DropFunctionDesc(functionName, isTemporaryFunction, null);
     rootTasks.add(TaskFactory.get(new FunctionWork(desc), conf));
 
     addEntities(functionName, isTemporaryFunction, null);
