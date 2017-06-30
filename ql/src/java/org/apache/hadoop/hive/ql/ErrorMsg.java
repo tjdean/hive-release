@@ -441,7 +441,7 @@ public enum ErrorMsg {
   REPLACE_CANNOT_DROP_COLUMNS(10313, "Replacing columns cannot drop columns for table {0}. SerDe may be incompatible", true),
   REPLACE_UNSUPPORTED_TYPE_CONVERSION(10314, "Replacing columns with unsupported type conversion (from {0} to {1}) for column {2}. SerDe may be incompatible", true),
   ERROR_SERIALIZE_METASTORE(10319, "Error while serializing the metastore objects"),
-  IO_ERROR(10320, "Error while peforming IO operation "),
+  IO_ERROR(10320, "Error while performing IO operation "),
   ERROR_SERIALIZE_METADATA(10321, "Error while serializing the metadata"),
   ACID_NOT_ENOUGH_HISTORY(10327, "Not enough history available for ({0},{1}).  " +
     "Oldest available base: {2}", true),
