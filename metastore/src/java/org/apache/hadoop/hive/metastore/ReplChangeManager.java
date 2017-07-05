@@ -1,20 +1,20 @@
 /*
-  Licensed to the Apache Software Foundation (ASF) under one
-  or more contributor license agreements.  See the NOTICE file
-  distributed with this work for additional information
-  regarding copyright ownership.  The ASF licenses this file
-  to you under the Apache License, Version 2.0 (the
-  "License"); you may not use this file except in compliance
-  with the License.  You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package org.apache.hadoop.hive.metastore;
 
@@ -57,6 +57,11 @@ public class ReplChangeManager {
   private static final String ORIG_LOC_TAG = "user.original-loc";
   static final String REMAIN_IN_TRASH_TAG = "user.remain-in-trash";
   private static final String URI_FRAGMENT_SEPARATOR = "#";
+
+  public enum RecycleType {
+    MOVE,
+    COPY
+  }
 
   public static ReplChangeManager getInstance(HiveConf hiveConf) throws MetaException {
     if (instance == null) {
@@ -101,43 +106,18 @@ public class ReplChangeManager {
     }
   };
 
-  void addFile(Path path) throws MetaException {
-    if (!enabled) {
-      return;
-    }
-    try {
-      if (fs.isDirectory(path)) {
-        throw new IllegalArgumentException(path + " cannot be a directory");
-      }
-      Path cmPath = getCMPath(hiveConf, checksumFor(path, fs));
-      boolean copySuccessful = FileUtils
-          .copy(path.getFileSystem(hiveConf), path, cmPath.getFileSystem(hiveConf), cmPath, false,
-              false, hiveConf);
-      if (!copySuccessful) {
-        LOG.debug("A file with the same content of " + path.toString() + " already exists, ignore");
-      } else {
-        fs.setOwner(cmPath, msUser, msGroup);
-        try {
-          fs.setXAttr(cmPath, ORIG_LOC_TAG, path.toString().getBytes());
-        } catch (UnsupportedOperationException e) {
-          LOG.warn("Error setting xattr for " + path.toString());
-        }
-      }
-    } catch (Exception exception) {
-      throw new MetaException(StringUtils.stringifyException(exception));
-    }
-  }
-
-
   /***
    * Move a path into cmroot. If the path is a directory (of a partition, or table if nonpartitioned),
    *   recursively move files inside directory to cmroot. Note the table must be managed table
    * @param path a single file or directory
-   * @param ifPurge if the file should skip Trash when delete
+   * @param type if the files to be copied or moved to cmpath.
+   *             Copy is costly but preserve the source file
+   * @param ifPurge if the file should skip Trash when move/delete source file.
+   *                This is referred only if type is MOVE.
    * @return int
    * @throws MetaException
    */
-  int recycle(Path path, boolean ifPurge) throws MetaException {
+  int recycle(Path path, RecycleType type, boolean ifPurge) throws MetaException {
     if (!enabled) {
       return 0;
     }
@@ -148,13 +128,11 @@ public class ReplChangeManager {
       if (fs.isDirectory(path)) {
         FileStatus[] files = fs.listStatus(path, hiddenFileFilter);
         for (FileStatus file : files) {
-          count += recycle(file.getPath(), ifPurge);
+          count += recycle(file.getPath(), type, ifPurge);
         }
       } else {
-        Path cmPath = getCMPath(hiveConf, checksumFor(path, fs));
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Moving " + path.toString() + " to " + cmPath.toString());
-        }
+        String fileCheckSum = checksumFor(path, fs);
+        Path cmPath = getCMPath(hiveConf, fileCheckSum);
 
         // set timestamp before moving to cmroot, so we can
         // avoid race condition CM remove the file before setting
@@ -162,17 +140,42 @@ public class ReplChangeManager {
         long now = System.currentTimeMillis();
         fs.setTimes(path, now, now);
 
-        boolean succ = fs.rename(path, cmPath);
+        boolean success = false;
+        if (fs.exists(cmPath) && fileCheckSum.equalsIgnoreCase(checksumFor(cmPath, fs))) {
+          // If already a file with same checksum exists in cmPath, just ignore the copy/move
+          // Also, mark the operation is unsuccessful to notify that file with same name already
+          // exist which will ensure the timestamp of cmPath is updated to avoid clean-up by
+          // CM cleaner.
+          success = false;
+        } else {
+          switch (type) {
+            case MOVE: {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Moving " + path.toString() + " to " + cmPath.toString());
+              }
+              // Rename fails if the file with same name already exist.
+              success = fs.rename(path, cmPath);
+              break;
+            }
+            case COPY: {
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Copying " + path.toString() + " to " + cmPath.toString());
+              }
+              // It is possible to have a file with same checksum in cmPath but the content is
+              // partially copied or corrupted. In this case, just overwrite the existing file with
+              // new one.
+              success = FileUtils.copy(fs, path, fs, cmPath, false, true, hiveConf);
+              break;
+            }
+            default:
+              // Operation fails as invalid input
+              break;
+          }
+        }
+
         // Ignore if a file with same content already exist in cmroot
         // We might want to setXAttr for the new location in the future
-        if (!succ) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("A file with the same content of " + path.toString() + " already exists, ignore");
-          }
-          // Need to extend the tenancy if we saw a newer file with the same content
-          fs.setTimes(cmPath, now, now);
-        } else {
-
+        if (success) {
           // set the file owner to hive (or the id metastore run as)
           fs.setOwner(cmPath, msUser, msGroup);
 
@@ -187,11 +190,18 @@ public class ReplChangeManager {
           }
 
           count++;
+        } else {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("A file with the same content of " + path.toString() + " already exists, ignore");
+          }
+          // Need to extend the tenancy if we saw a newer file with the same content
+          fs.setTimes(cmPath, now, now);
         }
+
         // Tag if we want to remain in trash after deletion.
         // If multiple files share the same content, then
         // any file claim remain in trash would be granted
-        if (!ifPurge) {
+        if ((type == RecycleType.MOVE) && !ifPurge) {
           try {
             fs.setXAttr(cmPath, REMAIN_IN_TRASH_TAG, new byte[]{0});
           } catch (UnsupportedOperationException e) {
