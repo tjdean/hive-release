@@ -153,6 +153,7 @@ public enum HiveOperationType {
   COMMIT,
   ROLLBACK,
   SET_AUTOCOMMIT,
+  ABORT_TRANSACTIONS
 
 
 }
