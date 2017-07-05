@@ -70,7 +70,8 @@ public class ExportSemanticAnalyzer extends BaseSemanticAnalyzer {
     // initialize export path
     String tmpPath = stripQuotes(toTree.getText());
     // All parsing is done, we're now good to start the export process.
-    TableExport.Paths exportPaths = new TableExport.Paths(ast, tmpPath, conf);
+    TableExport.Paths exportPaths =
+        new TableExport.Paths(tmpPath, conf);
     TableExport.AuthEntities authEntities =
         new TableExport(exportPaths, ts, replicationSpec, db, conf, LOG).run();
     inputs.addAll(authEntities.inputs);

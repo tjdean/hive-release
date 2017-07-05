@@ -30,7 +30,6 @@ import org.apache.hadoop.hive.ql.hooks.WriteEntity;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.PartitionIterable;
-import org.apache.hadoop.hive.ql.parse.ASTNode;
 import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer.TableSpec;
 import org.apache.hadoop.hive.ql.parse.EximUtil;
 import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
@@ -56,8 +55,8 @@ public class TableExport {
   private final Paths paths;
   private final AuthEntities authEntities = new AuthEntities();
 
-  public TableExport(Paths paths, TableSpec tableSpec,
-      ReplicationSpec replicationSpec, Hive db, HiveConf conf, Log logger)
+  public TableExport(Paths paths, TableSpec tableSpec, ReplicationSpec replicationSpec, Hive db,
+      HiveConf conf, Log logger)
       throws SemanticException {
     this.tableSpec = (tableSpec != null
         && tableSpec.tableHandle.isTemporary()
@@ -65,6 +64,9 @@ public class TableExport {
         ? null
         : tableSpec;
     this.replicationSpec = replicationSpec;
+    if (this.tableSpec != null && this.tableSpec.tableHandle.isView()) {
+      this.replicationSpec.setIsMetadataOnly(true);
+    }
     this.db = db;
     this.conf = conf;
     this.logger = logger;
@@ -75,6 +77,7 @@ public class TableExport {
     if (tableSpec == null) {
       writeMetaData(null);
     } else if (shouldExport()) {
+      //first we should get the correct replication spec before doing metadata/data export
       if (tableSpec.tableHandle.isView()) {
         replicationSpec.setIsMetadataOnly(true);
       }
@@ -114,7 +117,8 @@ public class TableExport {
     }
   }
 
-  private void writeMetaData(PartitionIterable partitions) throws SemanticException {
+  private void writeMetaData(PartitionIterable partitions)
+      throws SemanticException {
     try {
       EximUtil.createExportDump(
           paths.exportFileSystem,
@@ -171,7 +175,6 @@ public class TableExport {
    * directory creation.
    */
   public static class Paths {
-    private final ASTNode ast;
     private final HiveConf conf;
     public final Path exportRootDir;
     private final FileSystem exportFileSystem;
@@ -184,21 +187,20 @@ public class TableExport {
       Path path() throws SemanticException;
     }
 
-    public Paths(final ASTNode ast, final Path dbRoot, final String tblName, final HiveConf conf)
-        throws SemanticException {
-      this(ast, new Function() {
+    public Paths(final String astRepresentationForErrorMs, final Path dbRoot, final String tblName,
+        final HiveConf conf) throws SemanticException {
+      this(new Function() {
         @Override
         public Path path() throws SemanticException {
           Path tableRoot = new Path(dbRoot, tblName);
           URI exportRootDir = EximUtil.getValidatedURI(conf, tableRoot.toUri().toString());
-          validateTargetDir(conf, ast, exportRootDir);
+          validateTargetDir(conf, astRepresentationForErrorMs, exportRootDir);
           return new Path(exportRootDir);
         }
       }, conf);
     }
 
-    public Paths(ASTNode ast, Function builder, HiveConf conf) throws SemanticException {
-      this.ast = ast;
+    Paths(Function builder, HiveConf conf) throws SemanticException {
       this.conf = conf;
       this.exportRootDir = builder.path();
       try {
@@ -209,8 +211,9 @@ public class TableExport {
       }
     }
 
-    public Paths(ASTNode ast, final String path, final HiveConf conf) throws SemanticException {
-      this(ast, new Function() {
+    public Paths(final String path, final HiveConf conf)
+        throws SemanticException {
+      this(new Function() {
         @Override
         public Path path() throws SemanticException {
           return new Path(EximUtil.getValidatedURI(conf, path));
@@ -301,7 +304,8 @@ public class TableExport {
      * this level of validation might not be required as the root directory in which we dump will
      * be different for each run hence possibility of it having data is not there.
      */
-    private static void validateTargetDir(HiveConf conf, ASTNode ast, URI rootDirExportFile)
+    private static void validateTargetDir(HiveConf conf, String astRepresentationForErrorMsg,
+        URI rootDirExportFile)
         throws SemanticException {
       try {
         FileSystem fs = FileSystem.get(rootDirExportFile, conf);
@@ -311,21 +315,21 @@ public class TableExport {
           FileStatus tgt = fs.getFileStatus(toPath);
           // target exists
           if (!tgt.isDirectory()) {
-            throw new SemanticException(ErrorMsg.INVALID_PATH
-                .getMsg(ast, "Target is not a directory : " + rootDirExportFile));
+            throw new SemanticException(
+                astRepresentationForErrorMsg + ": " + "Target is not a directory : "
+                    + rootDirExportFile);
           } else {
             FileStatus[] files = fs.listStatus(toPath, FileUtils.HIDDEN_FILES_PATH_FILTER);
             if (files != null && files.length != 0) {
               throw new SemanticException(
-                  ErrorMsg.INVALID_PATH
-                      .getMsg(ast, "Target is not an empty directory : " + rootDirExportFile)
-              );
+                  astRepresentationForErrorMsg + ": " + "Target is not an empty directory : "
+                      + rootDirExportFile);
             }
           }
         } catch (FileNotFoundException ignored) {
         }
       } catch (IOException e) {
-        throw new SemanticException(ErrorMsg.INVALID_PATH.getMsg(ast), e);
+        throw new SemanticException(astRepresentationForErrorMsg, e);
       }
     }
   }
