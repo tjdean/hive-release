@@ -22,6 +22,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -37,7 +38,7 @@ public class TestHadoop23Shims {
     Configuration conf = new Configuration();
 
     Hadoop23Shims shims = new Hadoop23Shims();
-    List<String> paramsDefault = shims.constructDistCpParams(copySrc, copyDst, conf);
+    List<String> paramsDefault = shims.constructDistCpParams(Collections.singletonList(copySrc), copyDst, conf);
 
     assertEquals(5, paramsDefault.size());
     assertTrue("Distcp -update set by default", paramsDefault.contains("-update"));
@@ -50,7 +51,7 @@ public class TestHadoop23Shims {
     conf.set("distcp.options.blah", ""); // should set "-blah"
     conf.set("dummy", "option"); // should be ignored.
     List<String> paramsWithCustomParamInjection =
-        shims.constructDistCpParams(copySrc, copyDst, conf);
+        shims.constructDistCpParams(Collections.singletonList(copySrc), copyDst, conf);
 
     assertEquals(5, paramsWithCustomParamInjection.size());
 

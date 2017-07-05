@@ -680,7 +680,7 @@ public class Hadoop20SShims extends HadoopShimsSecure {
 
   private static final String DISTCP_OPTIONS_PREFIX = "distcp.options.";
 
-  List<String> constructDistCpParams(Path src, Path dst, Configuration conf) {
+  List<String> constructDistCpParams(List<Path> srcPaths, Path dst, Configuration conf) {
     List<String> params = new ArrayList<String>();
 
     Iterator<java.util.Map.Entry<java.lang.String,java.lang.String>> confIter = conf.iterator();
@@ -701,20 +701,22 @@ public class Hadoop20SShims extends HadoopShimsSecure {
       params.add("-update");
       params.add("-skipcrccheck");
     }
-    params.add(src.toString());
+    for (Path src : srcPaths) {
+      params.add(src.toString());
+    }
     params.add(dst.toString());
     return params;
   }
 
   @Override
-  public boolean runDistCpAs(final Path src, final Path dst, final Configuration conf, String doAsUser) throws IOException {
+  public boolean runDistCpAs(final List<Path> srcPaths, final Path dst, final Configuration conf, String doAsUser) throws IOException {
     UserGroupInformation proxyUser = UserGroupInformation.createProxyUser(
         doAsUser, UserGroupInformation.getLoginUser());
     try {
       return proxyUser.doAs(new PrivilegedExceptionAction<Boolean>() {
         @Override
         public Boolean run() throws Exception {
-          return runDistCp(src, dst, conf);
+          return runDistCp(srcPaths, dst, conf);
         }
       });
     } catch (InterruptedException e) {
@@ -723,15 +725,15 @@ public class Hadoop20SShims extends HadoopShimsSecure {
   }
 
   @Override
-  public boolean runDistCp(Path src, Path dst, Configuration conf) throws IOException {
+  public boolean runDistCp(List<Path> srcPaths, Path dst, Configuration conf) throws IOException {
 
-    DistCpOptions options = new DistCpOptions(Collections.singletonList(src), dst);
+    DistCpOptions options = new DistCpOptions(srcPaths, dst);
     options.setSyncFolder(true);
     options.setSkipCRC(true);
     options.preserve(FileAttribute.BLOCKSIZE);
 
     // Creates the command-line parameters for distcp
-    List<String> params = constructDistCpParams(src, dst, conf);
+    List<String> params = constructDistCpParams(srcPaths, dst, conf);
 
     try {
       DistCp distcp = new DistCp(conf, options);
