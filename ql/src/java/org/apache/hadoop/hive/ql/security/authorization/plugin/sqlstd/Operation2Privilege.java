@@ -425,6 +425,10 @@ public class Operation2Privilege {
         (null, null));
     op2Priv.put(HiveOperationType.SET_AUTOCOMMIT, PrivRequirement.newIOPrivRequirement
         (null, null));
+    op2Priv.put(HiveOperationType.ALTERTABLE_EXCHANGEPARTITION, PrivRequirement.newIOPrivRequirement
+            (null, null));
+    op2Priv.put(HiveOperationType.RELOADFUNCTION, PrivRequirement.newIOPrivRequirement
+            (null, null));
   }
 
   /**
