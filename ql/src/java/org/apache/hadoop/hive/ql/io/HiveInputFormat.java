@@ -236,7 +236,11 @@ public class HiveInputFormat<K extends WritableComparable, V extends Writable>
     }
 
     boolean nonNative = false;
-    PartitionDesc part = pathToPartitionInfo.get(hsplit.getPath().toString());
+    PartitionDesc part = HiveFileFormatUtils.getPartitionDescFromPathRecursively(
+      pathToPartitionInfo, hsplit.getPath(), null);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Found spec for " + hsplit.getPath() + " " + part + " from " + pathToPartitionInfo);
+    }
     if ((part != null) && (part.getTableDesc() != null)) {
       Utilities.copyTableJobPropertiesToConf(part.getTableDesc(), job);
       nonNative = part.getTableDesc().isNonNative();
