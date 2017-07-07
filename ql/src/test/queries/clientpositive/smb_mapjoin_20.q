@@ -4,7 +4,11 @@ set hive.enforce.bucketing=true;
 set hive.enforce.sorting=true;
 set hive.exec.reducers.max = 1;
 set hive.merge.mapfiles=false;
-set hive.merge.mapredfiles=false; 
+set hive.merge.mapredfiles=false;
+
+-- SORT_BEFORE_DIFF
+
+-- SORT_BEFORE_DIFF
 
 -- Create two bucketed and sorted tables
 CREATE TABLE test_table1 (key int, value STRING) PARTITIONED BY (ds STRING)
@@ -45,6 +49,17 @@ select count(*) from test_table3 where ds = '1' and hash(value1) % 2 = 0;
 select count(*) from test_table3 where ds = '1' and hash(value1) % 2 = 1;
 select count(*) from test_table3 tablesample (bucket 1 out of 2) s where ds = '1';
 select count(*) from test_table3 tablesample (bucket 2 out of 2) s where ds = '1';
+
+select * from test_table3;
+
+set hive.optimize.bucketingsorting=false;
+
+INSERT OVERWRITE TABLE test_table3 PARTITION (ds = '1')
+SELECT a.value, a.key, a.value FROM test_table1 a WHERE a.ds = '1';
+
+select * from test_table3;
+
+set hive.optimize.bucketingsorting=true;
 
 -- Insert data into the bucketed table by selecting from another bucketed table
 -- However, since an expression is being selected, it should involve a reducer
