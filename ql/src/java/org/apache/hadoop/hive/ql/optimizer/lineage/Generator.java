@@ -76,6 +76,7 @@ public class Generator implements Transform {
       if (!pctx.getQueryProperties().isCTAS()
           && pctx.getQueryProperties().isQuery()
           && pctx.getCreateTable() == null
+          && pctx.getCreateViewDesc() == null
           && (pctx.getLoadTableWork() == null || pctx.getLoadTableWork().isEmpty())) {
         LOG.debug("Not evaluating lineage");
         return pctx;

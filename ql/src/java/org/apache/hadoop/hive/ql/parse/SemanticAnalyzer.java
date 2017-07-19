@@ -458,7 +458,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         listMapJoinOpsNoReducer, prunedPartitions, tabNameToTabObject,
         opToSamplePruner, globalLimitCtx, nameToSplitSample, inputs, rootTasks,
         opToPartToSkewedPruner, viewAliasToInput, reduceSinkOperatorsAddedByEnforceBucketingSorting,
-        analyzeRewrite, tableDesc, queryProperties, viewProjectToTableSchema, acidFileSinks);
+        analyzeRewrite, tableDesc, createVwDesc, queryProperties, viewProjectToTableSchema, acidFileSinks);
   }
 
   @SuppressWarnings("nls")
@@ -10472,7 +10472,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         listMapJoinOpsNoReducer, prunedPartitions, tabNameToTabObject, opToSamplePruner,
         globalLimitCtx, nameToSplitSample, inputs, rootTasks, opToPartToSkewedPruner,
         viewAliasToInput, reduceSinkOperatorsAddedByEnforceBucketingSorting,
-        analyzeRewrite, tableDesc, queryProperties, viewProjectToTableSchema, acidFileSinks);
+        analyzeRewrite, tableDesc, createVwDesc, queryProperties, viewProjectToTableSchema, acidFileSinks);
 
     // 5. Take care of view creation
     if (createVwDesc != null) {
@@ -11481,6 +11481,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     createVwDesc = new CreateViewDesc(
       dbDotTable, cols, comment, tblProps, partColNames,
       ifNotExists, orReplace, isAlterViewAs);
+
+    qb.setViewDesc(createVwDesc);
 
     unparseTranslator.enable();
     rootTasks.add(TaskFactory.get(new DDLWork(getInputs(), getOutputs(),
