@@ -47,6 +47,7 @@ import org.apache.hadoop.hive.ql.optimizer.ppr.PartitionPruner;
 import org.apache.hadoop.hive.ql.optimizer.unionproc.UnionProcContext;
 import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer.AnalyzeRewriteContext;
 import org.apache.hadoop.hive.ql.plan.CreateTableDesc;
+import org.apache.hadoop.hive.ql.plan.CreateViewDesc;
 import org.apache.hadoop.hive.ql.plan.ExprNodeDesc;
 import org.apache.hadoop.hive.ql.plan.FileSinkDesc;
 import org.apache.hadoop.hive.ql.plan.FilterDesc.SampleDesc;
@@ -113,7 +114,8 @@ public class ParseContext {
   private CreateTableDesc createTableDesc;
   private boolean reduceSinkAddedBySortedDynPartition;
 
-  private Map<SelectOperator, Table> viewProjectToViewSchema;  
+  private Map<SelectOperator, Table> viewProjectToViewSchema;
+  private CreateViewDesc createViewDesc;
   private ColumnAccessInfo columnAccessInfo;
   private boolean needViewColumnAuthorization;
   private Set<FileSinkDesc> acidFileSinks = Collections.emptySet();
@@ -176,6 +178,7 @@ public class ParseContext {
       Map<String, ReadEntity> viewAliasToInput,
       List<ReduceSinkOperator> reduceSinkOperatorsAddedByEnforceBucketingSorting,
       AnalyzeRewriteContext analyzeRewrite, CreateTableDesc createTableDesc,
+      CreateViewDesc createViewDesc,
       QueryProperties queryProperties, Map<SelectOperator, Table> viewProjectToTableSchema,
       Set<FileSinkDesc> acidFileSinks) {
     this.conf = conf;
@@ -203,6 +206,7 @@ public class ParseContext {
     this.reduceSinkOperatorsAddedByEnforceBucketingSorting =
         reduceSinkOperatorsAddedByEnforceBucketingSorting;
     this.analyzeRewrite = analyzeRewrite;
+    this.createViewDesc = createViewDesc;
     this.createTableDesc = createTableDesc;
     this.queryProperties = queryProperties;
     this.viewProjectToViewSchema = viewProjectToTableSchema;
@@ -218,6 +222,10 @@ public class ParseContext {
       this.acidFileSinks.addAll(acidFileSinks);
     }
   }
+  public CreateViewDesc getCreateViewDesc() {
+    return createViewDesc;
+  }
+
   public Set<FileSinkDesc> getAcidSinks() {
     return acidFileSinks;
   }

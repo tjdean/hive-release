@@ -64,6 +64,7 @@ public class QueryProperties {
 
   private boolean multiDestQuery;
   private boolean filterWithSubQuery;
+  private boolean isMaterializedView;
 
 
   public boolean isQuery() {
@@ -258,6 +259,19 @@ public class QueryProperties {
 
   public boolean hasFilterWithSubQuery() {
     return this.filterWithSubQuery;
+  }
+
+  /**
+   * True indicates this statement create or replaces a materialized view, not that it is a query
+   * against a materialized view.
+   * @return
+   */
+  public boolean isMaterializedView() {
+    return isMaterializedView;
+  }
+
+  public void setMaterializedView(boolean isMaterializedView) {
+    this.isMaterializedView = isMaterializedView;
   }
 
   public void clear() {
