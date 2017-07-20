@@ -55,10 +55,12 @@ POSTHOOK: query: show role grant user hive_admin_user
 POSTHOOK: type: SHOW_ROLE_GRANT
 admin	true	-1	admin
 public	false	-1	
-PREHOOK: query: show tables test_replload_adminpriv_src
+PREHOOK: query: -- repl dump
+show tables test_replload_adminpriv_src
 PREHOOK: type: SHOWTABLES
 PREHOOK: Input: database:default
-POSTHOOK: query: show tables test_replload_adminpriv_src
+POSTHOOK: query: -- repl dump
+show tables test_replload_adminpriv_src
 POSTHOOK: type: SHOWTABLES
 POSTHOOK: Input: database:default
 PREHOOK: query: repl dump test_replload_adminpriv_src
@@ -66,9 +68,12 @@ PREHOOK: type: REPLDUMP
 POSTHOOK: query: repl dump test_replload_adminpriv_src
 POSTHOOK: type: REPLDUMP
 #### A masked pattern was here ####
+PREHOOK: query: -- repl load as admin should succeed
+#### A masked pattern was here ####
 PREHOOK: type: REPLLOAD
 #### A masked pattern was here ####
 PREHOOK: Output: test_replload_adminpriv_tgt1@dummy_tbl
+POSTHOOK: query: -- repl load as admin should succeed
 #### A masked pattern was here ####
 POSTHOOK: type: REPLLOAD
 #### A masked pattern was here ####

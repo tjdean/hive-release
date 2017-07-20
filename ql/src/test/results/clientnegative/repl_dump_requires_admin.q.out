@@ -47,10 +47,12 @@ POSTHOOK: query: show role grant user hive_admin_user
 POSTHOOK: type: SHOW_ROLE_GRANT
 admin	true	-1	admin
 public	false	-1	
-PREHOOK: query: show tables test_repldump_adminpriv
+PREHOOK: query: -- repl dump as admin should succeed
+show tables test_repldump_adminpriv
 PREHOOK: type: SHOWTABLES
 PREHOOK: Input: database:default
-POSTHOOK: query: show tables test_repldump_adminpriv
+POSTHOOK: query: -- repl dump as admin should succeed
+show tables test_repldump_adminpriv
 POSTHOOK: type: SHOWTABLES
 POSTHOOK: Input: database:default
 PREHOOK: query: repl dump test_repldump_adminpriv
