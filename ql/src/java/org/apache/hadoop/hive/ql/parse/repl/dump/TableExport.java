@@ -54,13 +54,14 @@ public class TableExport {
   private final Log logger;
   private final Paths paths;
   private final AuthEntities authEntities = new AuthEntities();
+  private final boolean forExportCommand;
 
   public TableExport(Paths paths, TableSpec tableSpec, ReplicationSpec replicationSpec, Hive db,
-      HiveConf conf, Log logger)
+      HiveConf conf, Log logger , boolean forExportCommand)
       throws SemanticException {
     this.tableSpec = (tableSpec != null
         && tableSpec.tableHandle.isTemporary()
-        && !replicationSpec.isInReplicationScope())
+        && replicationSpec.isInReplicationScope())
         ? null
         : tableSpec;
     this.replicationSpec = replicationSpec;
@@ -71,6 +72,7 @@ public class TableExport {
     this.conf = conf;
     this.logger = logger;
     this.paths = paths;
+    this.forExportCommand = forExportCommand;
   }
 
   public AuthEntities run() throws SemanticException {
@@ -146,13 +148,13 @@ public class TableExport {
           Path fromPath = partition.getDataLocation();
           // this the data copy
           Path rootDataDumpDir = paths.partitionExportDir(partition.getName());
-          new FileOperations(fromPath, rootDataDumpDir, conf).export(replicationSpec);
+          new FileOperations(fromPath, rootDataDumpDir, conf, forExportCommand).export(replicationSpec);
           authEntities.inputs.add(new ReadEntity(partition));
         }
       } else {
         Path fromPath = tableSpec.tableHandle.getDataLocation();
         //this is the data copy
-        new FileOperations(fromPath, paths.dataExportDir(), conf).export(replicationSpec);
+        new FileOperations(fromPath, paths.dataExportDir(), conf,forExportCommand).export(replicationSpec);
         authEntities.inputs.add(new ReadEntity(tableSpec.tableHandle));
       }
       authEntities.outputs.add(toWriteEntity(paths.exportRootDir, conf));
