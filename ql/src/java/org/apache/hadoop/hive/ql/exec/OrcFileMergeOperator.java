@@ -30,6 +30,7 @@ import org.apache.hadoop.hive.ql.io.orc.OrcFileKeyWrapper;
 import org.apache.hadoop.hive.ql.io.orc.OrcFileValueWrapper;
 import org.apache.hadoop.hive.ql.io.orc.Reader;
 import org.apache.hadoop.hive.ql.io.orc.Writer;
+import org.apache.hadoop.hive.ql.io.orc.TypeDescription;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.plan.OrcFileMergeDesc;
 import org.apache.hadoop.hive.ql.plan.api.OperatorType;
@@ -45,14 +46,15 @@ public class OrcFileMergeOperator extends
   // These parameters must match for all orc files involved in merging. If it
   // does not merge, the file will be put into incompatible file set and will
   // not be merged.
-  CompressionKind compression = null;
-  int compressBuffSize = 0;
-  OrcFile.Version version;
-  int columnCount = 0;
-  int rowIndexStride = 0;
+  private CompressionKind compression = null;
+  private int compressBuffSize = 0;
+  private OrcFile.Version fileVersion;
+  private OrcFile.WriterVersion writerVersion;
+  private TypeDescription fileSchema;
+  private int rowIndexStride = 0;
 
-  Writer outWriter;
-  Path prevPath;
+  private Writer outWriter;
+  private Path prevPath;
   private Reader reader;
   private FSDataInputStream fdis;
 
@@ -100,13 +102,14 @@ public class OrcFileMergeOperator extends
       if (outWriter == null) {
         compression = k.getCompression();
         compressBuffSize = k.getCompressBufferSize();
-        version = k.getVersion();
-        columnCount = k.getTypes().get(0).getSubtypesCount();
+        fileVersion = k.getFileVersion();
+        writerVersion = k.getWriterVersion();
+        fileSchema = k.getFileSchema();
         rowIndexStride = k.getRowIndexStride();
 
         OrcFile.WriterOptions options = OrcFile.writerOptions(jc)
             .compress(compression)
-            .version(version)
+            .version(fileVersion)
             .rowIndexStride(rowIndexStride)
             .inspector(reader.getObjectInspector());
         // compression buffer size should only be set if compression is enabled
@@ -175,8 +178,8 @@ public class OrcFileMergeOperator extends
 
   private boolean checkCompatibility(OrcFileKeyWrapper k) {
     // check compatibility with subsequent files
-    if ((k.getTypes().get(0).getSubtypesCount() != columnCount)) {
-      LOG.warn("Incompatible ORC file merge! Column counts mismatch for " + k.getInputPath());
+    if (!fileSchema.equals(k.getFileSchema())) {
+      LOG.warn("Incompatible ORC file merge! Schema mismatch for " + k.getInputPath());
       return false;
     }
 
@@ -191,8 +194,13 @@ public class OrcFileMergeOperator extends
 
     }
 
-    if (!k.getVersion().equals(version)) {
-      LOG.warn("Incompatible ORC file merge! Version mismatch for " + k.getInputPath());
+    if (!k.getFileVersion().equals(fileVersion)) {
+      LOG.warn("Incompatible ORC file merge! File version mismatch for " + k.getInputPath());
+      return false;
+    }
+
+    if (!k.getWriterVersion().equals(writerVersion)) {
+      LOG.warn("Incompatible ORC file merge! Writer version mismatch for " + k.getInputPath());
       return false;
     }
 
