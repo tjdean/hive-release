@@ -23,6 +23,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.MapOperator;
 import org.apache.hadoop.hive.ql.exec.mr.ExecMapperContext;
+import org.apache.hadoop.hive.ql.exec.tez.tools.KeyValueInputMerger;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapred.JobConf;
@@ -45,6 +46,10 @@ public class MapRecordSource implements RecordSource {
   void init(JobConf jconf, MapOperator mapOp, KeyValueReader reader) throws IOException {
     execContext = mapOp.getExecContext();
     this.mapOp = mapOp;
+    if (reader instanceof KeyValueInputMerger) {
+      KeyValueInputMerger kvMerger = (KeyValueInputMerger) reader;
+      kvMerger.setIOCxt(execContext.getIoCxt());
+    }
     this.reader = reader;
   }
 
