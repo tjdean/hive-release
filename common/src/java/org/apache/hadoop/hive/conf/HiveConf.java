@@ -2223,6 +2223,11 @@ public class HiveConf extends Configuration {
         METASTOREPWD.varname + "," + HIVE_SERVER2_SSL_KEYSTORE_PASSWORD.varname,
         "Comma separated list of configuration options which should not be read by normal user like passwords"),
 
+    HIVE_EXEC_MOVE_FILES_FROM_SOURCE_DIR("hive.exec.move.files.from.source.dir", false,
+        "When moving/renaming a directory from source to destination, individually move each \n" +
+        "file in the source directory, rather than renaming the source directory. This may \n" +
+        "help protect against files written to temp directories by runaway task attempts."),
+
     HIVE_MOVE_FILES_THREAD_COUNT("hive.mv.files.thread", 15, "Number of threads"
          + " used to move files in move task. Set it to 0 to disable multi-threaded file moves. This parameter is also used by"
          + " MSCK to check tables."),
