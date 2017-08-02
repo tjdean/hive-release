@@ -1559,6 +1559,51 @@ public final class Utilities {
     }
   }
 
+   /**
+   * Moves files from src to dst if it is within the specified set of paths
+   * @param fs
+   * @param src
+   * @param dst
+   * @param filesToMove
+   * @throws IOException
+   * @throws HiveException
+   */
+  private static void moveSpecifiedFiles(FileSystem fs, Path src, Path dst, Set<Path> filesToMove)
+      throws IOException, HiveException {
+    if (!fs.exists(dst)) {
+      fs.mkdirs(dst);
+    }
+
+    FileStatus[] files = fs.listStatus(src);
+    for (FileStatus file : files) {
+      if (filesToMove.contains(file.getPath())) {
+        Utilities.moveFile(fs, file, dst);
+      }
+    }
+  }
+
+  private static void moveFile(FileSystem fs, FileStatus file, Path dst) throws IOException,
+      HiveException {
+    Path srcFilePath = file.getPath();
+    String fileName = srcFilePath.getName();
+    Path dstFilePath = new Path(dst, fileName);
+    if (file.isDir()) {
+      renameOrMoveFiles(fs, srcFilePath, dstFilePath);
+    } else {
+      if (fs.exists(dstFilePath)) {
+        int suffix = 0;
+        do {
+          suffix++;
+          dstFilePath = new Path(dst, fileName + "_" + suffix);
+        } while (fs.exists(dstFilePath));
+      }
+
+      if (!fs.rename(srcFilePath, dstFilePath)) {
+        throw new HiveException("Unable to move: " + srcFilePath + " to: " + dst);
+      }
+    }
+  }
+
   /**
    * Rename src to dst, or in the case dst already exists, move files in src to dst. If there is an
    * existing file with the same name, the new file's name will be appended with "_1", "_2", etc.
@@ -1581,26 +1626,7 @@ public final class Utilities {
       // move file by file
       FileStatus[] files = fs.listStatus(src);
       for (FileStatus file : files) {
-
-        Path srcFilePath = file.getPath();
-        String fileName = srcFilePath.getName();
-        Path dstFilePath = new Path(dst, fileName);
-        if (file.isDir()) {
-          renameOrMoveFiles(fs, srcFilePath, dstFilePath);
-        }
-        else {
-          if (fs.exists(dstFilePath)) {
-            int suffix = 0;
-            do {
-              suffix++;
-              dstFilePath = new Path(dst, fileName + "_" + suffix);
-            } while (fs.exists(dstFilePath));
-          }
-
-          if (!fs.rename(srcFilePath, dstFilePath)) {
-            throw new HiveException("Unable to move: " + src + " to: " + dst);
-          }
-        }
+        Utilities.moveFile(fs, file, dst);
       }
     }
   }
@@ -1804,17 +1830,27 @@ public final class Utilities {
     Path taskTmpPath = Utilities.toTaskTempPath(specPath);
     if (success) {
       if (fs.exists(tmpPath)) {
+        Set<Path> filesKept = new HashSet<Path>();
         // remove any tmp file or double-committed output files
         ArrayList<String> emptyBuckets =
-            Utilities.removeTempOrDuplicateFiles(fs, tmpPath, dpCtx);
+            Utilities.removeTempOrDuplicateFiles(fs, tmpPath, dpCtx, filesKept);
         // create empty buckets if necessary
         if (emptyBuckets.size() > 0) {
           createEmptyBuckets(hconf, emptyBuckets, conf, reporter);
+          for (String emptyBucket : emptyBuckets) {
+            filesKept.add(new Path(emptyBucket));
+          }
         }
 
         // move to the file destination
         log.info("Moving tmp dir: " + tmpPath + " to: " + specPath);
-        Utilities.renameOrMoveFiles(fs, tmpPath, specPath);
+        if (HiveConf.getBoolVar(hconf, HiveConf.ConfVars.HIVE_EXEC_MOVE_FILES_FROM_SOURCE_DIR)) {
+          // HIVE-17113 - avoid copying files that may have been written to the temp dir by runaway tasks,
+          // by moving just the files we've tracked from removeTempOrDuplicateFiles().
+          Utilities.moveSpecifiedFiles(fs, tmpPath, specPath, filesKept);
+        } else {
+          Utilities.renameOrMoveFiles(fs, tmpPath, specPath);
+        }
       }
     } else {
       fs.delete(tmpPath, true);
@@ -1871,6 +1907,12 @@ public final class Utilities {
     }
   }
 
+  private static void addFilesToPathSet(Collection<FileStatus> files, Set<Path> fileSet) {
+    for (FileStatus file : files) {
+      fileSet.add(file.getPath());
+    }
+  }
+
   /**
    * Remove all temporary files and duplicate (double-committed) files from a given directory.
    */
@@ -1885,6 +1927,11 @@ public final class Utilities {
    */
   public static ArrayList<String> removeTempOrDuplicateFiles(FileSystem fs, Path path,
       DynamicPartitionCtx dpCtx) throws IOException {
+    return removeTempOrDuplicateFiles(fs, path, dpCtx, null);
+  }
+
+  public static ArrayList<String> removeTempOrDuplicateFiles(FileSystem fs, Path path,
+      DynamicPartitionCtx dpCtx, Set<Path> filesKept) throws IOException {
     if (path == null) {
       return null;
     }
@@ -1909,6 +1956,9 @@ public final class Utilities {
         }
 
         taskIDToFile = removeTempOrDuplicateFiles(items, fs);
+        if (filesKept != null && taskIDToFile != null) {
+          addFilesToPathSet(taskIDToFile.values(), filesKept);
+        }
         // if the table is bucketed and enforce bucketing, we should check and generate all buckets
         if (dpCtx.getNumBuckets() > 0 && taskIDToFile != null) {
           // refresh the file list
@@ -1928,7 +1978,10 @@ public final class Utilities {
       }
     } else {
       FileStatus[] items = fs.listStatus(path);
-      removeTempOrDuplicateFiles(items, fs);
+      HashMap<String, FileStatus> taskIDToFile = removeTempOrDuplicateFiles(items, fs);
+      if (filesKept != null && taskIDToFile != null) {
+        addFilesToPathSet(taskIDToFile.values(), filesKept);
+      }
     }
     return result;
   }

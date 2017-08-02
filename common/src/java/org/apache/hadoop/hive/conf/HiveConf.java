@@ -1775,6 +1775,11 @@ public class HiveConf extends Configuration {
         METASTOREPWD.varname + "," + HIVE_SERVER2_SSL_KEYSTORE_PASSWORD.varname,
         "Comma separated list of configuration options which should not be read by normal user like passwords"),
 
+    HIVE_EXEC_MOVE_FILES_FROM_SOURCE_DIR("hive.exec.move.files.from.source.dir", false,
+        "When moving/renaming a directory from source to destination, individually move each \n" +
+        "file in the source directory, rather than renaming the source directory. This may \n" +
+        "help protect against files written to temp directories by runaway task attempts."),
+
     // If this is set all move tasks at the end of a multi-insert query will only begin once all
     // outputs are ready
     HIVE_MULTI_INSERT_MOVE_TASKS_SHARE_DEPENDENCIES(
