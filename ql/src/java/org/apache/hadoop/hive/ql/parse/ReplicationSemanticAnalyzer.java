@@ -174,6 +174,17 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
               ctx.getResFile().toUri().toString()
           ), conf);
       rootTasks.add(replDumpWorkTask);
+      if (dbNameOrPattern != null) {
+        for (String dbName : Utils.matchesDb(db, dbNameOrPattern)) {
+          if (tblNameOrPattern != null) {
+            for (String tblName : Utils.matchesTbl(db, dbName, tblNameOrPattern)) {
+              inputs.add(new ReadEntity(db.getTable(dbName, tblName)));
+            }
+          } else {
+            inputs.add(new ReadEntity(db.getDatabase(dbName)));
+          }
+        }
+      }
       setFetchTask(createFetchTask(dumpSchema));
     } catch (Exception e) {
       // TODO : simple wrap & rethrow for now, clean up with error codes

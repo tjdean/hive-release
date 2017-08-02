@@ -17,8 +17,6 @@
  */
 package org.apache.hadoop.hive.ql.exec.repl;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Collections2;
 import com.google.common.primitives.Ints;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,7 +41,6 @@ import org.apache.hadoop.hive.ql.metadata.InvalidTableException;
 import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer.TableSpec;
 import org.apache.hadoop.hive.ql.parse.EximUtil;
 import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
-import org.apache.hadoop.hive.ql.parse.SemanticAnalyzer;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.parse.repl.DumpType;
 import org.apache.hadoop.hive.ql.parse.repl.dump.HiveWrapper;
@@ -65,9 +62,6 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
   private static final String dumpSchema = "dump_dir,last_repl_id#string,string";
   private static final String FUNCTIONS_ROOT_DIR_NAME = "_functions";
   private static final String FUNCTION_METADATA_DIR_NAME = "_metadata";
-
-  private final static String TMP_TABLE_PREFIX =
-      SemanticAnalyzer.VALUES_TMP_TABLE_NAME_PREFIX.toLowerCase();
 
   private Log REPL_STATE_LOG = LogFactory.getLog("ReplState");
 
@@ -176,7 +170,7 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
   private Long bootStrapDump(Path dumpRoot, DumpMetaData dmd, Path cmRoot) throws Exception {
     // bootstrap case
     Long bootDumpBeginReplId = Hive.get(conf).getMSC().getCurrentNotificationEventId().getEventId();
-    for (String dbName : matchesDb()) {
+    for (String dbName : Utils.matchesDb(Hive.get(conf), work.dbNameOrPattern)) {
       REPL_STATE_LOG
           .info("Repl Dump: Started analyzing Repl Dump for DB: " + dbName
               + ", Dump Type: BOOTSTRAP");
@@ -184,7 +178,7 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
 
       Path dbRoot = dumpDbMetadata(dbName, dumpRoot);
       dumpFunctionMetadata(dbName, dumpRoot);
-      for (String tblName : matchesTbl(dbName, work.tableNameOrPattern)) {
+      for (String tblName : Utils.matchesTbl(Hive.get(), dbName, work.tableNameOrPattern)) {
         LOG.debug(
             "analyzeReplDump dumping table: " + tblName + " to db root " + dbRoot.toUri());
         dumpTable(dbName, tblName, dbRoot);
@@ -221,30 +215,6 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
 
     // Set the correct last repl id to return to the user
     return bootDumpEndReplId;
-  }
-
-  private Iterable<? extends String> matchesDb() throws HiveException {
-    if (work.dbNameOrPattern == null) {
-      return Hive.get(conf).getAllDatabases();
-    } else {
-      return Hive.get(conf).getDatabasesByPattern(work.dbNameOrPattern);
-    }
-  }
-
-  private Iterable<? extends String> matchesTbl(String dbName, String tblPattern)
-      throws HiveException {
-    Hive db = Hive.get();
-    if (tblPattern == null) {
-      return Collections2.filter(db.getAllTables(dbName), new Predicate<String>() {
-        @Override
-        public boolean apply(String tableName) {
-          assert tableName != null;
-          return !tableName.toLowerCase().startsWith(TMP_TABLE_PREFIX);
-        }
-          });
-    } else {
-      return db.getTablesByPattern(dbName, tblPattern);
-    }
   }
 
   private Path dumpDbMetadata(String dbName, Path dumpRoot) throws Exception {
