@@ -31,6 +31,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.io.SequenceInputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -123,6 +124,7 @@ public class BeeLine implements Closeable {
   private OutputFile recordOutputFile = null;
   private PrintStream outputStream = new PrintStream(System.out, true);
   private PrintStream errorStream = new PrintStream(System.err, true);
+  private InputStream inputStream = System.in;
   private ConsoleReader consoleReader;
   private List<String> batch = null;
   private final Reflector reflector;
@@ -849,9 +851,14 @@ public class BeeLine implements Closeable {
   public ConsoleReader getConsoleReader(InputStream inputStream) throws IOException {
     if (inputStream != null) {
       // ### NOTE: fix for sf.net bug 879425.
-      consoleReader = new ConsoleReader(inputStream, getOutputStream());
+      // Working around an issue in jline-2.1.2, see https://github.com/jline/jline/issues/10
+      // by appending a newline to the end of inputstream
+      InputStream inputStreamAppendedNewline = new SequenceInputStream(inputStream,
+          new ByteArrayInputStream((new String("\n")).getBytes()));
+      consoleReader = new ConsoleReader(inputStreamAppendedNewline, getErrorStream());
+      consoleReader.setCopyPasteDetection(true); // jline will detect if <tab> is regular character
     } else {
-      consoleReader = new ConsoleReader();
+      consoleReader = new ConsoleReader(getInputStream(), getErrorStream());
     }
 
     //disable the expandEvents for the purpose of backward compatibility
@@ -1962,6 +1969,10 @@ public class BeeLine implements Closeable {
 
   PrintStream getErrorStream() {
     return errorStream;
+  }
+
+  InputStream getInputStream() {
+    return inputStream;
   }
 
   ConsoleReader getConsoleReader() {
