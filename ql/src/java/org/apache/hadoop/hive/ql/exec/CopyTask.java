@@ -18,7 +18,6 @@
 
 package org.apache.hadoop.hive.ql.exec;
 
-import java.io.IOException;
 import java.io.Serializable;
 
 import org.apache.commons.logging.Log;
@@ -32,7 +31,6 @@ import org.apache.hadoop.hive.ql.DriverContext;
 import org.apache.hadoop.hive.ql.parse.LoadSemanticAnalyzer;
 import org.apache.hadoop.hive.ql.plan.CopyWork;
 import org.apache.hadoop.hive.ql.plan.api.StageType;
-import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.util.StringUtils;
 
 /**
@@ -78,20 +76,6 @@ public class CopyTask extends Task<CopyWork> implements Serializable {
         return 2;
       }
 
-      if (doCopy(dstFs, toPath, srcFs, srcs , console, conf))
-        return 1;
-      return 0;
-
-    } catch (Exception e) {
-      console.printError("Failed with exception " + e.getMessage(), "\n"
-          + StringUtils.stringifyException(e));
-      return (1);
-    }
-  }
-
-  public static boolean doCopy(FileSystem dstFs, Path toPath, FileSystem srcFs, FileStatus[] srcs,
-      SessionState.LogHelper console, HiveConf conf)
-      throws IOException {
     for (FileStatus oneSrc : srcs) {
       console.printInfo("Copying file: " + oneSrc.getPath().toString());
       LOG.debug("Copying file: " + oneSrc.getPath().toString());
@@ -101,10 +85,16 @@ public class CopyTask extends Task<CopyWork> implements Serializable {
           conf)) {
         console.printError("Failed to copy: '" + oneSrc.getPath().toString()
             + "to: '" + toPath.toString() + "'");
-        return true;
+          return 1;
       }
     }
-    return false;
+      return 0;
+
+    } catch (Exception e) {
+      console.printError("Failed with exception " + e.getMessage(), "\n"
+          + StringUtils.stringifyException(e));
+      return (1);
+    }
   }
 
   @Override
