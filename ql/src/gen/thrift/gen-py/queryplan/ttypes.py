@@ -157,7 +157,8 @@ class StageType:
   STATS = 9
   DEPENDENCY_COLLECTION = 10
   COLUMNSTATS = 11
-  REPLDUMP = 12
+  REPL_DUMP = 12
+  REPL_BOOTSTRAP_LOAD = 13
 
   _VALUES_TO_NAMES = {
     0: "CONDITIONAL",
@@ -172,7 +173,8 @@ class StageType:
     9: "STATS",
     10: "DEPENDENCY_COLLECTION",
     11: "COLUMNSTATS",
-    12: "REPLDUMP",
+    12: "REPL_DUMP",
+    13: "REPL_BOOTSTRAP_LOAD",
   }
 
   _NAMES_TO_VALUES = {
@@ -188,7 +190,8 @@ class StageType:
     "STATS": 9,
     "DEPENDENCY_COLLECTION": 10,
     "COLUMNSTATS": 11,
-    "REPLDUMP": 12,
+    "REPL_DUMP": 12,
+    "REPL_BOOTSTRAP_LOAD": 13,
   }
 
 

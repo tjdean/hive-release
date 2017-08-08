@@ -25,6 +25,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.parse.repl.PathBuilder;
 import org.apache.hadoop.hive.ql.session.DependencyResolver;
 import org.junit.AfterClass;
@@ -92,7 +93,7 @@ public class TestReplicationScenariosAcrossInstances {
     WarehouseInstance.Tuple bootStrapDump = primary.dump(primaryDbName, null);
     replica.load(replicatedDbName, bootStrapDump.dumpLocation)
         .run("REPL STATUS " + replicatedDbName)
-        .verify(bootStrapDump.lastReplicationId);
+        .verifyResult(bootStrapDump.lastReplicationId);
 
     primary.run("CREATE FUNCTION " + primaryDbName
         + ".testFunction as 'hivemall.tools.string.StopwordUDF' "
@@ -102,16 +103,16 @@ public class TestReplicationScenariosAcrossInstances {
         primary.dump(primaryDbName, bootStrapDump.lastReplicationId);
     replica.load(replicatedDbName, incrementalDump.dumpLocation)
         .run("REPL STATUS " + replicatedDbName)
-        .verify(incrementalDump.lastReplicationId)
+        .verifyResult(incrementalDump.lastReplicationId)
         .run("SHOW FUNCTIONS LIKE '" + replicatedDbName + "*'")
-        .verify(replicatedDbName + ".testFunction");
+        .verifyResult(replicatedDbName + ".testFunction");
 
     // Test the idempotent behavior of CREATE FUNCTION
     replica.load(replicatedDbName, incrementalDump.dumpLocation)
             .run("REPL STATUS " + replicatedDbName)
-            .verify(incrementalDump.lastReplicationId)
+        .verifyResult(incrementalDump.lastReplicationId)
             .run("SHOW FUNCTIONS LIKE '" + replicatedDbName + "*'")
-            .verify(replicatedDbName + ".testFunction");
+        .verifyResult(replicatedDbName + ".testFunction");
   }
 
   @Ignore("This testcase is commented as it uses UDF library on java 1.8 which is not supported. Another JIRA BUG-80469 will track this.")
@@ -123,7 +124,7 @@ public class TestReplicationScenariosAcrossInstances {
     WarehouseInstance.Tuple bootStrapDump = primary.dump(primaryDbName, null);
     replica.load(replicatedDbName, bootStrapDump.dumpLocation)
         .run("REPL STATUS " + replicatedDbName)
-        .verify(bootStrapDump.lastReplicationId);
+        .verifyResult(bootStrapDump.lastReplicationId);
 
     primary.run("Drop FUNCTION " + primaryDbName + ".testFunction ");
 
@@ -131,16 +132,16 @@ public class TestReplicationScenariosAcrossInstances {
         primary.dump(primaryDbName, bootStrapDump.lastReplicationId);
     replica.load(replicatedDbName, incrementalDump.dumpLocation)
         .run("REPL STATUS " + replicatedDbName)
-        .verify(incrementalDump.lastReplicationId)
+        .verifyResult(incrementalDump.lastReplicationId)
         .run("SHOW FUNCTIONS LIKE '*testfunction*'")
-        .verify(null);
+        .verifyResult(null);
 
     // Test the idempotent behavior of DROP FUNCTION
     replica.load(replicatedDbName, incrementalDump.dumpLocation)
             .run("REPL STATUS " + replicatedDbName)
-            .verify(incrementalDump.lastReplicationId)
+        .verifyResult(incrementalDump.lastReplicationId)
             .run("SHOW FUNCTIONS LIKE '*testfunction*'")
-            .verify(null);
+        .verifyResult(null);
   }
 
   @Test
@@ -152,7 +153,7 @@ public class TestReplicationScenariosAcrossInstances {
 
     replica.load(replicatedDbName, bootStrapDump.dumpLocation)
         .run("SHOW FUNCTIONS LIKE '" + replicatedDbName + "*'")
-        .verify(replicatedDbName + ".testFunction");
+        .verifyResult(replicatedDbName + ".testFunction");
   }
 
   @Test
@@ -168,7 +169,7 @@ public class TestReplicationScenariosAcrossInstances {
 
     replica.load(replicatedDbName, tuple.dumpLocation)
         .run("SHOW FUNCTIONS LIKE '" + replicatedDbName + "*'")
-        .verify(replicatedDbName + ".anotherFunction");
+        .verifyResult(replicatedDbName + ".anotherFunction");
 
     FileStatus[] fileStatuses = replica.miniDFSCluster.getFileSystem().globStatus(
         new Path(
@@ -239,5 +240,33 @@ public class TestReplicationScenariosAcrossInstances {
       }
     });
     return new Dependencies(collect);
+  }
+
+  /*
+  From the hive logs(hive.log) we can also check for the info statement
+  fgrep "Total Tasks" [location of hive.log]
+  each line indicates one run of loadTask.
+   */
+  @Test
+  public void testMultipleStagesOfReplicationLoadTask() throws Throwable {
+    WarehouseInstance.Tuple tuple = primary
+        .run("use " + primaryDbName)
+        .run("create table t1 (id int)")
+        .run("create table t2 (place string) partitioned by (country string)")
+        .run("insert into table t2 partition(country='india') values ('bangalore')")
+        .run("insert into table t2 partition(country='india') values ('mumbai')")
+        .run("insert into table t2 partition(country='india') values ('delhi')")
+        .run("create table t3 (rank int)")
+        .dump(primaryDbName, null);
+
+    // each table creation itself takes more than one task, give we are giving a max of 1, we should hit multiple runs.
+    replica.hiveConf.setIntVar(HiveConf.ConfVars.REPL_APPROX_MAX_LOAD_TASKS, 1);
+    replica.load(replicatedDbName, tuple.dumpLocation)
+        .run("use " + replicatedDbName)
+        .run("show tables")
+        .verifyResults(new String[] { "t1", "t2", "t3" })
+        .run("repl status " + replicatedDbName)
+        .verifyResult(tuple.lastReplicationId);
+
   }
 }
