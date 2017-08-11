@@ -1,22 +1,22 @@
 /*
-  Licensed to the Apache Software Foundation (ASF) under one
-  or more contributor license agreements.  See the NOTICE file
-  distributed with this work for additional information
-  regarding copyright ownership.  The ASF licenses this file
-  to you under the Apache License, Version 2.0 (the
-  "License"); you may not use this file except in compliance
-  with the License.  You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
-package org.apache.hadoop.hive.ql.parse.repl.dump.io;
+package org.apache.hadoop.hive.ql.parse.repl;
 
 import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileSystem;
@@ -36,7 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class CopyUtils {
+public class CopyUtils {
 
   private static final Logger LOG = LoggerFactory.getLogger(CopyUtils.class);
 
@@ -44,26 +44,25 @@ class CopyUtils {
   private final long maxCopyFileSize;
   private final long maxNumberOfFiles;
   private final boolean hiveInTest, inheritPermissions;
-  ;
+
   private final String copyAsUser;
 
-  CopyUtils(HiveConf hiveConf) {
+  public CopyUtils(String distCpDoAsUser, HiveConf hiveConf) {
     this.hiveConf = hiveConf;
     maxNumberOfFiles = hiveConf.getLongVar(HiveConf.ConfVars.HIVE_EXEC_COPYFILE_MAXNUMFILES);
     maxCopyFileSize = hiveConf.getLongVar(HiveConf.ConfVars.HIVE_EXEC_COPYFILE_MAXSIZE);
     hiveInTest = hiveConf.getBoolVar(HiveConf.ConfVars.HIVE_IN_TEST);
-    copyAsUser = hiveConf.getVar(HiveConf.ConfVars.HIVE_DISTCP_DOAS_USER);
+    this.copyAsUser = distCpDoAsUser;
     inheritPermissions = hiveConf.getBoolVar(HiveConf.ConfVars.HIVE_WAREHOUSE_SUBDIR_INHERIT_PERMS);
   }
 
-  void doCopy(Path destination, List<Path> srcPaths) throws IOException {
+  public void doCopy(Path destination, List<Path> srcPaths) throws IOException {
     Map<FileSystem, List<Path>> map = fsToFileMap(srcPaths);
     FileSystem destinationFs = destination.getFileSystem(hiveConf);
 
     HadoopShims shims = ShimLoader.getHadoopShims();
     HdfsFileStatus sourceStatus = shims.getFullFileStatus(hiveConf, destinationFs,
         destination.getParent());
-
 
     for (Map.Entry<FileSystem, List<Path>> entry : map.entrySet()) {
       if (regularCopy(destinationFs, entry)) {
@@ -76,7 +75,6 @@ class CopyUtils {
             LOG.warn("Error setting permissions or group of " + destination, e);
           }
         }
-
       } else {
         FileUtils.distCp(
             entry.getKey(),   // source file system
@@ -94,10 +92,9 @@ class CopyUtils {
   /*
       Check for conditions that will lead to local copy, checks are:
       1. we are testing hive.
-      2. both source and destination are same FileSystem
-      3. either source or destination is a "local" FileSystem("file")
-      4. aggregate fileSize of all source Paths(can be directory /  file) is less than configured size.
-      5. number of files of all source Paths(can be directory /  file) is less than configured size.
+      2. either source or destination is a "local" FileSystem("file")
+      3. aggregate fileSize of all source Paths(can be directory /  file) is less than configured size.
+      4. number of files of all source Paths(can be directory /  file) is less than configured size.
   */
   private boolean regularCopy(FileSystem destinationFs, Map.Entry<FileSystem, List<Path>> entry)
       throws IOException {
@@ -105,9 +102,7 @@ class CopyUtils {
       return true;
     }
     FileSystem sourceFs = entry.getKey();
-    boolean isLocalFs = isLocal(sourceFs) || isLocal(destinationFs);
-    boolean sameFs = sourceFs.equals(destinationFs);
-    if (isLocalFs || sameFs) {
+    if (isLocal(sourceFs) || isLocal(destinationFs)) {
       return true;
     }
 
