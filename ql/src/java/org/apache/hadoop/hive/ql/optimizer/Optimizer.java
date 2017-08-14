@@ -75,7 +75,11 @@ public class Optimizer {
     Set<String> postExecHooks = Sets.newHashSet(
       Splitter.on(",").trimResults().omitEmptyStrings().split(
         Strings.nullToEmpty(HiveConf.getVar(hiveConf, HiveConf.ConfVars.POSTEXECHOOKS))));
-    transformations.add(new Generator(postExecHooks));
+    if (postExecHooks.contains("org.apache.hadoop.hive.ql.hooks.PostExecutePrinter")
+        || postExecHooks.contains("org.apache.hadoop.hive.ql.hooks.LineageLogger")
+        || postExecHooks.contains("org.apache.atlas.hive.hook.HiveHook")) {
+      transformations.add(new Generator(postExecHooks));
+    }
 
     // Try to transform OR predicates in Filter into simpler IN clauses first
     if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVEPOINTLOOKUPOPTIMIZER)) {
