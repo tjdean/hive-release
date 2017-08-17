@@ -165,7 +165,9 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
   }
 
   private ReplicationSpec getNewEventOnlyReplicationSpec(Long eventId) throws SemanticException {
-    return getNewReplicationSpec(eventId.toString(), eventId.toString());
+    ReplicationSpec rspec = getNewReplicationSpec(eventId.toString(), eventId.toString());
+    rspec.setIsIncrementalDump(true);
+    return rspec;
   }
 
   private Long bootStrapDump(Path dumpRoot, DumpMetaData dmd, Path cmRoot) throws Exception {
@@ -250,12 +252,13 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
   private ReplicationSpec getNewReplicationSpec() throws TException, HiveException {
     ReplicationSpec rspec = getNewReplicationSpec("replv2", "will-be-set");
     rspec.setCurrentReplicationState(String.valueOf(Hive.get(conf).getMSC()
-        .getCurrentNotificationEventId().getEventId()));
+            .getCurrentNotificationEventId().getEventId()));
     return rspec;
   }
 
   private ReplicationSpec getNewReplicationSpec(String evState, String objState) {
-    return new ReplicationSpec(true, false, evState, objState, false, true, true);
+    return new ReplicationSpec(true, false, false, evState, objState,
+                               false, true, true);
   }
 
   private String getNextDumpDir() {
