@@ -509,10 +509,10 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
                   .initialCapacity(DEFAULT_CACHE_INITIAL_CAPACITY)
                   .concurrencyLevel(numThreads)
                   .maximumWeight(cacheMemSize)
-                  .weigher(new Weigher<Path, ByteBuffer>() {
+                  .weigher(new Weigher<Path, OrcTail>() {
                     @Override
-                    public int weigh(Path key, ByteBuffer value) {
-                      return value.remaining() + 100;
+                    public int weigh(Path key, OrcTail value) {
+                      return value.getSerializedTail().remaining() + 100;
                     }
                   });
 
