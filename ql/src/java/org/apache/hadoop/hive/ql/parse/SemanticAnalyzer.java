@@ -10498,7 +10498,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
             || postExecHooks.contains("org.apache.hadoop.hive.ql.hooks.LineageLogger")
             || postExecHooks.contains("org.apache.atlas.hive.hook.HiveHook")) {
           ArrayList<Transform> transformations = new ArrayList<Transform>();
-          transformations.add(new Generator(postExecHooks));
+          transformations.add(new Generator());
           for (Transform t : transformations) {
             pCtx = t.transform(pCtx);
           }
