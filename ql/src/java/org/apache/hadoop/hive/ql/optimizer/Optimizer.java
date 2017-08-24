@@ -20,7 +20,6 @@ package org.apache.hadoop.hive.ql.optimizer;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,10 +40,6 @@ import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.ppd.PredicatePushDown;
 import org.apache.hadoop.hive.ql.ppd.PredicateTransitivePropagate;
 import org.apache.hadoop.hive.ql.ppd.SyntheticJoinPredicate;
-
-import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
-import com.google.common.collect.Sets;
 
 /**
  * Implementation of the optimizer.
@@ -72,10 +67,7 @@ public class Optimizer {
     transformations.add(new HiveOpConverterPostProc());
 
     // Add the transformation that computes the lineage information.
-    Set<String> postExecHooks = Sets.newHashSet(
-      Splitter.on(",").trimResults().omitEmptyStrings().split(
-        Strings.nullToEmpty(HiveConf.getVar(hiveConf, HiveConf.ConfVars.POSTEXECHOOKS))));
-    transformations.add(new Generator(postExecHooks));
+    transformations.add(new Generator());
 
     // Try to transform OR predicates in Filter into simpler IN clauses first
     if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVEPOINTLOOKUPOPTIMIZER)) {
