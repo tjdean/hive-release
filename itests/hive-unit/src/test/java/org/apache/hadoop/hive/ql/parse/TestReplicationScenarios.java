@@ -1910,6 +1910,21 @@ public class TestReplicationScenarios {
     //verifyRun("SELECT a from " + dbName + "_dupe.mat_view", ptn_data_1);
     verifyRun("SELECT * from " + dbName + "_dupe.virtual_view2", ptn_data_2);
     //verifyRun("SELECT * from " + dbName + "_dupe.mat_view2", unptn_data);
+
+    // Test "alter table"
+    run("ALTER VIEW " + dbName + ".virtual_view2 AS SELECT a FROM " + dbName + ".ptned where b=1");
+    verifyRun("SELECT * from " + dbName + ".virtual_view2", ptn_data_1);
+
+    // Perform REPL-DUMP/LOAD
+    advanceDumpDir();
+    run("REPL DUMP " + dbName + " FROM " + incrementalDumpId);
+    incrementalDumpLocn = getResult(0, 0);
+    incrementalDumpId = getResult(0,1,true);
+    LOG.info("Incremental-dump: Dumped to {} with id {}", incrementalDumpLocn, incrementalDumpId);
+    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
+    printOutput();
+    run("REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
+    verifyRun("SELECT * from " + dbName + "_dupe.virtual_view2", ptn_data_1);
   }
 
   @Test
