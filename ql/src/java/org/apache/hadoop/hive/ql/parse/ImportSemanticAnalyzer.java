@@ -141,7 +141,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
       }
 
       // parsing statement is now done, on to logic.
-      tableExists = prepareImport(
+      tableExists = prepareImport(true,
           isLocationSet, isExternalSet, isPartSpecSet, waitOnPrecursor,
           parsedLocation, parsedTableName, parsedDbName, parsedPartSpec, fromTree.getText(),
           new EximUtil.SemanticAnalyzerWrapperContext(conf, db, inputs, outputs, rootTasks, LOG, ctx),
@@ -177,7 +177,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     }
   }
 
-  public static boolean prepareImport(
+  public static boolean prepareImport(boolean isImportCmd,
       boolean isLocationSet, boolean isExternalSet, boolean isPartSpecSet, boolean waitOnPrecursor,
       String parsedLocation, String parsedTableName, String parsedDbName,
       LinkedHashMap<String, String> parsedPartSpec,
@@ -204,6 +204,8 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
       // nothing to do here, silently return.
       return false;
     }
+
+    replicationSpec.setIsImportCmd(isImportCmd);
 
     String dbname = SessionState.get().getCurrentDatabase();
     if ((parsedDbName !=null) && (!parsedDbName.isEmpty())){
