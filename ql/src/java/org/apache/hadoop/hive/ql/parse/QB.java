@@ -32,7 +32,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.plan.CreateTableDesc;
-import org.apache.hadoop.hive.ql.plan.CreateViewDesc;
 
 /**
  * Implementation of the query block.
@@ -63,9 +62,6 @@ public class QB {
   private List<Path> encryptedTargetTablePaths;
   private boolean insideView;
   private Set<String> aliasInsideView;
-
-  //If this is a materialized view, this stores the view descriptor
-  private CreateViewDesc viewDesc;
 
   // used by PTFs
   /*
@@ -397,14 +393,6 @@ public class QB {
 
   void setHavingClauseSubQueryPredicate(QBSubQuery sq) {
     havingClauseSubQueryPredicate = sq;
-  }
-
-  public CreateViewDesc getViewDesc() {
-    return viewDesc;
-  }
-
-  public void setViewDesc(CreateViewDesc viewDesc) {
-    this.viewDesc = viewDesc;
   }
 
   public QBSubQuery getHavingClauseSubQueryPredicate() {

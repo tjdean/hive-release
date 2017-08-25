@@ -457,7 +457,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         listMapJoinOpsNoReducer, prunedPartitions, tabNameToTabObject,
         opToSamplePruner, globalLimitCtx, nameToSplitSample, inputs, rootTasks,
         opToPartToSkewedPruner, viewAliasToInput, reduceSinkOperatorsAddedByEnforceBucketingSorting,
-        analyzeRewrite, tableDesc, createVwDesc, queryProperties, viewProjectToTableSchema, acidFileSinks);
+        analyzeRewrite, tableDesc, queryProperties, viewProjectToTableSchema, acidFileSinks);
   }
 
   @SuppressWarnings("nls")
@@ -10462,7 +10462,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         listMapJoinOpsNoReducer, prunedPartitions, tabNameToTabObject, opToSamplePruner,
         globalLimitCtx, nameToSplitSample, inputs, rootTasks, opToPartToSkewedPruner,
         viewAliasToInput, reduceSinkOperatorsAddedByEnforceBucketingSorting,
-        analyzeRewrite, tableDesc, createVwDesc, queryProperties, viewProjectToTableSchema, acidFileSinks);
+        analyzeRewrite, tableDesc, queryProperties, viewProjectToTableSchema, acidFileSinks);
 
     // 5. Take care of view creation
     if (createVwDesc != null) {
@@ -10488,7 +10488,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
             || postExecHooks.contains("org.apache.hadoop.hive.ql.hooks.LineageLogger")
             || postExecHooks.contains("org.apache.atlas.hive.hook.HiveHook")) {
           ArrayList<Transform> transformations = new ArrayList<Transform>();
-          transformations.add(new Generator(postExecHooks));
+          transformations.add(new Generator());
           for (Transform t : transformations) {
             pCtx = t.transform(pCtx);
           }
@@ -11471,8 +11471,6 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     createVwDesc = new CreateViewDesc(
       dbDotTable, cols, comment, tblProps, partColNames,
       ifNotExists, orReplace, isAlterViewAs);
-
-    qb.setViewDesc(createVwDesc);
 
     unparseTranslator.enable();
     rootTasks.add(TaskFactory.get(new DDLWork(getInputs(), getOutputs(),
@@ -12650,7 +12648,6 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
       queryProperties.setHasOuterOrderBy(!qb.getParseInfo().getIsSubQ() &&
               !qb.getParseInfo().getDestToOrderBy().isEmpty());
       queryProperties.setOuterQueryLimit(qb.getParseInfo().getOuterQueryLimit());
-      queryProperties.setMaterializedView(qb.getViewDesc() != null);
     }
   }
   private void warn(String msg) {

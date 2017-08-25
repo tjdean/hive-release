@@ -21,10 +21,7 @@ package org.apache.hadoop.hive.ql.optimizer.lineage;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.ql.exec.CommonJoinOperator;
 import org.apache.hadoop.hive.ql.exec.GroupByOperator;
 import org.apache.hadoop.hive.ql.exec.LateralViewJoinOperator;
@@ -56,33 +53,11 @@ import org.apache.hadoop.hive.ql.session.SessionState;
  */
 public class Generator implements Transform {
 
-  private static final Log LOG = LogFactory.getLog(Generator.class.getName());
-
-  private final Set<String> hooks;
-  private static final String ATLAS_HOOK_CLASSNAME = "org.apache.atlas.hive.hook.HiveHook";
-
-  public Generator(Set<String> hooks) {
-    this.hooks = hooks;
-  }
-
   /* (non-Javadoc)
    * @see org.apache.hadoop.hive.ql.optimizer.Transform#transform(org.apache.hadoop.hive.ql.parse.ParseContext)
    */
   @Override
   public ParseContext transform(ParseContext pctx) throws SemanticException {
-
-    if (hooks != null && hooks.contains(ATLAS_HOOK_CLASSNAME)) {
-      // Atlas would be interested in lineage information for insert,load,create etc.
-      if (!pctx.getQueryProperties().isCTAS()
-          && !pctx.getQueryProperties().isMaterializedView()
-          && pctx.getQueryProperties().isQuery()
-          && pctx.getCreateTable() == null
-          && pctx.getCreateViewDesc() == null
-          && (pctx.getLoadTableWork() == null || pctx.getLoadTableWork().isEmpty())) {
-        LOG.debug("Not evaluating lineage");
-        return pctx;
-      }
-    }
 
     // Create the lineage context
     LineageCtx lCtx = new LineageCtx(pctx);
