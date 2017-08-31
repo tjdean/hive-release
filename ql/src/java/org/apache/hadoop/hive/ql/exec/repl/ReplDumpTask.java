@@ -43,6 +43,7 @@ import org.apache.hadoop.hive.ql.parse.EximUtil;
 import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.parse.repl.DumpType;
+import org.apache.hadoop.hive.ql.parse.repl.ReplLogger;
 import org.apache.hadoop.hive.ql.parse.repl.dump.HiveWrapper;
 import org.apache.hadoop.hive.ql.parse.repl.dump.TableExport;
 import org.apache.hadoop.hive.ql.parse.repl.dump.Utils;
@@ -51,8 +52,12 @@ import org.apache.hadoop.hive.ql.parse.repl.dump.events.EventHandlerFactory;
 import org.apache.hadoop.hive.ql.parse.repl.dump.io.FunctionSerializer;
 import org.apache.hadoop.hive.ql.parse.repl.dump.io.JsonWriter;
 import org.apache.hadoop.hive.ql.parse.repl.load.DumpMetaData;
+import org.apache.hadoop.hive.ql.parse.repl.dump.log.BootstrapDumpLogger;
+import org.apache.hadoop.hive.ql.parse.repl.dump.log.IncrementalDumpLogger;
 import org.apache.hadoop.hive.ql.plan.api.StageType;
 import org.apache.thrift.TException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -63,7 +68,8 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
   private static final String FUNCTIONS_ROOT_DIR_NAME = "_functions";
   private static final String FUNCTION_METADATA_FILE_NAME = "_metadata";
 
-  private Log REPL_STATE_LOG = LogFactory.getLog("ReplState");
+  private Logger LOG = LoggerFactory.getLogger(ReplDumpTask.class);
+  private ReplLogger replLogger;
 
   @Override
   public String getName() {
@@ -126,8 +132,9 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
     String dbName = (null != work.dbNameOrPattern && !work.dbNameOrPattern.isEmpty())
         ? work.dbNameOrPattern
         : "?";
-    REPL_STATE_LOG
-        .info("Repl Dump: Started Repl Dump for DB: " + dbName + ", Dump Type: INCREMENTAL");
+    replLogger = new IncrementalDumpLogger(dbName, dumpRoot.toString(),
+            evFetcher.getDbNotificationEventsCount(work.eventFrom, dbName));
+    replLogger.startLog();
     while (evIter.hasNext()) {
       NotificationEvent ev = evIter.next();
       lastReplId = ev.getEventId();
@@ -135,9 +142,9 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
       dumpEvent(ev, evRoot, cmRoot);
     }
 
-    REPL_STATE_LOG.info("Repl Dump: Completed Repl Dump for DB: " + dbName);
+    replLogger.endLog(lastReplId.toString());
 
-    LOG.info("Done dumping events, preparing to return " + dumpRoot.toUri() + ", " + lastReplId);
+    LOG.info("Done dumping events, preparing to return {},{}", dumpRoot.toUri(), lastReplId);
     Utils.writeOutput(
         Arrays.asList(
             "incremental",
@@ -158,10 +165,9 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
         conf,
         getNewEventOnlyReplicationSpec(ev.getEventId())
     );
-    EventHandlerFactory.handlerFor(ev).handle(context);
-    REPL_STATE_LOG.info(
-        "Repl Dump: Dumped event with ID: " + String.valueOf(ev.getEventId()) + ", Type: " + ev
-            .getEventType() + " and dumped metadata and data to path " + evRoot.toUri().toString());
+    EventHandler eventHandler = EventHandlerFactory.handlerFor(ev);
+    eventHandler.handle(context);
+    replLogger.eventLog(String.valueOf(ev.getEventId()), eventHandler.dumpType().toString());
   }
 
   private ReplicationSpec getNewEventOnlyReplicationSpec(Long eventId) throws SemanticException {
@@ -173,19 +179,21 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
   private Long bootStrapDump(Path dumpRoot, DumpMetaData dmd, Path cmRoot) throws Exception {
     // bootstrap case
     Long bootDumpBeginReplId = Hive.get(conf).getMSC().getCurrentNotificationEventId().getEventId();
-    for (String dbName : Utils.matchesDb(Hive.get(conf), work.dbNameOrPattern)) {
-      REPL_STATE_LOG
-          .info("Repl Dump: Started analyzing Repl Dump for DB: " + dbName
-              + ", Dump Type: BOOTSTRAP");
-      LOG.debug("ReplicationSemanticAnalyzer: analyzeReplDump dumping db: " + dbName);
 
+    for (String dbName : Utils.matchesDb(Hive.get(conf), work.dbNameOrPattern)) {
+      LOG.debug("ReplicationSemanticAnalyzer: analyzeReplDump dumping db: " + dbName);
+      replLogger = new BootstrapDumpLogger(dbName, dumpRoot.toString(),
+              Utils.getAllTables(Hive.get(conf), dbName).size(),
+              Hive.get(conf).getAllFunctions().size());
+      replLogger.startLog();
       Path dbRoot = dumpDbMetadata(dbName, dumpRoot);
       dumpFunctionMetadata(dbName, dumpRoot);
-      for (String tblName : Utils.matchesTbl(Hive.get(), dbName, work.tableNameOrPattern)) {
+      for (String tblName : Utils.matchesTbl(Hive.get(conf), dbName, work.tableNameOrPattern)) {
         LOG.debug(
             "analyzeReplDump dumping table: " + tblName + " to db root " + dbRoot.toUri());
         dumpTable(dbName, tblName, dbRoot);
       }
+      replLogger.endLog(bootDumpBeginReplId.toString());
     }
     Long bootDumpEndReplId = Hive.get(conf).getMSC().getCurrentNotificationEventId().getEventId();
     LOG.info("Bootstrap object dump phase took from " + bootDumpBeginReplId + " to " +
@@ -227,7 +235,6 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
     Path dumpPath = new Path(dbRoot, EximUtil.METADATA_NAME);
     HiveWrapper.Tuple<Database> database = new HiveWrapper(Hive.get(conf), dbName).database();
     EximUtil.createDbExportDump(fs, dumpPath, database.object, database.replicationSpec);
-    REPL_STATE_LOG.info("Repl Dump: Dumped DB metadata");
     return dbRoot;
   }
 
@@ -239,9 +246,7 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
           new TableExport.Paths(work.astRepresentationForErrorMsg, dbRoot, tblName, conf);
       String distCpDoAsUser = conf.getVar(HiveConf.ConfVars.HIVE_DISTCP_DOAS_USER);
       new TableExport(exportPaths, ts, getNewReplicationSpec(), db, distCpDoAsUser, conf).write();
-      REPL_STATE_LOG.info(
-          "Repl Dump: Analyzed dump for table/view: " + dbName + "." + tblName
-              + " and dumping metadata and data to path " + exportPaths.exportRootDir.toString());
+      replLogger.tableLog(tblName, ts.tableHandle.getTableType());
     } catch (InvalidTableException te) {
       // Bootstrap dump shouldn't fail if the table is dropped/renamed while dumping it.
       // Just log a debug message and skip it.
@@ -294,7 +299,7 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
         FunctionSerializer serializer = new FunctionSerializer(tuple.object, conf);
         serializer.writeTo(jsonWriter, tuple.replicationSpec);
       }
-      REPL_STATE_LOG.info("Repl Dump: Dumped metadata for function: " + functionName);
+      replLogger.functionLog(functionName);
     }
   }
 
@@ -303,8 +308,7 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
       HiveWrapper.Tuple<Function> tuple =
           new HiveWrapper(Hive.get(conf), dbName).function(functionName);
       if (tuple.object.getResourceUris().isEmpty()) {
-        REPL_STATE_LOG.warn(
-            "Not replicating function: " + functionName + " as it seems to have been created "
+        LOG.warn("Not replicating function: " + functionName + " as it seems to have been created "
                 + "without USING clause");
         return null;
       }

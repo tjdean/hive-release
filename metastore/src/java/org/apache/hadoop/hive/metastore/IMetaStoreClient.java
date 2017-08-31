@@ -79,6 +79,8 @@ import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.InvalidPartitionException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
+import org.apache.hadoop.hive.metastore.api.NotificationEventsCountResponse;
+import org.apache.hadoop.hive.metastore.api.NotificationEventsCountRequest;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.PartitionEventType;
 import org.apache.hadoop.hive.metastore.api.PrincipalPrivilegeSet;
@@ -1508,6 +1510,15 @@ public interface IMetaStoreClient {
    */
   @InterfaceAudience.LimitedPrivate({"HCatalog"})
   CurrentNotificationEventId getCurrentNotificationEventId() throws TException;
+
+  /**
+   * Get the number of events from given eventID for the input database.
+   * @return number of events
+   * @throws TException
+   */
+  @InterfaceAudience.LimitedPrivate({"HCatalog"})
+  NotificationEventsCountResponse getNotificationEventsCount(NotificationEventsCountRequest rqst)
+          throws TException;
 
   /**
    * Request that the metastore fire an event.  Currently this is only supported for DML
