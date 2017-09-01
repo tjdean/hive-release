@@ -199,6 +199,11 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
       throw new SemanticException(ErrorMsg.INVALID_PATH.getMsg(), e);
     }
 
+    if (rv.getTable() == null) {
+      // nothing to do here, silently return.
+      return false;
+    }
+
     ReplicationSpec replicationSpec = rv.getReplicationSpec();
     if (replicationSpec.isNoop()){
       // nothing to do here, silently return.

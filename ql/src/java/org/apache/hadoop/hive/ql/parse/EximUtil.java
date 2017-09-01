@@ -34,6 +34,7 @@ import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity;
 import org.apache.hadoop.hive.ql.metadata.Hive;
+import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.parse.repl.dump.Utils;
 import org.apache.hadoop.hive.ql.parse.repl.dump.io.DBSerializer;
 import org.apache.hadoop.hive.ql.parse.repl.dump.io.JsonWriter;
@@ -404,4 +405,33 @@ public class EximUtil {
     };
   }
 
+  /**
+   * Verify if a table should be exported or not
+   */
+  public static Boolean shouldExportTable(ReplicationSpec replicationSpec, Table tableHandle) throws SemanticException {
+    if (replicationSpec == null)
+    {
+      replicationSpec = new ReplicationSpec();
+    }
+
+    if (replicationSpec.isNoop())
+    {
+      return false;
+    }
+
+    if (tableHandle == null)
+    {
+      return false;
+    }
+
+    if (replicationSpec.isInReplicationScope()) {
+      return !(tableHandle == null || tableHandle.isTemporary() || tableHandle.isNonNative());
+    }
+
+    if (tableHandle.isNonNative()) {
+      throw new SemanticException(ErrorMsg.EXIM_FOR_NON_NATIVE.getMsg());
+    }
+
+    return true;
+  }
 }
