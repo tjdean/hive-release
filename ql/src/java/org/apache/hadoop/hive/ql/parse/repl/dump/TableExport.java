@@ -97,11 +97,6 @@ public class TableExport {
 
   private PartitionIterable partitions() throws SemanticException {
     try {
-      // If current state is not set yet, then set it to the latest event ID
-      if (replicationSpec.getCurrentReplicationState() == null) {
-        long currentEventId = db.getMSC().getCurrentNotificationEventId().getEventId();
-        replicationSpec.setCurrentReplicationState(String.valueOf(currentEventId));
-      }
       if (tableSpec.tableHandle.isPartitioned()) {
         if (tableSpec.specType == TableSpec.SpecType.TABLE_ONLY) {
           // TABLE-ONLY, fetch partitions if regular export, don't if metadata-only
@@ -340,6 +335,7 @@ public class TableExport {
   public static class AuthEntities {
     /**
      * This is  concurrent implementation as
+     *
      * @see org.apache.hadoop.hive.ql.parse.repl.dump.PartitionExport
      * uses multiple threads to flush out partitions.
      */
