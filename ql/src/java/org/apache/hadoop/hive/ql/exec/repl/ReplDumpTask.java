@@ -18,8 +18,6 @@
 package org.apache.hadoop.hive.ql.exec.repl;
 
 import com.google.common.primitives.Ints;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -38,6 +36,7 @@ import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.InvalidTableException;
+import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer.TableSpec;
 import org.apache.hadoop.hive.ql.parse.EximUtil;
 import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
@@ -55,7 +54,6 @@ import org.apache.hadoop.hive.ql.parse.repl.load.DumpMetaData;
 import org.apache.hadoop.hive.ql.parse.repl.dump.log.BootstrapDumpLogger;
 import org.apache.hadoop.hive.ql.parse.repl.dump.log.IncrementalDumpLogger;
 import org.apache.hadoop.hive.ql.plan.api.StageType;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -241,24 +239,20 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
   private void dumpTable(String dbName, String tblName, Path dbRoot) throws Exception {
     try {
       Hive db = Hive.get(conf);
-      TableSpec ts = new TableSpec(db, conf, dbName + "." + tblName, null);
+      HiveWrapper.Tuple<Table> tuple = new HiveWrapper(db, dbName).table(tblName);
+      TableSpec tableSpec = new TableSpec(tuple.object);
       TableExport.Paths exportPaths =
           new TableExport.Paths(work.astRepresentationForErrorMsg, dbRoot, tblName, conf);
       String distCpDoAsUser = conf.getVar(HiveConf.ConfVars.HIVE_DISTCP_DOAS_USER);
-      new TableExport(exportPaths, ts, getNewReplicationSpec(), db, distCpDoAsUser, conf).write();
-      replLogger.tableLog(tblName, ts.tableHandle.getTableType());
+      tuple.replicationSpec.setIsReplace(true);  // by default for all other objects this is false
+      new TableExport(exportPaths, tableSpec, tuple.replicationSpec, db, distCpDoAsUser, conf).write();
+
+      replLogger.tableLog(tblName, tableSpec.tableHandle.getTableType());
     } catch (InvalidTableException te) {
       // Bootstrap dump shouldn't fail if the table is dropped/renamed while dumping it.
       // Just log a debug message and skip it.
       LOG.debug(te.getMessage());
     }
-  }
-
-  private ReplicationSpec getNewReplicationSpec() throws TException, HiveException {
-    ReplicationSpec rspec = getNewReplicationSpec("replv2", "will-be-set");
-    rspec.setCurrentReplicationState(String.valueOf(Hive.get(conf).getMSC()
-            .getCurrentNotificationEventId().getEventId()));
-    return rspec;
   }
 
   private ReplicationSpec getNewReplicationSpec(String evState, String objState) {

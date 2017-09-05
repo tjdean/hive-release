@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.ql.parse.repl.dump;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
 
 /**
@@ -47,6 +48,10 @@ public class HiveWrapper {
 
   public Tuple<Database> database() throws HiveException {
     return new Tuple<>(functionForSpec, new DatabaseObjectFunction(db, dbName));
+  }
+
+  public Tuple<Table> table(final String tableName) throws HiveException {
+    return new Tuple<>(functionForSpec, new TableObjectFunction(db, dbName, tableName));
   }
 
   private static class FunctionObjectFunction implements Tuple.Function<org.apache.hadoop.hive.metastore.api.Function> {
@@ -78,6 +83,22 @@ public class HiveWrapper {
     @Override
     public Database fromMetaStore() throws HiveException {
       return db.getDatabase(dbName);
+    }
+  }
+
+  private static class TableObjectFunction implements Tuple.Function<Table> {
+    private final Hive db;
+    private final String tableName, dbName;
+
+    private TableObjectFunction(Hive db, String dbName, String tableName) {
+      this.db = db;
+      this.tableName = tableName;
+      this.dbName = dbName;
+    }
+
+    @Override
+    public Table fromMetaStore() throws HiveException {
+      return db.getTable(dbName, tableName);
     }
   }
 
