@@ -169,7 +169,7 @@ Stage-0
          File Output Operator [FS_4]
             compressed:false
             Statistics:Num rows: 6 Data size: 851 Basic stats: COMPLETE Column stats: NONE
-            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
+            table:{"input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat","serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"}
             Select Operator [SEL_3]
             |  outputColumnNames:["_col0","_col1","_col2","_col3"]
             |  Statistics:Num rows: 6 Data size: 851 Basic stats: COMPLETE Column stats: NONE
@@ -450,7 +450,7 @@ Stage-0
          File Output Operator [FS_4]
             compressed:false
             Statistics:Num rows: 8 Data size: 851 Basic stats: COMPLETE Column stats: NONE
-            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
+            table:{"input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat","serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"}
             Select Operator [SEL_3]
             |  outputColumnNames:["_col0","_col1","_col2","_col3"]
             |  Statistics:Num rows: 8 Data size: 851 Basic stats: COMPLETE Column stats: NONE
@@ -655,7 +655,7 @@ Stage-0
          File Output Operator [FS_4]
             compressed:false
             Statistics:Num rows: 4 Data size: 299 Basic stats: COMPLETE Column stats: NONE
-            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
+            table:{"input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat","serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"}
             Select Operator [SEL_3]
             |  outputColumnNames:["_col0","_col1","_col2","_col3"]
             |  Statistics:Num rows: 4 Data size: 299 Basic stats: COMPLETE Column stats: NONE
