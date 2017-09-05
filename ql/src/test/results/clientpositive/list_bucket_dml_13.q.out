@@ -2,7 +2,6 @@ PREHOOK: query: -- Ensure skewed value map has escaped directory name
 
 -- INCLUDE_HADOOP_MAJOR_VERSIONS(0.23)
 -- SORT_QUERY_RESULTS
--- JAVA_VERSION_SPECIFIC_OUTPUT
 
 -- test where the skewed values are more than 1 say columns no. 2 and 4 in a table with 5 columns
 create table list_bucketing_mul_col (col1 String, col2 String, col3 String, col4 String, col5 string) 
@@ -17,7 +16,6 @@ POSTHOOK: query: -- Ensure skewed value map has escaped directory name
 
 -- INCLUDE_HADOOP_MAJOR_VERSIONS(0.23)
 -- SORT_QUERY_RESULTS
--- JAVA_VERSION_SPECIFIC_OUTPUT
 
 -- test where the skewed values are more than 1 say columns no. 2 and 4 in a table with 5 columns
 create table list_bucketing_mul_col (col1 String, col2 String, col3 String, col4 String, col5 string) 
@@ -127,7 +125,7 @@ STAGE PLANS:
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
-              COLUMN_STATS_ACCURATE {"COLUMN_STATS":{"key":"true","value":"true"},"BASIC_STATS":"true"}
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               bucket_count -1
               columns key,value
               columns.comments 'default','default'
@@ -147,7 +145,7 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE {"COLUMN_STATS":{"key":"true","value":"true"},"BASIC_STATS":"true"}
+                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
                 bucket_count -1
                 columns key,value
                 columns.comments 'default','default'
@@ -270,7 +268,7 @@ Stored As SubDirectories:	Yes
 Skewed Columns:     	[col2, col4]        	 
 Skewed Values:      	[[466, val_466], [287, val_287], [82, val_82]]	 
 #### A masked pattern was here ####
-Skewed Value to Truncated Path:	{[82, val_82]=/list_bucketing_mul_col/ds=2008-04-08/hr=2013-01-23+18%3A00%3A99/col2=82/col4=val_82, [466, val_466]=/list_bucketing_mul_col/ds=2008-04-08/hr=2013-01-23+18%3A00%3A99/col2=466/col4=val_466, [287, val_287]=/list_bucketing_mul_col/ds=2008-04-08/hr=2013-01-23+18%3A00%3A99/col2=287/col4=val_287}	 
+Skewed Value to Truncated Path:	{[466, val_466]=/list_bucketing_mul_col/ds=2008-04-08/hr=2013-01-23+18%3A00%3A99/col2=466/col4=val_466, [287, val_287]=/list_bucketing_mul_col/ds=2008-04-08/hr=2013-01-23+18%3A00%3A99/col2=287/col4=val_287, [82, val_82]=/list_bucketing_mul_col/ds=2008-04-08/hr=2013-01-23+18%3A00%3A99/col2=82/col4=val_82}	 
 Storage Desc Params:	 	 
 	serialization.format	1                   
 PREHOOK: query: explain extended

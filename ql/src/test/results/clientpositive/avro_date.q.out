@@ -1,10 +1,6 @@
-PREHOOK: query: -- JAVA_VERSION_SPECIFIC_OUTPUT
-
-DROP TABLE avro_date_staging
+PREHOOK: query: DROP TABLE avro_date_staging
 PREHOOK: type: DROPTABLE
-POSTHOOK: query: -- JAVA_VERSION_SPECIFIC_OUTPUT
-
-DROP TABLE avro_date_staging
+POSTHOOK: query: DROP TABLE avro_date_staging
 POSTHOOK: type: DROPTABLE
 PREHOOK: query: DROP TABLE avro_date
 PREHOOK: type: DROPTABLE
@@ -73,7 +69,7 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: default@avro_date
 POSTHOOK: Input: default@avro_date@p1=2/p2=2014-09-26
 #### A masked pattern was here ####
-2012-02-21	{"foo":"1980-12-16","bar":"1998-05-07"}	["2011-09-04","2011-09-05"]	2	2014-09-26
+2012-02-21	{"bar":"1998-05-07","foo":"1980-12-16"}	["2011-09-04","2011-09-05"]	2	2014-09-26
 2014-02-11	{"baz":"1981-12-16"}	["2011-09-05"]	2	2014-09-26
 1947-02-11	{"baz":"1921-12-16"}	["2011-09-05"]	2	2014-09-26
 8200-02-11	{"baz":"6981-12-16"}	["1039-09-05"]	2	2014-09-26
@@ -101,7 +97,7 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: default@avro_date
 POSTHOOK: Input: default@avro_date@p1=2/p2=2014-09-26
 #### A masked pattern was here ####
-2012-02-21	{"foo":"1980-12-16","bar":"1998-05-07"}	["2011-09-04","2011-09-05"]	2	2014-09-26
+2012-02-21	{"bar":"1998-05-07","foo":"1980-12-16"}	["2011-09-04","2011-09-05"]	2	2014-09-26
 2014-02-11	{"baz":"1981-12-16"}	["2011-09-05"]	2	2014-09-26
 8200-02-11	{"baz":"6981-12-16"}	["1039-09-05"]	2	2014-09-26
 PREHOOK: query: SELECT * FROM avro_date WHERE d<'2014-12-21'
@@ -114,7 +110,7 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: default@avro_date
 POSTHOOK: Input: default@avro_date@p1=2/p2=2014-09-26
 #### A masked pattern was here ####
-2012-02-21	{"foo":"1980-12-16","bar":"1998-05-07"}	["2011-09-04","2011-09-05"]	2	2014-09-26
+2012-02-21	{"bar":"1998-05-07","foo":"1980-12-16"}	["2011-09-04","2011-09-05"]	2	2014-09-26
 2014-02-11	{"baz":"1981-12-16"}	["2011-09-05"]	2	2014-09-26
 1947-02-11	{"baz":"1921-12-16"}	["2011-09-05"]	2	2014-09-26
 PREHOOK: query: SELECT * FROM avro_date WHERE d>'8000-12-01'

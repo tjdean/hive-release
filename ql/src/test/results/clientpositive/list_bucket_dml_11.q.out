@@ -1,7 +1,6 @@
 PREHOOK: query: -- Ensure it works if skewed column is not the first column in the table columns
 
 -- INCLUDE_HADOOP_MAJOR_VERSIONS(0.23)
--- JAVA_VERSION_SPECIFIC_OUTPUT
 
 -- list bucketing DML: static partition. multiple skewed columns.
 
@@ -17,7 +16,6 @@ PREHOOK: Output: default@list_bucketing_static_part
 POSTHOOK: query: -- Ensure it works if skewed column is not the first column in the table columns
 
 -- INCLUDE_HADOOP_MAJOR_VERSIONS(0.23)
--- JAVA_VERSION_SPECIFIC_OUTPUT
 
 -- list bucketing DML: static partition. multiple skewed columns.
 
@@ -123,7 +121,7 @@ STAGE PLANS:
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
-              COLUMN_STATS_ACCURATE {"COLUMN_STATS":{"key":"true","value":"true"},"BASIC_STATS":"true"}
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               bucket_count -1
               columns key,value
               columns.comments 'default','default'
@@ -143,7 +141,7 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE {"COLUMN_STATS":{"key":"true","value":"true"},"BASIC_STATS":"true"}
+                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
                 bucket_count -1
                 columns key,value
                 columns.comments 'default','default'
@@ -260,7 +258,7 @@ Stored As SubDirectories:	Yes
 Skewed Columns:     	[value]             	 
 Skewed Values:      	[[val_466], [val_287], [val_82]]	 
 #### A masked pattern was here ####
-Skewed Value to Truncated Path:	{[val_82]=/list_bucketing_static_part/ds=2008-04-08/hr=11/value=val_82, [val_287]=/list_bucketing_static_part/ds=2008-04-08/hr=11/value=val_287, [val_466]=/list_bucketing_static_part/ds=2008-04-08/hr=11/value=val_466}	 
+Skewed Value to Truncated Path:	{[val_287]=/list_bucketing_static_part/ds=2008-04-08/hr=11/value=val_287, [val_82]=/list_bucketing_static_part/ds=2008-04-08/hr=11/value=val_82, [val_466]=/list_bucketing_static_part/ds=2008-04-08/hr=11/value=val_466}	 
 Storage Desc Params:	 	 
 	serialization.format	1                   
 PREHOOK: query: explain extended

@@ -1,5 +1,4 @@
 PREHOOK: query: -- run this test case in minimr to ensure it works in cluster
--- JAVA_VERSION_SPECIFIC_OUTPUT
 
 -- list bucketing DML: static partition. multiple skewed columns.
 -- ds=2008-04-08/hr=11/HIVE_DEFAULT_LIST_BUCKETING_DIR_NAME:
@@ -22,7 +21,6 @@ PREHOOK: type: CREATETABLE
 PREHOOK: Output: database:default
 PREHOOK: Output: default@list_bucketing_static_part
 POSTHOOK: query: -- run this test case in minimr to ensure it works in cluster
--- JAVA_VERSION_SPECIFIC_OUTPUT
 
 -- list bucketing DML: static partition. multiple skewed columns.
 -- ds=2008-04-08/hr=11/HIVE_DEFAULT_LIST_BUCKETING_DIR_NAME:
@@ -141,7 +139,7 @@ STAGE PLANS:
             input format: org.apache.hadoop.mapred.TextInputFormat
             output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
             properties:
-              COLUMN_STATS_ACCURATE {"COLUMN_STATS":{"key":"true","value":"true"},"BASIC_STATS":"true"}
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               bucket_count -1
               columns key,value
               columns.comments 'default','default'
@@ -161,7 +159,7 @@ STAGE PLANS:
               input format: org.apache.hadoop.mapred.TextInputFormat
               output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
               properties:
-                COLUMN_STATS_ACCURATE {"COLUMN_STATS":{"key":"true","value":"true"},"BASIC_STATS":"true"}
+                COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
                 bucket_count -1
                 columns key,value
                 columns.comments 'default','default'
@@ -386,6 +384,6 @@ Stored As SubDirectories:	Yes
 Skewed Columns:     	[key]               	 
 Skewed Values:      	[[484], [51], [103]]	 
 #### A masked pattern was here ####
-Skewed Value to Truncated Path:	{[484]=/list_bucketing_static_part/ds=2008-04-08/hr=11/key=484, [103]=/list_bucketing_static_part/ds=2008-04-08/hr=11/key=103, [51]=/list_bucketing_static_part/ds=2008-04-08/hr=11/key=51}	 
+Skewed Value to Truncated Path:	{[103]=/list_bucketing_static_part/ds=2008-04-08/hr=11/key=103, [51]=/list_bucketing_static_part/ds=2008-04-08/hr=11/key=51, [484]=/list_bucketing_static_part/ds=2008-04-08/hr=11/key=484}	 
 Storage Desc Params:	 	 
 	serialization.format	1                   

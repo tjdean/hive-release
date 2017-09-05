@@ -2,7 +2,6 @@ PREHOOK: query: -- list bucketing DML: multiple skewed columns. 2 stages
 
 -- INCLUDE_HADOOP_MAJOR_VERSIONS(0.23)
 -- SORT_QUERY_RESULTS
--- JAVA_VERSION_SPECIFIC_OUTPUT
 
 -- create a skewed table
 create table list_bucketing_dynamic_part (key String, value String) 
@@ -16,7 +15,6 @@ POSTHOOK: query: -- list bucketing DML: multiple skewed columns. 2 stages
 
 -- INCLUDE_HADOOP_MAJOR_VERSIONS(0.23)
 -- SORT_QUERY_RESULTS
--- JAVA_VERSION_SPECIFIC_OUTPUT
 
 -- create a skewed table
 create table list_bucketing_dynamic_part (key String, value String) 
@@ -127,7 +125,7 @@ STAGE PLANS:
               ds 2008-04-08
               hr 11
             properties:
-              COLUMN_STATS_ACCURATE {"COLUMN_STATS":{"key":"true","value":"true"},"BASIC_STATS":"true"}
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               bucket_count -1
               columns key,value
               columns.comments 'default','default'
@@ -173,7 +171,7 @@ STAGE PLANS:
               ds 2008-04-08
               hr 12
             properties:
-              COLUMN_STATS_ACCURATE {"COLUMN_STATS":{"key":"true","value":"true"},"BASIC_STATS":"true"}
+              COLUMN_STATS_ACCURATE {"BASIC_STATS":"true","COLUMN_STATS":{"key":"true","value":"true"}}
               bucket_count -1
               columns key,value
               columns.comments 'default','default'
@@ -308,7 +306,7 @@ Stored As SubDirectories:	Yes
 Skewed Columns:     	[key, value]        	 
 Skewed Values:      	[[484, val_484], [51, val_14], [103, val_103]]	 
 #### A masked pattern was here ####
-Skewed Value to Truncated Path:	{[103, val_103]=/list_bucketing_dynamic_part/ds=2008-04-08/hr=11/key=103/value=val_103, [484, val_484]=/list_bucketing_dynamic_part/ds=2008-04-08/hr=11/key=484/value=val_484}	 
+Skewed Value to Truncated Path:	{[484, val_484]=/list_bucketing_dynamic_part/ds=2008-04-08/hr=11/key=484/value=val_484, [103, val_103]=/list_bucketing_dynamic_part/ds=2008-04-08/hr=11/key=103/value=val_103}	 
 Storage Desc Params:	 	 
 	serialization.format	1                   
 PREHOOK: query: desc formatted list_bucketing_dynamic_part partition (ds='2008-04-08', hr='12')
@@ -355,7 +353,7 @@ Stored As SubDirectories:	Yes
 Skewed Columns:     	[key, value]        	 
 Skewed Values:      	[[484, val_484], [51, val_14], [103, val_103]]	 
 #### A masked pattern was here ####
-Skewed Value to Truncated Path:	{[103, val_103]=/list_bucketing_dynamic_part/ds=2008-04-08/hr=12/key=103/value=val_103, [484, val_484]=/list_bucketing_dynamic_part/ds=2008-04-08/hr=12/key=484/value=val_484}	 
+Skewed Value to Truncated Path:	{[484, val_484]=/list_bucketing_dynamic_part/ds=2008-04-08/hr=12/key=484/value=val_484, [103, val_103]=/list_bucketing_dynamic_part/ds=2008-04-08/hr=12/key=103/value=val_103}	 
 Storage Desc Params:	 	 
 	serialization.format	1                   
 PREHOOK: query: select count(1) from srcpart where ds='2008-04-08'
