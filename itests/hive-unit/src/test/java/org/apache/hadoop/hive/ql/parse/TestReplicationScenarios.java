@@ -137,6 +137,7 @@ public class TestReplicationScenarios {
     hconf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
     hconf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
     hconf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
+    hconf.setBoolVar(HiveConf.ConfVars.HIVEOPTIMIZEMETADATAQUERIES, true);
     System.setProperty(HiveConf.ConfVars.PREEXECHOOKS.varname, " ");
     System.setProperty(HiveConf.ConfVars.POSTEXECHOOKS.varname, " ");
 
@@ -2715,6 +2716,75 @@ public class TestReplicationScenarios {
     //   a) Multi-db wh-level REPL LOAD - need to add that
     //   b) Insert into tables - quite a few cases need to be enumerated there, including dyn adds.
 
+  }
+
+  @Test
+  public void testRemoveStats() throws IOException {
+    String name = testName.getMethodName();
+    String dbName = createDB(name);
+
+    String[] unptn_data = new String[]{ "1" , "2" };
+    String[] ptn_data_1 = new String[]{ "5", "7", "8"};
+    String[] ptn_data_2 = new String[]{ "3", "2", "9"};
+
+    String unptn_locn = new Path(TEST_PATH, name + "_unptn").toUri().getPath();
+    String ptn_locn_1 = new Path(TEST_PATH, name + "_ptn1").toUri().getPath();
+    String ptn_locn_2 = new Path(TEST_PATH, name + "_ptn2").toUri().getPath();
+
+    createTestDataFile(unptn_locn, unptn_data);
+    createTestDataFile(ptn_locn_1, ptn_data_1);
+    createTestDataFile(ptn_locn_2, ptn_data_2);
+
+    run("CREATE TABLE " + dbName + ".unptned(a int) STORED AS TEXTFILE");
+    run("LOAD DATA LOCAL INPATH '" + unptn_locn + "' OVERWRITE INTO TABLE " + dbName + ".unptned");
+    run("CREATE TABLE " + dbName + ".ptned(a int) partitioned by (b int) STORED AS TEXTFILE");
+    run("LOAD DATA LOCAL INPATH '" + ptn_locn_1 + "' OVERWRITE INTO TABLE " + dbName + ".ptned PARTITION(b=1)");
+    run("ANALYZE TABLE " + dbName + ".unptned COMPUTE STATISTICS FOR COLUMNS");
+    run("ANALYZE TABLE " + dbName + ".unptned COMPUTE STATISTICS");
+    run("ANALYZE TABLE " + dbName + ".ptned partition(b) COMPUTE STATISTICS FOR COLUMNS");
+    run("ANALYZE TABLE " + dbName + ".ptned partition(b) COMPUTE STATISTICS");
+
+    verifySetup("SELECT * from " + dbName + ".unptned", unptn_data);
+    verifySetup("SELECT a from " + dbName + ".ptned WHERE b=1", ptn_data_1);
+    verifySetup("SELECT count(*) from " + dbName + ".unptned", new String[]{"2"});
+    verifySetup("SELECT count(*) from " + dbName + ".ptned", new String[]{"3"});
+    verifySetup("SELECT max(a) from " + dbName + ".unptned", new String[]{"2"});
+    verifySetup("SELECT max(a) from " + dbName + ".ptned where b=1", new String[]{"8"});
+
+    advanceDumpDir();
+    run("REPL DUMP " + dbName);
+    String replDumpLocn = getResult(0,0);
+    String replDumpId = getResult(0,1,true);
+    LOG.info("Dumped to {} with id {}",replDumpLocn,replDumpId);
+    run("REPL LOAD " + dbName + "_dupe FROM '" + replDumpLocn + "'");
+
+    verifyRun("SELECT count(*) from " + dbName + "_dupe.unptned", new String[]{"2"});
+    verifyRun("SELECT count(*) from " + dbName + "_dupe.ptned", new String[]{"3"});
+    verifyRun("SELECT max(a) from " + dbName + "_dupe.unptned", new String[]{"2"});
+    verifyRun("SELECT max(a) from " + dbName + "_dupe.ptned where b=1", new String[]{"8"});
+
+    run("CREATE TABLE " + dbName + ".unptned2(a int) STORED AS TEXTFILE");
+    run("LOAD DATA LOCAL INPATH '" + unptn_locn + "' OVERWRITE INTO TABLE " + dbName + ".unptned2");
+    run("CREATE TABLE " + dbName + ".ptned2(a int) partitioned by (b int) STORED AS TEXTFILE");
+    run("LOAD DATA LOCAL INPATH '" + ptn_locn_1 + "' OVERWRITE INTO TABLE " + dbName + ".ptned2 PARTITION(b=1)");
+    run("ANALYZE TABLE " + dbName + ".unptned2 COMPUTE STATISTICS FOR COLUMNS");
+    run("ANALYZE TABLE " + dbName + ".unptned2 COMPUTE STATISTICS");
+    run("ANALYZE TABLE " + dbName + ".ptned2 partition(b) COMPUTE STATISTICS FOR COLUMNS");
+    run("ANALYZE TABLE " + dbName + ".ptned2 partition(b) COMPUTE STATISTICS");
+
+    advanceDumpDir();
+    run("REPL DUMP " + dbName + " FROM " + replDumpId);
+    String incrementalDumpLocn = getResult(0,0);
+    String incrementalDumpId = getResult(0,1,true);
+    LOG.info("Dumped to {} with id {}", incrementalDumpLocn, incrementalDumpId);
+    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
+    printOutput();
+    run("REPL LOAD " + dbName + "_dupe FROM '"+incrementalDumpLocn+"'");
+
+    verifyRun("SELECT count(*) from " + dbName + "_dupe.unptned2", new String[]{"2"});
+    verifyRun("SELECT count(*) from " + dbName + "_dupe.ptned2", new String[]{"3"});
+    verifyRun("SELECT max(a) from " + dbName + "_dupe.unptned2", new String[]{"2"});
+    verifyRun("SELECT max(a) from " + dbName + "_dupe.ptned2 where b=1", new String[]{"8"});
   }
 
   private static String createDB(String name) {
