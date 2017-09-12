@@ -31,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.ql.exec.AbstractFileMergeOperator;
 import org.apache.hadoop.hive.ql.exec.AppMasterEventOperator;
 import org.apache.hadoop.hive.ql.exec.FetchTask;
 import org.apache.hadoop.hive.ql.exec.FileSinkOperator;
@@ -307,7 +308,7 @@ public class GenTezUtils {
         linked.add(desc);
 
         desc.setIndexInTezUnion(linked.size());
-        desc.setDirName(new Path(path, "" + desc.getIndexInTezUnion()));
+        desc.setDirName(new Path(path, AbstractFileMergeOperator.UNION_SUDBIR_PREFIX + desc.getIndexInTezUnion()));
         desc.setLinkedFileSink(true);
         desc.setParentDir(path);
         desc.setLinkedFileSinkDesc(linked);
