@@ -1382,7 +1382,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   @Override
   public List<String> listPartitionNames(String dbName, String tblName,
-      short max) throws MetaException, TException {
+      short max) throws NoSuchObjectException, MetaException, TException {
     return filterHook.filterPartitionNames(dbName, tblName,
         client.get_partition_names(dbName, tblName, max));
   }
