@@ -51,6 +51,7 @@ import org.apache.hadoop.hive.ql.lockmgr.HiveTxnManager;
 import org.apache.hadoop.hive.ql.lockmgr.LockException;
 import org.apache.hadoop.hive.ql.parse.ASTNode;
 import org.apache.hadoop.hive.ql.parse.HiveParser;
+import org.apache.hadoop.hive.ql.parse.QB;
 import org.apache.hadoop.hive.ql.plan.LoadTableDesc;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.shims.ShimLoader;
@@ -155,8 +156,17 @@ public class Context {
   /**
    * The suffix is always relative to a given ASTNode
    */
-  public DestClausePrefix getDestNamePrefix(ASTNode curNode) {
+  public DestClausePrefix getDestNamePrefix(ASTNode curNode, QB queryBlock) {
     assert curNode != null : "must supply curNode";
+    if(queryBlock.isInsideView() || queryBlock.getParseInfo().getIsSubQ()) {
+      /**
+       * Views get inlined in the logical plan but not in the AST
+       * {@link org.apache.hadoop.hive.ql.parse.SemanticAnalyzer#replaceViewReferenceWithDefinition(QB, Table, String, String)}
+       * Since here we only care to identify clauses representing Update/Delete which are not
+       * possible inside a view/subquery, we can immediately return the default {@link DestClausePrefix.INSERT}
+       */
+      return DestClausePrefix.INSERT;
+    }
     if(curNode.getType() != HiveParser.TOK_INSERT_INTO) {
       //select statement
       assert curNode.getType() == HiveParser.TOK_DESTINATION;
