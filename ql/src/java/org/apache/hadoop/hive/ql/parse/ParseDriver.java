@@ -163,7 +163,7 @@ public class ParseDriver {
   
   public ASTNode parse(String command, Context ctx) 
       throws ParseException {
-    return parse(command, ctx, true);
+    return parse(command, ctx, null);
   }
 
   /**
@@ -180,15 +180,19 @@ public class ParseDriver {
    *
    * @return parsed AST
    */
-  public ASTNode parse(String command, Context ctx, boolean setTokenRewriteStream) 
+  public ASTNode parse(String command, Context ctx, String viewFullyQualifiedName)
       throws ParseException {
     LOG.info("Parsing command: " + command);
 
     HiveLexerX lexer = new HiveLexerX(new ANTLRNoCaseStringStream(command));
     TokenRewriteStream tokens = new TokenRewriteStream(lexer);
     if (ctx != null) {
-      if ( setTokenRewriteStream) {
+      if (viewFullyQualifiedName == null) {
+        // Top level query
         ctx.setTokenRewriteStream(tokens);
+      } else {
+        // It is a view
+        ctx.addViewTokenRewriteStream(viewFullyQualifiedName, tokens);
       }
       lexer.setHiveConf(ctx.getConf());
     }
