@@ -2851,6 +2851,31 @@ public class TestReplicationScenarios {
     verifyRun("SELECT max(a) from " + dbName + "_dupe.ptned2 where b=1", new String[]{"8"});
   }
 
+  @Test
+  public void testCMConflict() throws IOException {
+    String testName = "cmConflict";
+    String dbName = createDB(testName);
+
+    // Create table and insert two file of the same content
+    run("CREATE TABLE " + dbName + ".unptned(a string) STORED AS TEXTFILE");
+    run("INSERT INTO TABLE " + dbName + ".unptned values('ten')");
+    run("INSERT INTO TABLE " + dbName + ".unptned values('ten')");
+
+    // Bootstrap test
+    advanceDumpDir();
+    run("REPL DUMP " + dbName);
+    String replDumpLocn = getResult(0, 0);
+    String replDumpId = getResult(0, 1, true);
+
+    // Drop two files so they are moved to CM
+    run("TRUNCATE TABLE " + dbName + ".unptned");
+
+    LOG.info("Bootstrap-Dump: Dumped to {} with id {}", replDumpLocn, replDumpId);
+    run("REPL LOAD " + dbName + "_dupe FROM '" + replDumpLocn + "'");
+
+    verifyRun("SELECT count(*) from " + dbName + "_dupe.unptned", new String[]{"2"});
+  }
+
   private static String createDB(String name) {
     LOG.info("Testing " + name);
     String dbName = name + "_" + tid;
