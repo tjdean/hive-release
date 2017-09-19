@@ -107,6 +107,7 @@ import org.apache.hadoop.hive.thrift.HadoopThriftAuthBridge;
 import org.apache.hadoop.hive.thrift.HadoopThriftAuthBridge.Server.ServerMode;
 import org.apache.hadoop.hive.thrift.HiveDelegationTokenManager;
 import org.apache.hadoop.hive.thrift.TUGIContainingTransport;
+import org.apache.hadoop.security.SecurityUtil;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.ReflectionUtils;
 import org.apache.hadoop.util.StringUtils;
@@ -6613,6 +6614,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
       TServerTransport serverTransport = tcpKeepAlive ?
           new TServerSocketKeepAlive(port) : new TServerSocket(port);
+
+      if (useSasl) {
+        // we are in secure mode. Login using keytab
+        String kerberosName = SecurityUtil
+            .getServerPrincipal(conf.getVar(ConfVars.METASTORE_KERBEROS_PRINCIPAL), "0.0.0.0");
+        String keyTabFile = conf.getVar(ConfVars.METASTORE_KERBEROS_KEYTAB_FILE);
+        UserGroupInformation.loginUserFromKeytab(kerberosName, keyTabFile);
+      }
 
       TProcessor processor;
       TTransportFactory transFactory;
