@@ -96,11 +96,11 @@
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.apache.hive</groupId>
-      <artifactId>hive-jdbc</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
+      <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-distcp</artifactId>
+          <version>${hadoop-23.version}</version>
+          <scope>test</scope>
       </dependency>
     <dependency>
       <groupId>org.apache.hive</groupId>
