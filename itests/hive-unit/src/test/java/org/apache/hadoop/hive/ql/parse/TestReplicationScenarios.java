@@ -17,8 +17,10 @@
  */
 package org.apache.hadoop.hive.ql.parse;
 
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
@@ -2876,6 +2878,55 @@ public class TestReplicationScenarios {
     verifyRun("SELECT count(*) from " + dbName + "_dupe.unptned", new String[]{"2"});
   }
 
+  @Test
+  public void testDeleteStagingDir() throws IOException {
+	String testName = "deleteStagingDir";
+	String dbName = createDB(testName);
+	String tableName = "unptned";
+    run("CREATE TABLE " + dbName + "." + tableName + "(a string) STORED AS TEXTFILE");
+
+    String[] unptn_data = new String[] {"one", "two"};
+    String unptn_locn = new Path(TEST_PATH , testName + "_unptn").toUri().getPath();
+    createTestDataFile(unptn_locn, unptn_data);
+    run("LOAD DATA LOCAL INPATH '" + unptn_locn + "' OVERWRITE INTO TABLE " + dbName + ".unptned");
+    verifySetup("SELECT * from " + dbName + ".unptned", unptn_data);
+
+    // Perform repl
+    advanceDumpDir();
+    run("REPL DUMP " + dbName);
+    String replDumpLocn = getResult(0,0);
+    // Reset the driver
+    driver.close();
+    driver.init();
+    run("REPL LOAD " + dbName + "_dupe FROM '" + replDumpLocn + "'");
+    // Calling close() explicitly to clean up the staging dirs
+    driver.close();
+    // Check result
+    Path warehouse = new Path(System.getProperty("test.warehouse.dir", "/tmp"));
+    FileSystem fs = FileSystem.get(warehouse.toUri(), hconf);
+    try {
+      Path path = new Path(warehouse, dbName + "_dupe.db" + Path.SEPARATOR + tableName);
+      // First check if the table dir exists (could have been deleted for some reason in pre-commit tests)
+      if (!fs.exists(path))
+      {
+        return;
+      }
+      PathFilter filter = new PathFilter()
+      {
+        @Override
+        public boolean accept(Path path)
+        {
+          return path.getName().startsWith(HiveConf.getVar(hconf, HiveConf.ConfVars.STAGINGDIR));
+        }
+      };
+      FileStatus[] statuses = fs.listStatus(path, filter);
+      assertEquals(0, statuses.length);
+    } catch (IOException e) {
+      LOG.error("Failed to list files in: " + warehouse, e);
+      assert(false);
+    }
+  }
+
   private static String createDB(String name) {
     LOG.info("Testing " + name);
     String dbName = name + "_" + tid;
@@ -3117,6 +3168,15 @@ public class TestReplicationScenarios {
       Partition ptn = metaStoreClient.getPartition(dbName, tableName, partValues);
       assertNotNull(ptn);
     } catch (TException te) {
+      assert(false);
+    }
+  }
+
+  private void verifyIfDirNotExist(FileSystem fs, Path path, PathFilter filter){
+    try {
+      FileStatus[] statuses = fs.listStatus(path, filter);
+      assertEquals(0, statuses.length);
+    } catch (IOException e) {
       assert(false);
     }
   }

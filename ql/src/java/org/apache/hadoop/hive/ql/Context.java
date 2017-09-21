@@ -260,6 +260,9 @@ public class Context {
     viewsTokenRewriteStreams = new HashMap<>();
   }
 
+  public Map<String, Path> getFsScratchDirs() {
+    return fsScratchDirs;
+  }
 
   public Map<LoadTableDesc, WriteEntity> getLoadTableOutputMap() {
     return loadTableOutputMap;
