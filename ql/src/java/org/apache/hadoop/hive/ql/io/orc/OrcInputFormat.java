@@ -859,6 +859,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     private OrcFile.WriterVersion writerVersion;
     private long projColsUncompressedSize;
     private List<OrcSplit> deltaSplits;
+    private final SplitInfo splitInfo;
     private final UserGroupInformation ugi;
     private SchemaEvolution evolution;
 
@@ -872,6 +873,7 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
       locations = SHIMS.getLocationsWithOffset(fs, file);
       this.isOriginal = splitInfo.isOriginal;
       this.deltas = splitInfo.deltas;
+      this.splitInfo = splitInfo;
       this.hasBase = splitInfo.hasBase;
       this.projColsUncompressedSize = -1;
       this.deltaSplits = splitInfo.getSplits();
@@ -1048,49 +1050,62 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
         }
       }
 
-      // if we didn't have predicate pushdown, read everything
-      if (includeStripe == null) {
-        includeStripe = new boolean[stripes.size()];
-        Arrays.fill(includeStripe, true);
-      }
+      // after major compaction, base files may become empty base files. Following sequence is an example
+      // 1) insert some rows
+      // 2) delete all rows
+      // 3) major compaction
+      // 4) insert some rows
+      // In such cases, consider base files without any stripes as uncovered delta
+      if (stripes == null || stripes.isEmpty()) {
+        AcidOutputFormat.Options options = AcidUtils.parseBaseBucketFilename(file.getPath(), context.conf);
+        int bucket = options.getBucket();
+        splitInfo.covered[bucket] = false;
+        deltaSplits = splitInfo.getSplits();
+      } else {
+        // if we didn't have predicate pushdown, read everything
+        if (includeStripe == null) {
+          includeStripe = new boolean[stripes.size()];
+          Arrays.fill(includeStripe, true);
+        }
 
-      long currentOffset = -1;
-      long currentLength = 0;
-      int idx = -1;
-      for (StripeInformation stripe : stripes) {
-        idx++;
+        long currentOffset = -1;
+        long currentLength = 0;
+        int idx = -1;
+        for (StripeInformation stripe : stripes) {
+          idx++;
 
-        if (!includeStripe[idx]) {
-          // create split for the previous unfinished stripe
-          if (currentOffset != -1) {
+          if (!includeStripe[idx]) {
+            // create split for the previous unfinished stripe
+            if (currentOffset != -1) {
+              splits.add(createSplit(currentOffset, currentLength, orcTail));
+              currentOffset = -1;
+            }
+            continue;
+          }
+
+          // if we are working on a stripe, over the min stripe size, and
+          // crossed a block boundary, cut the input split here.
+          if (currentOffset != -1 && currentLength > context.minSize &&
+            (currentOffset / blockSize != stripe.getOffset() / blockSize)) {
             splits.add(createSplit(currentOffset, currentLength, orcTail));
             currentOffset = -1;
           }
-          continue;
-        }
-
-        // if we are working on a stripe, over the min stripe size, and
-        // crossed a block boundary, cut the input split here.
-        if (currentOffset != -1 && currentLength > context.minSize &&
-            (currentOffset / blockSize != stripe.getOffset() / blockSize)) {
-          splits.add(createSplit(currentOffset, currentLength, orcTail));
-          currentOffset = -1;
-        }
-        // if we aren't building a split, start a new one.
-        if (currentOffset == -1) {
-          currentOffset = stripe.getOffset();
-          currentLength = stripe.getLength();
-        } else {
-          currentLength =
+          // if we aren't building a split, start a new one.
+          if (currentOffset == -1) {
+            currentOffset = stripe.getOffset();
+            currentLength = stripe.getLength();
+          } else {
+            currentLength =
               (stripe.getOffset() + stripe.getLength()) - currentOffset;
+          }
+          if (currentLength >= context.maxSize) {
+            splits.add(createSplit(currentOffset, currentLength, orcTail));
+            currentOffset = -1;
+          }
         }
-        if (currentLength >= context.maxSize) {
+        if (currentOffset != -1) {
           splits.add(createSplit(currentOffset, currentLength, orcTail));
-          currentOffset = -1;
         }
-      }
-      if (currentOffset != -1) {
-        splits.add(createSplit(currentOffset, currentLength, orcTail));
       }
 
       // add uncovered ACID delta splits
