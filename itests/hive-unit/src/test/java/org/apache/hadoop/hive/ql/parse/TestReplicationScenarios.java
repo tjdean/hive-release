@@ -217,8 +217,6 @@ public class TestReplicationScenarios {
   }
 
   private void loadAndVerify(String replDbName, String dumpLocation, String lastReplId) throws IOException {
-    run("EXPLAIN REPL LOAD " + replDbName + " FROM '" + dumpLocation + "'");
-    printOutput();
     run("REPL LOAD " + replDbName + " FROM '" + dumpLocation + "'");
     verifyRun("REPL STATUS " + replDbName, lastReplId);
     return;
@@ -323,8 +321,6 @@ public class TestReplicationScenarios {
     // Partition droppped after "repl dump"
     run("ALTER TABLE " + dbName + ".ptned " + "DROP PARTITION(b=1)");
 
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + replDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + replDumpLocn + "'");
 
     run("REPL STATUS " + dbName + "_dupe");
@@ -737,8 +733,6 @@ public class TestReplicationScenarios {
     String incrementalDumpLocn = getResult(0,0);
     String incrementalDumpId = getResult(0,1,true);
     LOG.info("Dumped to {} with id {}", incrementalDumpLocn, incrementalDumpId);
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '"+incrementalDumpLocn+"'");
 
     run("REPL STATUS " + dbName + "_dupe");
@@ -863,8 +857,6 @@ public class TestReplicationScenarios {
     String incrementalDumpLocn = getResult(0, 0);
     String incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-Dump: Dumped to {} with id {} from {}", incrementalDumpLocn, incrementalDumpId, replDumpId);
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
     verifyRun("SELECT a from " + dbName + "_dupe.unptned ORDER BY a", unptn_data);
   }
@@ -914,8 +906,6 @@ public class TestReplicationScenarios {
     run("REPL DUMP " + dbName);
     String replDumpLocn = getResult(0,0);
     String replDumpId = getResult(0,1,true);
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + replDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + replDumpLocn + "'");
     verifySetup("REPL STATUS " + dbName + "_dupe", new String[]{replDumpId});
 
@@ -945,8 +935,6 @@ public class TestReplicationScenarios {
     String postDropReplDumpLocn = getResult(0,0);
     String postDropReplDumpId = getResult(0,1,true);
     LOG.info("Dumped to {} with id {}->{}", postDropReplDumpLocn, replDumpId, postDropReplDumpId);
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + postDropReplDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + postDropReplDumpLocn + "'");
 
     // verify that drops were replicated. This can either be from tables or ptns
@@ -1008,8 +996,6 @@ public class TestReplicationScenarios {
     run("REPL DUMP " + dbName);
     String replDumpLocn = getResult(0,0);
     String replDumpId = getResult(0,1,true);
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + replDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + replDumpLocn + "'");
 
     run("REPL STATUS " + dbName + "_dupe");
@@ -1054,8 +1040,6 @@ public class TestReplicationScenarios {
     // Drop partition after dump
     run("ALTER TABLE " + dbName + ".ptned_copy DROP PARTITION(b='1')");
 
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + postDropReplDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + postDropReplDumpLocn + "'");
 
     Exception e = null;
@@ -1124,8 +1108,6 @@ public class TestReplicationScenarios {
     run("REPL DUMP " + dbName);
     String replDumpLocn = getResult(0,0);
     String replDumpId = getResult(0,1,true);
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + replDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + replDumpLocn + "'");
 
     run("REPL STATUS " + dbName + "_dupe");
@@ -1200,8 +1182,6 @@ public class TestReplicationScenarios {
     String postAlterReplDumpLocn = getResult(0,0);
     String postAlterReplDumpId = getResult(0,1,true);
     LOG.info("Dumped to {} with id {}->{}", postAlterReplDumpLocn, replDumpId, postAlterReplDumpId);
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + postAlterReplDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + postAlterReplDumpLocn + "'");
 
     // Replication done, we now do the following verifications:
@@ -1294,8 +1274,6 @@ public class TestReplicationScenarios {
     String incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-Dump: Dumped to {} with id {} from {}", incrementalDumpLocn, incrementalDumpId, replDumpId);
     replDumpId = incrementalDumpId;
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
     verifyRun("SELECT * from " + dbName + "_dupe.unptned_late", unptn_data);
 
@@ -1323,8 +1301,6 @@ public class TestReplicationScenarios {
     incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-Dump: Dumped to {} with id {} from {}", incrementalDumpLocn, incrementalDumpId, replDumpId);
     replDumpId = incrementalDumpId;
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
 
     verifyRun("SELECT a from " + dbName + "_dupe.ptned_late WHERE b=1", ptn_data_1);
@@ -1362,8 +1338,6 @@ public class TestReplicationScenarios {
     String incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-Dump: Dumped to {} with id {} from {}", incrementalDumpLocn, incrementalDumpId, replDumpId);
     replDumpId = incrementalDumpId;
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
     verifyRun("SELECT a from " + dbName + ".unptned ORDER BY a", unptn_data);
     verifyRun("SELECT a from " + dbName + ".unptned_late ORDER BY a", unptn_data);
@@ -1383,8 +1357,6 @@ public class TestReplicationScenarios {
     incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-Dump: Dumped to {} with id {} from {}", incrementalDumpLocn, incrementalDumpId, replDumpId);
     replDumpId = incrementalDumpId;
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
 
     verifyRun("SELECT a from " + dbName + "_dupe.unptned_late ORDER BY a", unptn_data_after_ins);
@@ -1402,7 +1374,6 @@ public class TestReplicationScenarios {
 
     String[] ptn_data = new String[]{ "ten"};
     run("INSERT INTO TABLE " + dbName + ".ptned partition(b=1) values('" + ptn_data[0] + "')");
-    run("DROP TABLE " + dbName + ".ptned");
 
     // Inject a behaviour where it throws exception if an INSERT event is found
     // As we dynamically add a partition through INSERT INTO cmd, it should just add ADD_PARTITION
@@ -1439,7 +1410,7 @@ public class TestReplicationScenarios {
     eventTypeValidator.assertInjectionsPerformed(true,false);
     InjectableBehaviourObjectStore.resetGetNextNotificationBehaviour(); // reset the behaviour
 
-    verifyIfTableNotExist(replDbName , "ptned");
+    verifyRun("SELECT a from " + dbName + "_dupe.ptned where (b=1)", ptn_data);
   }
 
   @Test
@@ -1478,8 +1449,6 @@ public class TestReplicationScenarios {
     String incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-Dump: Dumped to {} with id {} from {}", incrementalDumpLocn, incrementalDumpId, replDumpId);
     replDumpId = incrementalDumpId;
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
     verifyRun("SELECT a from " + dbName + ".ptned where (b=1) ORDER BY a", ptn_data_1);
     verifyRun("SELECT a from " + dbName + ".ptned where (b=2) ORDER BY a", ptn_data_2);
@@ -1500,8 +1469,6 @@ public class TestReplicationScenarios {
     incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-Dump: Dumped to {} with id {} from {}", incrementalDumpLocn, incrementalDumpId, replDumpId);
     replDumpId = incrementalDumpId;
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
 
     verifyRun("SELECT a from " + dbName + "_dupe.ptned where (b=2)", data_after_ovwrite);
@@ -1580,8 +1547,6 @@ public class TestReplicationScenarios {
     String incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-Dump: Dumped to {} with id {} from {}", incrementalDumpLocn, incrementalDumpId, replDumpId);
     replDumpId = incrementalDumpId;
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
     verifyRun("SELECT name from " + dbName + "_dupe.namelist where (year=1980) ORDER BY name", ptn_year_1980);
     verifyRun("SELECT name from " + dbName + "_dupe.namelist where (day=1) ORDER BY name", ptn_day_1_2);
@@ -1607,8 +1572,6 @@ public class TestReplicationScenarios {
     incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-Dump: Dumped to {} with id {} from {}", incrementalDumpLocn, incrementalDumpId, replDumpId);
     replDumpId = incrementalDumpId;
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
 
     verifySetup("SELECT name from " + dbName + "_dupe.namelist where (year=1990 and month=5 and day=25)", data_after_ovwrite);
@@ -2039,8 +2002,6 @@ public class TestReplicationScenarios {
     String incrementalDumpLocn = getResult(0,0);
     String incrementalDumpId = getResult(0,1,true);
     LOG.info("Incremental-dump: Dumped to {} with id {}", incrementalDumpLocn, incrementalDumpId);
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '"+incrementalDumpLocn+"'");
 
     run("REPL STATUS " + dbName + "_dupe");
@@ -2063,8 +2024,6 @@ public class TestReplicationScenarios {
     incrementalDumpLocn = getResult(0, 0);
     incrementalDumpId = getResult(0,1,true);
     LOG.info("Incremental-dump: Dumped to {} with id {}", incrementalDumpLocn, incrementalDumpId);
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
     verifyRun("SELECT * from " + dbName + "_dupe.virtual_view2", ptn_data_1);
 
@@ -2078,8 +2037,6 @@ public class TestReplicationScenarios {
     incrementalDumpLocn = getResult(0, 0);
     incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-dump: Dumped to {} with id {}", incrementalDumpLocn, incrementalDumpId);
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
     verifyIfTableNotExist(dbName + "_dupe", "virtual_view");
   }
@@ -2267,8 +2224,6 @@ public class TestReplicationScenarios {
     String incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-Dump: Dumped to {} with id {} from {}", incrementalDumpLocn, incrementalDumpId, replDumpId);
     replDumpId = incrementalDumpId;
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
     verifyRun("SELECT a from " + dbName + ".unptned ORDER BY a", unptn_data);
     verifyRun("SELECT a from " + dbName + "_dupe.unptned ORDER BY a", unptn_data);
@@ -2858,8 +2813,6 @@ public class TestReplicationScenarios {
     String incrementalDumpLocn = getResult(0,0);
     String incrementalDumpId = getResult(0,1,true);
     LOG.info("Dumped to {} with id {}", incrementalDumpLocn, incrementalDumpId);
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '"+incrementalDumpLocn+"'");
 
     verifyRun("SELECT count(*) from " + dbName + "_dupe.unptned2", new String[]{"2"});
@@ -2971,8 +2924,6 @@ public class TestReplicationScenarios {
     String incrementalDumpLocn = getResult(0, 0);
     String incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-dump: Dumped to {} with id {}", incrementalDumpLocn, incrementalDumpId);
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '"+incrementalDumpLocn+"'");
     verifyIfTableNotExist(dbName + "_dupe", "acid_table_rename");
 
@@ -2987,8 +2938,6 @@ public class TestReplicationScenarios {
     incrementalDumpLocn = getResult(0, 0);
     incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-dump: Dumped to {} with id {}", incrementalDumpLocn, incrementalDumpId);
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '"+incrementalDumpLocn+"'");
     verifyIfTableNotExist(dbName + "_dupe", "acid_table_incremental");
 
@@ -2998,8 +2947,6 @@ public class TestReplicationScenarios {
     incrementalDumpLocn = getResult(0, 0);
     incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-dump: Dumped to {} with id {}", incrementalDumpLocn, incrementalDumpId);
-    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
-    printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '"+incrementalDumpLocn+"'");
     verifyIfTableNotExist(dbName + "_dupe", "acid_table_incremental");
   }
