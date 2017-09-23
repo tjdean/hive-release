@@ -2067,6 +2067,21 @@ public class TestReplicationScenarios {
     printOutput();
     run("REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
     verifyRun("SELECT * from " + dbName + "_dupe.virtual_view2", ptn_data_1);
+
+    // Test "DROP VIEW"
+    run("DROP VIEW " + dbName + ".virtual_view");
+    verifyIfTableNotExist(dbName, "virtual_view");
+
+    // Perform REPL-DUMP/LOAD
+    advanceDumpDir();
+    run("REPL DUMP " + dbName + " FROM " + incrementalDumpId);
+    incrementalDumpLocn = getResult(0, 0);
+    incrementalDumpId = getResult(0, 1, true);
+    LOG.info("Incremental-dump: Dumped to {} with id {}", incrementalDumpLocn, incrementalDumpId);
+    run("EXPLAIN REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
+    printOutput();
+    run("REPL LOAD " + dbName + "_dupe FROM '" + incrementalDumpLocn + "'");
+    verifyIfTableNotExist(dbName + "_dupe", "virtual_view");
   }
 
   @Test
