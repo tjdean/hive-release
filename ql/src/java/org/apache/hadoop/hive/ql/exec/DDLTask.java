@@ -157,6 +157,7 @@ import org.apache.hadoop.hive.ql.plan.DropTableDesc;
 import org.apache.hadoop.hive.ql.plan.FileMergeDesc;
 import org.apache.hadoop.hive.ql.plan.GrantDesc;
 import org.apache.hadoop.hive.ql.plan.GrantRevokeRoleDDL;
+import org.apache.hadoop.hive.ql.plan.KillQueryDesc;
 import org.apache.hadoop.hive.ql.plan.ListBucketingCtx;
 import org.apache.hadoop.hive.ql.plan.LockDatabaseDesc;
 import org.apache.hadoop.hive.ql.plan.LockTableDesc;
@@ -519,6 +520,11 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
           work.getAlterTableExchangePartition();
       if (alterTableExchangePartition != null) {
         return exchangeTablePartition(db, alterTableExchangePartition);
+      }
+
+      KillQueryDesc killQueryDesc = work.getKillQueryDesc();
+      if (killQueryDesc != null) {
+        return killQuery(db, killQueryDesc);
       }
     } catch (Throwable e) {
       failed(e);
@@ -2717,7 +2723,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
 
     // Write the results into the file
     final String noVal = " --- ";
-    
+
     DataOutputStream os = null;
     try {
       Path resFile = new Path(desc.getResFile());
@@ -2829,6 +2835,15 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
 
   private int abortTxns(Hive db, AbortTxnsDesc desc) throws HiveException {
     db.abortTransactions(desc.getTxnids());
+    return 0;
+  }
+
+  private int killQuery(Hive db, KillQueryDesc desc) throws HiveException {
+    SessionState sessionState = SessionState.get();
+    for (String queryId : desc.getQueryIds()) {
+      sessionState.getKillQuery().killQuery(queryId);
+    }
+    LOG.info("kill query called (" + desc.getQueryIds().toString() + ")");
     return 0;
   }
 
@@ -4659,7 +4674,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
 
       db.createTable(tbl, crtView.getIfNotExists());
       addIfAbsentByName(new WriteEntity(tbl, WriteEntity.WriteType.DDL_NO_LOCK));
-      
+
       //set lineage info
       DataContainer dc = new DataContainer(tbl.getTTable());
       SessionState.get().getLineageState().setLineage(new Path(crtView.getViewName()), dc, tbl.getCols());
