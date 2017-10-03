@@ -351,6 +351,10 @@ public class TableExport {
   public AuthEntities getAuthEntities() throws SemanticException {
     AuthEntities authEntities = new AuthEntities();
     try {
+      // Return if metadata-only
+      if (replicationSpec.isMetadataOnly()) {
+        return authEntities;
+      }
       PartitionIterable partitions = getPartitions();
       if (tableSpec != null) {
         if (tableSpec.tableHandle.isPartitioned()) {
