@@ -1,20 +1,21 @@
 /*
-  Licensed to the Apache Software Foundation (ASF) under one
-  or more contributor license agreements.  See the NOTICE file
-  distributed with this work for additional information
-  regarding copyright ownership.  The ASF licenses this file
-  to you under the Apache License, Version 2.0 (the
-  "License"); you may not use this file except in compliance
-  with the License.  You may obtain a copy of the License at
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-      http://www.apache.org/licenses/LICENSE-2.0
-
-  Unless required by applicable law or agreed to in writing, software
-  distributed under the License is distributed on an "AS IS" BASIS,
-  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  See the License for the specific language governing permissions and
-  limitations under the License.
-*/
 package org.apache.hadoop.hive.ql.exec;
 
 import org.apache.hadoop.hive.metastore.ReplChangeManager;
@@ -75,11 +76,10 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
       // be a CM uri in the from path.
       if (ReplChangeManager.isCMFileUri(fromPath, srcFs)) {
         String[] result = ReplChangeManager.getFileWithChksumFromURI(fromPath.toString());
-        Path sourcePath = ReplChangeManager
-            .getFileStatus(new Path(result[0]), result[1], conf)
-            .getPath();
+        ReplChangeManager.FileInfo sourceInfo = ReplChangeManager
+            .getFileInfo(new Path(result[0]), result[1], conf);
         if (FileUtils.copy(
-            sourcePath.getFileSystem(conf), sourcePath,
+            sourceInfo.getSrcFs(), sourceInfo.getSourcePath(),
             dstFs, toPath, false, false, conf)) {
           return 0;
         } else {
@@ -89,13 +89,13 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
         }
       }
 
-      List<Path> srcPaths = new ArrayList<>();
+      List<ReplChangeManager.FileInfo> srcFiles = new ArrayList<>();
       if (rwork.readSrcAsFilesList()) {
         // This flow is usually taken for REPL LOAD
         // Our input is the result of a _files listing, we should expand out _files.
-        srcPaths = filesInFileListing(srcFs, fromPath);
-        LOG.debug("ReplCopyTask _files contains:" + (srcPaths == null ? "null" : srcPaths.size()));
-        if ((srcPaths == null) || (srcPaths.isEmpty())) {
+        srcFiles = filesInFileListing(srcFs, fromPath);
+        LOG.debug("ReplCopyTask _files contains:" + (srcFiles == null ? "null" : srcFiles.size()));
+        if ((srcFiles == null) || (srcFiles.isEmpty())) {
           if (work.isErrorOnSrcEmpty()) {
             console.printError("No _files entry found on source: " + fromPath.toString());
             return 5;
@@ -119,18 +119,19 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
         for (FileStatus oneSrc : srcs) {
           console.printInfo("Copying file: " + oneSrc.getPath().toString());
           LOG.debug("ReplCopyTask :cp:" + oneSrc.getPath()+ "=>" + toPath);
-          srcPaths.add(oneSrc.getPath());
+          srcFiles.add(new ReplChangeManager.FileInfo(oneSrc.getPath().getFileSystem(conf),
+                                                      oneSrc.getPath()));
         }
       }
 
-      LOG.debug("ReplCopyTask numFiles: " + srcPaths.size());
+      LOG.debug("ReplCopyTask numFiles: " + srcFiles.size());
       boolean inheritPerms = conf.getBoolVar(HiveConf.ConfVars.HIVE_WAREHOUSE_SUBDIR_INHERIT_PERMS);
       if (!FileUtils.mkdir(dstFs, toPath, inheritPerms, conf)) {
         console.printError("Cannot make target directory: " + toPath.toString());
         return 2;
       }
       // Copy the files from different source file systems to one destination directory
-      new CopyUtils(rwork.distCpDoAsUser(), conf).doCopy(toPath, srcPaths);
+      new CopyUtils(rwork.distCpDoAsUser(), conf).copyAndVerify(toPath, srcFiles);
 
       return 0;
     } catch (Exception e) {
@@ -140,7 +141,7 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
     }
   }
 
-  private List<Path> filesInFileListing(FileSystem fs, Path dataPath)
+  private List<ReplChangeManager.FileInfo> filesInFileListing(FileSystem fs, Path dataPath)
       throws IOException {
     Path fileListing = new Path(dataPath, EximUtil.FILES_NAME);
     LOG.debug("ReplCopyTask filesInFileListing() reading " + fileListing.toUri());
@@ -150,19 +151,18 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
       // On success, but with nothing to return, we can return an empty list.
     }
 
-    List<Path> filePaths = new ArrayList<>();
+    List<ReplChangeManager.FileInfo> filePaths = new ArrayList<>();
     BufferedReader br = new BufferedReader(new InputStreamReader(fs.open(fileListing)));
     // TODO : verify if skipping charset here is okay
 
     String line = null;
-    while ( (line = br.readLine()) != null){
+    while ((line = br.readLine()) != null) {
       LOG.debug("ReplCopyTask :_filesReadLine:" + line);
 
       String[] fileWithChksum = ReplChangeManager.getFileWithChksumFromURI(line);
       try {
-        Path f = ReplChangeManager
-                .getFileStatus(new Path(fileWithChksum[0]), fileWithChksum[1], conf)
-                .getPath();
+        ReplChangeManager.FileInfo f = ReplChangeManager
+                .getFileInfo(new Path(fileWithChksum[0]), fileWithChksum[1], conf);
         filePaths.add(f);
       } catch (MetaException e) {
         // issue warning for missing file and throw exception
