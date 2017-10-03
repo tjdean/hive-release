@@ -30,11 +30,13 @@ import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.PartitionIterable;
 import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer.TableSpec;
 import org.apache.hadoop.hive.ql.parse.EximUtil;
 import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
+import org.apache.hadoop.hive.ql.parse.repl.dump.TableExport.AuthEntities;
 import org.apache.hadoop.hive.ql.parse.repl.dump.io.FileOperations;
 import org.apache.hadoop.hive.shims.HadoopShims;
 import org.apache.hadoop.hive.shims.ShimLoader;
@@ -61,7 +63,6 @@ public class TableExport {
   private final String distCpDoAsUser;
   private final HiveConf conf;
   private final Paths paths;
-  private final AuthEntities authEntities = new AuthEntities();
 
   public TableExport(Paths paths, TableSpec tableSpec,
       ReplicationSpec replicationSpec, Hive db, String distCpDoAsUser, HiveConf conf)
@@ -81,7 +82,7 @@ public class TableExport {
     this.paths = paths;
   }
 
-  public AuthEntities write() throws SemanticException {
+  public void write() throws SemanticException {
     if (tableSpec == null) {
       writeMetaData(null);
     } else if (shouldExport()) {
@@ -89,18 +90,17 @@ public class TableExport {
       if (tableSpec.tableHandle.isView()) {
         replicationSpec.setIsMetadataOnly(true);
       }
-      PartitionIterable withPartitions = partitions();
+      PartitionIterable withPartitions = getPartitions();
       writeMetaData(withPartitions);
       if (!replicationSpec.isMetadataOnly()) {
         writeData(withPartitions);
       }
     }
-    return authEntities;
   }
 
-  private PartitionIterable partitions() throws SemanticException {
+  private PartitionIterable getPartitions() throws SemanticException {
     try {
-      if (tableSpec.tableHandle.isPartitioned()) {
+      if (tableSpec != null && tableSpec.tableHandle != null && tableSpec.tableHandle.isPartitioned()) {
         if (tableSpec.specType == TableSpec.SpecType.TABLE_ONLY) {
           // TABLE-ONLY, fetch partitions if regular export, don't if metadata-only
           if (replicationSpec.isMetadataOnly()) {
@@ -148,19 +148,16 @@ public class TableExport {
     try {
       if (tableSpec.tableHandle.isPartitioned()) {
         if (partitions == null) {
-          throw new IllegalStateException(
-              "partitions cannot be null for partitionTable :" + tableSpec.tableName);
+          throw new IllegalStateException("partitions cannot be null for partitionTable :"
+              + tableSpec.tableName);
         }
-        new PartitionExport(paths, partitions, distCpDoAsUser, conf, authEntities)
-                .write(replicationSpec);
+        new PartitionExport(paths, partitions, distCpDoAsUser, conf).write(replicationSpec);
       } else {
         Path fromPath = tableSpec.tableHandle.getDataLocation();
-        //this is the data copy
+        // this is the data copy
         new FileOperations(fromPath, paths.dataExportDir(), distCpDoAsUser, conf)
-                .export(replicationSpec);
-        authEntities.inputs.add(new ReadEntity(tableSpec.tableHandle));
+            .export(replicationSpec);
       }
-      authEntities.outputs.add(toWriteEntity(paths.exportRootDir, conf));
     } catch (Exception e) {
       throw new SemanticException(e);
     }
@@ -176,9 +173,9 @@ public class TableExport {
    */
   public static class Paths {
     private final HiveConf conf;
-    public final Path exportRootDir;
+    private final Path exportRootDir;
     private final FileSystem exportFileSystem;
-
+    private boolean writeData = true;
     /**
      * this is just a helper function interface which creates the path object from the two different
      * constructor's required by users of TableExport.
@@ -187,46 +184,48 @@ public class TableExport {
       Path path() throws SemanticException;
     }
 
-    public Paths(final String astRepresentationForErrorMs, final Path dbRoot, final String tblName,
-        final HiveConf conf) throws SemanticException {
+    public Paths(final String astRepresentationForErrorMsg, final Path dbRoot,
+        final String tblName, final HiveConf conf) throws SemanticException {
       this(new Function() {
         @Override
         public Path path() throws SemanticException {
           Path tableRoot = new Path(dbRoot, tblName);
           URI exportRootDir = EximUtil.getValidatedURI(conf, tableRoot.toUri().toString());
-          validateTargetDir(conf, astRepresentationForErrorMs, exportRootDir);
+          validateTargetDir(conf, astRepresentationForErrorMsg, exportRootDir);
           return new Path(exportRootDir);
         }
-      }, conf);
+      }, conf, true);
     }
 
-    Paths(Function builder, HiveConf conf) throws SemanticException {
+    public Paths(Function builder, HiveConf conf, boolean shouldWriteData) throws SemanticException {
       this.conf = conf;
       this.exportRootDir = builder.path();
       try {
-        this.exportFileSystem = this.exportRootDir.getFileSystem(conf);
-        mkdir(conf, exportFileSystem, exportRootDir);
+        this.exportFileSystem = this.getExportRootDir().getFileSystem(conf);
+        if (writeData) {
+          mkdir(conf, exportFileSystem, getExportRootDir());
+        }
       } catch (IOException e) {
         throw new SemanticException(e);
       }
     }
 
-    public Paths(final String path, final HiveConf conf)
+    public Paths(final String path, final HiveConf conf, boolean shouldWriteData)
         throws SemanticException {
       this(new Function() {
         @Override
         public Path path() throws SemanticException {
           return new Path(EximUtil.getValidatedURI(conf, path));
         }
-      }, conf);
+      }, conf, shouldWriteData);
     }
 
     Path partitionExportDir(String partitionName) throws SemanticException {
-      return exportDir(new Path(exportRootDir, partitionName));
+      return exportDir(new Path(getExportRootDir(), partitionName));
     }
 
     private Path metaDataExportFile() {
-      return new Path(exportRootDir, EximUtil.METADATA_NAME);
+      return new Path(getExportRootDir(), EximUtil.METADATA_NAME);
     }
 
     /**
@@ -234,7 +233,7 @@ public class TableExport {
      * Partition's data export directory is created within the export semantics of partition.
      */
     private Path dataExportDir() throws SemanticException {
-      return exportDir(new Path(exportRootDir, EximUtil.DATA_PATH_NAME));
+      return exportDir(new Path(getExportRootDir(), EximUtil.DATA_PATH_NAME));
     }
 
     private Path exportDir(Path exportDir) throws SemanticException {
@@ -249,10 +248,10 @@ public class TableExport {
       }
     }
 
-    private static void mkdir(HiveConf conf, final FileSystem fileSystem, final Path path)
+    public static void mkdir(HiveConf conf, final FileSystem fileSystem, final Path path)
         throws IOException {
       if(fileSystem.exists(path)) return;
-      Tuple tuple = pathsForPermissions(fileSystem, path);
+      PathsForPermission tuple = getPathsForPermissions(fileSystem, path);
       HadoopShims shims = ShimLoader.getHadoopShims();
       HdfsFileStatus permissionsToSet = shims.getFullFileStatus(conf, fileSystem,
           tuple.nearestParentAvailable);
@@ -261,17 +260,6 @@ public class TableExport {
       fileSystem.mkdirs(path);
       shims.setFullFileStatus(conf, permissionsToSet, fileSystem,
           tuple.childNotExistingForNearestParentAvailable, true);
-    }
-
-    private static class Tuple {
-      private final Path nearestParentAvailable;
-      private final Path childNotExistingForNearestParentAvailable;
-
-      Tuple(Path nearestParentAvailable,
-          Path childNotExistingForNearestParentAvailable) {
-        this.nearestParentAvailable = nearestParentAvailable;
-        this.childNotExistingForNearestParentAvailable = childNotExistingForNearestParentAvailable;
-      }
     }
 
     /**
@@ -284,20 +272,20 @@ public class TableExport {
      * 'partition1=1/partition2=2'  so tuple will have nearestParentAvailable = [some_dir] and
      * childNotExistingForNearestParentAvailable = '[some_dir]/partition1=1'
      */
-    private static Tuple pathsForPermissions(FileSystem fileSystem, Path path)
+    private static PathsForPermission getPathsForPermissions(FileSystem fileSystem, Path path)
         throws IOException {
       Path temp = path;
       Path parent = temp.getParent();
       while (parent != null) {
         if (fileSystem.exists(parent)) {
-          return new Tuple(parent, temp);
+          return new PathsForPermission(parent, temp);
         } else {
           temp = parent;
           parent = temp.getParent();
         }
       }
-      throw new IllegalStateException(
-          "Could not find a existing parent for path " + path + " to inherit permissions from");
+      throw new IllegalStateException("Could not find a existing parent for path " + path
+          + " to inherit permissions from");
     }
 
     /**
@@ -332,6 +320,20 @@ public class TableExport {
         throw new SemanticException(astRepresentationForErrorMsg, e);
       }
     }
+
+    public Path getExportRootDir() {
+      return exportRootDir;
+    }
+  }
+
+  public static class PathsForPermission {
+    private final Path nearestParentAvailable;
+    private final Path childNotExistingForNearestParentAvailable;
+
+    PathsForPermission(Path nearestParentAvailable, Path childNotExistingForNearestParentAvailable) {
+      this.nearestParentAvailable = nearestParentAvailable;
+      this.childNotExistingForNearestParentAvailable = childNotExistingForNearestParentAvailable;
+    }
   }
 
   public static class AuthEntities {
@@ -344,5 +346,30 @@ public class TableExport {
     public final Set<ReadEntity> inputs =
         Collections.newSetFromMap(new ConcurrentHashMap<ReadEntity, Boolean>());
     public final Set<WriteEntity> outputs = new HashSet<>();
+  }
+
+  public AuthEntities getAuthEntities() throws SemanticException {
+    AuthEntities authEntities = new AuthEntities();
+    try {
+      PartitionIterable partitions = getPartitions();
+      if (tableSpec != null) {
+        if (tableSpec.tableHandle.isPartitioned()) {
+          if (partitions == null) {
+            throw new IllegalStateException("partitions cannot be null for partitionTable :"
+                + tableSpec.tableName);
+          }
+          new PartitionExport(paths, partitions, distCpDoAsUser, conf).write(replicationSpec);
+          for (Partition partition : partitions) {
+            authEntities.inputs.add(new ReadEntity(partition));
+          }
+        } else {
+          authEntities.inputs.add(new ReadEntity(tableSpec.tableHandle));
+        }
+      }
+      authEntities.outputs.add(toWriteEntity(paths.getExportRootDir(), conf));
+    } catch (Exception e) {
+      throw new SemanticException(e);
+    }
+    return authEntities;
   }
 }
