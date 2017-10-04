@@ -65,6 +65,7 @@ import org.apache.hadoop.hive.ql.plan.AddPartitionDesc;
 import org.apache.hadoop.hive.ql.plan.ImportTableDesc;
 import org.apache.hadoop.hive.ql.plan.DDLWork;
 import org.apache.hadoop.hive.ql.plan.LoadTableDesc;
+import org.apache.hadoop.hive.ql.plan.LoadTableDesc.LoadFileType;
 import org.apache.hadoop.hive.ql.plan.MoveWork;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.serde.serdeConstants;
@@ -355,7 +356,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     Task<?> copyTask = ReplCopyTask.getLoadCopyTask(replicationSpec, dataPath, tmpPath, x.getConf());
     LoadTableDesc loadTableWork = new LoadTableDesc(tmpPath,
         Utilities.getTableDesc(table), new TreeMap<String, String>(),
-        replace);
+        replace ? LoadFileType.REPLACE_ALL : LoadFileType.OVERWRITE_EXISTING);
     MoveWork moveWork = new MoveWork(x.getInputs(), x.getOutputs(), loadTableWork, null, false);
     moveWork.setInImportScope(true);
     Task<?> loadTableTask = TaskFactory.get(new MoveWork(x.getInputs(),
@@ -427,7 +428,8 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
           x.getOutputs(), addPartitionDesc), x.getConf());
       LoadTableDesc loadTableWork = new LoadTableDesc(tmpPath,
           Utilities.getTableDesc(table),
-          partSpec.getPartSpec(), replicationSpec.isReplace());
+          partSpec.getPartSpec(),
+          replicationSpec.isReplace() ? LoadFileType.REPLACE_ALL : LoadFileType.OVERWRITE_EXISTING);
       loadTableWork.setInheritTableSpecs(false);
       MoveWork moveWork = new MoveWork(x.getInputs(), x.getOutputs(), loadTableWork, null, false);
       moveWork.setInImportScope(true);
