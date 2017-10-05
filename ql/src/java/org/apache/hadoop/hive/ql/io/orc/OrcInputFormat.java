@@ -868,7 +868,6 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
     private OrcFile.WriterVersion writerVersion;
     private long projColsUncompressedSize;
     private List<OrcSplit> deltaSplits;
-    private final SplitInfo splitInfo;
     private final UserGroupInformation ugi;
     private SchemaEvolution evolution;
 
@@ -882,7 +881,6 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
       locations = SHIMS.getLocationsWithOffset(fs, file);
       this.isOriginal = splitInfo.isOriginal;
       this.deltas = splitInfo.deltas;
-      this.splitInfo = splitInfo;
       this.hasBase = splitInfo.hasBase;
       this.projColsUncompressedSize = -1;
       this.deltaSplits = splitInfo.getSplits();
@@ -1064,12 +1062,9 @@ public class OrcInputFormat  implements InputFormat<NullWritable, OrcStruct>,
       // 2) delete all rows
       // 3) major compaction
       // 4) insert some rows
-      // In such cases, consider base files without any stripes as uncovered delta
+      // In such cases, consider entire base delta file as an orc split (similar to what BI strategy does)
       if (stripes == null || stripes.isEmpty()) {
-        AcidOutputFormat.Options options = AcidUtils.parseBaseBucketFilename(file.getPath(), context.conf);
-        int bucket = options.getBucket();
-        splitInfo.covered[bucket] = false;
-        deltaSplits = splitInfo.getSplits();
+        splits.add(createSplit(0, file.getLen(), orcTail));
       } else {
         // if we didn't have predicate pushdown, read everything
         if (includeStripe == null) {
