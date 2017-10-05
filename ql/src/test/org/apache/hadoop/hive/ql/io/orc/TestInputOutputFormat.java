@@ -2809,7 +2809,7 @@ public class TestInputOutputFormat {
       assertTrue(split.toString().contains("start=3"));
       assertTrue(split.toString().contains("hasFooter=false"));
       assertTrue(split.toString().contains("hasBase=true"));
-      assertTrue(split.toString().contains("deltas=0"));
+      assertTrue(split.toString().contains("deltas=[]"));
       if (split instanceof OrcSplit) {
         assertFalse("No footer serialize test for non-vector reader, hasFooter is not expected in" +
                 " orc splits.", ((OrcSplit) split).hasFooter());
@@ -2881,7 +2881,7 @@ public class TestInputOutputFormat {
       assertTrue(split.toString().contains("start=3"));
       assertTrue(split.toString().contains("hasFooter=true"));
       assertTrue(split.toString().contains("hasBase=true"));
-      assertTrue(split.toString().contains("deltas=0"));
+      assertTrue(split.toString().contains("deltas=[]"));
       if (split instanceof OrcSplit) {
         assertTrue("Footer serialize test for non-vector reader, hasFooter is expected in" +
                 " orc splits.", ((OrcSplit) split).hasFooter());
@@ -2954,7 +2954,7 @@ public class TestInputOutputFormat {
       assertTrue(split.toString().contains("start=3"));
       assertTrue(split.toString().contains("hasFooter=false"));
       assertTrue(split.toString().contains("hasBase=true"));
-      assertTrue(split.toString().contains("deltas=0"));
+      assertTrue(split.toString().contains("deltas=[]"));
       if (split instanceof OrcSplit) {
         assertFalse("No footer serialize test for vector reader, hasFooter is not expected in" +
                 " orc splits.", ((OrcSplit) split).hasFooter());
@@ -3029,7 +3029,7 @@ public class TestInputOutputFormat {
       assertTrue(split.toString().contains("start=3"));
       assertTrue(split.toString().contains("hasFooter=true"));
       assertTrue(split.toString().contains("hasBase=true"));
-      assertTrue(split.toString().contains("deltas=0"));
+      assertTrue(split.toString().contains("deltas=[]"));
       if (split instanceof OrcSplit) {
         assertTrue("Footer serialize test for vector reader, hasFooter is expected in" +
                 " orc splits.", ((OrcSplit) split).hasFooter());
@@ -3102,7 +3102,7 @@ public class TestInputOutputFormat {
       assertTrue(split.toString().contains("start=3"));
       assertTrue(split.toString().contains("hasFooter=false"));
       assertTrue(split.toString().contains("hasBase=true"));
-      assertTrue(split.toString().contains("deltas=0"));
+      assertTrue(split.toString().contains("deltas=[]"));
       if (split instanceof OrcSplit) {
         assertFalse("No footer serialize test for non-vector reader, hasFooter is not expected in" +
                 " orc splits.", ((OrcSplit) split).hasFooter());
@@ -3177,7 +3177,7 @@ public class TestInputOutputFormat {
       assertTrue(split.toString().contains("start=3"));
       assertTrue(split.toString().contains("hasFooter=true"));
       assertTrue(split.toString().contains("hasBase=true"));
-      assertTrue(split.toString().contains("deltas=0"));
+      assertTrue(split.toString().contains("deltas=[]"));
       if (split instanceof OrcSplit) {
         assertTrue("Footer serialize test for ACID reader, hasFooter is expected in" +
                 " orc splits.", ((OrcSplit) split).hasFooter());
@@ -3252,8 +3252,8 @@ public class TestInputOutputFormat {
       assertTrue(split.toString().contains("hasBase=true"));
       // NOTE: don't be surprised if deltas value is different
       // in older release deltas=2 as min and max transaction are added separately to delta list.
-      // in newer release since both of them are put together deltas=1
-      assertTrue(split.toString().contains("deltas=2"));
+      // in newer release since both of them are put together deltas=1 (as of HIVE-13985/BUG-59914 it's 1)
+      assertTrue(split.toString().contains("deltas=[{ minTxnId: 1 maxTxnId: 2 stmtIds: [] }]]"));
       if (split instanceof OrcSplit) {
         assertFalse("No footer serialize test for ACID reader, hasFooter is not expected in" +
                 " orc splits.", ((OrcSplit) split).hasFooter());
@@ -3330,8 +3330,8 @@ public class TestInputOutputFormat {
       assertTrue(split.toString().contains("hasBase=true"));
       // NOTE: don't be surprised if deltas value is different
       // in older release deltas=2 as min and max transaction are added separately to delta list.
-      // in newer release since both of them are put together deltas=1
-      assertTrue(split.toString().contains("deltas=2"));
+      // in newer release since both of them are put together deltas=1 (as of HIVE-13985/BUG-59914 it's 1)
+      assertTrue(split.toString().contains("deltas=[{ minTxnId: 1 maxTxnId: 2 stmtIds: [] }]]"));
       if (split instanceof OrcSplit) {
         assertTrue("Footer serialize test for ACID reader, hasFooter is not expected in" +
                 " orc splits.", ((OrcSplit) split).hasFooter());
