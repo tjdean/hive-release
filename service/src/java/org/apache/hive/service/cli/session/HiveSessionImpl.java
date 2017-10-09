@@ -142,6 +142,13 @@ public class HiveSessionImpl implements HiveSession {
     sessionState.setUserIpAddress(ipAddress);
     sessionState.setIsHiveServerQuery(true);
     sessionState.setForwardedAddresses(SessionManager.getForwardedAddresses());
+    try {
+      if (sessionManager != null) {
+        sessionState.setHiveServer2Host(sessionManager.getHiveServer2HostName());
+      }
+    } catch (Exception e) {
+      throw new HiveSQLException(e);
+    }
     sessionState.setKillQuery(new KillQueryImpl(operationManager));
     SessionState.start(sessionState);
     try {
