@@ -31,6 +31,7 @@ import java.util.Stack;
 
 import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
+import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsData;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsObj;
 import org.apache.hadoop.hive.metastore.api.DoubleColumnStatsData;
@@ -265,6 +266,20 @@ public class StatsOptimizer implements Transform {
         if (tsOp.getConf().getRowLimit() != -1) {
           // table is sampled. In some situation, we really can leverage row
           // limit. In order to be safe, we do not use it now.
+          return null;
+        }
+        Table tbl = tsOp.getConf().getTableMetadata();
+        if (MetaStoreUtils.isExternalTable(tbl.getTTable())) {
+          Logger.info("Table " + tbl.getTableName() + " is external. Skip StatsOptimizer.");
+          return null;
+        }
+        if (AcidUtils.isAcidTable(tbl)) {
+          Logger.info("Table " + tbl.getTableName() + " is ACID table. Skip StatsOptimizer.");
+          return null;
+        }
+        Long rowCnt = getRowCnt(pctx, tsOp, tbl);
+        // if we can not have correct table stats, then both the table stats and column stats are not useful.
+        if (rowCnt == null) {
           return null;
         }
         SelectOperator pselOp = (SelectOperator)stack.get(1);
