@@ -129,7 +129,9 @@ public abstract class Task<T extends Serializable> implements Serializable, Node
     isdone = false;
     started = false;
     setInitialized();
-    this.conf = conf;
+    if (null == this.conf) {
+      this.conf = conf;
+    }
 
     try {
       db = Hive.get(conf);
@@ -358,7 +360,9 @@ public abstract class Task<T extends Serializable> implements Serializable, Node
     return isrunnable;
   }
 
-
+  public void setConf(HiveConf conf) {
+    this.conf = conf;
+  }
 
   public void setWork(T work) {
     this.work = work;
