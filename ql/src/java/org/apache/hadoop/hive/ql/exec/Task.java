@@ -57,7 +57,7 @@ public abstract class Task<T extends Serializable> implements Serializable, Node
   public transient TaskHandle taskHandle;
   protected transient boolean started;
   protected transient boolean initialized;
-  protected transient boolean isdone;
+  protected transient volatile boolean isdone;
   protected transient boolean queued;
   protected transient HiveConf conf;
   protected transient Hive db;
@@ -348,6 +348,7 @@ public abstract class Task<T extends Serializable> implements Serializable, Node
     if (parentTasks != null) {
       for (Task<? extends Serializable> parent : parentTasks) {
         if (!parent.done()) {
+          LOG.debug("Task " + this + " cannot run because parent " + parent + " isn't done.");
           isrunnable = false;
           break;
         }
