@@ -18,6 +18,7 @@
 package org.apache.hadoop.hive.metastore;
 
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.ObjectStore.RetryingExecutor;
 import org.apache.hadoop.hive.metastore.api.CurrentNotificationEventId;
 import org.apache.hadoop.hive.metastore.api.NotificationEvent;
 import org.apache.hadoop.hive.metastore.api.NotificationEventRequest;
@@ -191,4 +192,11 @@ public class TestObjectStore {
       previousId = event.getEventId();
     }
   }
+
+  @Test
+  public void testRetryingExecutorSleep() throws Exception {
+    RetryingExecutor re = new ObjectStore.RetryingExecutor(new HiveConf(), null);
+    assertTrue("invalid sleep value", re.getSleepInterval() >= 0);
+  }
+
 }
