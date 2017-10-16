@@ -1505,7 +1505,12 @@ public class Driver implements CommandProcessor {
         if (tskRun == null) {
           continue;
         }
-        hookContext.addCompleteTask(tskRun);
+        String opName = plan.getOperationName();
+        boolean isReplicationOperation = opName.equals(HiveOperation.REPLDUMP.getOperationName())
+            || opName.equals(HiveOperation.REPLLOAD.getOperationName());
+        if (!isReplicationOperation) {
+          hookContext.addCompleteTask(tskRun);
+        }
 
         Task<? extends Serializable> tsk = tskRun.getTask();
         TaskResult result = tskRun.getTaskResult();
