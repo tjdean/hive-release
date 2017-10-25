@@ -1898,6 +1898,35 @@ public class TestReplicationScenarios {
     verifyIfPartitionNotExist(replDbName, "ptned", new ArrayList<>(Arrays.asList(ptnVal)));
   }
 
+  /**
+   * Verify replication when string partition column value has special chars
+   * @throws IOException
+   */
+  @Test
+  public void testWithStringPartitionSpecialChars() throws IOException {
+    String testName = "testWithStringPartitionSpecialChars";
+    String dbName = createDB(testName);
+    run("CREATE TABLE " + dbName + ".ptned(v string) PARTITIONED BY (p string)");
+    String[] ptn_data = new String[] { "fourteen", "fifteen" };
+    String[] ptnVal = new String [] {"has a space, /, and \t tab", "another set of '#@ chars" };
+    run("INSERT INTO TABLE " + dbName + ".ptned PARTITION(p=\"" + ptnVal[0] +"\") values('" + ptn_data[0] + "')");
+
+    // Bootstrap dump/load
+    String replDbName = dbName + "_dupe";
+    Tuple bootstrapDump = bootstrapLoadAndVerify(dbName, replDbName);
+
+    run("INSERT INTO TABLE " + dbName + ".ptned PARTITION(p=\"" + ptnVal[1] +"\") values('" + ptn_data[1] + "')");
+    // Replicate insert event and verify
+    Tuple incrDump = incrementalLoadAndVerify(dbName, bootstrapDump.lastReplId, replDbName);
+    verifyRun("SELECT p from " + replDbName + ".ptned ORDER BY p desc", ptnVal);
+
+    run("ALTER TABLE " + dbName + ".ptned DROP PARTITION(p=\"" + ptnVal[0] + "\")");
+
+    // Replicate drop partition event and verify
+    incrementalLoadAndVerify(dbName, incrDump.lastReplId, replDbName);
+    verifyIfPartitionNotExist(replDbName, "ptned", new ArrayList<>(Arrays.asList(ptnVal[0])));
+  }
+  
   @Test
   public void testRenameTableWithCM() throws IOException {
     String testName = "renameTableWithCM";
