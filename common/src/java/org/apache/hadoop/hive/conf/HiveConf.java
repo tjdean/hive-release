@@ -2244,11 +2244,6 @@ public class HiveConf extends Configuration {
         METASTOREPWD.varname + "," + HIVE_SERVER2_SSL_KEYSTORE_PASSWORD.varname,
         "Comma separated list of configuration options which should not be read by normal user like passwords"),
 
-    HIVE_EXEC_MOVE_FILES_FROM_SOURCE_DIR("hive.exec.move.files.from.source.dir", false,
-        "When moving/renaming a directory from source to destination, individually move each \n" +
-        "file in the source directory, rather than renaming the source directory. This may \n" +
-        "help protect against files written to temp directories by runaway task attempts."),
-
     HIVE_MOVE_FILES_THREAD_COUNT("hive.mv.files.thread", 15, "Number of threads"
          + " used to move files in move task. Set it to 0 to disable multi-threaded file moves. This parameter is also used by"
          + " MSCK to check tables."),
@@ -2498,7 +2493,12 @@ public class HiveConf extends Configuration {
 	"Expected inflation factor between disk/in memory representation of hash tables"),
     HIVE_LOG_TRACE_ID("hive.log.trace.id", "",
         "Log tracing id that can be used by upstream clients for tracking respective logs. " +
-        "Truncated to " + LOG_PREFIX_LENGTH + " characters. Defaults to use auto-generated session id.");
+        "Truncated to " + LOG_PREFIX_LENGTH + " characters. Defaults to use auto-generated session id."),
+
+    /* BLOBSTORE section */
+
+    HIVE_BLOBSTORE_SUPPORTED_SCHEMES("hive.blobstore.supported.schemes", "s3,s3a,s3n",
+            "Comma-separated list of supported blobstore schemes.");
 
     public final String varname;
     private final String defaultExpr;
