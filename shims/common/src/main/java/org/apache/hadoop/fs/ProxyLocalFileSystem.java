@@ -37,6 +37,11 @@ public class ProxyLocalFileSystem extends FilterFileSystem {
 
   protected LocalFileSystem localFs;
 
+  /**
+   * URI scheme
+   */
+  private String scheme;
+
   public ProxyLocalFileSystem() {
     localFs = new LocalFileSystem();
   }
@@ -50,7 +55,7 @@ public class ProxyLocalFileSystem extends FilterFileSystem {
     // create a proxy for the local filesystem
     // the scheme/authority serving as the proxy is derived
     // from the supplied URI
-    String scheme = name.getScheme();
+    this.scheme = name.getScheme();
     String nameUriString = name.toString();
     if (Shell.WINDOWS) {
       // Replace the encoded backward slash with forward slash
@@ -62,11 +67,15 @@ public class ProxyLocalFileSystem extends FilterFileSystem {
     }
 
     String authority = name.getAuthority() != null ? name.getAuthority() : "";
-    String proxyUriString = nameUriString + "://" + authority + "/";
+    String proxyUriString = scheme + "://" + authority + "/";
 
     fs = ShimLoader.getHadoopShims().createProxyFileSystem(
         localFs, URI.create(proxyUriString));
 
     fs.initialize(name, conf);
+  }
+
+  public String getScheme() {
+    return scheme;
   }
 }

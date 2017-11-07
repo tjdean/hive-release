@@ -1775,11 +1775,6 @@ public class HiveConf extends Configuration {
         METASTOREPWD.varname + "," + HIVE_SERVER2_SSL_KEYSTORE_PASSWORD.varname,
         "Comma separated list of configuration options which should not be read by normal user like passwords"),
 
-    HIVE_EXEC_MOVE_FILES_FROM_SOURCE_DIR("hive.exec.move.files.from.source.dir", false,
-        "When moving/renaming a directory from source to destination, individually move each \n" +
-        "file in the source directory, rather than renaming the source directory. This may \n" +
-        "help protect against files written to temp directories by runaway task attempts."),
-
     // If this is set all move tasks at the end of a multi-insert query will only begin once all
     // outputs are ready
     HIVE_MULTI_INSERT_MOVE_TASKS_SHARE_DEPENDENCIES(
@@ -1959,7 +1954,12 @@ public class HiveConf extends Configuration {
        " others; 'ignore' will skip the validation (legacy behavior, causes bugs in many cases)"),
     HIVE_LOG_TRACE_ID("hive.log.trace.id", "",
         "Log tracing id that can be used by upstream clients for tracking respective logs. " +
-        "Truncated to " + LOG_PREFIX_LENGTH + " characters. Defaults to use auto-generated session id.");
+        "Truncated to " + LOG_PREFIX_LENGTH + " characters. Defaults to use auto-generated session id."),
+
+    /* BLOBSTORE section */
+
+    HIVE_BLOBSTORE_SUPPORTED_SCHEMES("hive.blobstore.supported.schemes", "s3,s3a,s3n",
+            "Comma-separated list of supported blobstore schemes.");
 
 
     public final String varname;
