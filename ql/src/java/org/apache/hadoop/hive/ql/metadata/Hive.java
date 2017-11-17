@@ -2019,7 +2019,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
       Table tbl, AddPartitionDesc.OnePartitionDesc addSpec) throws HiveException {
     Path location = addSpec.getLocation() != null
         ? new Path(tbl.getPath(), addSpec.getLocation()) : null;
-    if (location !=null && !Utilities.isDefaultNameNode(conf)) {
+    if (location != null) {
       // Ensure that it is a full qualified path (in most cases it will be since tbl.getPath() is full qualified)
       location = new Path(Utilities.getQualifiedPath(conf, location));
     }
@@ -3165,11 +3165,13 @@ private void constructOneLBLocationMap(FileStatus fSta,
     }
 
     //Check if different encryption zones
-    HadoopShims.HdfsFileStatus destStatus = null;
-    HadoopShims.HdfsEncryptionShim hdfsEncryptionShim = SessionState.get().getHdfsEncryptionShim();
+    HadoopShims.HdfsEncryptionShim srcHdfsEncryptionShim = SessionState.get().getHdfsEncryptionShim(srcFs);
+    HadoopShims.HdfsEncryptionShim destHdfsEncryptionShim = SessionState.get().getHdfsEncryptionShim(destFs);
     try {
-      return hdfsEncryptionShim != null && (hdfsEncryptionShim.isPathEncrypted(srcf) || hdfsEncryptionShim.isPathEncrypted(destf))
-        && !hdfsEncryptionShim.arePathsOnSameEncryptionZone(srcf, destf);
+      return srcHdfsEncryptionShim != null
+          && destHdfsEncryptionShim != null
+          && (srcHdfsEncryptionShim.isPathEncrypted(srcf) || destHdfsEncryptionShim.isPathEncrypted(destf))
+          && !srcHdfsEncryptionShim.arePathsOnSameEncryptionZone(srcf, destf, destHdfsEncryptionShim);
     } catch (IOException e) {
       throw new HiveException(e);
     }
