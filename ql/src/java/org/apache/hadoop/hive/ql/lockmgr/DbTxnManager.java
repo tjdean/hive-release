@@ -1,19 +1,19 @@
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+/*
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
  */
 package org.apache.hadoop.hive.ql.lockmgr;
 
@@ -22,6 +22,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.ql.io.AcidUtils;
+import org.apache.hadoop.hive.ql.plan.HiveOperation;
+import org.apache.hadoop.hive.ql.plan.LockDatabaseDesc;
+import org.apache.hadoop.hive.ql.plan.LockTableDesc;
+import org.apache.hadoop.hive.ql.plan.UnlockDatabaseDesc;
+import org.apache.hadoop.hive.ql.plan.UnlockTableDesc;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hive.common.util.ShutdownHookManager;
 import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.common.ValidTxnList;
@@ -42,6 +48,8 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.thrift.TException;
 
+import java.io.IOException;
+import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -319,7 +327,7 @@ public class DbTxnManager extends HiveTxnManagerImpl {
       return null;
     }
 
-    List<HiveLock> locks = new ArrayList<HiveLock>(1); 
+    List<HiveLock> locks = new ArrayList<HiveLock>(1);
     LockState lockState = lockMgr.lock(rqstBuilder.build(), queryId, isBlocking, locks);
     ctx.setHiveLocks(locks);
     return lockState;
@@ -341,7 +349,7 @@ public class DbTxnManager extends HiveTxnManagerImpl {
       ctx.setHeartbeater(startHeartbeat(delay));
     }
   }
-  
+
   @Override
   public void releaseLocks(List<HiveLock> hiveLocks) throws LockException {
     if (lockMgr != null) {
@@ -478,7 +486,14 @@ public class DbTxnManager extends HiveTxnManagerImpl {
   private Heartbeater startHeartbeat(long initialDelay) throws LockException {
     long heartbeatInterval = getHeartbeatInterval(conf);
     assert heartbeatInterval > 0;
-    Heartbeater heartbeater = new Heartbeater(this, conf, queryId);
+    UserGroupInformation currentUser;
+    try {
+      currentUser = UserGroupInformation.getCurrentUser();
+    } catch (IOException e) {
+      throw new LockException("error while getting current user,", e);
+    }
+
+    Heartbeater heartbeater = new Heartbeater(this, conf, queryId, currentUser);
     // For negative testing purpose..
     if(conf.getBoolVar(HiveConf.ConfVars.HIVE_IN_TEST) && conf.getBoolVar(HiveConf.ConfVars.HIVETESTMODEFAILHEARTBEATER)) {
       initialDelay = 0;
@@ -649,6 +664,7 @@ public class DbTxnManager extends HiveTxnManagerImpl {
   public static class Heartbeater implements Runnable {
     private HiveTxnManager txnMgr;
     private HiveConf conf;
+    private UserGroupInformation currentUser;
     LockException lockException;
     private final String queryId;
 
@@ -658,10 +674,13 @@ public class DbTxnManager extends HiveTxnManagerImpl {
     /**
      *
      * @param txnMgr transaction manager for this operation
+     * @param currentUser
      */
-    Heartbeater(HiveTxnManager txnMgr, HiveConf conf, String queryId) {
+    Heartbeater(HiveTxnManager txnMgr, HiveConf conf, String queryId,
+        UserGroupInformation currentUser) {
       this.txnMgr = txnMgr;
       this.conf = conf;
+      this.currentUser = currentUser;
       lockException = null;
       this.queryId = queryId;
     }
@@ -676,16 +695,23 @@ public class DbTxnManager extends HiveTxnManagerImpl {
         if(conf.getBoolVar(HiveConf.ConfVars.HIVE_IN_TEST) && conf.getBoolVar(HiveConf.ConfVars.HIVETESTMODEFAILHEARTBEATER)) {
           throw new LockException(HiveConf.ConfVars.HIVETESTMODEFAILHEARTBEATER.name() + "=true");
         }
-        LOG.debug("Heartbeating...");
-        txnMgr.heartbeat();
+        LOG.debug("Heartbeating...for currentUser: " + currentUser);
+        currentUser.doAs(new PrivilegedExceptionAction<Object>() {
+          @Override
+          public Object run() throws Exception {
+            txnMgr.heartbeat();
+            return null;
+          }
+        });
       } catch (LockException e) {
-        LOG.error("Failed trying to heartbeat queryId=" + queryId + ": " + e.getMessage());
+        LOG.error("Failed trying to heartbeat queryId=" + queryId + ", currentUser: "
+            + currentUser + ": " + e.getMessage());
         lockException = e;
       } catch (Throwable t) {
-        LOG.error("Failed trying to heartbeat queryId=" + queryId + ": " + t.getMessage(), t);
-        lockException =
-            new LockException("Failed trying to heartbeat queryId=" + queryId + ": "
-                + t.getMessage(), t);
+        String errorMsg = "Failed trying to heartbeat queryId=" + queryId + ", currentUser: "
+            + currentUser + ": " + t.getMessage();
+        LOG.error(errorMsg, t);
+        lockException = new LockException(errorMsg, t);
       }
     }
   }
