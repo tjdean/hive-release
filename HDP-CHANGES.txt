@@ -115,6 +115,20 @@ IMPROVEMENTS
     HIVE-11037 : HiveOnTez: make explain user level = true as default
 
 BUG FIXES
+  HDP-2.6.3.0
+    HIVE-15090: Temporary DB failure can stop ExpiredTokenRemover thread (Peter Vary, reviewed by Aihua Xu)
+    HIVE-17947: Concurrent inserts might fail for ACID table since HIVE-17526 on branch-1 (Daniel Voros reviewed by Eugene Koifman)
+    HIVE-16317: CASE .. NULL in JOIN condition can trigger SemanticException (Remus Rusanu, reviewed by Ashutosh Chauhan)
+    HIVE-11878: ClassNotFoundException can possibly occur if multiple jars are registered one at a time in Hive (Ratandeep Ratti via Jason Dere)
+    HIVE-17115: MetaStoreUtils.getDeserializer doesn't catch the java.lang.ClassNotFoundException (Erik.fang, reviewed by Daniel Dai)
+    HIVE-16385: StatsNoJobTask could exit early before all partitions have been processed (Chao Sun, reviewed by Xuefu Zhang)
+    HIVE-14380: Queries on tables with remote HDFS paths fail in "encryption" checks. (Mithun Radhakrishnan, reviewed by Sergio Pena)
+    HIVE-17628: always use fully qualified path for tables/partitions/etc. (Sergey Shelukhin, reviewed by Ashutosh Chauhan and Thejas M Nair)
+    HIVE-17774: compaction may start with 0 splits and fail (Sergey Shelukhin, reviewed by Eugene Koifman)
+    HIVE-16360: Improve 'No delta files or original files found to compact in' message (Eugene Koifman, reviewed by Alan Gates)
+    HIVE-17963 HIVE-17813: Fix for HIVE-17113 can be improved for non-blobstore filesystems
+    HIVE-15700: BytesColumnVector can get stuck trying to resize byte buffer (Jason Dere, reviewed by Matt McCline)
+
   HDP-2.6.0:    HIVE-16114: NullPointerException in TezSessionPoolManager when getting the session
     HIVE-16175: Possible race condition in InstanceCache 
     HIVE-16160: OutOfMemoryError: GC overhead limit exceeded on Hs2 longevity tests
@@ -873,7 +887,10 @@ BUG FIXES
 
 
 INTERNAL FIXES (NO APACHE JIRA)
-  HDP-2.6.1:
+HDP-2.6.4.0:
+    QE-16280: updating q.out diffs present since HDP-2.6.3.0.
+
+HDP-2.6.1:
     BUG-79816: upgrade jackson.version
 
   HDP-2.6.0:
