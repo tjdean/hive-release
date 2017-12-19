@@ -268,20 +268,6 @@ public class StatsOptimizer implements Transform {
           // limit. In order to be safe, we do not use it now.
           return null;
         }
-        Table tbl = tsOp.getConf().getTableMetadata();
-        if (MetaStoreUtils.isExternalTable(tbl.getTTable())) {
-          Logger.info("Table " + tbl.getTableName() + " is external. Skip StatsOptimizer.");
-          return null;
-        }
-        if (AcidUtils.isAcidTable(tbl)) {
-          Logger.info("Table " + tbl.getTableName() + " is ACID table. Skip StatsOptimizer.");
-          return null;
-        }
-        Long rowCnt = getRowCnt(pctx, tsOp, tbl);
-        // if we can not have correct table stats, then both the table stats and column stats are not useful.
-        if (rowCnt == null) {
-          return null;
-        }
         SelectOperator pselOp = (SelectOperator)stack.get(1);
         for(ExprNodeDesc desc : pselOp.getConf().getColList()) {
           if (!((desc instanceof ExprNodeColumnDesc) || (desc instanceof ExprNodeConstantDesc))) {
@@ -334,6 +320,10 @@ public class StatsOptimizer implements Transform {
         }
 
         Table tbl = tsOp.getConf().getTableMetadata();
+        if (MetaStoreUtils.isExternalTable(tbl.getTTable())) {
+           Logger.info("Table " + tbl.getTableName() + " is external. Skip StatsOptimizer.");
+           return null;
+        }
         if (AcidUtils.isAcidTable(tbl)) {
           Logger.info("Table " + tbl.getTableName() + " is ACID table. Skip StatsOptimizer.");
           return null;
