@@ -115,7 +115,8 @@ IMPROVEMENTS
     HIVE-11037 : HiveOnTez: make explain user level = true as default
 
 BUG FIXES
-  HDP-2.6.3.0
+  HDP-2.6.4.0
+    HIVE-18271: Druid Insert into fails with exception when committing files
     HIVE-15090: Temporary DB failure can stop ExpiredTokenRemover thread (Peter Vary, reviewed by Aihua Xu)
     HIVE-17947: Concurrent inserts might fail for ACID table since HIVE-17526 on branch-1 (Daniel Voros reviewed by Eugene Koifman)
     HIVE-16317: CASE .. NULL in JOIN condition can trigger SemanticException (Remus Rusanu, reviewed by Ashutosh Chauhan)
