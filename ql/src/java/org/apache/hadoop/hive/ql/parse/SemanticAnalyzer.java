@@ -3132,7 +3132,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         pos = Integer.valueOf(pos.intValue() + 1);
         matched++;
 
-        if (unparseTranslator.isEnabled() || tableMask.isEnabled()) {
+        if (unparseTranslator.isEnabled() || (tableMask.isEnabled() && analyzeRewrite == null)) {
           if (replacementText.length() > 0) {
             replacementText.append(", ");
           }
@@ -10383,7 +10383,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     ctesExpanded = new ArrayList<String>();
 
     // 1. analyze and process the position alias
-    processPositionAlias(ast);
+    // step processPositionAlias out of genResolvedParseTree
 
     // 2. analyze create table command
     if (ast.getToken().getType() == HiveParser.TOK_CREATETABLE) {
@@ -10411,7 +10411,6 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     // masking and filtering should be created here
     // the basic idea is similar to unparseTranslator.
     tableMask = new TableMask(this, conf, ctx.isSkipTableMasking());
-
     // 4. continue analyzing from the child ASTNode.
     Phase1Ctx ctx_1 = initPhase1Ctx();
     preProcessForInsert(child, qb);
@@ -10474,6 +10473,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     // 1. Generate Resolved Parse tree from syntax tree
     LOG.info("Starting Semantic Analysis");
     PlannerContext plannerCtx = pcf.create();
+    //change the location of position alias process here
+    processPositionAlias(ast);
     if (!genResolvedParseTree(ast, plannerCtx)) {
       return;
     }
@@ -10481,7 +10482,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     // 2. Gen OP Tree from resolved Parse Tree
     Operator sinkOp = genOPTree(ast, plannerCtx);
 
-    if (!unparseTranslator.isEnabled() && tableMask.isEnabled()) {
+    if (!unparseTranslator.isEnabled() &&
+            (tableMask.isEnabled() && analyzeRewrite == null)) {
       // Here we rewrite the * and also the masking table
       ASTNode tree = rewriteASTWithMaskAndFilter(tableMask, ast, ctx.getTokenRewriteStream(),
               ctx, db, tabNameToTabObject, ignoredTokens);
@@ -10489,6 +10491,8 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         plannerCtx = pcf.create();
         ctx.setSkipTableMasking(true);
         init(true);
+        //change the location of position alias process here
+        processPositionAlias(tree);
         genResolvedParseTree(tree, plannerCtx);
         if (this instanceof CalcitePlanner) {
           ((CalcitePlanner) this).resetCalciteConfiguration();
@@ -11624,7 +11628,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     for (int child_pos = 0; child_pos < child_count; ++child_pos) {
       ASTNode node = (ASTNode) ast.getChild(child_pos);
       int type = node.getToken().getType();
-      if (type == HiveParser.TOK_SELECT) {
+      if (type == HiveParser.TOK_SELECT || type == HiveParser.TOK_SELECTDI) {
         selectNode = node;
       } else if (type == HiveParser.TOK_GROUPBY) {
         groupbyNode = node;
