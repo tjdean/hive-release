@@ -28,8 +28,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.metastore.api.FieldSchema;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hive.ql.exec.AbstractMapJoinOperator;
 import org.apache.hadoop.hive.ql.exec.ColumnInfo;
 import org.apache.hadoop.hive.ql.exec.CommonJoinOperator;
@@ -84,7 +85,7 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
  * Factory for generating the different node processors used by ColumnPruner.
  */
 public final class ColumnPrunerProcFactory {
-  protected static final Log LOG = LogFactory.getLog(ColumnPrunerProcFactory.class.getName());
+  protected static final Logger LOG = LoggerFactory.getLogger(ColumnPrunerProcFactory.class.getName());
   private ColumnPrunerProcFactory() {
     // prevent instantiation
   }
@@ -316,9 +317,9 @@ public final class ColumnPrunerProcFactory {
       } else {
         prunedCols = referencedColumns;
       }
-      
-      List<ColumnInfo> newRS = prunedColumnsList(prunedCols, op.getSchema(), funcDef);      
-      
+
+      List<ColumnInfo> newRS = prunedColumnsList(prunedCols, op.getSchema(), funcDef);
+
       op.getSchema().setSignature(new ArrayList<ColumnInfo>(newRS));
 
       ShapeDetails outputShape = funcDef.getStartOfChain().getInput().getOutputShape();
@@ -326,7 +327,7 @@ public final class ColumnPrunerProcFactory {
       return null;
     }
 
-    private List<ColumnInfo> buildPrunedRS(List<String> prunedCols, RowSchema oldRS) 
+    private List<ColumnInfo> buildPrunedRS(List<String> prunedCols, RowSchema oldRS)
         throws SemanticException {
       ArrayList<ColumnInfo> sig = new ArrayList<ColumnInfo>();
       HashSet<String> prunedColsSet = new HashSet<String>(prunedCols);
@@ -348,7 +349,7 @@ public final class ColumnPrunerProcFactory {
       }
       return columns;
     }
-    
+
     private RowResolver buildPrunedRR(List<String> prunedCols, RowSchema oldRS)
         throws SemanticException {
       RowResolver resolver = new RowResolver();
@@ -396,12 +397,12 @@ public final class ColumnPrunerProcFactory {
       } else {
         pDef.getOutputShape().setRr(buildPrunedRR(prunedCols, oldRS));
       }
-      
+
       PTFInputDef input = pDef.getInput();
       if (input instanceof PartitionedTableFunctionDef) {
         return prunedColumnsList(prunedCols, oldRS, (PartitionedTableFunctionDef)input);
       }
-      
+
       ArrayList<String> inputColumns = prunedInputList(prunedCols, input);
       input.getOutputShape().setRr(buildPrunedRR(inputColumns, oldRS));
       input.getOutputShape().setColumnNames(inputColumns);
@@ -702,12 +703,12 @@ public final class ColumnPrunerProcFactory {
       ((SelectDesc)select.getConf()).setColList(colList);
       ((SelectDesc)select.getConf()).setOutputColumnNames(outputColNames);
       pruneOperator(ctx, select, outputColNames);
-      
+
       Operator<?> udtfPath = op.getChildOperators().get(LateralViewJoinOperator.UDTF_TAG);
       List<String> lvFCols = new ArrayList<String>(cppCtx.getPrunedColLists().get(udtfPath));
       lvFCols = Utilities.mergeUniqElems(lvFCols, outputColNames);
       pruneOperator(ctx, op, lvFCols);
-      
+
       return null;
     }
   }
@@ -779,8 +780,10 @@ public final class ColumnPrunerProcFactory {
         for (String col : cols) {
           int index = originalOutputColumnNames.indexOf(col);
           Table tab = cppCtx.getParseContext().getViewProjectToTableSchema().get(op);
+          List<FieldSchema> fullFieldList = new ArrayList<FieldSchema>(tab.getCols());
+          fullFieldList.addAll(tab.getPartCols());
           cppCtx.getParseContext().getColumnAccessInfo()
-              .add(tab.getCompleteName(), tab.getCols().get(index).getName());
+              .add(tab.getCompleteName(), fullFieldList.get(index).getName());
         }
       }
       if (cols.size() < originalOutputColumnNames.size()) {
