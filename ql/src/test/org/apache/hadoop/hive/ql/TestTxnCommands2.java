@@ -32,7 +32,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FileUtil;
+import org.apache.hadoop.fs.LocatedFileStatus;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.common.ValidTxnList;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -1640,6 +1642,50 @@ public class TestTxnCommands2 {
     runWorker(hiveConf);
     runCleaner(hiveConf);
     runStatementOnDriver("select count(*) from " + Table.ACIDTBL);
+  }
+  /**
+   * see HIVE-18429
+   */
+  @Test
+  public void testEmptyCompactionResult() throws Exception {
+    int[][] data = {{1,2}, {3,4}};
+    runStatementOnDriver("insert into " + Table.ACIDTBL + "(a,b) " + makeValuesClause(data));
+    runStatementOnDriver("insert into " + Table.ACIDTBL + "(a,b) " + makeValuesClause(data));
+
+    //delete the bucket files so now we have empty delta dirs
+    List<String> rs = runStatementOnDriver("select distinct INPUT__FILE__NAME from " + Table.ACIDTBL);
+    FileSystem fs = FileSystem.get(hiveConf);
+    for(String path : rs) {
+      RemoteIterator<LocatedFileStatus> files = fs.listFiles(new Path(path), true);
+      while (files.hasNext()) {
+        LocatedFileStatus fileStatus = files.next();
+        fs.delete(fileStatus.getPath(), true);
+      }
+    }
+    runStatementOnDriver("alter table " + Table.ACIDTBL + " compact 'MAJOR'");
+    runWorker(hiveConf);
+    //check status of compaction job
+    TxnStore txnHandler = TxnUtils.getTxnStore(hiveConf);
+    ShowCompactResponse resp = txnHandler.showCompact(new ShowCompactRequest());
+    Assert.assertEquals("Unexpected number of compactions in history", 1, resp.getCompactsSize());
+    Assert.assertEquals("Unexpected 0 compaction state", TxnStore.CLEANING_RESPONSE, resp.getCompacts().get(0).getState());
+    Assert.assertTrue(resp.getCompacts().get(0).getHadoopJobId().startsWith("job_local"));
+
+    //now run another compaction make sure empty dirs don't cause issues
+    runStatementOnDriver("insert into " + Table.ACIDTBL + "(a,b) " + makeValuesClause(data));
+    runStatementOnDriver("alter table " + Table.ACIDTBL + " compact 'MAJOR'");
+    runWorker(hiveConf);
+
+    //check status of compaction job
+    resp = txnHandler.showCompact(new ShowCompactRequest());
+    Assert.assertEquals("Unexpected number of compactions in history", 2, resp.getCompactsSize());
+    for(int i = 0; i < 2; i++) {
+      Assert.assertEquals("Unexpected 0 compaction state", TxnStore.CLEANING_RESPONSE, resp.getCompacts().get(i).getState());
+      Assert.assertTrue(resp.getCompacts().get(i).getHadoopJobId().startsWith("job_local"));
+    }
+    rs = runStatementOnDriver("select a, b from " + Table.ACIDTBL + " order by a, b");
+    Assert.assertEquals(stringifyValues(data), rs);
+
   }
   /**
    * takes raw data and turns it into a string as if from Driver.getResults()
