@@ -76,6 +76,15 @@ public class AcidUtils {
   public static final String BUCKET_DIGITS = "%05d";
   public static final String LEGACY_FILE_BUCKET_DIGITS = "%06d";
   public static final String DELTA_DIGITS = "%07d";
+  /**
+   * 10K statements per tx.  Probably overkill ... since that many delta files
+   * would not be good for performance
+   */
+  public static final String STATEMENT_DIGITS = "%04d";
+  /**
+   * This must be in sync with {@link #STATEMENT_DIGITS}
+   */
+  public static final int MAX_STATEMENTS_PER_TXN = 10000;
   public static final Pattern BUCKET_DIGIT_PATTERN = Pattern.compile("[0-9]{5}$");
   public static final Pattern   LEGACY_BUCKET_DIGIT_PATTERN = Pattern.compile("^[0-9]{6}");
   public static final PathFilter originalBucketFilter = new PathFilter() {
