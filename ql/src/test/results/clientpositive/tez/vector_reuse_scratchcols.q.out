@@ -1,0 +1,160 @@
+WARNING: Comparing a bigint and a double may result in a loss of precision.
+PREHOOK: query: --EXPLAIN VECTORIZATION DETAIL
+SELECT AVG(cint),
+       (AVG(cint) + -3728),
+       (-((AVG(cint) + -3728))),
+       (-((-((AVG(cint) + -3728))))),
+       ((-((-((AVG(cint) + -3728))))) * (AVG(cint) + -3728)),
+       SUM(cdouble),
+       (-(AVG(cint))),
+       STDDEV_POP(cint),
+       (((-((-((AVG(cint) + -3728))))) * (AVG(cint) + -3728)) * (-((-((AVG(cint) + -3728)))))),
+       STDDEV_SAMP(csmallint),
+       (-(STDDEV_POP(cint))),
+       (STDDEV_POP(cint) - (-((-((AVG(cint) + -3728)))))),
+       ((STDDEV_POP(cint) - (-((-((AVG(cint) + -3728)))))) * STDDEV_POP(cint)),
+       VAR_SAMP(cint),
+       AVG(cfloat),
+       (10.175 - VAR_SAMP(cint)),
+       (-((10.175 - VAR_SAMP(cint)))),
+       ((-(STDDEV_POP(cint))) / -563),
+       STDDEV_SAMP(cint),
+       (-(((-(STDDEV_POP(cint))) / -563))),
+       (AVG(cint) / SUM(cdouble)),
+       MIN(ctinyint),
+       COUNT(csmallint),
+       (MIN(ctinyint) / ((-(STDDEV_POP(cint))) / -563)),
+       (-((AVG(cint) / SUM(cdouble))))
+FROM   alltypesorc
+WHERE  ((762 = cbigint)
+        OR ((csmallint < cfloat)
+            AND ((ctimestamp2 > -5)
+                 AND (cdouble != cint)))
+        OR (cstring1 = 'a')
+           OR ((cbigint <= -1.389)
+               AND ((cstring2 != 'a')
+                    AND ((79.553 != cint)
+                         AND (cboolean2 != cboolean1)))))
+PREHOOK: type: QUERY
+PREHOOK: Input: default@alltypesorc
+#### A masked pattern was here ####
+POSTHOOK: query: --EXPLAIN VECTORIZATION DETAIL
+SELECT AVG(cint),
+       (AVG(cint) + -3728),
+       (-((AVG(cint) + -3728))),
+       (-((-((AVG(cint) + -3728))))),
+       ((-((-((AVG(cint) + -3728))))) * (AVG(cint) + -3728)),
+       SUM(cdouble),
+       (-(AVG(cint))),
+       STDDEV_POP(cint),
+       (((-((-((AVG(cint) + -3728))))) * (AVG(cint) + -3728)) * (-((-((AVG(cint) + -3728)))))),
+       STDDEV_SAMP(csmallint),
+       (-(STDDEV_POP(cint))),
+       (STDDEV_POP(cint) - (-((-((AVG(cint) + -3728)))))),
+       ((STDDEV_POP(cint) - (-((-((AVG(cint) + -3728)))))) * STDDEV_POP(cint)),
+       VAR_SAMP(cint),
+       AVG(cfloat),
+       (10.175 - VAR_SAMP(cint)),
+       (-((10.175 - VAR_SAMP(cint)))),
+       ((-(STDDEV_POP(cint))) / -563),
+       STDDEV_SAMP(cint),
+       (-(((-(STDDEV_POP(cint))) / -563))),
+       (AVG(cint) / SUM(cdouble)),
+       MIN(ctinyint),
+       COUNT(csmallint),
+       (MIN(ctinyint) / ((-(STDDEV_POP(cint))) / -563)),
+       (-((AVG(cint) / SUM(cdouble))))
+FROM   alltypesorc
+WHERE  ((762 = cbigint)
+        OR ((csmallint < cfloat)
+            AND ((ctimestamp2 > -5)
+                 AND (cdouble != cint)))
+        OR (cstring1 = 'a')
+           OR ((cbigint <= -1.389)
+               AND ((cstring2 != 'a')
+                    AND ((79.553 != cint)
+                         AND (cboolean2 != cboolean1)))))
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@alltypesorc
+#### A masked pattern was here ####
+1.6000018929276082E8	1.5999646129276082E8	-1.5999646129276082E8	1.5999646129276082E8	2.5598867626205912E16	-8706342.964000002	-1.6000018929276082E8	5.481251832900256E8	4.095728233294762E24	8549.657499338187	-5.481251832900256E8	3.8812872199726474E8	2.12743126884874112E17	3.0054786945575034E17	-5.700752675298234	-3.0054786945575034E17	3.0054786945575034E17	973579.3664121237	5.48222463472403E8	-973579.3664121237	-18.377427808018613	-64	2044	-6.573680812059066E-5	18.377427808018613
+WARNING: Comparing a bigint and a double may result in a loss of precision.
+PREHOOK: query: --EXPLAIN VECTORIZATION DETAIL
+SELECT AVG(cint),
+       (AVG(cint) + -3728),
+       (-((AVG(cint) + -3728))),
+       (-((-((AVG(cint) + -3728))))),
+       ((-((-((AVG(cint) + -3728))))) * (AVG(cint) + -3728)),
+       SUM(cdouble),
+       (-(AVG(cint))),
+       STDDEV_POP(cint),
+       (((-((-((AVG(cint) + -3728))))) * (AVG(cint) + -3728)) * (-((-((AVG(cint) + -3728)))))),
+       STDDEV_SAMP(csmallint),
+       (-(STDDEV_POP(cint))),
+       (STDDEV_POP(cint) - (-((-((AVG(cint) + -3728)))))),
+       ((STDDEV_POP(cint) - (-((-((AVG(cint) + -3728)))))) * STDDEV_POP(cint)),
+       VAR_SAMP(cint),
+       AVG(cfloat),
+       (10.175 - VAR_SAMP(cint)),
+       (-((10.175 - VAR_SAMP(cint)))),
+       ((-(STDDEV_POP(cint))) / -563),
+       STDDEV_SAMP(cint),
+       (-(((-(STDDEV_POP(cint))) / -563))),
+       (AVG(cint) / SUM(cdouble)),
+       MIN(ctinyint),
+       COUNT(csmallint),
+       (MIN(ctinyint) / ((-(STDDEV_POP(cint))) / -563)),
+       (-((AVG(cint) / SUM(cdouble))))
+FROM   alltypesorc
+WHERE  ((762 = cbigint)
+        OR ((csmallint < cfloat)
+            AND ((ctimestamp2 > -5)
+                 AND (cdouble != cint)))
+        OR (cstring1 = 'a')
+           OR ((cbigint <= -1.389)
+               AND ((cstring2 != 'a')
+                    AND ((79.553 != cint)
+                         AND (cboolean2 != cboolean1)))))
+PREHOOK: type: QUERY
+PREHOOK: Input: default@alltypesorc
+#### A masked pattern was here ####
+POSTHOOK: query: --EXPLAIN VECTORIZATION DETAIL
+SELECT AVG(cint),
+       (AVG(cint) + -3728),
+       (-((AVG(cint) + -3728))),
+       (-((-((AVG(cint) + -3728))))),
+       ((-((-((AVG(cint) + -3728))))) * (AVG(cint) + -3728)),
+       SUM(cdouble),
+       (-(AVG(cint))),
+       STDDEV_POP(cint),
+       (((-((-((AVG(cint) + -3728))))) * (AVG(cint) + -3728)) * (-((-((AVG(cint) + -3728)))))),
+       STDDEV_SAMP(csmallint),
+       (-(STDDEV_POP(cint))),
+       (STDDEV_POP(cint) - (-((-((AVG(cint) + -3728)))))),
+       ((STDDEV_POP(cint) - (-((-((AVG(cint) + -3728)))))) * STDDEV_POP(cint)),
+       VAR_SAMP(cint),
+       AVG(cfloat),
+       (10.175 - VAR_SAMP(cint)),
+       (-((10.175 - VAR_SAMP(cint)))),
+       ((-(STDDEV_POP(cint))) / -563),
+       STDDEV_SAMP(cint),
+       (-(((-(STDDEV_POP(cint))) / -563))),
+       (AVG(cint) / SUM(cdouble)),
+       MIN(ctinyint),
+       COUNT(csmallint),
+       (MIN(ctinyint) / ((-(STDDEV_POP(cint))) / -563)),
+       (-((AVG(cint) / SUM(cdouble))))
+FROM   alltypesorc
+WHERE  ((762 = cbigint)
+        OR ((csmallint < cfloat)
+            AND ((ctimestamp2 > -5)
+                 AND (cdouble != cint)))
+        OR (cstring1 = 'a')
+           OR ((cbigint <= -1.389)
+               AND ((cstring2 != 'a')
+                    AND ((79.553 != cint)
+                         AND (cboolean2 != cboolean1)))))
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@alltypesorc
+#### A masked pattern was here ####
+1.6000018929276082E8	1.5999646129276082E8	-1.5999646129276082E8	1.5999646129276082E8	2.5598867626205912E16	-8706342.964000002	-1.6000018929276082E8	5.481251832900256E8	4.095728233294762E24	8549.657499338187	-5.481251832900256E8	3.8812872199726474E8	2.12743126884874112E17	3.0054786945575034E17	-5.700752675298234	-3.0054786945575034E17	3.0054786945575034E17	973579.3664121237	5.48222463472403E8	-973579.3664121237	-18.377427808018613	-64	2044	-6.573680812059066E-5	18.377427808018613
