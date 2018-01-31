@@ -28,6 +28,7 @@ import org.apache.hadoop.hive.metastore.IMetaStoreClient;
 import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore;
 import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore.BehaviourInjection;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
+import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.NotificationEvent;
 import org.apache.hadoop.hive.metastore.api.NotificationEventResponse;
@@ -1066,9 +1067,9 @@ public class TestReplicationScenarios {
   }
 
   @Test
-  public void testAlters() throws IOException {
+  public void testTableAlters() throws IOException {
 
-    String testName = "alters";
+    String testName = "TableAlters";
     String dbName = createDB(testName);
     run("CREATE TABLE " + dbName + ".unptned(a string) STORED AS TEXTFILE");
     run("CREATE TABLE " + dbName + ".unptned2(a string) STORED AS TEXTFILE");
@@ -1226,6 +1227,63 @@ public class TestReplicationScenarios {
       assertNull(te);
     }
 
+  }
+
+  @Test
+  public void testDatabaseAlters() throws IOException {
+
+    String testName = "DatabaseAlters";
+    String dbName = createDB(testName);
+    String replDbName = dbName + "_dupe";
+    String ownerName = "test";
+
+    run("ALTER DATABASE " + dbName + " SET OWNER USER " + ownerName);
+
+    // Trigger bootstrap replication
+    Tuple bootstrap = bootstrapLoadAndVerify(dbName, replDbName);
+
+    try {
+      Database replDb = metaStoreClient.getDatabase(replDbName);
+      assertEquals(ownerName, replDb.getOwnerName());
+      assertEquals("USER", replDb.getOwnerType().toString());
+    } catch (TException e) {
+      assertNull(e);
+    }
+
+    // Alter database set DB property
+    String testKey = "blah";
+    String testVal = "foo";
+    run("ALTER DATABASE " + dbName + " SET DBPROPERTIES ('" + testKey + "' = '" + testVal + "')");
+
+    // All alters done, now we replicate them over.
+    Tuple incremental = incrementalLoadAndVerify(dbName, bootstrap.lastReplId, replDbName);
+
+    // Replication done, we need to check if the new property is added
+    try {
+      Database replDb = metaStoreClient.getDatabase(replDbName);
+      assertTrue(replDb.getParameters().containsKey(testKey));
+      assertEquals(testVal, replDb.getParameters().get(testKey));
+    } catch (TException e) {
+      assertNull(e);
+    }
+
+    String newValue = "newFoo";
+    String newOwnerName = "newTest";
+    run("ALTER DATABASE " + dbName + " SET DBPROPERTIES ('" + testKey + "' = '" + newValue + "')");
+    run("ALTER DATABASE " + dbName + " SET OWNER ROLE " + newOwnerName);
+
+    incremental = incrementalLoadAndVerify(dbName, incremental.lastReplId, replDbName);
+
+    // Replication done, we need to check if new value is set for existing property
+    try {
+      Database replDb = metaStoreClient.getDatabase(replDbName);
+      assertTrue(replDb.getParameters().containsKey(testKey));
+      assertEquals(newValue, replDb.getParameters().get(testKey));
+      assertEquals(newOwnerName, replDb.getOwnerName());
+      assertEquals("ROLE", replDb.getOwnerType().toString());
+    } catch (TException e) {
+      assertNull(e);
+    }
   }
 
   @Test
@@ -1878,13 +1936,16 @@ public class TestReplicationScenarios {
     String testName = "dropPartitionEventWithPartitionOnTimestampColumn";
     String dbName = createDB(testName);
     run("CREATE TABLE " + dbName + ".ptned(a string) PARTITIONED BY (b timestamp)");
+    String[] ptn_data = new String[] { "fourteen" };
+    String ptnVal = "2017-10-01 01:00:10.1";
+    run("INSERT INTO TABLE " + dbName + ".ptned PARTITION(b=\"" + ptnVal +"\") values('" + ptn_data[0] + "')");
 
     // Bootstrap dump/load
     String replDbName = dbName + "_dupe";
     Tuple bootstrapDump = bootstrapLoadAndVerify(dbName, replDbName);
 
-    String[] ptn_data = new String[] { "fifteen" };
-    String ptnVal = "2017-10-24 00:00:00.0";
+    ptn_data = new String[] { "fifteen" };
+    ptnVal = "2017-10-24 00:00:00.0";
     run("INSERT INTO TABLE " + dbName + ".ptned PARTITION(b=\"" + ptnVal +"\") values('" + ptn_data[0] + "')");
 
     // Replicate insert event and verify
@@ -2240,18 +2301,24 @@ public class TestReplicationScenarios {
     String[] unptn_data_load1 = new String[] { "eleven" };
     String[] unptn_data_load2 = new String[] { "eleven", "thirteen" };
 
-    // 3 events to insert, last repl ID: replDumpId+3
+    // x events to insert, last repl ID: replDumpId+x
     run("INSERT INTO TABLE " + dbName + ".unptned values('" + unptn_data[0] + "')");
-    // 3 events to insert, last repl ID: replDumpId+6
+    String firstInsertLastReplId = replDumpDb(dbName, replDumpId, null, null).lastReplId;
+    Integer numOfEventsIns1 = Integer.valueOf(firstInsertLastReplId) - Integer.valueOf(replDumpId);
+
+    // x events to insert, last repl ID: replDumpId+2x
     run("INSERT INTO TABLE " + dbName + ".unptned values('" + unptn_data[1] + "')");
-    // 3 events to insert, last repl ID: replDumpId+9
+    String secondInsertLastReplId = replDumpDb(dbName, firstInsertLastReplId, null, null).lastReplId;
+    Integer numOfEventsIns2 = Integer.valueOf(secondInsertLastReplId) - Integer.valueOf(firstInsertLastReplId);
+
+    // x events to insert, last repl ID: replDumpId+3x
     run("INSERT INTO TABLE " + dbName + ".unptned values('" + unptn_data[2] + "')");
     verifyRun("SELECT a from " + dbName + ".unptned ORDER BY a", unptn_data);
 
     run("REPL LOAD " + dbName + "_dupe FROM '" + replDumpLocn + "'");
 
     advanceDumpDir();
-    run("REPL DUMP " + dbName + " FROM " + replDumpId + " LIMIT 3");
+    run("REPL DUMP " + dbName + " FROM " + replDumpId + " LIMIT " + numOfEventsIns1);
     String incrementalDumpLocn = getResult(0, 0);
     String incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-Dump: Dumped to {} with id {} from {}", incrementalDumpLocn, incrementalDumpId, replDumpId);
@@ -2266,7 +2333,7 @@ public class TestReplicationScenarios {
     lastReplID += 1000;
     String toReplID = String.valueOf(lastReplID);
 
-    run("REPL DUMP " + dbName + " FROM " + replDumpId + " TO " + toReplID + " LIMIT 3");
+    run("REPL DUMP " + dbName + " FROM " + replDumpId + " TO " + toReplID + " LIMIT " + numOfEventsIns2);
     incrementalDumpLocn = getResult(0, 0);
     incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-Dump: Dumped to {} with id {} from {}", incrementalDumpLocn, incrementalDumpId, replDumpId);
@@ -2523,15 +2590,24 @@ public class TestReplicationScenarios {
     String[] unptn_data_load1 = new String[] { "eleven" };
     String[] unptn_data_load2 = new String[] { "eleven", "thirteen" };
 
-    // 3 events to insert, last repl ID: replDumpId+3
+    // x events to insert, last repl ID: replDumpId+x
     run("INSERT INTO TABLE " + dbName + ".unptned values('" + unptn_data[0] + "')");
-    // 3 events to insert, last repl ID: replDumpId+6
+    String firstInsertLastReplId = replDumpDb(dbName, replDumpId, null, null).lastReplId;
+    Integer numOfEventsIns1 = Integer.valueOf(firstInsertLastReplId) - Integer.valueOf(replDumpId);
+
+    // x events to insert, last repl ID: replDumpId+2x
     run("INSERT INTO TABLE " + dbName + ".unptned values('" + unptn_data[1] + "')");
     verifyRun("SELECT a from " + dbName + ".unptned ORDER BY a", unptn_data);
-    // 1 event to truncate, last repl ID: replDumpId+8
+    String secondInsertLastReplId = replDumpDb(dbName, firstInsertLastReplId, null, null).lastReplId;
+    Integer numOfEventsIns2 = Integer.valueOf(secondInsertLastReplId) - Integer.valueOf(firstInsertLastReplId);
+
+    // y event to truncate, last repl ID: replDumpId+2x+y
     run("TRUNCATE TABLE " + dbName + ".unptned");
     verifyRun("SELECT a from " + dbName + ".unptned ORDER BY a", empty);
-    // 3 events to insert, last repl ID: replDumpId+11
+    String thirdTruncLastReplId = replDumpDb(dbName, secondInsertLastReplId, null, null).lastReplId;
+    Integer numOfEventsTrunc3 = Integer.valueOf(thirdTruncLastReplId) - Integer.valueOf(secondInsertLastReplId);
+
+    // x events to insert, last repl ID: replDumpId+3x+y
     run("INSERT INTO TABLE " + dbName + ".unptned values('" + unptn_data_load1[0] + "')");
     verifyRun("SELECT a from " + dbName + ".unptned ORDER BY a", unptn_data_load1);
 
@@ -2539,7 +2615,7 @@ public class TestReplicationScenarios {
 
     // Dump and load only first insert (1 record)
     advanceDumpDir();
-    run("REPL DUMP " + dbName + " FROM " + replDumpId + " LIMIT 3");
+    run("REPL DUMP " + dbName + " FROM " + replDumpId + " LIMIT " + numOfEventsIns1);
     String incrementalDumpLocn = getResult(0, 0);
     String incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-Dump: Dumped to {} with id {} from {}", incrementalDumpLocn, incrementalDumpId, replDumpId);
@@ -2555,7 +2631,7 @@ public class TestReplicationScenarios {
     lastReplID += 1000;
     String toReplID = String.valueOf(lastReplID);
 
-    run("REPL DUMP " + dbName + " FROM " + replDumpId + " TO " + toReplID + " LIMIT 3");
+    run("REPL DUMP " + dbName + " FROM " + replDumpId + " TO " + toReplID + " LIMIT " + numOfEventsIns2);
     incrementalDumpLocn = getResult(0, 0);
     incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-Dump: Dumped to {} with id {} from {}", incrementalDumpLocn, incrementalDumpId, replDumpId);
@@ -2566,7 +2642,7 @@ public class TestReplicationScenarios {
 
     // Dump and load only truncate (0 records)
     advanceDumpDir();
-    run("REPL DUMP " + dbName + " FROM " + replDumpId + " LIMIT 2");
+    run("REPL DUMP " + dbName + " FROM " + replDumpId + " LIMIT " + numOfEventsTrunc3);
     incrementalDumpLocn = getResult(0, 0);
     incrementalDumpId = getResult(0, 1, true);
     LOG.info("Incremental-Dump: Dumped to {} with id {} from {}", incrementalDumpLocn, incrementalDumpId, replDumpId);
@@ -2873,6 +2949,7 @@ public class TestReplicationScenarios {
     verifyRun("SELECT a from " + replDbName + ".ptned where (b=1) ORDER BY a", ptn_data_1);
     verifyRun("SELECT a from " + replDbName + ".ptned_tmp where (b=1) ORDER BY a", ptn_data_1);
   }
+
   @Test
   public void testStatus() throws IOException {
     String name = testName.getMethodName();
