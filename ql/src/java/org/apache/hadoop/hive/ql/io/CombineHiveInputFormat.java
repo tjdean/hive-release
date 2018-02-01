@@ -516,32 +516,34 @@ public class CombineHiveInputFormat<K extends WritableComparable, V extends Writ
     int numPathPerThread = (int) Math.ceil((double) paths.length / numThreads);
     LOG.info("Total number of paths: " + paths.length +
         ", launching " + numThreads + " threads to check non-combinable ones.");
-    ExecutorService executor = Executors.newFixedThreadPool(numThreads);
-    List<Future<Set<Integer>>> futureList = new ArrayList<Future<Set<Integer>>>(numThreads);
-    try {
-      for (int i = 0; i < numThreads; i++) {
-        int start = i * numPathPerThread;
-        int length = i != numThreads - 1 ? numPathPerThread : paths.length - start;
-        futureList.add(executor.submit(
-            new CheckNonCombinablePathCallable(paths, start, length, job)));
-      }
-      Set<Integer> nonCombinablePathIndices = new HashSet<Integer>();
-      for (Future<Set<Integer>> future : futureList) {
-        nonCombinablePathIndices.addAll(future.get());
-      }
-      for (int i = 0; i < paths.length; i++) {
-        if (nonCombinablePathIndices.contains(i)) {
-          nonCombinablePaths.add(paths[i]);
-        } else {
-          combinablePaths.add(paths[i]);
+    if (numThreads > 0) {
+      ExecutorService executor = Executors.newFixedThreadPool(numThreads);
+      List<Future<Set<Integer>>> futureList = new ArrayList<Future<Set<Integer>>>(numThreads);
+      try {
+        for (int i = 0; i < numThreads; i++) {
+          int start = i * numPathPerThread;
+          int length = i != numThreads - 1 ? numPathPerThread : paths.length - start;
+          futureList.add(executor.submit(
+              new CheckNonCombinablePathCallable(paths, start, length, job)));
         }
+        Set<Integer> nonCombinablePathIndices = new HashSet<Integer>();
+        for (Future<Set<Integer>> future : futureList) {
+          nonCombinablePathIndices.addAll(future.get());
+        }
+        for (int i = 0; i < paths.length; i++) {
+          if (nonCombinablePathIndices.contains(i)) {
+            nonCombinablePaths.add(paths[i]);
+          } else {
+            combinablePaths.add(paths[i]);
+          }
+        }
+      } catch (Exception e) {
+        LOG.error("Error checking non-combinable path", e);
+        perfLogger.PerfLogEnd(CLASS_NAME, PerfLogger.GET_SPLITS);
+        throw new IOException(e);
+      } finally {
+        executor.shutdownNow();
       }
-    } catch (Exception e) {
-      LOG.error("Error checking non-combinable path", e);
-      perfLogger.PerfLogEnd(CLASS_NAME, PerfLogger.GET_SPLITS);
-      throw new IOException(e);
-    } finally {
-      executor.shutdownNow();
     }
 
     // Store the previous value for the path specification
