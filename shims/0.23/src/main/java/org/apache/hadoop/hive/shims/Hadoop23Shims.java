@@ -742,12 +742,10 @@ public class Hadoop23Shims extends HadoopShimsSecure {
   boolean aclEnabled = Objects.equal(conf.get("dfs.namenode.acls.enabled"), "true");
   FsPermission sourcePerm = fStatus.getPermission();
   List<AclEntry> aclEntries = null;
-  AclStatus aclStatus;
   if (aclEnabled) {
-    aclStatus =  ((Hadoop23FileStatus)sourceStatus).getAclStatus();
-    if (aclStatus != null) {
-      LOG.trace(aclStatus.toString());
-      aclEntries = aclStatus.getEntries();
+    if (((Hadoop23FileStatus)sourceStatus).getAclEntries() != null) {
+      LOG.trace(((Hadoop23FileStatus)sourceStatus).aclStatus.toString());
+      aclEntries = new ArrayList<>(((Hadoop23FileStatus)sourceStatus).getAclEntries());
       removeBaseAclEntries(aclEntries);
 
       //the ACL api's also expect the tradition user/group/other permission in the form of ACL
@@ -816,8 +814,8 @@ public class Hadoop23Shims extends HadoopShimsSecure {
     public FileStatus getFileStatus() {
       return fileStatus;
     }
-    public AclStatus getAclStatus() {
-      return aclStatus;
+    public List<AclEntry> getAclEntries() {
+      return aclStatus == null ? null : Collections.unmodifiableList(aclStatus.getEntries());
     }
     @Override
     public void debugLog() {
