@@ -4204,9 +4204,17 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
   private int dropDatabase(Hive db, DropDatabaseDesc dropDb)
       throws HiveException {
     try {
-      db.dropDatabase(dropDb.getDatabaseName(), true, dropDb.getIfExists(), dropDb.isCasdade());
-    }
-    catch (NoSuchObjectException ex) {
+      String dbName = dropDb.getDatabaseName();
+      ReplicationSpec replicationSpec = dropDb.getReplicationSpec();
+      if (replicationSpec.isInReplicationScope()) {
+        Database database = db.getDatabase(dbName);
+        if (database == null
+            || !replicationSpec.allowEventReplacementInto(database.getParameters())) {
+          return 0;
+        }
+      }
+      db.dropDatabase(dbName, true, dropDb.getIfExists(), dropDb.isCasdade());
+    } catch (NoSuchObjectException ex) {
       throw new HiveException(ex, ErrorMsg.DATABASE_NOT_EXISTS, dropDb.getDatabaseName());
     }
     return 0;
@@ -4674,7 +4682,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
     return 0;
   }
 
-  private int truncateTable(Hive db, TruncateTableDesc truncateTableDesc) throws HiveException {
+ private int truncateTable(Hive db, TruncateTableDesc truncateTableDesc) throws HiveException {
 
     if (truncateTableDesc.getColumnIndexes() != null) {
       ColumnTruncateWork truncateWork = new ColumnTruncateWork(

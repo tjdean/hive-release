@@ -43,6 +43,8 @@ public class EventHandlerFactory {
     register(MessageFactory.DROP_TABLE_EVENT, DropTableHandler.class);
     register(MessageFactory.INSERT_EVENT, InsertHandler.class);
     register(MessageFactory.DROP_FUNCTION_EVENT, DropFunctionHandler.class);
+    register(MessageFactory.CREATE_DATABASE_EVENT, CreateDatabaseHandler.class);
+    register(MessageFactory.DROP_DATABASE_EVENT, DropDatabaseHandler.class);
   }
 
   static void register(String event, Class<? extends EventHandler> handlerClazz) {
