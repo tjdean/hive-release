@@ -65,7 +65,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileChecksum;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Options;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.common.HiveStatsUtils;
 import org.apache.hadoop.hive.common.ObjectPair;
@@ -1746,7 +1749,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
    * @param txnId txnId, can be 0 unless isAcid == true
    * @return partition map details (PartitionSpec and Partition)
    * @throws HiveException
-   * @throws JSONException 
+   * @throws JSONException
    */
   public Map<Map<String, String>, Partition> loadDynamicPartitions(final Path loadPath,
       final String tableName, final Map<String, String> partSpec, final LoadFileType loadFileType,
@@ -3094,7 +3097,15 @@ private void constructOneLBLocationMap(FileStatus fSta,
 
               final Path destFile = new Path(destf, srcStatus.getPath().getName());
               if (null == pool) {
-                if(!destFs.rename(srcStatus.getPath(), destFile)) {
+                boolean success = false;
+                if (destFs instanceof DistributedFileSystem) {
+                  ((DistributedFileSystem)destFs).rename(srcStatus.getPath(), destFile, Options.Rename.OVERWRITE);
+                  success = true;
+                } else {
+                  destFs.delete(destFile, false);
+                  success = destFs.rename(srcStatus.getPath(), destFile);
+                }
+                if(!success) {
                   throw new IOException("rename for src path: " + srcStatus.getPath() + " to dest:"
                       + destf + " returned false");
                 }
@@ -3105,13 +3116,17 @@ private void constructOneLBLocationMap(FileStatus fSta,
                     LOG.debug("moving file " + srcStatus.getPath());
                     SessionState.setCurrentSessionState(parentSession);
                     final String group = srcStatus.getGroup();
-                    if(destFs.rename(srcStatus.getPath(), destFile)) {
-                      if (inheritPerms) {
-                        shims.setFullFileStatus(conf, desiredStatus, group, destFs, destFile, false);
-                      }
+                    boolean success = false;
+                    if (destFs instanceof DistributedFileSystem) {
+                      ((DistributedFileSystem)destFs).rename(srcStatus.getPath(), destFile, Options.Rename.OVERWRITE);
+                      success = true;
                     } else {
-                      throw new IOException("rename for src path: " + srcStatus.getPath() + " to dest path:"
-                          + destFile + " returned false");
+                      destFs.delete(destFile, false);
+                      success = destFs.rename(srcStatus.getPath(), destFile);
+                    }
+                    if(!success) {
+                      throw new IOException("rename for src path: " + srcStatus.getPath() + " to dest:"
+                          + destf + " returned false");
                     }
                     return null;
                   }
