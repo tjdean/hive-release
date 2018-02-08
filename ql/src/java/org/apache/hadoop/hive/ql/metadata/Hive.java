@@ -58,7 +58,10 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Options;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.common.HiveStatsUtils;
 import org.apache.hadoop.hive.common.ObjectPair;
@@ -1400,7 +1403,7 @@ public class Hive {
    * @param isSrcLocal
    *          If the source directory is LOCAL
    * @param isAcid true if this is an ACID operation
-   * @throws JSONException 
+   * @throws JSONException
    */
   public Partition loadPartition(Path loadPath, Table tbl,
       Map<String, String> partSpec, boolean replace,
@@ -1637,7 +1640,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
    * @param txnId txnId, can be 0 unless isAcid == true
    * @return partition map details (PartitionSpec and Partition)
    * @throws HiveException
-   * @throws JSONException 
+   * @throws JSONException
    */
   public Map<Map<String, String>, Partition> loadDynamicPartitions(Path loadPath,
       String tableName, Map<String, String> partSpec, boolean replace,
@@ -2856,8 +2859,20 @@ private void constructOneLBLocationMap(FileStatus fSta,
             for (final FileStatus srcStatus : srcs) {
 
               final Path destFile = new Path(destf, srcStatus.getPath().getName());
+
+              final String poolMsg =
+                  "Unable to move source " + srcStatus.getPath() + " to destination " + destFile;
+
               if (null == pool) {
-                if(!destFs.rename(srcStatus.getPath(), destFile)) {
+                boolean success = false;
+                if (destFs instanceof DistributedFileSystem) {
+                  ((DistributedFileSystem)destFs).rename(srcStatus.getPath(), destFile, Options.Rename.OVERWRITE);
+                  success = true;
+                } else {
+                  destFs.delete(destFile, false);
+                  success = destFs.rename(srcStatus.getPath(), destFile);
+                }
+                if(!success) {
                   throw new IOException("rename for src path: " + srcStatus.getPath() + " to dest:"
                       + destf + " returned false");
                 }
@@ -2867,13 +2882,18 @@ private void constructOneLBLocationMap(FileStatus fSta,
                   public Void call() throws Exception {
                     SessionState.setCurrentSessionState(parentSession);
                     final String group = srcStatus.getGroup();
-                    if(destFs.rename(srcStatus.getPath(), destFile)) {
-                      if (inheritPerms) {
-                        shims.setFullFileStatus(conf, desiredStatus, group, destFs, destFile, false);
-                      }
+                    boolean success = false;
+                    if (destFs instanceof DistributedFileSystem) {
+                      ((DistributedFileSystem)destFs).rename(srcStatus.getPath(), destFile, Options.Rename.OVERWRITE);
+                      success = true;
                     } else {
-                      throw new IOException("rename for src path: " + srcStatus.getPath() + " to dest path:"
-                          + destFile + " returned false");
+                      destFs.delete(destFile, false);
+                      success = destFs.rename(srcStatus.getPath(), destFile);
+                    }
+                    if (!success) {
+                      throw new IOException(
+                          "rename for src path: " + srcStatus.getPath() + " to dest path:"
+                              + destFile + " returned false");
                     }
                     return null;
                   }
