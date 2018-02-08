@@ -134,7 +134,7 @@ public abstract class Task<T extends Serializable> implements Serializable, Node
     }
 
     try {
-      db = Hive.get(conf);
+      db = Hive.get(this.conf);
     } catch (HiveException e) {
       // Bail out ungracefully - we should never hit
       // this here - but would have hit it in SemanticAnalyzer

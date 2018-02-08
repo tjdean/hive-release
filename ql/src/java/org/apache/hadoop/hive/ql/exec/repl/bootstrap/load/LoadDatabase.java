@@ -93,14 +93,14 @@ public class LoadDatabase {
     // db.
     // TODO: we might revisit this in create-drop-recreate cases, needs some thinking on.
     DDLWork work = new DDLWork(new HashSet<ReadEntity>(), new HashSet<WriteEntity>(), createDbDesc);
-    return TaskFactory.get(work, context.hiveConf);
+    return TaskFactory.get(work, context.hiveConf, true);
   }
 
   private static Task<? extends Serializable> alterDbTask(Database dbObj, HiveConf hiveConf) {
     AlterDatabaseDesc alterDbDesc =
         new AlterDatabaseDesc(dbObj.getName(), dbObj.getParameters(), null);
     DDLWork work = new DDLWork(new HashSet<ReadEntity>(), new HashSet<WriteEntity>(), alterDbDesc);
-    return TaskFactory.get(work, hiveConf);
+    return TaskFactory.get(work, hiveConf, true);
   }
 
   private Task<? extends Serializable> setOwnerInfoTask(Database dbObj) {

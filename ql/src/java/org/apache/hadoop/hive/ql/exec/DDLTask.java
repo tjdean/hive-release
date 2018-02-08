@@ -275,10 +275,7 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
   public int execute(DriverContext driverContext) {
 
     // Create the db
-    Hive db;
     try {
-      db = Hive.get(conf);
-
       CreateDatabaseDesc createDatabaseDesc = work.getCreateDatabaseDesc();
       if (null != createDatabaseDesc) {
         return createDatabase(db, createDatabaseDesc);

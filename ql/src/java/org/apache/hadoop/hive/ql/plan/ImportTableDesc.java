@@ -280,9 +280,9 @@ public class ImportTableDesc {
       HiveConf conf) {
     switch (getDescType()) {
       case TABLE:
-        return TaskFactory.get(new DDLWork(inputs, outputs, createTblDesc), conf);
+        return TaskFactory.get(new DDLWork(inputs, outputs, createTblDesc), conf, true);
       case VIEW:
-        return TaskFactory.get(new DDLWork(inputs, outputs, createViewDesc), conf);
+        return TaskFactory.get(new DDLWork(inputs, outputs, createViewDesc), conf, true);
     }
     return null;
   }
