@@ -4352,7 +4352,7 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
     if (enableFlag) {
       for (String tableName : materializedViewTable.getCreationMetadata().keySet()) {
         Table table = getTable(tableName, true);
-        if (!AcidUtils.isAcidTable(table)) {
+        if (!AcidUtils.isTransactionalTable(table)) {
           throw new SemanticException("Automatic rewriting for materialized view cannot "
               + "be enabled if the materialized view uses non-transactional tables");
         }
