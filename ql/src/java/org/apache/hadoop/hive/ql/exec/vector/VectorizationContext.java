@@ -2895,6 +2895,20 @@ public class VectorizationContext {
           childExpr.subList(2, childExpr.size()));
     }
 
+    if (isNullConst(thenDesc) && isNullConst(elseDesc)) {
+
+      // THEN NULL ELSE NULL: An unusual "case", but possible.
+      final int outputColumnNum = ocm.allocateOutputColumn(returnType);
+
+      final VectorExpression resultExpr =
+          new IfExprNullNull(
+            outputColumnNum);
+
+      resultExpr.setOutputTypeInfo(returnType);
+      resultExpr.setOutputDataTypePhysicalVariation(DataTypePhysicalVariation.NONE);
+
+      return resultExpr;
+    }
     if (isNullConst(thenDesc)) {
       final VectorExpression whenExpr = getVectorExpression(whenDesc, mode);
       final VectorExpression elseExpr = getVectorExpression(elseDesc, mode);
