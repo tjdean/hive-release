@@ -1,0 +1,37 @@
+PREHOOK: query: CREATE TABLE acid_vectorized(a INT, b STRING) CLUSTERED BY(a) INTO 2 BUCKETS STORED AS ORC TBLPROPERTIES ('transactional'='true')
+PREHOOK: type: CREATETABLE
+PREHOOK: Output: database:default
+PREHOOK: Output: default@acid_vectorized
+POSTHOOK: query: CREATE TABLE acid_vectorized(a INT, b STRING) CLUSTERED BY(a) INTO 2 BUCKETS STORED AS ORC TBLPROPERTIES ('transactional'='true')
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: database:default
+POSTHOOK: Output: default@acid_vectorized
+PREHOOK: query: insert into table acid_vectorized select cint, cstring1 from alltypesorc where cint is not null order by cint limit 10
+PREHOOK: type: QUERY
+PREHOOK: Input: default@alltypesorc
+PREHOOK: Output: default@acid_vectorized
+POSTHOOK: query: insert into table acid_vectorized select cint, cstring1 from alltypesorc where cint is not null order by cint limit 10
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@alltypesorc
+POSTHOOK: Output: default@acid_vectorized
+POSTHOOK: Lineage: acid_vectorized.a SIMPLE [(alltypesorc)alltypesorc.FieldSchema(name:cint, type:int, comment:null), ]
+POSTHOOK: Lineage: acid_vectorized.b SIMPLE [(alltypesorc)alltypesorc.FieldSchema(name:cstring1, type:string, comment:null), ]
+PREHOOK: query: insert into table acid_vectorized values (1, 'bar')
+PREHOOK: type: QUERY
+PREHOOK: Input: _dummy_database@_dummy_table
+PREHOOK: Output: default@acid_vectorized
+POSTHOOK: query: insert into table acid_vectorized values (1, 'bar')
+POSTHOOK: type: QUERY
+POSTHOOK: Input: _dummy_database@_dummy_table
+POSTHOOK: Output: default@acid_vectorized
+POSTHOOK: Lineage: acid_vectorized.a SCRIPT []
+POSTHOOK: Lineage: acid_vectorized.b SCRIPT []
+PREHOOK: query: select sum(a) from acid_vectorized where false
+PREHOOK: type: QUERY
+PREHOOK: Input: default@acid_vectorized
+#### A masked pattern was here ####
+POSTHOOK: query: select sum(a) from acid_vectorized where false
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@acid_vectorized
+#### A masked pattern was here ####
+NULL
