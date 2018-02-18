@@ -897,35 +897,6 @@ public class Vectorizer implements PhysicalPlanResolver {
     delayedFixups.clear();
   }
 
-  /*
-   * The fix up is delayed so that the parent operators aren't modified until the entire operator
-   * tree has been vectorized.
-   */
-  private void queueDelayedFixup(Operator<? extends OperatorDesc> parent,
-      Operator<? extends OperatorDesc> child, Operator<? extends OperatorDesc> vectorChild) {
-    if (delayedFixups.get(parent) == null) {
-      HashSet<ImmutablePair<Operator<? extends OperatorDesc>, Operator<? extends OperatorDesc>>> value =
-          new HashSet<ImmutablePair<Operator<? extends OperatorDesc>, Operator<? extends OperatorDesc>>>(1);
-      delayedFixups.put(parent, value);
-    }
-    delayedFixups.get(parent).add(
-        new ImmutablePair<Operator<? extends OperatorDesc>, Operator<? extends OperatorDesc>>(
-            child, vectorChild));
-  }
-
-  private void runDelayedFixups() {
-    for (Entry<Operator<? extends OperatorDesc>, Set<ImmutablePair<Operator<? extends OperatorDesc>, Operator<? extends OperatorDesc>>>> delayed 
-        : delayedFixups.entrySet()) {
-      Operator<? extends OperatorDesc> key = delayed.getKey();
-      Set<ImmutablePair<Operator<? extends OperatorDesc>, Operator<? extends OperatorDesc>>> value =
-          delayed.getValue();
-      for (ImmutablePair<Operator<? extends OperatorDesc>, Operator<? extends OperatorDesc>> swap : value) {
-        fixupOtherParent(key, swap.getLeft(), swap.getRight());
-      }
-    }
-    delayedFixups.clear();
-  }
-
   private void fixupOtherParent(
       Operator<? extends OperatorDesc> childMultipleParent,
       Operator<? extends OperatorDesc> child,
