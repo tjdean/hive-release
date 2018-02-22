@@ -22,8 +22,8 @@ PREHOOK: Input: default@hbase_table_1
 POSTHOOK: query: DESCRIBE EXTENDED hbase_table_1
 POSTHOOK: type: DESCTABLE
 POSTHOOK: Input: default@hbase_table_1
-key                 	int                 	from deserializer   
-value               	string              	from deserializer   
+key                 	int                 	It is a column key  
+value               	string              	It is the column string value
 	 	 
 #### A masked pattern was here ####
 PREHOOK: query: select * from hbase_table_1
@@ -98,8 +98,8 @@ POSTHOOK: type: DESCTABLE
 POSTHOOK: Input: default@hbase_table_1
 # col_name            	data_type           	comment             
 	 	 
-key                 	int                 	from deserializer   
-value               	string              	from deserializer   
+key                 	int                 	It is a column key  
+value               	string              	It is the column string value
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -146,8 +146,8 @@ POSTHOOK: type: DESCTABLE
 POSTHOOK: Input: default@hbase_table_1
 # col_name            	data_type           	comment             
 	 	 
-key                 	int                 	from deserializer   
-value               	string              	from deserializer   
+key                 	int                 	It is a column key  
+value               	string              	It is the column string value
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 

@@ -26,10 +26,10 @@ POSTHOOK: type: DESCTABLE
 POSTHOOK: Input: default@users
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	from deserializer   
-state               	string              	from deserializer   
-country             	string              	from deserializer   
-country_id          	int                 	from deserializer   
+key                 	string              	                    
+state               	string              	                    
+country             	string              	                    
+country_id          	int                 	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -111,10 +111,10 @@ POSTHOOK: type: DESCTABLE
 POSTHOOK: Input: default@users
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	from deserializer   
-state               	string              	from deserializer   
-country             	string              	from deserializer   
-country_id          	int                 	from deserializer   
+key                 	string              	                    
+state               	string              	                    
+country             	string              	                    
+country_id          	int                 	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -178,10 +178,10 @@ POSTHOOK: type: DESCTABLE
 POSTHOOK: Input: default@users
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	from deserializer   
-state               	string              	from deserializer   
-country             	string              	from deserializer   
-country_id          	int                 	from deserializer   
+key                 	string              	                    
+state               	string              	                    
+country             	string              	                    
+country_id          	int                 	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -235,10 +235,10 @@ POSTHOOK: type: DESCTABLE
 POSTHOOK: Input: default@users
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	from deserializer   
-state               	string              	from deserializer   
-country             	string              	from deserializer   
-country_id          	int                 	from deserializer   
+key                 	string              	                    
+state               	string              	                    
+country             	string              	                    
+country_id          	int                 	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
@@ -308,10 +308,10 @@ POSTHOOK: type: DESCTABLE
 POSTHOOK: Input: default@users
 # col_name            	data_type           	comment             
 	 	 
-key                 	string              	from deserializer   
-state               	string              	from deserializer   
-country             	string              	from deserializer   
-country_id          	int                 	from deserializer   
+key                 	string              	                    
+state               	string              	                    
+country             	string              	                    
+country_id          	int                 	                    
 	 	 
 # Detailed Table Information	 	 
 Database:           	default             	 
