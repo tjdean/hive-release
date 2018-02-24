@@ -373,7 +373,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     MoveWork moveWork = new MoveWork(x.getInputs(), x.getOutputs(), loadTableWork, null, false);
     moveWork.setInImportScope(true);
     Task<?> loadTableTask = TaskFactory.get(new MoveWork(x.getInputs(),
-        x.getOutputs(), loadTableWork, null, false), x.getConf());
+        x.getOutputs(), loadTableWork, null, false), x.getConf(), true);
     copyTask.addDependentTask(loadTableTask);
     x.getTasks().add(copyTask);
     return loadTableTask;

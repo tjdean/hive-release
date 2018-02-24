@@ -108,7 +108,7 @@ public class LoadDatabase {
             new PrincipalDesc(dbObj.getOwnerName(), dbObj.getOwnerType()),
             null);
     DDLWork work = new DDLWork(new HashSet<ReadEntity>(), new HashSet<WriteEntity>(), alterDbDesc);
-    return TaskFactory.get(work, context.hiveConf);
+    return TaskFactory.get(work, context.hiveConf, true);
   }
 
   private boolean existEmptyDb(String dbName) throws InvalidOperationException, HiveException {
