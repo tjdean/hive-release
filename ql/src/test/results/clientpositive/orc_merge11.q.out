@@ -98,6 +98,14 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: default@orcfile_merge1
 #### A masked pattern was here ####
 100000
+PREHOOK: query: INSERT OVERWRITE DIRECTORY 'output' stored as orcfile select * from orc_split_elim
+PREHOOK: type: QUERY
+PREHOOK: Input: default@orc_split_elim
+PREHOOK: Output: output
+POSTHOOK: query: INSERT OVERWRITE DIRECTORY 'output' stored as orcfile select * from orc_split_elim
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@orc_split_elim
+POSTHOOK: Output: output
 PREHOOK: query: DROP TABLE orc_split_elim
 PREHOOK: type: DROPTABLE
 PREHOOK: Input: default@orc_split_elim
