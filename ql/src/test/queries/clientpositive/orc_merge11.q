@@ -31,5 +31,9 @@ select count(*) from orc_split_elim;
 -- will have double the number of rows
 select count(*) from orcfile_merge1;
 
+SET mapreduce.job.reduces=2;
+
+INSERT OVERWRITE DIRECTORY 'output' stored as orcfile select * from orc_split_elim;
+
 DROP TABLE orc_split_elim;
 DROP TABLE orcfile_merge1;
