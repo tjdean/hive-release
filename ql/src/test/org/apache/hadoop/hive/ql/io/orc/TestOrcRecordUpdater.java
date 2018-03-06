@@ -224,7 +224,8 @@ public class TestOrcRecordUpdater {
     String outDump = new String(myOut.toByteArray());
     assertEquals(true, outDump.contains("Compression: SNAPPY"));
     assertEquals(true, outDump.contains("Compression size: 2048"));
-    assertEquals(true, outDump.contains("ACID stats: inserts: 5 updates: 0 deletes: 0"));
+    // ACID stats line removed with port of ORC-223
+    //assertEquals(true, outDump.contains("ACID stats: inserts: 5 updates: 0 deletes: 0"));
     System.setOut(origOut);
     updater.close(false);
   }
