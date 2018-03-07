@@ -115,7 +115,9 @@ class Utils {
     // The default value of the cookie name when CookieAuth=true
     static final String DEFAULT_COOKIE_NAMES_HS2 = "hive.server2.auth";
     // The http header prefix for additional headers which have to be appended to the request
-    static final String HTTP_HEADER_PREFIX = "http.header.";
+    static final String HTTP_HEADER_PREFIX = "http.header.";     
+    // Cookie prefix
+    static final String HTTP_COOKIE_PREFIX = "http.cookie.";
 
     // --------------- Begin 2 way ssl options -------------------------
     // Use two way ssl. This param will take effect only when ssl=true
@@ -149,7 +151,7 @@ class Utils {
 
     public JdbcConnectionParams() {
     }
-    
+
     public JdbcConnectionParams(JdbcConnectionParams params) {
       this.host = params.host;
       this.port = params.port;
@@ -385,7 +387,7 @@ class Utils {
         connParams.getHiveVars().put(varMatcher.group(1), varMatcher.group(2));
       }
     }
-    
+
     // Apply configs supplied in the JDBC connection properties object
     for (Map.Entry<Object, Object> kv : info.entrySet()) {
       if ((kv.getKey() instanceof String)) {
