@@ -585,7 +585,7 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
     try {
       Hive newDb;
       if (needNewdb) {
-        newDb = Hive.get(conf, false);
+        newDb = Hive.get(conf);
       } else {
         newDb = db;
       }

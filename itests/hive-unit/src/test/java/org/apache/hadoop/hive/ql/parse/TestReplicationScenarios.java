@@ -3211,6 +3211,21 @@ public class TestReplicationScenarios {
     verifyIfTableNotExist(dbName + "_dupe", "acid_table_incremental");
   }
 
+  @Test
+  public void testReplStatusWithCluase() throws IOException {
+    String dbName = testName.getMethodName();
+
+    run("CREATE DATABASE " + dbName);
+    run("REPL DUMP " + dbName);
+    String replDumpLocn = getResult(0,0);
+    String replDumpId = getResult(0,1,true);
+    run("REPL LOAD " + dbName + "_dupe FROM '" + replDumpLocn + "'");
+
+    run("REPL STATUS " + dbName + "_dupe");
+    verifyResults(new String[] {replDumpId});
+    verifyFail("REPL STATUS " + dbName + "_dupe with ('hive.metastore.uris' = 'thrift://localhost:9999')");
+  }
+
   private static String createDB(String name) {
     LOG.info("Testing " + name);
     String dbName = name + "_" + tid;
