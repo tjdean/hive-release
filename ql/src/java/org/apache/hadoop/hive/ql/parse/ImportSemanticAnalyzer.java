@@ -412,7 +412,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
         x.getInputs(),
         x.getOutputs(),
         addPartitionDesc
-    ), x.getConf());
+    ), x.getConf(), true);
   }
 
  private static Task<?> addSinglePartition(URI fromURI, FileSystem fs, ImportTableDesc tblDesc,
@@ -425,7 +425,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
           + partSpecToString(partSpec.getPartSpec()));
       // addPartitionDesc already has the right partition location
       Task<?> addPartTask = TaskFactory.get(new DDLWork(x.getInputs(),
-          x.getOutputs(), addPartitionDesc), x.getConf());
+          x.getOutputs(), addPartitionDesc), x.getConf(), true);
       return addPartTask;
     } else {
       String srcLocation = partSpec.getLocation();
