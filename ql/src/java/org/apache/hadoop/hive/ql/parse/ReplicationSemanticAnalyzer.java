@@ -79,8 +79,9 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
   // of any other queries running in the session
   private HiveConf conf;
 
-  // This will be set to true only if repl-status is fired with "WITH" keyword
-  private boolean needNewdb;
+  // By default, this will be same as that of super class BaseSemanticAnalyzer. But need to obtain again
+  // if the Hive configs are received from WITH clause in REPL LOAD or REPL STATUS commands.
+  private Hive db;
 
   private static String testInjectDumpDir = null; // unit tests can overwrite this to affect default dump behaviour
   private static final String dumpSchema = "dump_dir,last_repl_id#string,string";
@@ -89,6 +90,7 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
 
   ReplicationSemanticAnalyzer(HiveConf conf) throws SemanticException {
     super(conf);
+    this.db = super.db;
     this.conf = new HiveConf(conf);
   }
 
@@ -221,6 +223,13 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
           if (null != replConfigs) {
             for (Map.Entry<String, String> config : replConfigs.entrySet()) {
               conf.set(config.getKey(), config.getValue());
+            }
+
+            // As hive conf is changed, need to get the Hive DB again with it.
+            try {
+              db = Hive.get(conf);
+            } catch (HiveException e) {
+              throw new SemanticException(e);
             }
           }
           break;
@@ -551,7 +560,6 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
 
   // REPL STATUS
   private void initReplStatus(ASTNode ast) throws SemanticException{
-    needNewdb = false;
     dbNameOrPattern = PlanUtils.stripQuotes(ast.getChild(0).getText());
     int numChildren = ast.getChildCount();
     for (int i = 1; i < numChildren; i++) {
@@ -567,8 +575,14 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
           for (Map.Entry<String, String> config : replConfigs.entrySet()) {
             conf.set(config.getKey(), config.getValue());
           }
+
+          // As hive conf is changed, need to get the Hive DB again with it.
+          try {
+            db = Hive.get(conf);
+          } catch (HiveException e) {
+            throw new SemanticException(e);
+          }
         }
-        needNewdb = true;
         break;
       default:
         throw new SemanticException("Unrecognized token in REPL STATUS statement");
@@ -583,16 +597,9 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
     String replLastId = null;
 
     try {
-      Hive newDb;
-      if (needNewdb) {
-        newDb = Hive.get(conf);
-      } else {
-        newDb = db;
-      }
-
       if (tblNameOrPattern != null) {
         // Checking for status of table
-        Table tbl = newDb.getTable(dbNameOrPattern, tblNameOrPattern);
+        Table tbl = db.getTable(dbNameOrPattern, tblNameOrPattern);
         if (tbl != null) {
           inputs.add(new ReadEntity(tbl));
           Map<String, String> params = tbl.getParameters();
@@ -603,7 +610,7 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
       } else {
         // Checking for status of a db
 
-        Database database = newDb.getDatabase(dbNameOrPattern);
+        Database database = db.getDatabase(dbNameOrPattern);
         if (database != null) {
           inputs.add(new ReadEntity(database));
           Map<String, String> params = database.getParameters();
