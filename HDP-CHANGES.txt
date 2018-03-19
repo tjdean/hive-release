@@ -6,6 +6,65 @@ INCOMPATIBLE CHANGES
     HIVE-11118 : Load data query should validate file formats with destination tables
 
 NEW FEATURES & BUG FIXES
+  HDP-2.6.5.0:
+    HIVE-18460: Compactor doesn't pass Table properties to the Orc writer (Eugene Koifman, reviewed by Prasanth Jayachandran)
+    HIVE-18613: Extend JsonSerDe to support BINARY type (Jesus Camacho Rodriguez, reviewed by Prasanth Jayachandran)
+    HIVE-18808: Make compaction more robust when stats update fails (Eugene Koifman, reviewed by Alan Gates)
+    HIVE-18907: Create utility to fix acid key index issue from HIVE-18817
+    HIVE-18258: Vectorization: Reduce-Side GROUP BY MERGEPARTIAL with duplicate columns is broken
+    HIVE-18879: Disallow embedded element in UDFXPathUtil needs to work if xercesImpl.jar in classpath
+    HIVE-18788: Clean up inputs in JDBC PreparedStatement
+    HIVE-18754 : REPL STATUS should support 'with' clause
+    HIVE-18817 - ArrayIndexOutOfBounds exception during read of ACID table.
+    ORC-223: FileDump utility should print user metadata
+    HIVE-18447: JDBC: Provide a way for JDBC users to pass cookie info via connection string
+    HIVE-18327 : Remove the unnecessary HiveConf dependency for MiniHiveKdc (Daniel Voros via Ashutosh Chauhan)
+    HIVE-18833: Auto Merge fails when "insert into directory as orcfile"
+    HIVE-17829: ArrayIndexOutOfBoundsException - HBASE-backed tables with Avro schema in Hive2
+    HIVE-12245: Support column comments for an HBase backed table
+    HIVE-18794: Repl load "with" clause does not pass config to tasks for non-partition tables
+    HIVE-17900: analyze stats on columns triggered by Compactor generates malformed SQL with > 1 partition column (Eugene Koifman, reviewed by Sergey Shelukhin)
+    HIVE-18754 : REPL STATUS should support 'with' clause
+    HIVE-17530: ClassCastException when converting uniontype (Anthony Hsu via Carl Steinbach)
+    HIVE-10697 : ObjectInspectorConvertors#UnionConvertor does a faulty conversion (Swarnim Kulkarni, reviewed by Hari Subramaniyan)
+    HIVE-14205: Hive doesn't support union type with AVRO file format (Yibing Shi, via Chaoyu Tang)
+    HIVE-18587: insert DML event may attempt to calculate a checksum on directories (Sergey Shelukhin, reviewed by Ashutosh Chauhan)
+    HIVE-18660: PCR doesn't distinguish between partition and virtual columns  (Ashutosh Chauhan via Gopal V, Jesus Camacho Rodriguez)
+    HIVE-17063: insert overwrite partition onto a external table fail when drop partition first (Wang Haihua, Deepak Jaiswal, reviewed by Ashutosh Chauhan)
+    HIVE-18390: IndexOutOfBoundsException when query a  partitioned view in ColumnPruner (Hengyu Dai via Ashutosh Chauhan)
+    HIVE-16828: With CBO enabled, Query on partitioned views throws IndexOutOfBoundException (Vineet Garg, reviewed by Ashutosh Chauhan)
+    HIVE-18551: Vectorization: VectorMapOperator tries to write too many vector columns for Hybrid Grace (Matt McCline, reviewed by Teddy Choi)
+    HIVE-18626: Repl load "with" clause does not pass config to tasks
+    HIVE-18467: support whole warehouse dump / load + create/drop database events (Anishek Agarwal, reviewed by Sankar Hariappan)    
+    HIVE-15563: Ignore Illegal Operation state transition exception in SQLOperation.runQuery to expose real exception (Zhihai Xu via Jimmy Xiang)
+    HIVE-18031: Support replication for Alter Database operation (Sankar Hariappan, reviewed by Anishek Agarwal)
+    HIVE-15680: Incorrect results when hive.optimize.index.filter=true and same ORC table is referenced twice in query, in MR mode
+    HIVE-17636: Add multiple_agg.q test for blobstores (Ran Gu, reviewed by Sergio Pena)
+    HIVE-17803: With Pig multi-query, 2 HCatStorers writing to the same table will trample each other's outputs (Chris Drome, reviewed by Mithun Radhakrishnan)
+    HIVE-17621: Hive-site settings are ignored during HCatInputFormat split-calculation (Chris Drome, reviewed by Mithun Radhakrishnan)
+    HIVE-18429 - Compaction should handle a case when it produces no output (Eugene Koifman, reviewed by Prasanth Jayachandran)
+    HIVE-14013: Describe table doesn't show unicode properly (Reviewed by Yongzhi Chen)
+    HIVE-17731 : add a backward compat option for external users to HIVE-11985 (Sergey Shelukhin, reviewed by Jesus Camacho Rodriguez)
+    HIVE-18090: acid heartbeat fails when metastore is connected via hadoop credential (Anishek Agarwal, reviewed by Eugene Koifman)
+    HIVE-12315: Fix Vectorized double divide by zero (Gopal V, reviewed by Matt McCline)
+    HIVE-17729: Add Database & Explain related blobstore tests (Rentao Wu, reviewed by Sergio Pena)
+    HIVE-16232: Support stats computation for columns in QuotedIdentifier  (Pengcheng Xiong, reviewed by Ashutosh Chauhan)
+    HIVE-17845 : insert fails if target table columns are not lowercase (Naresh P R via Ashutosh Chauhan)
+    HIVE-18341: Add repl load support for adding "raw" namespace for TDE with same encryption keys (Anishek Agarwal, reviewed Daniel Dai)
+    HIVE-15883 HBase mapped table in Hive insert fail for decimal (Naveen Gangam reviewed by Ashutosh Chauhan and Aihua Xu)
+    HIVE-12378: Exception on HBaseSerDe.serialize binary field (Yongzhi Chen, reviewed by Jimmy Xiang)
+    HIVE-17013: Delete request with a subquery based on select over a view (Eugene Koifman, reviewed by Ashutosh Chauhan)
+    HIVE-17259 : Hive JDBC does not recognize UNIONTYPE columns (Pierre Villard via Ashutosh Chauhan)
+    HIVE-12360: Bad seek in uncompressed ORC with predicate pushdown (Prasanth Jayachandran reviewed by Sergey Shelukhin)
+    HIVE-12785: View with union type and UDF to  the struct is broken (Pengcheng Xiong, reviewed by Laljo John Pullokkaran)
+    HIVE-18352: introduce a METADATAONLY option while doing REPL DUMP to allow integrations of other tools (Anishek Agarwal reviewed by Daniel Dai)
+    HIVE-18026: Hive webhcat principal configuration optimization (ZhangBing Lin via Rui)
+    HIVE-18293 - Hive is failing to compact tables contained within a folder that is not owned by identity running HiveMetaStore (Johannes Alberti via Eugene Koifman)
+    HIVE-18353 : CompactorMR should call jobclient.close() to trigger cleanup (Prabhu Joseph via Thejas Nair)
+    HIVE-14421: FS.deleteOnExit holds references to _tmp_space.db files. (Siddharth Seth, reviewed by Thejas Nair)
+    HIVE-11266: count(*) wrong result based on table statistics for external tables (Jesus Camacho Rodriguez, reviewed by Ashutosh Chauhan)
+    HIVE-15874 HIVE-18189: Hive query returning wrong results when set hive.groupby.orderby.position.alias to true
+    HIVE-17419: ANALYZE TABLE...COMPUTE STATISTICS FOR COLUMNS command shows computed stats for masked tables (Jesus Camacho Rodriguez, reviewed by Ashutosh Chauhan)
   HDP-2.6.1:
     HIVE-14204: Optimize loading dynamic partitions
     HIVE-16673: Create table as select does not check ownership of the location
@@ -888,6 +947,8 @@ BUG FIXES
 
 
 INTERNAL FIXES (NO APACHE JIRA)
+HDP-2.6.5.0:
+    BUG-95644: CombineHiveInputFormat: Hive query is failing in Tez with java.lang.IllegalArgumentException exception
 HDP-2.6.4.0:
     QE-16280: updating q.out diffs present since HDP-2.6.3.0.
 
