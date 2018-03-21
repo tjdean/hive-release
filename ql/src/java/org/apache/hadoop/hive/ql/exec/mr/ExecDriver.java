@@ -28,7 +28,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -165,6 +167,12 @@ public class ExecDriver extends Task<MapredWork> implements Serializable, Hadoop
   @Override
   public void initialize(HiveConf conf, QueryPlan queryPlan, DriverContext driverContext) {
     super.initialize(conf, queryPlan, driverContext);
+
+    Iterator<Map.Entry<String, String>> iter = conf.iterator();
+    while(iter.hasNext()) {
+      String key = iter.next().getKey();
+      conf.set(key, conf.get(key));
+    }
 
     job = new JobConf(conf, ExecDriver.class);
 
