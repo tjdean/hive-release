@@ -253,7 +253,8 @@ public class Hive {
   public static Hive get(HiveConf c) throws HiveException {
     Hive db = hiveDB.get();
     if (db == null || !db.isCurrentUserOwner() ||
-        (db.metaStoreClient != null && !db.metaStoreClient.isCompatibleWith(c))) {
+        (db.metaStoreClient != null && !db.metaStoreClient.isCompatibleWith(c)
+          || db.syncMetaStoreClient != null && !db.syncMetaStoreClient.isCompatibleWith(c))) {
       return get(c, true);
     }
     db.conf = c;

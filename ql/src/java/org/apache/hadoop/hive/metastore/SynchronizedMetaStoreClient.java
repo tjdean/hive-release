@@ -21,6 +21,7 @@ package org.apache.hadoop.hive.metastore;
 import java.util.List;
 
 import org.apache.hadoop.hive.common.ValidTxnList;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.EnvironmentContext;
 import org.apache.hadoop.hive.metastore.api.FireEventRequest;
@@ -115,5 +116,9 @@ public final class SynchronizedMetaStoreClient {
 
     public synchronized FireEventResponse fireListenerEvent(FireEventRequest rqst) throws TException {
       return client.fireListenerEvent(rqst);
+    }
+
+    public boolean isCompatibleWith(HiveConf conf) {
+      return client.isCompatibleWith(conf);
     }
 }
