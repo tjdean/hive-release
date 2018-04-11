@@ -3872,7 +3872,7 @@ STAGE PLANS:
                   Statistics: Num rows: 1 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
                   TableScan Vectorization:
                       native: true
-                      vectorizationSchemaColumns: [0:sd_id:bigint, 1:cd_id:bigint, 2:input_format:string, 3:is_compressed:boolean, 4:is_storedassubdirectories:boolean, 5:location:string, 6:num_buckets:int, 7:output_format:string, 8:serde_id:bigint, 9:ROW__ID:struct<writeid:bigint,bucketid:int,rowid:bigint>]
+                      vectorizationSchemaColumns: [0:sd_id:bigint, 1:cd_id:bigint, 2:input_format:string, 3:is_compressed:boolean, 4:is_storedassubdirectories:boolean, 5:location:string, 6:num_buckets:int, 7:output_format:string, 8:serde_id:bigint]
                   Select Operator
                     Select Vectorization:
                         className: VectorSelectOperator
@@ -3895,9 +3895,10 @@ STAGE PLANS:
                         sort order: 
                         Reduce Sink Vectorization:
                             className: VectorReduceSinkEmptyKeyOperator
+                            keyColumnNums: []
                             native: true
                             nativeConditionsMet: hive.vectorized.execution.reducesink.new.enabled IS true, hive.execution.engine tez IN [tez, spark] IS true, No PTF TopN IS true, No DISTINCT columns IS true, BinarySortableSerDe for keys IS true, LazyBinarySerDe for values IS true
-                            valueColumns: 0:bigint
+                            valueColumnNums: [0]
                         Statistics: Num rows: 1 Data size: 8 Basic stats: PARTIAL Column stats: COMPLETE
                         value expressions: _col0 (type: bigint)
             Execution mode: vectorized, llap
@@ -3987,11 +3988,11 @@ POSTHOOK: query: select name, slib from serdes order by name, slib limit 5
 POSTHOOK: type: QUERY
 POSTHOOK: Input: sys@serdes
 #### A masked pattern was here ####
-NULL	org.apache.hadoop.hive.ql.io.orc.OrcSerde
-NULL	org.apache.hadoop.hive.ql.io.orc.OrcSerde
-NULL	org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe
-NULL	org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
-NULL	org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
+NULL	NULL
+NULL	NULL
+NULL	NULL
+NULL	NULL
+NULL	NULL
 PREHOOK: query: select param_key, param_value from serde_params order by param_key, param_value limit 5
 PREHOOK: type: QUERY
 PREHOOK: Input: sys@serde_params
@@ -4114,8 +4115,8 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: sys@tab_col_stats
 #### A masked pattern was here ####
 alltypesorc	cbigint	3115	5917
-alltypesorc	cboolean1	3114	0
-alltypesorc	cboolean2	3115	0
+alltypesorc	cboolean1	3114	NULL
+alltypesorc	cboolean2	3115	NULL
 alltypesorc	cdouble	3114	5527
 alltypesorc	cfloat	3115	131
 alltypesorc	cint	3115	6104
@@ -4131,12 +4132,12 @@ POSTHOOK: query: select table_name, partition_name, column_name, num_nulls, num_
 POSTHOOK: type: QUERY
 POSTHOOK: Input: sys@part_col_stats
 #### A masked pattern was here ####
-cbo_t1	dt=2014	c_boolean	2	0
+cbo_t1	dt=2014	c_boolean	2	NULL
 cbo_t1	dt=2014	c_float	2	1
 cbo_t1	dt=2014	c_int	2	1
 cbo_t1	dt=2014	key	2	4
 cbo_t1	dt=2014	value	2	4
-cbo_t2	dt=2014	c_boolean	2	0
+cbo_t2	dt=2014	c_boolean	2	NULL
 cbo_t2	dt=2014	c_float	2	2
 cbo_t2	dt=2014	c_int	2	2
 cbo_t2	dt=2014	key	2	5
