@@ -63,6 +63,7 @@ IMPROVEMENTS
     HIVE-11037 : HiveOnTez: make explain user level = true as default
 
 BUG FIXES
+    HOTFIX-1481 HIVE-18788: Clean up inputs in JDBC PreparedStatement
   HDP-2.6.0:    HIVE-16114: NullPointerException in TezSessionPoolManager when getting the session
     HIVE-16175: Possible race condition in InstanceCache 
     HIVE-16160: OutOfMemoryError: GC overhead limit exceeded on Hs2 longevity tests
