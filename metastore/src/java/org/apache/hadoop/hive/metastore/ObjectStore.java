@@ -180,6 +180,8 @@ import com.google.common.collect.Lists;
  * filestore.
  */
 public class ObjectStore implements RawStore, Configurable {
+  private int batchSize = Batchable.NO_BATCHING;
+
   private static Properties prop = null;
   private static PersistenceManagerFactory pmf = null;
 
@@ -289,6 +291,8 @@ public class ObjectStore implements RawStore, Configurable {
       } else {
         partitionValidationPattern = null;
       }
+
+      this.batchSize = HiveConf.getIntVar(conf, ConfVars.RAWSTORE_PARTITION_BATCH_SIZE);
 
       if (!isInitialized) {
         throw new RuntimeException(

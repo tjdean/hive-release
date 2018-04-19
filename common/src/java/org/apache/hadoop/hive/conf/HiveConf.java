@@ -734,6 +734,10 @@ public class HiveConf extends Configuration {
     METASTORE_METRICS("hive.metastore.metrics.enabled", false, "Enable metrics on the metastore."),
     METASTORE_INIT_METADATA_COUNT_ENABLED("hive.metastore.initial.metadata.count.enabled", true,
       "Enable a metadata count at metastore startup for metrics."),
+    RAWSTORE_PARTITION_BATCH_SIZE("metastore.rawstore.batch.size", -1,
+      "Batch size for partition and other object retrieval from the underlying DB in JDO.\n" +
+      "The JDO implementation such as DataNucleus may run into issues when the generated queries are\n" +
+      "too large. Use this parameter to break the query into multiple batches. -1 means no batching."),
 
     // Parameters for exporting metadata on table drop (requires the use of the)
     // org.apache.hadoop.hive.ql.parse.MetaDataExportListener preevent listener
