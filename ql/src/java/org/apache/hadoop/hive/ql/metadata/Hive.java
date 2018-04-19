@@ -1890,18 +1890,17 @@ private void constructOneLBLocationMap(FileStatus fSta,
 
     List<Path> newFiles = null;
     Table tbl = getTable(tableName);
-    HiveConf sessionConf = SessionState.getSessionConf();
     if (conf.getBoolVar(ConfVars.FIRE_EVENTS_FOR_DML) && !tbl.isTemporary()) {
       newFiles = Collections.synchronizedList(new ArrayList<Path>());
     }
     if (loadFileType == LoadFileType.REPLACE_ALL) {
       Path tableDest = tbl.getPath();
-      replaceFiles(tableDest, loadPath, tableDest, tableDest, sessionConf, isSrcLocal, newFiles);
+      replaceFiles(tableDest, loadPath, tableDest, tableDest, conf, isSrcLocal, newFiles);
     } else {
       FileSystem fs;
       try {
-        fs = tbl.getDataLocation().getFileSystem(sessionConf);
-        copyFiles(sessionConf, loadPath, tbl.getPath(), fs, isSrcLocal, isAcid,
+        fs = tbl.getDataLocation().getFileSystem(conf);
+        copyFiles(conf, loadPath, tbl.getPath(), fs, isSrcLocal, isAcid,
                           (loadFileType == LoadFileType.OVERWRITE_EXISTING), newFiles);
       } catch (IOException e) {
         throw new HiveException("addFiles: filesystem error in check phase", e);
