@@ -71,13 +71,10 @@ public class ReplChangeManager {
     Path cmPath;
     String checkSum;
     boolean useSourcePath;
+    boolean copyDone;
 
     public FileInfo(FileSystem srcFs, Path sourcePath) {
-      this.srcFs = srcFs;
-      this.sourcePath = sourcePath;
-      this.cmPath = null;
-      this.checkSum = null;
-      this.useSourcePath = true;
+      this(srcFs, sourcePath, null, null, true);
     }
     public FileInfo(FileSystem srcFs, Path sourcePath, Path cmPath, String checkSum, boolean useSourcePath) {
       this.srcFs = srcFs;
@@ -85,6 +82,7 @@ public class ReplChangeManager {
       this.cmPath = cmPath;
       this.checkSum = checkSum;
       this.useSourcePath = useSourcePath;
+      this.copyDone = false;
     }
     public FileSystem getSrcFs() {
       return srcFs;
@@ -101,8 +99,14 @@ public class ReplChangeManager {
     public boolean isUseSourcePath() {
       return useSourcePath;
     }
-    public void setIsUseSourcePath(boolean useSourcePath) {
+    public void setUseSourcePath(boolean useSourcePath) {
       this.useSourcePath = useSourcePath;
+    }
+    public boolean isCopyDone() {
+      return copyDone;
+    }
+    public void setCopyDone(boolean copyDone) {
+      this.copyDone = copyDone;
     }
     public Path getEffectivePath() {
       if (useSourcePath) {
