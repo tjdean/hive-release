@@ -118,7 +118,7 @@ public class LineageCtx implements NodeProcessorCtx {
         old_dep.setType(new_type);
         Set<BaseColumnInfo> bci_set = new LinkedHashSet<BaseColumnInfo>(old_dep.getBaseCols());
         bci_set.addAll(dep.getBaseCols());
-        old_dep.setBaseCols(new ArrayList<BaseColumnInfo>(bci_set));
+        old_dep.setBaseCols(new LinkedHashSet<>(bci_set));
         // TODO: Fix the expressions later.
         old_dep.setExpr(null);
       }

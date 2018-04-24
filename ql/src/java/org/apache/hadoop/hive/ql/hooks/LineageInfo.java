@@ -334,9 +334,9 @@ public class LineageInfo implements Serializable {
     private String expr;
 
     /**
-     * The list of base columns that the particular column depends on.
+     * The set of base columns that the particular column depends on.
      */
-    private List<BaseColumnInfo> baseCols;
+    private Set<BaseColumnInfo> baseCols;
 
     /**
      * @return the type
@@ -369,14 +369,14 @@ public class LineageInfo implements Serializable {
     /**
      * @return the baseCols
      */
-    public List<BaseColumnInfo> getBaseCols() {
+    public Set<BaseColumnInfo> getBaseCols() {
       return baseCols;
     }
 
     /**
      * @param baseCols the baseCols to set
      */
-    public void setBaseCols(List<BaseColumnInfo> baseCols) {
+    public void setBaseCols(Set<BaseColumnInfo> baseCols) {
       this.baseCols = baseCols;
     }
 

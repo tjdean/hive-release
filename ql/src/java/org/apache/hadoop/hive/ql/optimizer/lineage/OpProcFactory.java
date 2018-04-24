@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.ql.optimizer.lineage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -110,7 +111,7 @@ public class OpProcFactory {
       }
 
       dep.setType(new_type);
-      dep.setBaseCols(new ArrayList<BaseColumnInfo>(col_set));
+      dep.setBaseCols(col_set);
 
       // This dependency is then set for all the colinfos of the script operator
       for(ColumnInfo ci : op.getSchema().getSignature()) {
@@ -169,7 +170,7 @@ public class OpProcFactory {
         dep.setType(LineageInfo.DependencyType.SIMPLE);
         // TODO: Find out how to get the expression here.
         dep.setExpr(null);
-        dep.setBaseCols(new ArrayList<BaseColumnInfo>());
+        dep.setBaseCols(new LinkedHashSet<>());
         dep.getBaseCols().add(bci);
 
         // Put the dependency in the map
@@ -373,7 +374,7 @@ public class OpProcFactory {
           }
         }
 
-        dep.setBaseCols(new ArrayList<BaseColumnInfo>(bci_set));
+        dep.setBaseCols(bci_set);
         dep.setType(new_type);
         lctx.getIndex().putDependency(gop, col_infos.get(cnt++), dep);
       }

@@ -118,7 +118,7 @@ public class ExprProcFactory {
         bci_set.addAll(child_dep.getBaseCols());
       }
 
-      dep.setBaseCols(new ArrayList<BaseColumnInfo>(bci_set));
+      dep.setBaseCols(new LinkedHashSet<>(bci_set));
       dep.setType(new_type);
 
       return dep;
@@ -140,7 +140,7 @@ public class ExprProcFactory {
       // Create a dependency that has no basecols
       Dependency dep = new Dependency();
       dep.setType(LineageInfo.DependencyType.SIMPLE);
-      dep.setBaseCols(new ArrayList<BaseColumnInfo>());
+      dep.setBaseCols(new LinkedHashSet<>());
 
       return dep;
     }
