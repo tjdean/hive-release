@@ -19,13 +19,14 @@ package org.apache.hadoop.hive.ql.txn.compactor;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.common.FileUtils;
+import org.apache.hadoop.hive.common.ValidReadTxnList;
+import org.apache.hadoop.hive.common.ValidTxnList;
 import org.apache.hadoop.hive.metastore.ReplChangeManager;
 import org.apache.hadoop.hive.metastore.txn.TxnStore;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hive.common.ValidTxnList;
-import org.apache.hadoop.hive.common.ValidReadTxnList;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
@@ -45,8 +46,12 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -120,7 +125,9 @@ public class Cleaner extends CompactorThread {
         }
         if (toClean.size() > 0 || compactId2LockMap.size() > 0) {
           ShowLocksResponse locksResponse = txnHandler.showLocks(new ShowLocksRequest());
-
+          if(LOG.isDebugEnabled()) {
+            dumpLockState(locksResponse);
+          }
           for (CompactionInfo ci : toClean) {
             // Check to see if we have seen this request before.  If so, ignore it.  If not,
             // add it to our queue.
@@ -158,6 +165,9 @@ public class Cleaner extends CompactorThread {
                 for (Long lockId : expiredLocks) {
                   queueEntry.getValue().remove(lockId);
                 }
+                LOG.info("Skipping cleaning of " +
+                    idWatermark(compactId2CompactInfoMap.get(queueEntry.getKey())) +
+                    " due to reader present: " + queueEntry.getValue());
               }
             }
           } finally {
@@ -198,9 +208,18 @@ public class Cleaner extends CompactorThread {
   private Set<Long> findRelatedLocks(CompactionInfo ci, ShowLocksResponse locksResponse) {
     Set<Long> relatedLocks = new HashSet<Long>();
     for (ShowLocksResponseElement lock : locksResponse.getLocks()) {
-      if (ci.dbname.equals(lock.getDbname())) {
+      /**
+       * Hive QL is not case sensitive wrt db/table/column names
+       * Partition names get
+       * normalized (as far as I can tell) by lower casing column name but not partition value.
+       * {@link org.apache.hadoop.hive.metastore.Warehouse#makePartName(List, List, String)}
+       * {@link org.apache.hadoop.hive.ql.parse.DDLSemanticAnalyzer#getPartSpec(ASTNode)}
+       * Since user input may start out in any case, compare here case-insensitive for db/table
+       * but leave partition name as is.
+       */
+      if (ci.dbname.equalsIgnoreCase(lock.getDbname())) {
         if ((ci.tableName == null && lock.getTablename() == null) ||
-            (ci.tableName != null && ci.tableName.equals(lock.getTablename()))) {
+            (ci.tableName != null && ci.tableName.equalsIgnoreCase(lock.getTablename()))) {
           if ((ci.partName == null && lock.getPartname() == null) ||
               (ci.partName != null && ci.partName.equals(lock.getPartname()))) {
             relatedLocks.add(lock.getLockid());
@@ -221,12 +240,13 @@ public class Cleaner extends CompactorThread {
   }
 
   private void clean(CompactionInfo ci) throws MetaException {
-    LOG.info("Starting cleaning for " + ci.getFullPartitionName());
+    LOG.info("Starting cleaning for " + ci);
     try {
       Table t = resolveTable(ci);
       if (t == null) {
         // The table was dropped before we got around to cleaning it.
-        LOG.info("Unable to find table " + ci.getFullTableName() + ", assuming it was dropped");
+        LOG.info("Unable to find table " + ci.getFullTableName() + ", assuming it was dropped." +
+            idWatermark(ci));
         txnHandler.markCleaned(ci);
         return;
       }
@@ -236,7 +256,7 @@ public class Cleaner extends CompactorThread {
         if (p == null) {
           // The partition was dropped before we got around to cleaning it.
           LOG.info("Unable to find partition " + ci.getFullPartitionName() +
-              ", assuming it was dropped");
+              ", assuming it was dropped." + idWatermark(ci));
           txnHandler.markCleaned(ci);
           return;
         }
@@ -260,7 +280,7 @@ public class Cleaner extends CompactorThread {
        * Now removeFiles() (more specifically AcidUtils.getAcidState()) will declare D3 to be obsolete
        * unless ValidTxnList is "capped" at highestTxnId.
        */
-      final ValidTxnList txnList = ci.highestTxnId > 0 ? 
+      final ValidTxnList txnList = ci.highestTxnId > 0 ?
         new ValidReadTxnList(new long[0], ci.highestTxnId) : new ValidReadTxnList();
 
       if (runJobAsSelf(ci.runAs)) {
@@ -280,7 +300,7 @@ public class Cleaner extends CompactorThread {
           FileSystem.closeAllForUGI(ugi);
         } catch (IOException exception) {
           LOG.error("Could not clean up file-system handles for UGI: " + ugi + " for " +
-              ci.getFullPartitionName(), exception);
+              ci.getFullPartitionName() + idWatermark(ci), exception);
         }
       }
       txnHandler.markCleaned(ci);
@@ -291,19 +311,34 @@ public class Cleaner extends CompactorThread {
     }
   }
 
+  private static String idWatermark(CompactionInfo ci) {
+    return " id=" + ci.id;
+  }
   private void removeFiles(String location, ValidTxnList txnList, CompactionInfo ci) throws IOException, HiveException, MetaException {
+    Path locPath = new Path(location);
     AcidUtils.Directory dir = AcidUtils.getAcidState(new Path(location), conf, txnList);
     List<FileStatus> obsoleteDirs = dir.getObsolete();
     List<Path> filesToDelete = new ArrayList<Path>(obsoleteDirs.size());
+    StringBuilder extraDebugInfo = new StringBuilder("[");
     for (FileStatus stat : obsoleteDirs) {
       filesToDelete.add(stat.getPath());
+      extraDebugInfo.append(stat.getPath().getName()).append(",");
+      if(!FileUtils.isPathWithinSubtree(stat.getPath(), locPath)) {
+        LOG.info(idWatermark(ci) + " found unexpected file: " + stat.getPath());
+      }
     }
+    extraDebugInfo.setCharAt(extraDebugInfo.length() - 1, ']');
+    List<Long> compactIds = new ArrayList<>(compactId2CompactInfoMap.keySet());
+    Collections.sort(compactIds);
+    extraDebugInfo.append("compactId2CompactInfoMap.keySet(").append(compactIds).append(")");
+    LOG.info(idWatermark(ci) + " About to remove " + filesToDelete.size() +
+         " obsolete directories from " + location + ". " + extraDebugInfo.toString());
     if (filesToDelete.size() < 1) {
       LOG.warn("Hmm, nothing to delete in the cleaner for directory " + location +
           ", that hardly seems right.");
       return;
     }
-    LOG.info("About to remove " + filesToDelete.size() + " obsolete directories from " + location);
+
     FileSystem fs = filesToDelete.get(0).getFileSystem(conf);
 
     Database db = Hive.get().getDatabase(ci.dbname);
@@ -315,5 +350,63 @@ public class Cleaner extends CompactorThread {
       fs.delete(dead, true);
     }
   }
+  private static class LockComparator implements Comparator<ShowLocksResponseElement> {
+    //sort ascending by resource, nulls first
+    @Override
+    public int compare(ShowLocksResponseElement o1, ShowLocksResponseElement o2) {
+      if(o1 == o2) {
+        return 0;
+      }
+      if(o1 == null) {
+        return -1;
+      }
+      if(o2 == null) {
+        return 1;
+      }
+      int v = o1.getDbname().compareToIgnoreCase(o2.getDbname());
+      if(v != 0) {
+        return v;
+      }
+      if(o1.getTablename() == null) {
+        return -1;
+      }
+      if(o2.getTablename() == null) {
+        return 1;
+      }
+      v = o1.getTablename().compareToIgnoreCase(o2.getTablename());
+      if(v != 0) {
+        return v;
+      }
+      if(o1.getPartname() == null) {
+        return -1;
+      }
+      if(o2.getPartname() == null) {
+        return 1;
+      }
+      v = o1.getPartname().compareToIgnoreCase(o2.getPartname());
+      if(v != 0) {
+        return v;
+      }
+      //if still equal, compare by lock ids
+      v = Long.compare(o1.getLockid(), o2.getLockid());
+      if(v != 0) {
+        return v;
+      }
+      return Long.compare(o1.getLockIdInternal(), o2.getLockIdInternal());
 
+    }
+  }
+  private void dumpLockState(ShowLocksResponse slr) {
+    Iterator<ShowLocksResponseElement> l = slr.getLocksIterator();
+    List<ShowLocksResponseElement> sortedList = new ArrayList<>();
+    while(l.hasNext()) {
+      sortedList.add(l.next());
+    }
+    //sort for readability
+    sortedList.sort(new LockComparator());
+    LOG.info("dumping locks");
+    for(ShowLocksResponseElement lock : sortedList) {
+      LOG.info(lock.toString());
+    }
+  }
 }
