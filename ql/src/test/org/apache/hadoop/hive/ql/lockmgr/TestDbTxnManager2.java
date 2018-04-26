@@ -920,7 +920,7 @@ public class TestDbTxnManager2 {
     Assert.assertTrue("Didn't get exception", expectedException != null);
     Assert.assertEquals("Got wrong message code", ErrorMsg.TXN_ABORTED, expectedException.getCanonicalErrorMsg());
     Assert.assertEquals("Exception msg didn't match",
-      "Aborting [txnid:3,3] due to a write conflict on default/TAB_PART/p=blah committed by [txnid:2,3] u/u",
+      "Aborting [txnid:"+txnId2+","+txnId2+"] due to a write conflict on default/tab_part/p=blah committed by [txnid:"+txnId+","+txnId2+"] u/u",
       expectedException.getCause().getMessage());
   }
   /**
