@@ -186,13 +186,15 @@ public class CreateFunctionHandler extends AbstractMessageHandler {
       String sourceUri = resourceUri.getUri();
       String[] split = sourceUri.split(Path.SEPARATOR);
       PathBuilder pathBuilder = new PathBuilder(functionsRootDir);
-      Path qualifiedDestinationPath =
+      Path qualifiedDestinationPath = PathBuilder.fullyQualifiedHDFSUri(
           pathBuilder
               .addDescendant(destinationDbName.toLowerCase())
               .addDescendant(metadata.function.getFunctionName().toLowerCase())
               .addDescendant(String.valueOf(System.nanoTime()))
               .addDescendant(ReplChangeManager.getFileWithChksumFromURI(split[split.length - 1])[0])
-              .build();
+              .build(),
+          FileSystem.get(context.hiveConf)
+      );
 
       Task<?> copyTask = ReplCopyTask.getLoadCopyTask(
           metadata.getReplicationSpec(), new Path(sourceUri), qualifiedDestinationPath,
