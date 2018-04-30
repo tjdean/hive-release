@@ -319,10 +319,12 @@ public class CopyUtils {
           fileInfo.setUseSourcePath(false);
         }
       }
-      size += contentSummary.getLength();
-      numberOfFiles += contentSummary.getFileCount();
-      if (limitReachedForLocalCopy(size, numberOfFiles)) {
-        return false;
+      if (contentSummary != null) {
+        size += contentSummary.getLength();
+        numberOfFiles += contentSummary.getFileCount();
+        if (limitReachedForLocalCopy(size, numberOfFiles)) {
+          return false;
+        }
       }
     }
     return true;
