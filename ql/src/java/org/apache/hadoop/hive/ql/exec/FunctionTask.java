@@ -160,8 +160,11 @@ public class FunctionTask extends Task<FunctionWork> {
     // For permanent functions, check for any resources from local filesystem.
     checkLocalFunctionResources(db, createFunctionDesc.getResources());
 
+    HiveConf oldConf = SessionState.get().getConf();
+    SessionState.get().setConf(conf);
     FunctionInfo registered = FunctionRegistry.registerPermanentFunction(
         registeredName, className, true, toFunctionResource(resources));
+    SessionState.get().setConf(oldConf);
     if (registered == null) {
       console.printError("Failed to register " + registeredName
           + " using class " + createFunctionDesc.getClassName());
