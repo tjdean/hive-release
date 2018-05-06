@@ -923,7 +923,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
           }
         } else {
           x.getLOG().debug("adding dependent CopyWork/MoveWork for table");
-          t.addDependentTask(loadTable(fromURI, table, true, new Path(tblDesc.getLocation()),replicationSpec, x));
+          t.addDependentTask(loadTable(fromURI, table, replicationSpec.isReplace(), new Path(tblDesc.getLocation()),replicationSpec, x));
         }
       }
 
