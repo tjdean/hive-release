@@ -936,15 +936,36 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
         x.getTasks().add(t);
       }
     } else {
+      // If table of current event has partition flag different from existing table, it means, some
+      // of the previous events in same batch have drop and create table events with same same but
+      // different partition flag. In this case, should go with current event's table type and so
+      // create the dummy table object for adding repl tasks.
+      boolean isOldTableValid = true;
+      if (table.isPartitioned() != isPartitioned(tblDesc)) {
+        table = new Table(tblDesc.getDatabaseName(), tblDesc.getTableName());
+        isOldTableValid = false;
+      }
+
       // Table existed, and is okay to replicate into, not dropping and re-creating.
-      if (table.isPartitioned()) {
+      if (isPartitioned(tblDesc)) {
         x.getLOG().debug("table partitioned");
         for (AddPartitionDesc addPartitionDesc : partitionDescs) {
           addPartitionDesc.setReplicationSpec(replicationSpec);
           Map<String, String> partSpec = addPartitionDesc.getPartition(0).getPartSpec();
           org.apache.hadoop.hive.ql.metadata.Partition ptn = null;
+          if (isOldTableValid) {
+            // If existing table is valid but the partition spec is different, then ignore partition
+            // validation and create new partition.
+            try {
+              ptn = x.getHive().getPartition(table, partSpec, false);
+            } catch (HiveException ex) {
+              ptn = null;
+              table = new Table(tblDesc.getDatabaseName(), tblDesc.getTableName());
+              isOldTableValid = false;
+            }
+          }
 
-          if ((ptn = x.getHive().getPartition(table, partSpec, false)) == null) {
+          if (ptn == null) {
             if (!replicationSpec.isMetadataOnly()){
               x.getTasks().add(addSinglePartition(
                   fromURI, fs, tblDesc, table, wh, addPartitionDesc, replicationSpec, x));
@@ -989,7 +1010,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
         x.getLOG().debug("table non-partitioned");
         if (!replicationSpec.isMetadataOnly()) {
           // repl-imports are replace-into unless the event is insert-into
-          loadTable(fromURI, table, replicationSpec.isReplace(), table.getDataLocation(), replicationSpec, x);
+          loadTable(fromURI, table, replicationSpec.isReplace(), new Path(tblDesc.getLocation()), replicationSpec, x);
         } else {
           x.getTasks().add(alterTableTask(tblDesc, x, replicationSpec));
         }
