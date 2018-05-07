@@ -179,7 +179,7 @@ public class LoadTable {
         tracker.addTask(alterTableTask);
       } else {
         Task<?> loadTableTask =
-            loadTableTask(table, replicationSpec, event.metadataPath(), table.getDataLocation());
+            loadTableTask(table, replicationSpec, table.getDataLocation(), event.metadataPath());
         alterTableTask.addDependentTask(loadTableTask);
         tracker.addTask(alterTableTask);
       }
