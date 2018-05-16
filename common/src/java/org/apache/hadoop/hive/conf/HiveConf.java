@@ -1909,6 +1909,9 @@ public class HiveConf extends Configuration {
         "that has indexes on it. The reason the user want to set this to true\n" +
         "is because it can help user to avoid handling all index drop, recreation,\n" +
         "rebuild work. This is very helpful for tables with thousands of partitions."),
+    //was disabled in HIVE-17403 however EAR-8066 requires it to only be in internal branch
+    ALLOW_CONCATENATE_UNMANAGED_TABLES("hive.concatenate.unmanaged.tables", false,
+        "Allow ability to concatenate un manged tables."),
     HIVE_IO_EXCEPTION_HANDLERS("hive.io.exception.handlers", "",
         "A list of io exception handler class names. This is used\n" +
         "to construct a list exception handlers to handle exceptions thrown\n" +

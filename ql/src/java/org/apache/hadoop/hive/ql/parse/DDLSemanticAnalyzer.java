@@ -1662,7 +1662,10 @@ public class DDLSemanticAnalyzer extends BaseSemanticAnalyzer {
         throw new SemanticException(ErrorMsg.CONCATENATE_UNSUPPORTED_TABLE_NON_NATIVE.getMsg());
       }
 
-      if (tblObj.getTableType() != TableType.MANAGED_TABLE) {
+      boolean preventConcatUnmanagedTables =
+          !conf.getBoolean(ConfVars.ALLOW_CONCATENATE_UNMANAGED_TABLES.varname, false);
+
+      if (preventConcatUnmanagedTables && tblObj.getTableType() != TableType.MANAGED_TABLE) {
         throw new SemanticException(ErrorMsg.CONCATENATE_UNSUPPORTED_TABLE_NOT_MANAGED.getMsg());
       }
 
