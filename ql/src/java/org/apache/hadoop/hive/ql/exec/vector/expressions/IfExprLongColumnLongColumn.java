@@ -60,6 +60,7 @@ public class IfExprLongColumnLongColumn extends VectorExpression {
     }
 
     LongColumnVector arg1ColVector = (LongColumnVector) batch.cols[arg1Column];
+    boolean[] arg1IsNull = arg1ColVector.isNull;
     LongColumnVector arg2ColVector = (LongColumnVector) batch.cols[arg2Column];
     LongColumnVector arg3ColVector = (LongColumnVector) batch.cols[arg3Column];
     LongColumnVector outputColVector = (LongColumnVector) batch.cols[outputColumnNum];
@@ -87,7 +88,7 @@ public class IfExprLongColumnLongColumn extends VectorExpression {
      * of code paths.
      */
     if (arg1ColVector.isRepeating) {
-      if (vector1[0] == 1) {
+      if ((arg1ColVector.noNulls || !arg1IsNull[0]) && vector1[0] == 1) {
         arg2ColVector.copySelected(batch.selectedInUse, sel, n, outputColVector);
       } else {
         arg3ColVector.copySelected(batch.selectedInUse, sel, n, outputColVector);
@@ -121,14 +122,14 @@ public class IfExprLongColumnLongColumn extends VectorExpression {
       if (batch.selectedInUse) {
         for(int j = 0; j != n; j++) {
           int i = sel[j];
-          outputVector[i] = (!arg1ColVector.isNull[i] && vector1[i] == 1 ?
+          outputVector[i] = (!arg1IsNull[i] && vector1[i] == 1 ?
               vector2[i] : vector3[i]);
           outputIsNull[i] = (!arg1ColVector.isNull[i] && vector1[i] == 1 ?
               arg2ColVector.isNull[i] : arg3ColVector.isNull[i]);
         }
       } else {
         for(int i = 0; i != n; i++) {
-          outputVector[i] = (!arg1ColVector.isNull[i] && vector1[i] == 1 ?
+          outputVector[i] = (!arg1IsNull[i] && vector1[i] == 1 ?
               vector2[i] : vector3[i]);
           outputIsNull[i] = (!arg1ColVector.isNull[i] && vector1[i] == 1 ?
               arg2ColVector.isNull[i] : arg3ColVector.isNull[i]);

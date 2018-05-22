@@ -15,10 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hive.ql.exec.vector.expressions;
+package org.apache.hadoop.hive.ql.exec.vector.expressions.gen;
 
 import org.apache.hadoop.hive.ql.exec.vector.LongColumnVector;
-import org.apache.hadoop.hive.ql.exec.vector.IntervalDayTimeColumnVector;
+import org.apache.hadoop.hive.ql.exec.vector.<ColumnVectorType>;
+import org.apache.hadoop.hive.ql.exec.vector.expressions.VectorExpression;
 import org.apache.hadoop.hive.ql.exec.vector.VectorExpressionDescriptor;
 import org.apache.hadoop.hive.ql.exec.vector.VectorizedRowBatch;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -28,7 +29,7 @@ import org.apache.hadoop.hive.ql.metadata.HiveException;
  * The first is always a boolean (LongColumnVector).
  * The second and third are long columns or long expression results.
  */
-public class IfExprIntervalDayTimeColumnColumn extends VectorExpression {
+public class <ClassName> extends VectorExpression {
 
   private static final long serialVersionUID = 1L;
 
@@ -36,7 +37,7 @@ public class IfExprIntervalDayTimeColumnColumn extends VectorExpression {
   private final int arg2Column;
   private final int arg3Column;
 
-  public IfExprIntervalDayTimeColumnColumn(int arg1Column, int arg2Column, int arg3Column,
+  public <ClassName>(int arg1Column, int arg2Column, int arg3Column,
       int outputColumnNum) {
     super(outputColumnNum);
     this.arg1Column = arg1Column;
@@ -44,7 +45,7 @@ public class IfExprIntervalDayTimeColumnColumn extends VectorExpression {
     this.arg3Column = arg3Column;
   }
 
-  public IfExprIntervalDayTimeColumnColumn() {
+  public <ClassName>() {
     super();
 
     // Dummy final assignments.
@@ -61,11 +62,16 @@ public class IfExprIntervalDayTimeColumnColumn extends VectorExpression {
     }
 
     LongColumnVector arg1ColVector = (LongColumnVector) batch.cols[arg1Column];
-    IntervalDayTimeColumnVector arg2ColVector = (IntervalDayTimeColumnVector) batch.cols[arg2Column];
-    IntervalDayTimeColumnVector arg3ColVector = (IntervalDayTimeColumnVector) batch.cols[arg3Column];
-    IntervalDayTimeColumnVector outputColVector = (IntervalDayTimeColumnVector) batch.cols[outputColumnNum];
+    <ColumnVectorType> arg2ColVector = (<ColumnVectorType>) batch.cols[arg2Column];
+    boolean[] arg2IsNull = arg2ColVector.isNull;
+    <ColumnVectorType> arg3ColVector = (<ColumnVectorType>) batch.cols[arg3Column];
+    boolean[] arg3IsNull = arg3ColVector.isNull;
+    <ColumnVectorType> outputColVector = (<ColumnVectorType>) batch.cols[outputColumnNum];
     int[] sel = batch.selected;
     boolean[] outputIsNull = outputColVector.isNull;
+
+    // We do not need to do a column reset since we are carefully changing the output.
+    outputColVector.isRepeating = false;
 
     int n = batch.size;
     long[] vector1 = arg1ColVector.vector;
@@ -74,9 +80,6 @@ public class IfExprIntervalDayTimeColumnColumn extends VectorExpression {
     if (n == 0) {
       return;
     }
-
-    // We do not need to do a column reset since we are carefully changing the output.
-    outputColVector.isRepeating = false;
 
     /* All the code paths below propagate nulls even if neither arg2 nor arg3
      * have nulls. This is to reduce the number of code paths and shorten the
@@ -98,53 +101,89 @@ public class IfExprIntervalDayTimeColumnColumn extends VectorExpression {
     arg3ColVector.flatten(batch.selectedInUse, sel, n);
 
     if (arg1ColVector.noNulls) {
-
-      // Carefully handle NULLs...
-
-      /*
-       * For better performance on LONG/DOUBLE we don't want the conditional
-       * statements inside the for loop.
-       */
-      outputColVector.noNulls = false;
-
       if (batch.selectedInUse) {
         for(int j = 0; j != n; j++) {
           int i = sel[j];
-          outputIsNull[i] = (vector1[i] == 1 ?
-              arg2ColVector.isNull[i] : arg3ColVector.isNull[i]);
-          outputColVector.set(i, vector1[i] == 1 ? arg2ColVector.asScratchIntervalDayTime(i) : arg3ColVector.asScratchIntervalDayTime(i));
+          if (vector1[i] == 1) {
+            if (!arg2IsNull[i]) {
+              outputIsNull[i] = false;
+              outputColVector.set(i, arg2ColVector.asScratch<ObjectName>(i));
+            } else {
+              outputIsNull[i] = true;
+              outputColVector.noNulls = false;
+            }
+          } else {
+            if (!arg3IsNull[i]) {
+              outputIsNull[i] = false;
+              outputColVector.set(i, arg3ColVector.asScratch<ObjectName>(i));
+            } else {
+              outputIsNull[i] = true;
+              outputColVector.noNulls = false;
+            }
+          }
         }
       } else {
         for(int i = 0; i != n; i++) {
-          outputIsNull[i] = (vector1[i] == 1 ?
-              arg2ColVector.isNull[i] : arg3ColVector.isNull[i]);
-          outputColVector.set(i, vector1[i] == 1 ? arg2ColVector.asScratchIntervalDayTime(i) : arg3ColVector.asScratchIntervalDayTime(i));
+          if (vector1[i] == 1) {
+            if (!arg2IsNull[i]) {
+              outputIsNull[i] = false;
+              outputColVector.set(i, arg2ColVector.asScratch<ObjectName>(i));
+            } else {
+              outputIsNull[i] = true;
+              outputColVector.noNulls = false;
+            }
+          } else {
+            if (!arg3IsNull[i]) {
+              outputIsNull[i] = false;
+              outputColVector.set(i, arg3ColVector.asScratch<ObjectName>(i));
+            } else {
+              outputIsNull[i] = true;
+              outputColVector.noNulls = false;
+            }
+          }
         }
       }
-    } else /* there are NULLs in the inputColVector */ {
-
-      // Carefully handle NULLs...
-
-      /*
-       * For better performance on LONG/DOUBLE we don't want the conditional
-       * statements inside the for loop.
-       */
-      outputColVector.noNulls = false;
-
+    } else /* there are nulls */ {
       if (batch.selectedInUse) {
         for(int j = 0; j != n; j++) {
           int i = sel[j];
-          outputColVector.set(i, !arg1ColVector.isNull[i] && vector1[i] == 1 ?
-              arg2ColVector.asScratchIntervalDayTime(i) : arg3ColVector.asScratchIntervalDayTime(i));
-          outputIsNull[i] = (!arg1ColVector.isNull[i] && vector1[i] == 1 ?
-              arg2ColVector.isNull[i] : arg3ColVector.isNull[i]);
+          if (!arg1ColVector.isNull[i] && vector1[i] == 1) {
+            if (!arg2IsNull[i]) {
+              outputIsNull[i] = false;
+              outputColVector.set(i, arg2ColVector.asScratch<ObjectName>(i));
+            } else {
+              outputIsNull[i] = true;
+              outputColVector.noNulls = false;
+            }
+          } else {
+            if (!arg3IsNull[i]) {
+              outputIsNull[i] = false;
+              outputColVector.set(i, arg3ColVector.asScratch<ObjectName>(i));
+            } else {
+              outputIsNull[i] = true;
+              outputColVector.noNulls = false;
+            }
+          }
         }
       } else {
         for(int i = 0; i != n; i++) {
-          outputColVector.set(i, !arg1ColVector.isNull[i] && vector1[i] == 1 ?
-              arg2ColVector.asScratchIntervalDayTime(i) : arg3ColVector.asScratchIntervalDayTime(i));
-          outputIsNull[i] = (!arg1ColVector.isNull[i] && vector1[i] == 1 ?
-              arg2ColVector.isNull[i] : arg3ColVector.isNull[i]);
+          if (!arg1ColVector.isNull[i] && vector1[i] == 1) {
+            if (!arg2IsNull[i]) {
+              outputIsNull[i] = false;
+              outputColVector.set(i, arg2ColVector.asScratch<ObjectName>(i));
+            } else {
+              outputIsNull[i] = true;
+              outputColVector.noNulls = false;
+            }
+          } else {
+            if (!arg3IsNull[i]) {
+              outputIsNull[i] = false;
+              outputColVector.set(i, arg3ColVector.asScratch<ObjectName>(i));
+            } else {
+              outputIsNull[i] = true;
+              outputColVector.noNulls = false;
+            }
+          }
         }
       }
     }
@@ -168,8 +207,8 @@ public class IfExprIntervalDayTimeColumnColumn extends VectorExpression {
         .setNumArguments(3)
         .setArgumentTypes(
             VectorExpressionDescriptor.ArgumentType.getType("int_family"),
-            VectorExpressionDescriptor.ArgumentType.getType("interval_day_time"),
-            VectorExpressionDescriptor.ArgumentType.getType("interval_day_time"))
+            VectorExpressionDescriptor.ArgumentType.getType("<TypeName>"),
+            VectorExpressionDescriptor.ArgumentType.getType("<TypeName>"))
         .setInputExpressionTypes(
             VectorExpressionDescriptor.InputExpressionType.COLUMN,
             VectorExpressionDescriptor.InputExpressionType.COLUMN,
