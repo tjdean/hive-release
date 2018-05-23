@@ -108,6 +108,7 @@ import org.apache.hadoop.hive.ql.plan.StatsWork;
 import org.apache.hadoop.hive.ql.plan.TableDesc;
 import org.apache.hadoop.hive.ql.plan.TableScanDesc;
 import org.apache.hadoop.hive.ql.plan.TezWork;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.ql.stats.StatsFactory;
 import org.apache.hadoop.hive.serde2.SerDeException;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
@@ -1188,7 +1189,6 @@ public final class GenMapRedUtils {
 
   /**
    * @param fsInput The FileSink operator.
-   * @param ctx The MR processing context.
    * @param finalName the final destination path the merge job should output.
    * @param dependencyTask
    * @param mvTasks
@@ -1279,7 +1279,8 @@ public final class GenMapRedUtils {
     // 2. Constructing a conditional task consisting of a move task and a map reduce task
     //
     MoveWork dummyMv = new MoveWork(null, null, null,
-         new LoadFileDesc(fsInputDesc.getFinalDirName(), finalName, true, null, null), false);
+         new LoadFileDesc(fsInputDesc.getFinalDirName(), finalName, true, null, null),
+            false, SessionState.get().getLineageState());
     MapWork cplan;
     Serializable work;
 

@@ -60,10 +60,10 @@ public class HiveHistoryImpl implements HiveHistory{
   private Map<String, String> idToTableMap = null;
 
   // Job Hash Map
-  private final HashMap<String, QueryInfo> queryInfoMap = new HashMap<String, QueryInfo>();
+  private final HashMap<String, QueryInfo> queryInfoMap = new HashMap<>();
 
   // Task Hash Map
-  private final HashMap<String, TaskInfo> taskInfoMap = new HashMap<String, TaskInfo>();
+  private final HashMap<String, TaskInfo> taskInfoMap = new HashMap<>();
 
   private static final String DELIMITER = " ";
 
@@ -103,7 +103,7 @@ public class HiveHistoryImpl implements HiveHistory{
       console.printInfo("Hive history file=" + histFileName);
       histStream = new PrintWriter(histFileName);
 
-      HashMap<String, String> hm = new HashMap<String, String>();
+      HashMap<String, String> hm = new HashMap<>();
       hm.put(Keys.SESSION_ID.name(), ss.getSessionId());
       log(RecordTypes.SessionStart, hm);
     } catch (IOException e) {
@@ -313,12 +313,12 @@ public class HiveHistoryImpl implements HiveHistory{
       new ThreadLocal<Map<String, String>>() {
     @Override
     protected Map<String,String> initialValue() {
-      return new HashMap<String,String>();
+      return new HashMap<>();
     }
   };
 
   @Override
-  public void logPlanProgress(QueryPlan plan) throws IOException {
+  public synchronized void logPlanProgress(QueryPlan plan) throws IOException {
     if (plan != null) {
       Map<String,String> ctrmap = ctrMapFactory.get();
       ctrmap.put("plan", plan.toString());

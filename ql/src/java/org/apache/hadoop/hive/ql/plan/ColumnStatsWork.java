@@ -34,14 +34,16 @@ public class ColumnStatsWork implements Serializable {
   private FetchWork fWork;
   private ColumnStatsDesc colStats;
   private static final int LIMIT = -1;
-
+  private String currentDatabaseName;
 
   public ColumnStatsWork() {
+    currentDatabaseName = null;
   }
 
-  public ColumnStatsWork(FetchWork work, ColumnStatsDesc colStats) {
+  public ColumnStatsWork(FetchWork work, ColumnStatsDesc colStats, String currentDatabaseName) {
     this.fWork = work;
     this.setColStats(colStats);
+    this.currentDatabaseName = currentDatabaseName;
   }
 
   @Override
@@ -53,10 +55,6 @@ public class ColumnStatsWork implements Serializable {
 
   public FetchWork getfWork() {
     return fWork;
-  }
-
-  public void setfWork(FetchWork fWork) {
-    this.fWork = fWork;
   }
 
   @Explain(displayName = "Column Stats Desc")
@@ -76,12 +74,11 @@ public class ColumnStatsWork implements Serializable {
     fWork.initializeForFetch();
   }
 
-  public int getLeastNumRows() {
-    return fWork.getLeastNumRows();
-  }
-
   public static int getLimit() {
     return LIMIT;
   }
 
+  public String getCurrentDatabaseName() {
+    return currentDatabaseName;
+  }
 }

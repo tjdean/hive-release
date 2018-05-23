@@ -18,8 +18,6 @@
 
 package org.apache.hadoop.hive.ql.exec.tez;
 
-import java.io.Serializable;
-import org.apache.hadoop.hive.ql.exec.ConditionalTask;
 import org.apache.hadoop.hive.ql.exec.FileSinkOperator;
 
 import java.io.IOException;
@@ -119,6 +117,10 @@ public class TezTask extends Task<TezWork> {
     return counters;
   }
 
+  @Override
+  public boolean canExecuteInParallel(){
+    return false;
+  }
 
   @Override
   public int execute(DriverContext driverContext) {

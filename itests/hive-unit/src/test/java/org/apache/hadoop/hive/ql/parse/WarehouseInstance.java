@@ -209,9 +209,9 @@ class WarehouseInstance implements Closeable {
   }
 
   WarehouseInstance load(String replicatedDbName, String dumpLocation) throws Throwable {
-    run("EXPLAIN REPL LOAD " + replicatedDbName + " FROM '" + dumpLocation + "'");
+    run("EXPLAIN REPL LOAD " + replicatedDbName + " FROM '" + dumpLocation + "' with ('hive.exec.parallel' =  'true')");
     printOutput();
-    run("REPL LOAD " + replicatedDbName + " FROM '" + dumpLocation + "'");
+    run("REPL LOAD " + replicatedDbName + " FROM '" + dumpLocation + "' with ('hive.exec.parallel' =  'true')");
     return this;
   }
 

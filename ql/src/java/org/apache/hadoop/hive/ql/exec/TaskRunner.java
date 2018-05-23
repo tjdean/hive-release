@@ -44,9 +44,9 @@ public class TaskRunner extends Thread {
 
   protected Thread runner;
 
-  public TaskRunner(Task<? extends Serializable> tsk, TaskResult result) {
+  public TaskRunner(Task<? extends Serializable> tsk) {
     this.tsk = tsk;
-    this.result = result;
+    this.result = new TaskResult();
     ss = SessionState.get();
   }
 
@@ -70,6 +70,10 @@ public class TaskRunner extends Thread {
   public void run() {
     runner = Thread.currentThread();
     try {
+      // For tasks which run in separate thread, hive object is not created during initialization.
+      if (tsk.canExecuteInParallel()) {
+        tsk.createHiveObject();
+      }
       OperationLog.setCurrentOperationLog(operationLog);
       SessionState.start(ss);
       runSequential();
@@ -86,7 +90,7 @@ public class TaskRunner extends Thread {
   public void runSequential() {
     int exitVal = -101;
     try {
-      exitVal = tsk.executeTask();
+      exitVal = tsk.executeTask(ss == null ? null : ss.getHiveHistory());
     } catch (Throwable t) {
       if (tsk.getException() == null) {
         tsk.setException(t);

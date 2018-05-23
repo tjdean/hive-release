@@ -89,7 +89,6 @@ import org.apache.hadoop.hive.ql.metadata.formatting.MetaDataFormatter;
 import org.apache.hadoop.hive.ql.optimizer.ppr.PartitionPruner;
 import org.apache.hadoop.hive.ql.parse.ASTNode;
 import org.apache.hadoop.hive.ql.parse.BaseSemanticAnalyzer;
-import org.apache.hadoop.hive.ql.parse.CalcitePlanner;
 import org.apache.hadoop.hive.ql.parse.ColumnAccessInfo;
 import org.apache.hadoop.hive.ql.parse.HiveSemanticAnalyzerHook;
 import org.apache.hadoop.hive.ql.parse.HiveSemanticAnalyzerHookContext;
@@ -1484,9 +1483,9 @@ public class Driver implements CommandProcessor {
 
       this.driverCxt = driverCxt; // for canceling the query (should be bound to session?)
 
-      SessionState.get().setMapRedStats(new LinkedHashMap<String, MapRedStats>());
-      SessionState.get().setStackTraces(new HashMap<String, List<List<String>>>());
-      SessionState.get().setLocalMapRedErrors(new HashMap<String, List<String>>());
+      SessionState.get().setMapRedStats(new LinkedHashMap<>());
+      SessionState.get().setStackTraces(new HashMap<>());
+      SessionState.get().setLocalMapRedErrors(new HashMap<>());
 
       // Add root Tasks to runnable
       for (Task<? extends Serializable> tsk : plan.getRootTasks()) {
@@ -1746,12 +1745,11 @@ public class Driver implements CommandProcessor {
       console.printInfo("Launching Job " + cxt.getCurJobNo() + " out of " + jobs);
     }
     tsk.initialize(conf, plan, cxt);
-    TaskResult tskRes = new TaskResult();
-    TaskRunner tskRun = new TaskRunner(tsk, tskRes);
+    TaskRunner tskRun = new TaskRunner(tsk);
 
     cxt.launching(tskRun);
     // Launch Task
-    if (HiveConf.getBoolVar(conf, HiveConf.ConfVars.EXECPARALLEL) && tsk.isMapRedTask()) {
+    if (HiveConf.getBoolVar(conf, HiveConf.ConfVars.EXECPARALLEL) && tsk.canExecuteInParallel()) {
       // Launch it in the parallel mode, as a separate thread only for MR tasks
       if (LOG.isInfoEnabled()){
         LOG.info("Starting task [" + tsk + "] in parallel");
@@ -1761,6 +1759,11 @@ public class Driver implements CommandProcessor {
     } else {
       if (LOG.isInfoEnabled()){
         LOG.info("Starting task [" + tsk + "] in serial mode");
+      }
+
+      // hive object is not created during init for tasks which can run in parallel.
+      if (tsk.canExecuteInParallel()) {
+        tsk.createHiveObject();
       }
       tskRun.runSequential();
     }

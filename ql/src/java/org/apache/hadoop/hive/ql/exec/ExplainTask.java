@@ -1003,4 +1003,9 @@ public class ExplainTask extends Task<ExplainWork> implements Serializable {
     colList.add(tmpFieldSchema);
     return colList;
   }
+
+  @Override
+  public boolean canExecuteInParallel() {
+    return false;
+  }
 }

@@ -36,6 +36,7 @@ import org.apache.hadoop.hive.shims.HadoopShims;
 import org.apache.hadoop.hive.shims.ShimLoader;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -227,7 +228,7 @@ public class AcidUtils {
     return result;
   }
 
-  public enum Operation {
+  public enum Operation implements Serializable {
     NOT_ACID, INSERT, UPDATE, DELETE;
   }
 

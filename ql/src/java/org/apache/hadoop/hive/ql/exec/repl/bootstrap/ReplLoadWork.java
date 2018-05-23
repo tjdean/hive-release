@@ -21,6 +21,7 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.DatabaseEvent;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.filesystem.BootstrapEventsIterator;
 import org.apache.hadoop.hive.ql.plan.Explain;
+import org.apache.hadoop.hive.ql.session.LineageState;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -35,16 +36,27 @@ public class ReplLoadWork implements Serializable {
   private int loadTaskRunCount = 0;
   private DatabaseEvent.State state = null;
 
+  /**
+   * These are sessionState objects that are copied over to work to allow for parallel execution.
+   * Based on the current use case the methods are selectively synchronized, which might need to be
+   * taken care when using other methods.
+   */
+  final LineageState sessionStateLineageState;
+  public final long currentTransactionId;
+
   public ReplLoadWork(HiveConf hiveConf, String dumpDirectory, String dbNameToLoadIn,
-      String tableNameToLoadIn) throws IOException {
+      String tableNameToLoadIn, LineageState lineageState, long currentTransactionId) throws IOException {
     this.tableNameToLoadIn = tableNameToLoadIn;
     this.iterator = new BootstrapEventsIterator(dumpDirectory, dbNameToLoadIn, hiveConf);
     this.dbNameToLoadIn = dbNameToLoadIn;
+    sessionStateLineageState = lineageState;
+    this.currentTransactionId = currentTransactionId;
   }
 
-  public ReplLoadWork(HiveConf hiveConf, String dumpDirectory, String dbNameOrPattern)
+  public ReplLoadWork(HiveConf hiveConf, String dumpDirectory, String dbNameOrPattern,
+                      LineageState lineageState, long currentTransactionId)
       throws IOException {
-    this(hiveConf, dumpDirectory, dbNameOrPattern, null);
+    this(hiveConf, dumpDirectory, dbNameOrPattern, null, lineageState, currentTransactionId);
   }
 
   public BootstrapEventsIterator iterator() {

@@ -304,7 +304,7 @@ public class ColumnStatsTask extends Task<ColumnStatsWork> implements Serializab
 
   private List<ColumnStatistics> constructColumnStatsFromPackedRows() throws HiveException, MetaException, IOException {
 
-    String currentDb = SessionState.get().getCurrentDatabase();
+    String currentDb = work.getCurrentDatabaseName();
     String tableName = work.getColStats().getTableName();
     String partName = null;
     List<String> colName = work.getColStats().getColName();

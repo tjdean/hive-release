@@ -370,12 +370,11 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     Path tmpPath = x.getCtx().getExternalTmpPath(tgtPath);
     Task<?> copyTask = ReplCopyTask.getLoadCopyTask(replicationSpec, dataPath, tmpPath, x.getConf());
     LoadTableDesc loadTableWork = new LoadTableDesc(tmpPath,
-        Utilities.getTableDesc(table), new TreeMap<String, String>(),
+        Utilities.getTableDesc(table), new TreeMap<>(),
         replace ? LoadFileType.REPLACE_ALL : LoadFileType.OVERWRITE_EXISTING);
-    MoveWork moveWork = new MoveWork(x.getInputs(), x.getOutputs(), loadTableWork, null, false);
-    moveWork.setInImportScope(true);
     Task<?> loadTableTask = TaskFactory.get(new MoveWork(x.getInputs(),
-        x.getOutputs(), loadTableWork, null, false), x.getConf(), true);
+        x.getOutputs(), loadTableWork, null, false, SessionState.get().getLineageState()),
+            x.getConf(), true);
     copyTask.addDependentTask(loadTableTask);
     x.getTasks().add(copyTask);
     return loadTableTask;
@@ -453,11 +452,9 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
           partSpec.getPartSpec(),
           replicationSpec.isReplace() ? LoadFileType.REPLACE_ALL : LoadFileType.OVERWRITE_EXISTING);
       loadTableWork.setInheritTableSpecs(false);
-      MoveWork moveWork = new MoveWork(x.getInputs(), x.getOutputs(), loadTableWork, null, false);
-      moveWork.setInImportScope(true);
       Task<?> loadPartTask = TaskFactory.get(new MoveWork(
-          x.getInputs(), x.getOutputs(), loadTableWork, null, false),
-          x.getConf(), true);
+          x.getInputs(), x.getOutputs(), loadTableWork, null, false,
+                      SessionState.get().getLineageState()), x.getConf(), true);
       copyTask.addDependentTask(loadPartTask);
       addPartTask.addDependentTask(loadPartTask);
       x.getTasks().add(copyTask);

@@ -106,4 +106,13 @@ public class CopyTask extends Task<CopyWork> implements Serializable {
   public String getName() {
     return "COPY";
   }
+
+  /**
+   * Uses the authorizer from SessionState will need some more work to get this to run in parallel,
+   * however this should not be a bottle neck so might not need to parallelize this.
+   */
+  @Override
+  public boolean canExecuteInParallel() {
+    return false;
+  }
 }

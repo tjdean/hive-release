@@ -231,8 +231,8 @@ public class LoadTable {
         tmpPath, Utilities.getTableDesc(table), new TreeMap<String, String>(),
         replicationSpec.isReplace() ? LoadFileType.REPLACE_ALL : LoadFileType.OVERWRITE_EXISTING);
     MoveWork moveWork =
-        new MoveWork(new HashSet<ReadEntity>(), new HashSet<WriteEntity>(), loadTableWork, null,
-            false);
+        new MoveWork(new HashSet<>(), new HashSet<>(), loadTableWork, null,
+            false, context.sessionStateLineageState);
     Task<?> loadTableTask = TaskFactory.get(moveWork, context.hiveConf, true);
     copyTask.addDependentTask(loadTableTask);
     return copyTask;
