@@ -29,7 +29,6 @@ import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import java.io.FileNotFoundException;
 
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -72,7 +71,6 @@ import org.apache.hadoop.hive.ql.plan.api.StageType;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.shims.HadoopShims;
 import org.apache.hadoop.hive.shims.ShimLoader;
-import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.util.StringUtils;
 
 /**
@@ -85,6 +83,11 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
 
   public MoveTask() {
     super();
+  }
+
+  @Override
+  public boolean canExecuteInParallel(){
+    return true;
   }
 
   private void moveFile(Path sourcePath, Path targetPath, boolean isDfsDir)
@@ -454,7 +457,7 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
                   dpCtx.getNumDPCols(),
                   isSkewedStoredAsDirs(tbd),
                   work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID,
-                  SessionState.get().getTxnMgr().getCurrentTxnId(), hasFollowingStatsTask(),
+                        work.getLoadTableWork().getCurrentTransactionId(), hasFollowingStatsTask(),
                   work.getLoadTableWork().getWriteType());
             String loadTime = "\t Time taken to load dynamic partitions: "  +
                     (System.currentTimeMillis() - startTime)/1000.0 + " seconds";
@@ -495,10 +498,10 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
               dc = new DataContainer(table.getTTable(), partn.getTPartition());
 
               // Don't set lineage on delete as we don't have all the columns
-              if (SessionState.get() != null &&
+              if (work.getLineagState() != null &&
                   work.getLoadTableWork().getWriteType() != AcidUtils.Operation.DELETE &&
                   work.getLoadTableWork().getWriteType() != AcidUtils.Operation.UPDATE) {
-                SessionState.get().getLineageState().setLineage(tbd.getSourcePath(), dc,
+                work.getLineagState().setLineage(tbd.getSourcePath(), dc,
                     table.getCols());
               }
 
@@ -530,25 +533,25 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
             }
          }
         }
-        if (SessionState.get() != null && dc != null) {
+        if (work.getLineagState() != null && dc != null) {
           // If we are doing an update or a delete the number of columns in the table will not
           // match the number of columns in the file sink.  For update there will be one too many
           // (because of the ROW__ID), and in the case of the delete there will be just the
           // ROW__ID, which we don't need to worry about from a lineage perspective.
-          List<FieldSchema> tableCols = null;
+          List<FieldSchema> tableCols;
           switch (work.getLoadTableWork().getWriteType()) {
             case DELETE:
             case UPDATE:
               // Pass an empty list as no columns will be written to the file.
               // TODO I should be able to make this work for update
-              tableCols = new ArrayList<FieldSchema>();
+              tableCols = new ArrayList<>();
               break;
 
             default:
               tableCols = table.getCols();
               break;
           }
-          SessionState.get().getLineageState().setLineage(tbd.getSourcePath(), dc, tableCols);
+          work.getLineagState().setLineage(tbd.getSourcePath(), dc, tableCols);
         }
         releaseLocks(tbd);
       }

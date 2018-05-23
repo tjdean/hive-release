@@ -216,4 +216,9 @@ public class ConditionalTask extends Task<ConditionalWork> implements Serializab
   public List<Task<? extends Serializable>> getDependentTasks() {
     return listTasks;
   }
+
+  @Override
+  public boolean canExecuteInParallel() {
+    return isMapRedTask();
+  }
 }

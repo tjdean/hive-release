@@ -26,6 +26,7 @@ import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity;
 import org.apache.hadoop.hive.ql.plan.Explain.Level;
+import org.apache.hadoop.hive.ql.session.LineageState;
 
 
 /**
@@ -38,6 +39,13 @@ public class MoveWork implements Serializable {
   private LoadTableDesc loadTableWork;
   private LoadFileDesc loadFileWork;
   private LoadMultiFilesDesc loadMultiFilesWork;
+
+  /**
+   * These are sessionState objects that are copied over to work to allow for parallel execution.
+   * Based on the current use case the methods are selectively synchronized, which might need to be
+   * taken care when using other methods.
+   */
+  private final LineageState sessionStateLineageState;
 
   private boolean checkFileFormat;
   private boolean srcLocal;
@@ -58,17 +66,19 @@ public class MoveWork implements Serializable {
   protected List<Partition> movedParts;
 
   public MoveWork() {
+    sessionStateLineageState = null;
   }
 
-  public MoveWork(HashSet<ReadEntity> inputs, HashSet<WriteEntity> outputs) {
+  public MoveWork(HashSet<ReadEntity> inputs, HashSet<WriteEntity> outputs, LineageState lineageState) {
     this.inputs = inputs;
     this.outputs = outputs;
+    sessionStateLineageState = lineageState;
   }
 
   public MoveWork(HashSet<ReadEntity> inputs, HashSet<WriteEntity> outputs,
-      final LoadTableDesc loadTableWork, final LoadFileDesc loadFileWork,
-      boolean checkFileFormat, boolean srcLocal) {
-    this(inputs, outputs);
+                  final LoadTableDesc loadTableWork, final LoadFileDesc loadFileWork,
+                  boolean checkFileFormat, boolean srcLocal, LineageState lineageState) {
+    this(inputs, outputs, lineageState);
     this.loadTableWork = loadTableWork;
     this.loadFileWork = loadFileWork;
     this.checkFileFormat = checkFileFormat;
@@ -77,8 +87,8 @@ public class MoveWork implements Serializable {
 
   public MoveWork(HashSet<ReadEntity> inputs, HashSet<WriteEntity> outputs,
       final LoadTableDesc loadTableWork, final LoadFileDesc loadFileWork,
-      boolean checkFileFormat) {
-    this(inputs, outputs);
+      boolean checkFileFormat, LineageState lineageState) {
+    this(inputs, outputs, lineageState);
     this.loadTableWork = loadTableWork;
     this.loadFileWork = loadFileWork;
     this.checkFileFormat = checkFileFormat;
@@ -115,10 +125,6 @@ public class MoveWork implements Serializable {
     return checkFileFormat;
   }
 
-  public void setCheckFileFormat(boolean checkFileFormat) {
-    this.checkFileFormat = checkFileFormat;
-  }
-
   public HashSet<ReadEntity> getInputs() {
     return inputs;
   }
@@ -139,16 +145,7 @@ public class MoveWork implements Serializable {
     return srcLocal;
   }
 
-  public void setSrcLocal(boolean srcLocal) {
-    this.srcLocal = srcLocal;
+  public LineageState getLineagState() {
+    return sessionStateLineageState;
   }
-
-  public boolean isInImportScope() {
-    return isInImportScope;
-  }
-
-  public void setInImportScope(boolean isInImportScope) {
-    this.isInImportScope = isInImportScope;
-  }
-
 }

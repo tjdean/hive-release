@@ -219,7 +219,7 @@ public class TestReplicationScenarios {
   }
 
   private void loadAndVerify(String replDbName, String dumpLocation, String lastReplId) throws IOException {
-    run("REPL LOAD " + replDbName + " FROM '" + dumpLocation + "'");
+    run("REPL LOAD " + replDbName + " FROM '" + dumpLocation + "' with ('hive.exec.parallel' =  'true')");
     verifyRun("REPL STATUS " + replDbName, lastReplId);
     return;
   }

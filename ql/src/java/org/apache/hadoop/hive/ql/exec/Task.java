@@ -32,6 +32,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.DriverContext;
 import org.apache.hadoop.hive.ql.QueryPlan;
+import org.apache.hadoop.hive.ql.history.HiveHistory;
 import org.apache.hadoop.hive.ql.lib.Node;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -133,6 +134,17 @@ public abstract class Task<T extends Serializable> implements Serializable, Node
       this.conf = conf;
     }
 
+    // for task which runs in separate thread, we need to create hive object in that thread context.
+    //TODO: need to check for mapreduce tasks which are also executed in parallel.
+    if (!canExecuteInParallel()) {
+      createHiveObject();
+    }
+
+    this.driverContext = driverContext;
+    console = new LogHelper(LOG);
+  }
+
+  public void createHiveObject() {
     try {
       db = Hive.get(this.conf);
     } catch (HiveException e) {
@@ -141,28 +153,24 @@ public abstract class Task<T extends Serializable> implements Serializable, Node
       LOG.error(StringUtils.stringifyException(e));
       throw new RuntimeException(e);
     }
-    this.driverContext = driverContext;
-
-    console = new LogHelper(LOG);
   }
 
   /**
    * This method is called in the Driver on every task. It updates counters and calls execute(),
    * which is overridden in each task
-   *
+   * @param hiveHistory hive execution history
    * @return return value of execute()
    */
-  public int executeTask() {
+  public int executeTask(HiveHistory hiveHistory) {
     try {
-      SessionState ss = SessionState.get();
       this.setStarted();
-      if (ss != null) {
-        ss.getHiveHistory().logPlanProgress(queryPlan);
+      if (hiveHistory != null) {
+        hiveHistory.logPlanProgress(queryPlan);
       }
       int retval = execute(driverContext);
       this.setDone();
-      if (ss != null) {
-        ss.getHiveHistory().logPlanProgress(queryPlan);
+      if (hiveHistory != null) {
+        hiveHistory.logPlanProgress(queryPlan);
       }
       return retval;
     } catch (IOException e) {
@@ -314,36 +322,44 @@ public abstract class Task<T extends Serializable> implements Serializable, Node
     }
   }
 
-  public void setStarted() {
+  public synchronized void setStarted() {
     this.started = true;
   }
 
-  public boolean started() {
+  public synchronized boolean started() {
     return started;
   }
 
-  public boolean done() {
+  public synchronized boolean done() {
     return isdone;
   }
 
-  public void setDone() {
+  public synchronized void setDone() {
     isdone = true;
   }
 
-  public void setQueued() {
+  public synchronized void setQueued() {
     queued = true;
   }
 
-  public boolean getQueued() {
+  public synchronized boolean getQueued() {
     return queued;
   }
 
-  public void setInitialized() {
+  public synchronized void setInitialized() {
     initialized = true;
   }
 
-  public boolean getInitialized() {
+  public synchronized boolean getInitialized() {
     return initialized;
+  }
+
+  public synchronized boolean isNotInitialized() {
+    return !(started && initialized);
+  }
+
+  public boolean canExecuteInParallel(){
+    return isMapRedTask();
   }
 
   public boolean isRunnable() {

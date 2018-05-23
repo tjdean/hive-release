@@ -18,6 +18,7 @@
 
 package org.apache.hadoop.hive.ql.optimizer.lineage;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -41,7 +42,7 @@ import org.apache.hadoop.hive.ql.plan.OperatorDesc;
  */
 public class LineageCtx implements NodeProcessorCtx {
 
-  public static class Index {
+  public static class Index implements Serializable {
 
     /**
      * Serial Version UID.

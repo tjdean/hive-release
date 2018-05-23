@@ -191,4 +191,9 @@ public class FetchTask extends Task<FetchWork> implements Serializable {
       fetch.clearFetchContext();
     }
   }
+
+  @Override
+  public boolean canExecuteInParallel() {
+    return false;
+  }
 }

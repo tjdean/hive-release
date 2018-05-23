@@ -38,6 +38,10 @@ public class LoadTableDesc extends org.apache.hadoop.hive.ql.plan.LoadDesc
   private ListBucketingCtx lbCtx;
   private boolean inheritTableSpecs = true; //For partitions, flag controlling whether the current
                                             //table specs are to be used
+
+  // If the writeType above is NOT_ACID then the currentTransactionId will be null
+  private final Long currentTransactionId;
+
   // Need to remember whether this is an acid compliant operation, and if so whether it is an
   // insert, update, or delete.
   private AcidUtils.Operation writeType;
@@ -53,11 +57,13 @@ public class LoadTableDesc extends org.apache.hadoop.hive.ql.plan.LoadDesc
   }
 
   public LoadTableDesc(final Path sourcePath,
-      final org.apache.hadoop.hive.ql.plan.TableDesc table,
-      final Map<String, String> partitionSpec,
-      final LoadFileType loadFileType,
-      final AcidUtils.Operation writeType) {
+                       final TableDesc table,
+                       final Map<String, String> partitionSpec,
+                       final LoadFileType loadFileType,
+                       final AcidUtils.Operation writeType,
+                       Long currentTransactionId) {
     super(sourcePath);
+    this.currentTransactionId = currentTransactionId;
     init(table, partitionSpec, loadFileType, writeType);
   }
 
@@ -72,14 +78,15 @@ public class LoadTableDesc extends org.apache.hadoop.hive.ql.plan.LoadDesc
                        final TableDesc table,
                        final Map<String, String> partitionSpec,
                        final LoadFileType loadFileType) {
-    this(sourcePath, table, partitionSpec, loadFileType, AcidUtils.Operation.NOT_ACID);
+    this(sourcePath, table, partitionSpec, loadFileType, AcidUtils.Operation.NOT_ACID, null);
   }
 
   public LoadTableDesc(final Path sourcePath,
-      final org.apache.hadoop.hive.ql.plan.TableDesc table,
-      final Map<String, String> partitionSpec,
-      final AcidUtils.Operation writeType) {
-    this(sourcePath, table, partitionSpec, LoadFileType.REPLACE_ALL, writeType);
+                       final TableDesc table,
+                       final Map<String, String> partitionSpec,
+                       final AcidUtils.Operation writeType,
+                       Long currentTransactionId) {
+    this(sourcePath, table, partitionSpec, LoadFileType.REPLACE_ALL, writeType, currentTransactionId);
   }
 
   /**
@@ -89,21 +96,24 @@ public class LoadTableDesc extends org.apache.hadoop.hive.ql.plan.LoadDesc
    * @param partitionSpec
    */
   public LoadTableDesc(final Path sourcePath,
-                       final org.apache.hadoop.hive.ql.plan.TableDesc table,
+                       final TableDesc table,
                        final Map<String, String> partitionSpec) {
-    this(sourcePath, table, partitionSpec, LoadFileType.REPLACE_ALL, AcidUtils.Operation.NOT_ACID);
+    this(sourcePath, table, partitionSpec, LoadFileType.REPLACE_ALL,
+            AcidUtils.Operation.NOT_ACID, null);
   }
 
   public LoadTableDesc(final Path sourcePath,
-      final org.apache.hadoop.hive.ql.plan.TableDesc table,
-      final DynamicPartitionCtx dpCtx,
-      final AcidUtils.Operation writeType) {
+                       final TableDesc table,
+                       final DynamicPartitionCtx dpCtx,
+                       final AcidUtils.Operation writeType,
+                       Long currentTransactionId) {
     super(sourcePath);
     this.dpCtx = dpCtx;
+    this.currentTransactionId = currentTransactionId;
     if (dpCtx != null && dpCtx.getPartSpec() != null && partitionSpec == null) {
       init(table, dpCtx.getPartSpec(), LoadFileType.REPLACE_ALL, writeType);
     } else {
-      init(table, new LinkedHashMap<String, String>(), LoadFileType.REPLACE_ALL, writeType);
+      init(table, new LinkedHashMap<>(), LoadFileType.REPLACE_ALL, writeType);
     }
   }
 
@@ -181,5 +191,9 @@ public class LoadTableDesc extends org.apache.hadoop.hive.ql.plan.LoadDesc
 
   public AcidUtils.Operation getWriteType() {
     return writeType;
+  }
+
+  public long getCurrentTransactionId() {
+    return writeType == AcidUtils.Operation.NOT_ACID ? 0L : currentTransactionId;
   }
 }

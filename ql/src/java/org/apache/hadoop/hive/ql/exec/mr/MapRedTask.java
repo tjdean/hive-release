@@ -475,4 +475,9 @@ public class MapRedTask extends ExecDriver implements Serializable {
       executor = null;
     }
   }
+
+  @Override
+  public boolean canExecuteInParallel() {
+    return false;
+  }
 }

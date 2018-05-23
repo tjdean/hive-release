@@ -49,6 +49,7 @@ import org.apache.hadoop.hive.ql.plan.LoadTableDesc;
 import org.apache.hadoop.hive.ql.plan.LoadTableDesc.LoadFileType;
 import org.apache.hadoop.hive.ql.plan.MoveWork;
 import org.apache.hadoop.hive.ql.plan.StatsWork;
+import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.mapred.InputFormat;
 
 import com.google.common.collect.Lists;
@@ -281,7 +282,8 @@ public class LoadSemanticAnalyzer extends BaseSemanticAnalyzer {
     }
 
     Task<? extends Serializable> childTask = TaskFactory.get(new MoveWork(getInputs(),
-        getOutputs(), loadTableWork, null, true, isLocal), conf);
+        getOutputs(), loadTableWork, null, true, isLocal,
+            SessionState.get().getLineageState()), conf);
     if (rTask != null) {
       rTask.addDependentTask(childTask);
     } else {

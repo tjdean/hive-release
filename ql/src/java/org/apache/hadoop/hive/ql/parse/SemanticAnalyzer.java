@@ -6400,7 +6400,9 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           acidOp = getAcidType(table_desc.getOutputFileFormatClass(), dest);
           checkAcidConstraints(qb, table_desc, dest_tab);
         }
-        ltd = new LoadTableDesc(queryTmpdir, table_desc, dpCtx, acidOp);
+        Long currentTransactionId = ((acidOp == Operation.NOT_ACID) ? null :
+                SessionState.get().getTxnMgr().getCurrentTxnId());
+        ltd = new LoadTableDesc(queryTmpdir, table_desc, dpCtx, acidOp, currentTransactionId);
         LoadFileType loadType = (!qb.getParseInfo().isInsertIntoTable(dest_tab.getDbName(),
                 dest_tab.getTableName()))
                 ? LoadFileType.REPLACE_ALL : LoadFileType.KEEP_EXISTING;
@@ -6511,7 +6513,9 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
         acidOp = getAcidType(table_desc.getOutputFileFormatClass(), dest);
         checkAcidConstraints(qb, table_desc, dest_tab);
       }
-      ltd = new LoadTableDesc(queryTmpdir, table_desc, dest_part.getSpec(), acidOp);
+      Long currentTransactionId = ((acidOp == Operation.NOT_ACID) ? null :
+              SessionState.get().getTxnMgr().getCurrentTxnId());
+      ltd = new LoadTableDesc(queryTmpdir, table_desc, dest_part.getSpec(), acidOp, currentTransactionId);
       LoadFileType loadType = (!qb.getParseInfo().isInsertIntoTable(dest_tab.getDbName(),
               dest_tab.getTableName()))
               ? LoadFileType.REPLACE_ALL : LoadFileType.KEEP_EXISTING;
