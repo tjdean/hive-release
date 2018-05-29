@@ -24,9 +24,13 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.ql.exec.repl.ReplUtils;
 import org.apache.hadoop.hive.ql.parse.repl.PathBuilder;
 import org.apache.hadoop.hive.ql.session.DependencyResolver;
 import org.apache.hadoop.hive.shims.Utils;
+import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.api.Table;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -46,14 +50,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertTrue;
 
-  public class TestReplicationScenariosAcrossInstances {
+public class TestReplicationScenariosAcrossInstances {
   @Rule
   public final TestName testName = new TestName();
 
@@ -68,7 +74,6 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
   public static void classLevelSetup() throws Exception {
     Configuration conf = new Configuration();
     conf.set("dfs.client.use.datanode.hostname", "true");
-
     conf.set("hadoop.proxyuser." + Utils.getUGI().getShortUserName() + ".hosts", "*");
     MiniDFSCluster miniDFSCluster =
         new MiniDFSCluster.Builder(conf).numDataNodes(1).format(true).build();
@@ -681,54 +686,94 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 
     // Bootstrap load in replica
     replica.load(replicatedDbName, bootstrapTuple.dumpLocation)
-            .status(replicatedDbName)
-            .verifyResult(bootstrapTuple.lastReplicationId);
+        .status(replicatedDbName)
+        .verifyResult(bootstrapTuple.lastReplicationId);
 
     // First incremental dump
     WarehouseInstance.Tuple firstIncremental = primary.run("use " + primaryDbName)
-            .run("create table table1 (id int) partitioned by (country string)")
-            .run("create table table2 (id int)")
-            .run("create table table3 (id int) partitioned by (country string)")
-            .run("insert into table1 partition(country='india') values(1)")
-            .run("insert into table2 values(2)")
-            .run("insert into table3 partition(country='india') values(3)")
-            .dump(primaryDbName, bootstrapTuple.lastReplicationId);
+        .run("create table table1 (id int) partitioned by (country string)")
+        .run("create table table2 (id int)")
+        .run("create table table3 (id int) partitioned by (country string)")
+        .run("insert into table1 partition(country='india') values(1)")
+        .run("insert into table2 values(2)")
+        .run("insert into table3 partition(country='india') values(3)")
+        .dump(primaryDbName, bootstrapTuple.lastReplicationId);
 
     // Second incremental dump
     WarehouseInstance.Tuple secondIncremental = primary.run("use " + primaryDbName)
-            .run("drop table table1")
-            .run("drop table table2")
-            .run("drop table table3")
-            .run("create table table1 (id int)")
-            .run("insert into table1 values (10)")
-            .run("create table table2 (id int) partitioned by (country string)")
-            .run("insert into table2 partition(country='india') values(20)")
-            .run("create table table3 (id int) partitioned by (name string, rank int)")
-            .run("insert into table3 partition(name='adam', rank=100) values(30)")
-            .dump(primaryDbName, firstIncremental.lastReplicationId);
+        .run("drop table table1")
+        .run("drop table table2")
+        .run("drop table table3")
+        .run("create table table1 (id int)")
+        .run("insert into table1 values (10)")
+        .run("create table table2 (id int) partitioned by (country string)")
+        .run("insert into table2 partition(country='india') values(20)")
+        .run("create table table3 (id int) partitioned by (name string, rank int)")
+        .run("insert into table3 partition(name='adam', rank=100) values(30)")
+        .dump(primaryDbName, firstIncremental.lastReplicationId);
 
     // First incremental load
     replica.load(replicatedDbName, firstIncremental.dumpLocation)
-            .status(replicatedDbName)
-            .verifyResult(firstIncremental.lastReplicationId)
-            .run("use " + replicatedDbName)
-            .run("select id from table1")
-            .verifyResults(new String[] {"1"})
-            .run("select * from table2")
-            .verifyResults(new String[] {"2"})
-            .run("select id from table3")
-            .verifyResults(new String[] {"3"});
+        .status(replicatedDbName)
+        .verifyResult(firstIncremental.lastReplicationId)
+        .run("use " + replicatedDbName)
+        .run("select id from table1")
+        .verifyResults(new String[] { "1" })
+        .run("select * from table2")
+        .verifyResults(new String[] { "2" })
+        .run("select id from table3")
+        .verifyResults(new String[] { "3" });
 
     // Second incremental load
     replica.load(replicatedDbName, secondIncremental.dumpLocation)
-            .status(replicatedDbName)
-            .verifyResult(secondIncremental.lastReplicationId)
+        .status(replicatedDbName)
+        .verifyResult(secondIncremental.lastReplicationId)
+        .run("use " + replicatedDbName)
+        .run("select * from table1")
+        .verifyResults(new String[] { "10" })
+        .run("select id from table2")
+        .verifyResults(new String[] { "20" })
+        .run("select id from table3")
+        .verifyResults(new String[] {"30"});
+  }
+
+  private void verifyIfCkptSet(Map<String, String> props, String dumpDir) {
+    assertTrue(props.containsKey(ReplUtils.REPL_CHECKPOINT_KEY));
+    assertTrue(props.get(ReplUtils.REPL_CHECKPOINT_KEY).equals(dumpDir));
+  }
+
+  @Test
+  public void testIfCkptSetForObjectsByBootstrapReplLoad() throws Throwable {
+    WarehouseInstance.Tuple tuple = primary
+            .run("use " + primaryDbName)
+            .run("create table t1 (id int)")
+            .run("insert into table t1 values (10)")
+            .run("create table t2 (place string) partitioned by (country string)")
+            .run("insert into table t2 partition(country='india') values ('bangalore')")
+            .run("insert into table t2 partition(country='uk') values ('london')")
+            .run("insert into table t2 partition(country='us') values ('sfo')")
+            .dump(primaryDbName, null);
+
+    replica.load(replicatedDbName, tuple.dumpLocation)
             .run("use " + replicatedDbName)
-            .run("select * from table1")
-            .verifyResults(new String[] {"10"})
-            .run("select id from table2")
-            .verifyResults(new String[] {"20"})
-            .run("select id from table3")
-            .verifyResults(new String[] {"30"});
+            .run("repl status " + replicatedDbName)
+            .verifyResult(tuple.lastReplicationId)
+            .run("show tables")
+            .verifyResults(new String[] { "t1", "t2" })
+            .run("select country from t2")
+            .verifyResults(Arrays.asList("india", "uk", "us"));
+
+    Database db = replica.getDatabase(replicatedDbName);
+    verifyIfCkptSet(db.getParameters(), tuple.dumpLocation);
+    Table t1 = replica.getTable(replicatedDbName, "t1");
+    verifyIfCkptSet(t1.getParameters(), tuple.dumpLocation);
+    Table t2 = replica.getTable(replicatedDbName, "t2");
+    verifyIfCkptSet(t2.getParameters(), tuple.dumpLocation);
+    Partition india = replica.getPartition(replicatedDbName, "t2", Collections.singletonList("india"));
+    verifyIfCkptSet(india.getParameters(), tuple.dumpLocation);
+    Partition us = replica.getPartition(replicatedDbName, "t2", Collections.singletonList("us"));
+    verifyIfCkptSet(us.getParameters(), tuple.dumpLocation);
+    Partition uk = replica.getPartition(replicatedDbName, "t2", Collections.singletonList("uk"));
+    verifyIfCkptSet(uk.getParameters(), tuple.dumpLocation);
   }
 }
