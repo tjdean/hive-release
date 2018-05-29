@@ -24,6 +24,7 @@ import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.session.LineageState;
 
 public class Context {
+  public final String dumpDirectory;
   public final HiveConf hiveConf;
   public final Hive hiveDb;
   public final Warehouse warehouse;
@@ -37,8 +38,9 @@ public class Context {
   public final LineageState sessionStateLineageState;
   public final long currentTransactionId;
 
-  public Context(HiveConf hiveConf, Hive hiveDb,
+  public Context(String dumpDirectory, HiveConf hiveConf, Hive hiveDb,
                  LineageState lineageState, long currentTransactionId) throws MetaException {
+    this.dumpDirectory = dumpDirectory;
     this.hiveConf = hiveConf;
     this.hiveDb = hiveDb;
     this.warehouse = new Warehouse(hiveConf);

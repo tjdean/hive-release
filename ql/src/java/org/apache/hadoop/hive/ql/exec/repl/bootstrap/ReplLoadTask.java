@@ -36,12 +36,14 @@ import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.table.LoadPartitions;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.table.LoadTable;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.table.TableContext;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.util.Context;
+import org.apache.hadoop.hive.ql.exec.util.DAGTraversal;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.parse.repl.ReplLogger;
 import org.apache.hadoop.hive.ql.plan.api.StageType;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.LoadDatabase.AlterDatabase;
@@ -67,7 +69,7 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
   protected int execute(DriverContext driverContext) {
     try {
       int maxTasks = conf.getIntVar(HiveConf.ConfVars.REPL_APPROX_MAX_LOAD_TASKS);
-      Context context = new Context(conf, db, work.sessionStateLineageState, work.currentTransactionId);
+      Context context = new Context(work.dumpDirectory, conf, db, work.sessionStateLineageState, work.currentTransactionId);
       TaskTracker loadTaskTracker = new TaskTracker(maxTasks);
       /*
           for now for simplicity we are doing just one directory ( one database ), come back to use
@@ -211,7 +213,8 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
     if (null == scope.rootTasks) {
       scope.rootTasks.add(replLogTask);
     } else {
-      dependency(scope.rootTasks, replLogTask);
+      DAGTraversal.traverse(scope.rootTasks,
+          new AddDependencyToLeaves(Collections.singletonList(replLogTask)));
     }
     return replLogTask;
   }
@@ -219,6 +222,12 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
   /**
    * There was a database update done before and we want to make sure we update the last repl
    * id on this database as we are now going to switch to processing a new database.
+   *
+   * This has to be last task in the graph since if there are intermediate tasks and the last.repl.id
+   * is a root level task then in the execution phase the root level tasks will get executed first,
+   * however if any of the child tasks of the bootstrap load failed then even though the bootstrap has failed
+   * the last repl status of the target database will return a valid value, which will not represent
+   * the state of the database.
    */
   private TaskTracker updateDatabaseLastReplID(int maxTasks, Context context, Scope scope)
       throws SemanticException {
@@ -229,7 +238,10 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
     TaskTracker taskTracker =
         new AlterDatabase(context, work.databaseEvent(context.hiveConf), work.dbNameToLoadIn,
             new TaskTracker(maxTasks)).tasks();
-    scope.rootTasks.addAll(taskTracker.tasks());
+
+    AddDependencyToLeaves function = new AddDependencyToLeaves(taskTracker.tasks());
+    DAGTraversal.traverse(scope.rootTasks, function);
+
     return taskTracker;
   }
 
@@ -266,27 +278,8 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
    */
     if (shouldCreateAnotherLoadTask) {
       Task<ReplLoadWork> loadTask = TaskFactory.get(work, conf, true);
-      dependency(rootTasks, loadTask);
+      DAGTraversal.traverse(rootTasks, new AddDependencyToLeaves(loadTask));
     }
-  }
-
-  /**
-   * add the dependency to the leaf node
-   */
-  public static boolean dependency(List<Task<? extends Serializable>> tasks, Task<?> tailTask) {
-    if (tasks == null || tasks.isEmpty()) {
-      return true;
-    }
-    for (Task<? extends Serializable> task : tasks) {
-      if (task == tailTask) {
-        continue;
-      }
-      boolean leafNode = dependency(task.getChildTasks(), tailTask);
-      if (leafNode) {
-        task.addDependentTask(tailTask);
-      }
-    }
-    return false;
   }
 
   @Override

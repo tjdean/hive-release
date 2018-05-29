@@ -32,6 +32,7 @@ import java.io.Serializable;
 public class ReplLoadWork implements Serializable {
   final String dbNameToLoadIn;
   final String tableNameToLoadIn;
+  final String dumpDirectory;
   private final BootstrapEventsIterator iterator;
   private int loadTaskRunCount = 0;
   private DatabaseEvent.State state = null;
@@ -47,6 +48,7 @@ public class ReplLoadWork implements Serializable {
   public ReplLoadWork(HiveConf hiveConf, String dumpDirectory, String dbNameToLoadIn,
       String tableNameToLoadIn, LineageState lineageState, long currentTransactionId) throws IOException {
     this.tableNameToLoadIn = tableNameToLoadIn;
+    this.dumpDirectory = dumpDirectory;
     this.iterator = new BootstrapEventsIterator(dumpDirectory, dbNameToLoadIn, hiveConf);
     this.dbNameToLoadIn = dbNameToLoadIn;
     sessionStateLineageState = lineageState;

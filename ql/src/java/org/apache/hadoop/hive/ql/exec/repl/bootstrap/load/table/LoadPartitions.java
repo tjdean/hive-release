@@ -26,8 +26,7 @@ import org.apache.hadoop.hive.ql.exec.ReplCopyTask;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.exec.TaskFactory;
 import org.apache.hadoop.hive.ql.exec.Utilities;
-import org.apache.hadoop.hive.ql.exec.repl.ReplStateLogWork;
-import org.apache.hadoop.hive.ql.exec.repl.bootstrap.ReplLoadTask;
+import org.apache.hadoop.hive.ql.exec.repl.ReplUtils;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.TableEvent;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.ReplicationState;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.TaskTracker;
@@ -54,7 +53,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -110,21 +109,6 @@ public class LoadPartitions {
     }
   }
 
-  private void createTableReplLogTask() throws SemanticException {
-    ReplStateLogWork replLogWork = new ReplStateLogWork(replLogger,
-                                            tableDesc.getTableName(), tableDesc.tableType());
-    Task<ReplStateLogWork> replLogTask = TaskFactory.get(replLogWork, context.hiveConf, true);
-
-    if (tracker.tasks().isEmpty()) {
-      tracker.addTask(replLogTask);
-    } else {
-      ReplLoadTask.dependency(tracker.tasks(), replLogTask);
-
-      List<Task<? extends Serializable>> visited = new ArrayList<>();
-      tracker.updateTaskCount(replLogTask, visited);
-    }
-  }
-
   public TaskTracker tasks() throws SemanticException {
     try {
       /*
@@ -142,20 +126,23 @@ public class LoadPartitions {
           updateReplicationState(initialReplicationState());
           if (!forNewTable().hasReplicationState()) {
             // Add ReplStateLogTask only if no pending table load tasks left for next cycle
-            createTableReplLogTask();
+            Task<? extends Serializable> replLogTask
+                    = ReplUtils.getTableReplLogTask(tableDesc, replLogger, context.hiveConf);
+            tracker.addDependentTask(replLogTask);
           }
           return tracker;
         }
       } else {
         // existing
-
         if (table.isPartitioned()) {
           List<AddPartitionDesc> partitionDescs = event.partitionDescriptions(tableDesc);
           if (!event.replicationSpec().isMetadataOnly() && !partitionDescs.isEmpty()) {
             updateReplicationState(initialReplicationState());
             if (!forExistingTable(lastReplicatedPartition).hasReplicationState()) {
               // Add ReplStateLogTask only if no pending table load tasks left for next cycle
-              createTableReplLogTask();
+              Task<? extends Serializable> replLogTask
+                      = ReplUtils.getTableReplLogTask(tableDesc, replLogger, context.hiveConf);
+              tracker.addDependentTask(replLogTask);
             }
             return tracker;
           }
@@ -229,8 +216,19 @@ public class LoadPartitions {
 
     Task<?> movePartitionTask = movePartitionTask(table, partSpec, tmpPath);
 
+    // Set Checkpoint task as dependant to add partition tasks. So, if same dump is retried for
+    // bootstrap, we skip current partition update.
+    Task<?> ckptTask = ReplUtils.getTableCheckpointTask(
+            tableDesc,
+            (HashMap<String, String>)partSpec.getPartSpec(),
+            context.dumpDirectory,
+            context.hiveConf
+    );
+
     copyTask.addDependentTask(addPartTask);
     addPartTask.addDependentTask(movePartitionTask);
+    movePartitionTask.addDependentTask(ckptTask);
+
     return copyTask;
   }
 
