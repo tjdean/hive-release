@@ -77,7 +77,7 @@ class InsertHandler extends AbstractEventHandler {
          * tables. But, Insert event is generated for each partition to which the data is inserted. So, qlPtns list
          * will have only one entry.
          */
-        assert(1 == qlPtns.size());
+        assert (1 == qlPtns.size());
         dataPath = new Path(withinContext.eventRoot, qlPtns.get(0).getName());
       }
 

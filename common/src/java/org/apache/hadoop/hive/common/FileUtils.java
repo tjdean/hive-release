@@ -61,6 +61,8 @@ import org.apache.hive.common.util.ShutdownHookManager;
 public final class FileUtils {
   private static final Log LOG = LogFactory.getLog(FileUtils.class.getName());
   private static final Random random = new Random();
+  public static final int MAX_IO_ERROR_RETRY = 5;
+  public static final int IO_ERROR_SLEEP_TIME = 100;
 
   public static final PathFilter HIDDEN_FILES_PATH_FILTER = new PathFilter() {
     public boolean accept(Path p) {
@@ -979,5 +981,13 @@ public final class FileUtils {
       path = path.getParent();
     }
     return false;
+  }
+
+  /**
+   * Returns the incremented sleep time in milli seconds.
+   * @param repeatNum number of retry done so far.
+   */
+  public static int getSleepTime(int repeatNum) {
+    return IO_ERROR_SLEEP_TIME * (int)(Math.pow(2.0, repeatNum));
   }
 }

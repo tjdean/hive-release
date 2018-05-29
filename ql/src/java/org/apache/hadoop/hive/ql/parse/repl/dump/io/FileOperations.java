@@ -22,8 +22,10 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.ReplChangeManager;
+import org.apache.hadoop.hive.shims.Utils;
 import org.apache.hadoop.hive.ql.parse.EximUtil;
 import org.apache.hadoop.hive.ql.parse.LoadSemanticAnalyzer;
 import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
@@ -43,7 +45,9 @@ public class FileOperations {
   private final Path exportRootDataDir;
   private final String distCpDoAsUser;
   private final HiveConf hiveConf;
-  private final FileSystem dataFileSystem, exportFileSystem;
+  private FileSystem exportFileSystem;
+  private FileSystem dataFileSystem;
+  public static final int MAX_IO_ERROR_RETRY = 5;
 
   public FileOperations(Path dataFileListPath, Path exportRootDataDir,
                         String distCpDoAsUser, HiveConf hiveConf) throws IOException {
@@ -67,8 +71,7 @@ public class FileOperations {
    * This writes the actual data in the exportRootDataDir from the source.
    */
   private void copyFiles() throws IOException, LoginException {
-    FileStatus[] fileStatuses =
-        LoadSemanticAnalyzer.matchFilesOrDir(dataFileSystem, dataFileListPath);
+    FileStatus[] fileStatuses = LoadSemanticAnalyzer.matchFilesOrDir(dataFileSystem, dataFileListPath);
     List<Path> srcPaths = new ArrayList<>();
     for (FileStatus fileStatus : fileStatuses) {
       srcPaths.add(fileStatus.getPath());
@@ -81,13 +84,43 @@ public class FileOperations {
    * The data export here is a list of files either in table/partition that are written to the _files
    * in the exportRootDataDir provided.
    */
-  private void exportFilesAsList() throws SemanticException, IOException {
-    try (BufferedWriter writer = writer()) {
-      FileStatus[] fileStatuses =
-          LoadSemanticAnalyzer.matchFilesOrDir(dataFileSystem, dataFileListPath);
-      for (FileStatus fileStatus : fileStatuses) {
-        writer.write(encodedUri(fileStatus));
-        writer.newLine();
+  private void exportFilesAsList() throws SemanticException, IOException, LoginException {
+    boolean done = false;
+    int repeat = 0;
+    while (!done) {
+      // This is only called for replication that handles MM tables; no need for mmCtx.
+      try (BufferedWriter writer = writer()) {
+        FileStatus[] fileStatuses =
+                LoadSemanticAnalyzer.matchFilesOrDir(dataFileSystem, dataFileListPath);
+        for (FileStatus fileStatus : fileStatuses) {
+          writer.write(encodedUri(fileStatus));
+          writer.newLine();
+        }
+        done = true;
+      } catch (IOException e) {
+        repeat++;
+        logger.info("writeFilesList failed", e);
+        if (repeat >= FileUtils.MAX_IO_ERROR_RETRY) {
+          logger.error("exporting data files in dir : " + dataFileListPath + " to " + exportRootDataDir + " failed");
+          throw e;
+        }
+
+        int sleepTime = FileUtils.getSleepTime(repeat - 1);
+        logger.info(" sleep for " + sleepTime + " milliseconds for retry num " + repeat);
+        try {
+          Thread.sleep(sleepTime);
+        } catch (InterruptedException timerEx) {
+          logger.info("thread sleep interrupted", timerEx);
+        }
+
+        // in case of io error, reset the file system object
+        FileSystem.closeAllForUGI(Utils.getUGI());
+        dataFileSystem = dataFileListPath.getFileSystem(hiveConf);
+        exportFileSystem = exportRootDataDir.getFileSystem(hiveConf);
+        Path exportPath = new Path(exportRootDataDir, EximUtil.FILES_NAME);
+        if (exportFileSystem.exists(exportPath)) {
+          exportFileSystem.delete(exportPath, true);
+        }
       }
     }
   }
