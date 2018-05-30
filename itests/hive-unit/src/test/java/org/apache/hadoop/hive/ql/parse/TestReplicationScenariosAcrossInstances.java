@@ -58,6 +58,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.Assert.assertTrue;
+import static org.apache.hadoop.hive.metastore.ReplChangeManager.SOURCE_OF_REPLICATION;
 
 public class TestReplicationScenariosAcrossInstances {
   @Rule
@@ -95,7 +96,8 @@ public class TestReplicationScenariosAcrossInstances {
     replV1BackwardCompat = primary.getReplivationV1CompatRule(new ArrayList<>());
     primaryDbName = testName.getMethodName() + "_" + +System.currentTimeMillis();
     replicatedDbName = "replicated_" + primaryDbName;
-    primary.run("create database " + primaryDbName);
+    primary.run("create database " + primaryDbName + " WITH DBPROPERTIES ( '" +
+            SOURCE_OF_REPLICATION + "' = '1,2,3')");
   }
 
   @After
@@ -399,14 +401,15 @@ public class TestReplicationScenariosAcrossInstances {
     String randomTwo = RandomStringUtils.random(10, true, false);
     String dbOne = primaryDbName + randomOne;
     String dbTwo = primaryDbName + randomTwo;
+    primary.run("alter database default set dbproperties ('" + SOURCE_OF_REPLICATION + "' = '1, 2, 3')");
     WarehouseInstance.Tuple tuple = primary
         .run("use " + primaryDbName)
         .run("create table t1 (i int, j int)")
-        .run("create database " + dbOne)
+        .run("create database " + dbOne + " WITH DBPROPERTIES ( '" + SOURCE_OF_REPLICATION + "' = '1,2,3')")
         .run("use " + dbOne)
         .run("create table t1 (i int, j int) partitioned by (load_date date) "
             + "clustered by(i) into 2 buckets stored as orc tblproperties ('transactional'='true') ")
-        .run("create database " + dbTwo)
+        .run("create database " + dbTwo + " WITH DBPROPERTIES ( '" + SOURCE_OF_REPLICATION + "' = '1,2,3')")
         .run("use " + dbTwo)
         .run("create table t1 (i int, j int)")
         .dump("`*`", null, Arrays.asList("'hive.repl.dump.metadata.only'='true'",
@@ -457,10 +460,12 @@ public class TestReplicationScenariosAcrossInstances {
     String randomOne = RandomStringUtils.random(10, true, false);
     String randomTwo = RandomStringUtils.random(10, true, false);
     String dbOne = primaryDbName + randomOne;
+    primary.run("alter database default set dbproperties ('" + SOURCE_OF_REPLICATION + "' = '1, 2, 3')");
     WarehouseInstance.Tuple bootstrapTuple = primary
         .run("use " + primaryDbName)
         .run("create table t1 (i int, j int)")
-        .run("create database " + dbOne)
+        .run("create database " + dbOne + " WITH DBPROPERTIES ( '" +
+                SOURCE_OF_REPLICATION + "' = '1,2,3')")
         .run("use " + dbOne)
         .run("create table t1 (i int, j int) partitioned by (load_date date) "
             + "clustered by(i) into 2 buckets stored as orc tblproperties ('transactional'='true') ")
@@ -469,7 +474,8 @@ public class TestReplicationScenariosAcrossInstances {
 
     String dbTwo = primaryDbName + randomTwo;
     WarehouseInstance.Tuple incrementalTuple = primary
-        .run("create database " + dbTwo)
+        .run("create database " + dbTwo + " WITH DBPROPERTIES ( '" +
+                SOURCE_OF_REPLICATION + "' = '1,2,3')")
         .run("use " + dbTwo)
         .run("create table t1 (i int, j int)")
         .run("use " + dbOne)

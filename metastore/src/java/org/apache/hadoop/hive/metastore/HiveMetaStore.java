@@ -172,6 +172,8 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Multimaps;
 
+import static org.apache.hadoop.hive.metastore.ReplChangeManager.SOURCE_OF_REPLICATION;
+
 /**
  * TODO:pc remove application logic to a separate interface.
  */
@@ -915,7 +917,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         if (!success) {
           ms.rollbackTransaction();
           if (madeDir) {
-            wh.deleteDir(dbPath, true);
+            wh.deleteDir(dbPath, true, db);
           }
         }
         LOG.info("create_database_core listeners " + db.getName());
@@ -1075,6 +1077,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         ms.openTransaction();
         db = ms.getDatabase(name);
 
+        boolean isInTest = Boolean.valueOf(HiveConf.getBoolVar(hiveConf, ConfVars.HIVE_IN_TEST));
+        if (!isInTest && ReplChangeManager.isSourceOfReplication(db)) {
+          throw new InvalidOperationException("can not drop a database which is a source of replication");
+        }
+
         firePreEvent(new PreDropDatabaseEvent(db, this));
 
         List<String> allTables = get_all_tables(db.getName());
@@ -1167,14 +1174,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           ms.rollbackTransaction();
         } else if (deleteData) {
           // Delete the data in the partitions which have other locations
-          deletePartitionData(partitionPaths);
+          deletePartitionData(partitionPaths, false, db);
           // Delete the data in the tables which have other locations
           for (Path tablePath : tablePaths) {
-            deleteTableData(tablePath);
+            deleteTableData(tablePath, false, db);
           }
           // Delete the data in the database
           try {
-            wh.deleteDir(new Path(db.getLocationUri()), true);
+            wh.deleteDir(new Path(db.getLocationUri()), true, db);
           } catch (Exception e) {
             LOG.error("Failed to delete database directory: " + db.getLocationUri() +
                 " " + e.getMessage());
@@ -1449,6 +1456,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       Map<String, String> transactionalListenerResponses = Collections.emptyMap();
       Path tblPath = null;
       boolean success = false, madeDir = false;
+      Database db = null;
       try {
         LOG.info("create_table_core preEvent " + logName);
         firePreEvent(new PreCreateTableEvent(tbl, this));
@@ -1456,7 +1464,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         LOG.info("create_table_core rdbms checks " + logName);
         ms.openTransaction();
 
-        Database db = ms.getDatabase(tbl.getDbName());
+        db = ms.getDatabase(tbl.getDbName());
         if (db == null) {
           throw new NoSuchObjectException("The database " + tbl.getDbName() + " does not exist");
         }
@@ -1471,8 +1479,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         if (!TableType.VIRTUAL_VIEW.toString().equals(tbl.getTableType())) {
           if (tbl.getSd().getLocation() == null
               || tbl.getSd().getLocation().isEmpty()) {
-            tblPath = wh.getDefaultTablePath(
-                ms.getDatabase(tbl.getDbName()), tbl.getTableName());
+            tblPath = wh.getDefaultTablePath(db, tbl.getTableName());
           } else {
             if (!isExternal(tbl) && !MetaStoreUtils.isNonNativeTable(tbl)) {
               LOG.warn("Location: " + tbl.getSd().getLocation()
@@ -1523,7 +1530,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         if (!success) {
           ms.rollbackTransaction();
           if (madeDir) {
-            wh.deleteDir(tblPath, true);
+            wh.deleteDir(tblPath, true, db);
           }
         }
         LOG.info("create_table_core rdbms listeners " + logName);
@@ -1589,6 +1596,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       Table tbl = null;
       boolean ifPurge = false;
       Map<String, String> transactionalListenerResponses = Collections.emptyMap();
+      Database db = null;
       try {
         ms.openTransaction();
         // drop any partitions
@@ -1648,6 +1656,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
                                                       new DropTableEvent(tbl, true, deleteData, this),
                                                       envContext);
           }
+          db = ms.getDatabase(dbname);
           success = ms.commitTransaction();
         }
       } finally {
@@ -1656,9 +1665,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         } else if (deleteData && !isExternal) {
           // Data needs deletion. Check if trash may be skipped.
           // Delete the data in the partitions which have other locations
-          deletePartitionData(partPaths, ifPurge);
+          deletePartitionData(partPaths, ifPurge, db);
           // Delete the data in the table
-          deleteTableData(tblPath, ifPurge);
+          deleteTableData(tblPath, ifPurge, db);
           // ok even if the data is not deleted
         }
         if (!listeners.isEmpty()) {
@@ -1676,38 +1685,20 @@ public class HiveMetaStore extends ThriftHiveMetastore {
      * Deletes the data in a table's location, if it fails logs an error
      *
      * @param tablePath
-     */
-    private void deleteTableData(Path tablePath) {
-      deleteTableData(tablePath, false);
-    }
-
-    /**
-     * Deletes the data in a table's location, if it fails logs an error
-     *
-     * @param tablePath
      * @param ifPurge completely purge the table (skipping trash) while removing
      *                data from warehouse
+     * @param db database the table belongs to
      */
-    private void deleteTableData(Path tablePath, boolean ifPurge) {
+    private void deleteTableData(Path tablePath, boolean ifPurge, Database db) {
 
       if (tablePath != null) {
         try {
-          wh.deleteDir(tablePath, true, ifPurge);
+          wh.deleteDir(tablePath, true, ifPurge, db);
         } catch (Exception e) {
           LOG.error("Failed to delete table directory: " + tablePath +
               " " + e.getMessage());
         }
       }
-    }
-
-    /**
-     * Give a list of partitions' locations, tries to delete each one
-     * and for each that fails logs an error.
-     *
-     * @param partPaths
-     */
-    private void deletePartitionData(List<Path> partPaths) {
-      deletePartitionData(partPaths, false);
     }
 
     /**
@@ -1717,12 +1708,13 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     * @param partPaths
     * @param ifPurge completely purge the partition (skipping trash) while
     *                removing data from warehouse
+    * @param db database the partition belongs to
     */
-    private void deletePartitionData(List<Path> partPaths, boolean ifPurge) {
+    private void deletePartitionData(List<Path> partPaths, boolean ifPurge, Database db) {
       if (partPaths != null && !partPaths.isEmpty()) {
         for (Path partPath : partPaths) {
           try {
-            wh.deleteDir(partPath, true, ifPurge);
+            wh.deleteDir(partPath, true, ifPurge, db);
           } catch (Exception e) {
             LOG.error("Failed to delete partition directory: " + partPath +
                 " " + e.getMessage());
@@ -1965,6 +1957,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       try {
         Table tbl = get_table_core(dbName, tableName);
         boolean isAutopurge = (tbl.isSetParameters() && "true".equalsIgnoreCase(tbl.getParameters().get("auto.purge")));
+        Database db = get_database_core(dbName);
 
         // This is not transactional
         for (Path location : getLocationsForTruncate(getMS(), dbName, tableName, tbl, partNames)) {
@@ -1976,7 +1969,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
             HdfsFileStatus status = shim.getFullFileStatus(getHiveConf(), fs, location);
             FileStatus targetStatus = fs.getFileStatus(location);
             String targetGroup = targetStatus == null ? null : targetStatus.getGroup();
-            wh.deleteDir(location, true, isAutopurge);
+            wh.deleteDir(location, true, isAutopurge, db);
             fs.mkdirs(location);
             try {
               shim.setFullFileStatus(getHiveConf(), status, targetGroup, fs, location, true);
@@ -1989,7 +1982,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
               continue;
             }
             for (final FileStatus status : statuses) {
-              wh.deleteDir(status.getPath(), true, isAutopurge);
+              wh.deleteDir(location, true, isAutopurge, db);
             }
           }
         }
@@ -2182,13 +2175,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     private Partition append_partition_common(RawStore ms, String dbName, String tableName,
         List<String> part_vals, EnvironmentContext envContext) throws InvalidObjectException,
-        AlreadyExistsException, MetaException {
+        AlreadyExistsException, MetaException, NoSuchObjectException {
 
       Partition part = new Partition();
       boolean success = false, madeDir = false;
       Path partLocation = null;
       Table tbl = null;
       Map<String, String> transactionalListenerResponses = Collections.emptyMap();
+      Database db = null;
       try {
         ms.openTransaction();
         part.setDbName(dbName);
@@ -2231,6 +2225,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
             throw new MetaException(partLocation
                 + " is not a directory or unable to create one");
           }
+          db = get_database_core(dbName);
           madeDir = true;
         }
 
@@ -2259,7 +2254,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         if (!success) {
           ms.rollbackTransaction();
           if (madeDir) {
-            wh.deleteDir(partLocation, true);
+            wh.deleteDir(partLocation, true, db);
           }
         }
 
@@ -2410,6 +2405,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       final List<Partition> existingParts = new ArrayList<Partition>();
       Table tbl = null;
       Map<String, String> transactionalListenerResponses = Collections.emptyMap();
+      Database db = null;
       try {
         ms.openTransaction();
         tbl = ms.getTable(dbName, tblName);
@@ -2484,6 +2480,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           throw new MetaException(e.getMessage());
         }
 
+        db = ms.getDatabase(dbName);
+
         if (!newParts.isEmpty()) {
           success = ms.addPartitions(dbName, tblName, newParts);
         } else {
@@ -2507,7 +2505,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           for (Map.Entry<PartValEqWrapper, Boolean> e : addedPartitions.entrySet()) {
             if (e.getValue()) {
               // we just created this directory - it's not a case of pre-creation, so we nuke.
-              wh.deleteDir(new Path(e.getKey().partition.getSd().getLocation()), true);
+              wh.deleteDir(new Path(e.getKey().partition.getSd().getLocation()), true, db);
             }
           }
           if (!listeners.isEmpty()) {
@@ -2616,6 +2614,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           .getPartitionIterator();
       Table tbl = null;
       Map<String, String> transactionalListenerResponses = Collections.emptyMap();
+      Database db = null;
       try {
         ms.openTransaction();
         tbl = ms.getTable(dbName, tblName);
@@ -2623,6 +2622,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           throw new InvalidObjectException("Unable to add partitions because "
               + "database or table " + dbName + "." + tblName + " does not exist");
         }
+
+        db = ms.getDatabase(dbName);
 
         firePreEvent(new PreAddPartitionEvent(tbl, partitionSpecProxy, this));
 
@@ -2706,7 +2707,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           for (Map.Entry<PartValEqWrapperLite, Boolean> e : addedPartitions.entrySet()) {
             if (e.getValue()) {
               // we just created this directory - it's not a case of pre-creation, so we nuke.
-              wh.deleteDir(new Path(e.getKey().location), true);
+              wh.deleteDir(new Path(e.getKey().location), true, db);
             }
           }
         }
@@ -2822,6 +2823,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       boolean success = false;
       Table tbl = null;
       Map<String, String> transactionalListenerResponses = Collections.emptyMap();
+      Database db = null;
       try {
         ms.openTransaction();
         tbl = ms.getTable(part.getDbName(), part.getTableName());
@@ -2830,6 +2832,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
               "Unable to add partition because table or database do not exist");
         }
 
+        db = ms.getDatabase(part.getDbName());
         firePreEvent(new PreAddPartitionEvent(tbl, part, this));
 
         boolean shouldAdd = startAddPartition(ms, part, false);
@@ -2840,7 +2843,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           success = ms.addPartition(part);
         } finally {
           if (!success && madeDir) {
-            wh.deleteDir(new Path(part.getSd().getLocation()), true);
+            wh.deleteDir(new Path(part.getSd().getLocation()), true, db);
           }
         }
 
@@ -2906,6 +2909,19 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       return ret;
     }
 
+    private boolean isRenameAllowed(String srcDBName, String destDBName)
+            throws MetaException, NoSuchObjectException {
+      RawStore ms = getMS();
+      if (!srcDBName.equalsIgnoreCase(destDBName)) {
+        Database destDB = ms.getDatabase(destDBName);
+        Database srcDB = ms.getDatabase(srcDBName);
+        if (ReplChangeManager.isSourceOfReplication(srcDB) || ReplChangeManager.isSourceOfReplication(destDB)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
     @Override
     public Partition exchange_partition(Map<String, String> partitionSpecs,
         String sourceDbName, String sourceTableName, String destDbName,
@@ -2950,6 +2966,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       Map<String, String> transactionalListenerResponsesForAddPartition = Collections.emptyMap();
       List<Map<String, String>> transactionalListenerResponsesForDropPartition =
           Lists.newArrayListWithCapacity(partitionsToExchange.size());
+
+      if (!isRenameAllowed(sourceDbName, destDbName)) {
+        throw new MetaException("Exchange partition not allowed for " +
+                getQualifiedName(sourceDbName, sourceTableName) + " Dest db : " + destDbName);
+      }
 
       try {
         for (Partition partition: partitionsToExchange) {
@@ -3045,7 +3066,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       Path archiveParentDir = null;
       boolean mustPurge = false;
       Map<String, String> transactionalListenerResponses = Collections.emptyMap();
-
+      boolean isSourceOfReplication = false;
       try {
         ms.openTransaction();
         part = ms.getPartition(db_name, tbl_name, part_vals);
@@ -3080,6 +3101,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
                                                       new DropPartitionEvent(tbl, part, true, deleteData, this),
                                                       envContext);
           }
+          isSourceOfReplication = ReplChangeManager.isSourceOfReplication(ms.getDatabase(db_name));
           success = ms.commitTransaction();
         }
       } finally {
@@ -3097,11 +3119,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
             // The original directory was saved in params
             if (isArchived) {
               assert (archiveParentDir != null);
-              wh.deleteDir(archiveParentDir, true, mustPurge);
+              wh.deleteDir(archiveParentDir, true, mustPurge, isSourceOfReplication);
             } else {
               assert (partPath != null);
-              wh.deleteDir(partPath, true, mustPurge);
-              deleteParentRecursive(partPath.getParent(), part_vals.size() - 1, mustPurge);
+              wh.deleteDir(partPath, true, mustPurge, isSourceOfReplication);
+              deleteParentRecursive(partPath.getParent(), part_vals.size() - 1, mustPurge, isSourceOfReplication);
             }
             // ok even if the data is not deleted
           }
@@ -3129,10 +3151,11 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         || (tbl.isSetParameters() && "true".equalsIgnoreCase(tbl.getParameters().get("auto.purge")));
 
     }
-    private void deleteParentRecursive(Path parent, int depth, boolean mustPurge) throws IOException, MetaException {
+    private void deleteParentRecursive(Path parent, int depth, boolean mustPurge, boolean needRecycle)
+            throws IOException, MetaException {
       if (depth > 0 && parent != null && wh.isWritable(parent) && wh.isEmpty(parent)) {
-        wh.deleteDir(parent, true, mustPurge);
-        deleteParentRecursive(parent.getParent(), depth - 1, mustPurge);
+        wh.deleteDir(parent, true, mustPurge, needRecycle);
+        deleteParentRecursive(parent.getParent(), depth - 1, mustPurge, needRecycle);
       }
     }
 
@@ -3173,6 +3196,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       List<Partition> parts = null;
       boolean mustPurge = false;
       List<Map<String, String>> transactionalListenerResponses = Lists.newArrayList();
+      boolean isSourceOfReplication = false;
       try {
         // We need Partition-s for firing events and for result; DN needs MPartition-s to drop.
         // Great... Maybe we could bypass fetching MPartitions by issuing direct SQL deletes.
@@ -3227,6 +3251,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           }
         }
 
+        isSourceOfReplication = ReplChangeManager.isSourceOfReplication(ms.getDatabase(dbName));
+
         for (Partition part : parts) {
           if (!ignoreProtection && !MetaStoreUtils.canDropPartition(tbl, part)) {
             throw new MetaException("Table " + tbl.getTableName()
@@ -3279,12 +3305,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           // Archived partitions have har:/to_har_file as their location.
           // The original directory was saved in params
           for (Path path : archToDelete) {
-            wh.deleteDir(path, true, mustPurge);
+            wh.deleteDir(path, true, mustPurge, isSourceOfReplication);
           }
           for (PathAndPartValSize p : dirsToDelete) {
-            wh.deleteDir(p.path, true, mustPurge);
+            wh.deleteDir(p.path, true, mustPurge, isSourceOfReplication);
             try {
-              deleteParentRecursive(p.path.getParent(), p.partValSize - 1, mustPurge);
+              deleteParentRecursive(p.path.getParent(), p.partValSize - 1, mustPurge, isSourceOfReplication);
             } catch (IOException ex) {
               LOG.warn("Error from deleteParentRecursive", ex);
               throw new MetaException("Failed to delete parent: " + ex.getMessage());
@@ -3907,6 +3933,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       Exception ex = null;
       try {
         Table oldt = get_table_core(dbname, name);
+        if (!isRenameAllowed(dbname, newTable.getDbName())) {
+          throw new MetaException("Alter table not allowed for table " + getQualifiedName(dbname, name) +
+                  "to new table = " + getQualifiedName(newTable.getDbName(), newTable.getTableName()));
+        }
         firePreEvent(new PreAlterTableEvent(oldt, newTable, this));
         alterHandler.alterTable(getMS(), wh, dbname, name, newTable,
                 envContext, this);
@@ -4582,6 +4612,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       Path tblPath = null;
       List<Path> partPaths = null;
       Map<String, String> transactionalListenerResponses = Collections.emptyMap();
+      Database db = null;
       try {
         ms.openTransaction();
         // drop the underlying index table
@@ -4595,6 +4626,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           if (tbl.getSd() == null) {
             throw new MetaException("Table metadata is corrupted");
           }
+
+          db = ms.getDatabase(tbl.getDbName());
 
           if (tbl.getSd().getLocation() != null) {
             tblPath = new Path(tbl.getSd().getLocation());
@@ -4626,8 +4659,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         if (!success) {
           ms.rollbackTransaction();
         } else if (deleteData && tblPath != null) {
-          deletePartitionData(partPaths);
-          deleteTableData(tblPath);
+          deletePartitionData(partPaths, false, db);
+          deleteTableData(tblPath, false, db);
           // ok even if the data is not deleted
         }
         if (index != null && !listeners.isEmpty()) {
@@ -6028,12 +6061,14 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         if (func == null) {
           throw new NoSuchObjectException("Function " + funcName + " does not exist");
         }
+
+        Boolean isSourceOfReplication = ReplChangeManager.isSourceOfReplication(get_database_core(dbName));
         // if copy of jar to change management fails we fail the metastore transaction, since the
         // user might delete the jars on HDFS externally after dropping the function, hence having
         // a copy is required to allow incremental replication to work correctly.
         if (func.getResourceUris() != null && !func.getResourceUris().isEmpty()) {
           for (ResourceUri uri : func.getResourceUris()) {
-            if (uri.getUri().toLowerCase().startsWith("hdfs:")) {
+            if (uri.getUri().toLowerCase().startsWith("hdfs:") && isSourceOfReplication) {
               wh.addToChangeManagement(new Path(uri.getUri()));
             }
           }

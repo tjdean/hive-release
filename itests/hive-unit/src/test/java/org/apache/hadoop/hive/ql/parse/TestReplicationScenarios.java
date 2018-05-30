@@ -75,6 +75,7 @@ import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.apache.hadoop.hive.metastore.ReplChangeManager.SOURCE_OF_REPLICATION;
 
 public class TestReplicationScenarios {
 
@@ -276,9 +277,7 @@ public class TestReplicationScenarios {
 
     String testName = "basic_with_cm";
     LOG.info("Testing "+testName);
-    String dbName = testName + "_" + tid;
-
-    run("CREATE DATABASE " + dbName);
+    String dbName = createDB(testName);
     run("CREATE TABLE " + dbName + ".unptned(a string) STORED AS TEXTFILE");
     run("CREATE TABLE " + dbName + ".ptned(a string) partitioned by (b int) STORED AS TEXTFILE");
     run("CREATE TABLE " + dbName + ".unptned_empty(a string) STORED AS TEXTFILE");
@@ -343,10 +342,9 @@ public class TestReplicationScenarios {
   @Test
   public void testBootstrapLoadOnExistingDb() throws IOException {
     String testName = "bootstrapLoadOnExistingDb";
-    LOG.info("Testing "+testName);
-    String dbName = testName + "_" + tid;
+    LOG.info("Testing " + testName);
+    String dbName = createDB(testName);
 
-    run("CREATE DATABASE " + dbName);
     run("CREATE TABLE " + dbName + ".unptned(a string) STORED AS TEXTFILE");
 
     String[] unptn_data = new String[]{ "eleven" , "twelve" };
@@ -357,39 +355,39 @@ public class TestReplicationScenarios {
     verifySetup("SELECT * from " + dbName + ".unptned ORDER BY a", unptn_data);
 
     // Create an empty database to load
-    run("CREATE DATABASE " + dbName + "_empty");
+    String emptyDB = createDB(testName + "_empty");
 
     advanceDumpDir();
     run("REPL DUMP " + dbName);
     String replDumpLocn = getResult(0,0);
     String replDumpId = getResult(0,1,true);
     // Load to an empty database
-    run("REPL LOAD " + dbName + "_empty FROM '" + replDumpLocn + "'");
+    run("REPL LOAD " + emptyDB + " FROM '" + replDumpLocn + "'");
 
     // REPL STATUS should return same repl ID as dump
-    verifyRun("REPL STATUS " + dbName + "_empty", replDumpId);
-    verifyRun("SELECT * from " + dbName + "_empty.unptned", unptn_data);
+    verifyRun("REPL STATUS " + emptyDB, replDumpId);
+    verifyRun("SELECT * from " + emptyDB + ".unptned", unptn_data);
 
     String[] nullReplId = new String[]{ "NULL" };
 
     // Create a database with a table
-    run("CREATE DATABASE " + dbName + "_withtable");
-    run("CREATE TABLE " + dbName + "_withtable.unptned(a string) STORED AS TEXTFILE");
+    String withTableDb = createDB(testName + "_withtable");
+    run("CREATE TABLE " + withTableDb + ".unptned(a string) STORED AS TEXTFILE");
     // Load using same dump to a DB with table. It should fail as DB is not empty.
-    verifyFail("REPL LOAD " + dbName + "_withtable FROM '" + replDumpLocn + "'");
+    verifyFail("REPL LOAD " + withTableDb + " FROM '" + replDumpLocn + "'");
 
     // REPL STATUS should return NULL
-    verifyRun("REPL STATUS " + dbName + "_withtable", nullReplId);
+    verifyRun("REPL STATUS " + withTableDb , nullReplId);
 
     // Create a database with a view
-    run("CREATE DATABASE " + dbName + "_withview");
-    run("CREATE TABLE " + dbName + "_withview.unptned(a string) STORED AS TEXTFILE");
-    run("CREATE VIEW " + dbName + "_withview.view AS SELECT * FROM " + dbName + "_withview.unptned");
+    String withViewDb = createDB(testName + "_withview");
+    run("CREATE TABLE " + withViewDb + ".unptned(a string) STORED AS TEXTFILE");
+    run("CREATE VIEW " + withViewDb + ".view AS SELECT * FROM " + withViewDb + ".unptned");
     // Load using same dump to a DB with view. It should fail as DB is not empty.
-    verifyFail("REPL LOAD " + dbName + "_withview FROM '" + replDumpLocn + "'");
+    verifyFail("REPL LOAD " + withViewDb + " FROM '" + replDumpLocn + "'");
 
     // REPL STATUS should return NULL
-    verifyRun("REPL STATUS " + dbName + "_withview", nullReplId);
+    verifyRun("REPL STATUS " + withViewDb, nullReplId);
   }
 
   @Test
@@ -963,9 +961,8 @@ public class TestReplicationScenarios {
 
     String testName = "drops_with_cm";
     LOG.info("Testing "+testName);
-    String dbName = testName + "_" + tid;
+    String dbName = createDB(testName);
 
-    run("CREATE DATABASE " + dbName);
     run("CREATE TABLE " + dbName + ".unptned(a string) STORED AS TEXTFILE");
     run("CREATE TABLE " + dbName + ".ptned(a string) partitioned by (b string) STORED AS TEXTFILE");
     run("CREATE TABLE " + dbName + ".ptned2(a string) partitioned by (b string) STORED AS TEXTFILE");
@@ -1540,9 +1537,8 @@ public class TestReplicationScenarios {
   public void testIncrementalInsertToPartition() throws IOException {
     String testName = "incrementalInsertToPartition";
     LOG.info("Testing " + testName);
-    String dbName = testName + "_" + tid;
+    String dbName = createDB(testName);
 
-    run("CREATE DATABASE " + dbName);
     run("CREATE TABLE " + dbName + ".ptned(a string) partitioned by (b int) STORED AS TEXTFILE");
 
     advanceDumpDir();
@@ -1602,9 +1598,9 @@ public class TestReplicationScenarios {
   public void testInsertToMultiKeyPartition() throws IOException {
     String testName = "insertToMultiKeyPartition";
     LOG.info("Testing " + testName);
-    String dbName = testName + "_" + tid;
+    String dbName = createDB(testName);
 
-    run("CREATE DATABASE " + dbName);
+
     run("CREATE TABLE " + dbName + ".namelist(name string) partitioned by (year int, month int, day int) STORED AS TEXTFILE");
     run("USE " + dbName);
 
@@ -1835,9 +1831,8 @@ public class TestReplicationScenarios {
   public void testInsertOverwriteOnUnpartitionedTableWithCM() throws IOException {
     String testName = "insertOverwriteOnUnpartitionedTableWithCM";
     LOG.info("Testing " + testName);
-    String dbName = testName + "_" + tid;
+    String dbName = createDB(testName);
 
-    run("CREATE DATABASE " + dbName);
     run("CREATE TABLE " + dbName + ".unptned(a string) STORED AS TEXTFILE");
 
     advanceDumpDir();
@@ -1885,9 +1880,8 @@ public class TestReplicationScenarios {
   public void testInsertOverwriteOnPartitionedTableWithCM() throws IOException {
     String testName = "insertOverwriteOnPartitionedTableWithCM";
     LOG.info("Testing " + testName);
-    String dbName = testName + "_" + tid;
+    String dbName = createDB(testName);
 
-    run("CREATE DATABASE " + dbName);
     run("CREATE TABLE " + dbName + ".ptned(a string) partitioned by (b int) STORED AS TEXTFILE");
 
     advanceDumpDir();
@@ -1998,9 +1992,8 @@ public class TestReplicationScenarios {
   public void testRenameTableWithCM() throws IOException {
     String testName = "renameTableWithCM";
     LOG.info("Testing " + testName);
-    String dbName = testName + "_" + tid;
+    String dbName = createDB(testName);
 
-    run("CREATE DATABASE " + dbName);
     run("CREATE TABLE " + dbName + ".unptned(a string) STORED AS TEXTFILE");
     run("CREATE TABLE " + dbName + ".ptned(a string) partitioned by (b int) STORED AS TEXTFILE");
 
@@ -2064,9 +2057,8 @@ public class TestReplicationScenarios {
   public void testRenamePartitionWithCM() throws IOException {
     String testName = "renamePartitionWithCM";
     LOG.info("Testing " + testName);
-    String dbName = testName + "_" + tid;
+    String dbName = createDB(testName);
 
-    run("CREATE DATABASE " + dbName);
     run("CREATE TABLE " + dbName + ".ptned(a string) partitioned by (b int) STORED AS TEXTFILE");
 
     advanceDumpDir();
@@ -2123,13 +2115,11 @@ public class TestReplicationScenarios {
   public void testRenameTableAcrossDatabases() throws IOException {
     String testName = "renameTableAcrossDatabases";
     LOG.info("Testing " + testName);
-    String dbName1 = testName + "_" + tid + "_1";
-    String dbName2 = testName + "_" + tid + "_2";
+    String dbName1 = createDB(testName+"_1");
+    String dbName2 = createDB(testName+"_2");
     String replDbName1 = dbName1 + "_dupe";
     String replDbName2 = dbName2 + "_dupe";
 
-    run("CREATE DATABASE " + dbName1);
-    run("CREATE DATABASE " + dbName2);
     run("CREATE TABLE " + dbName1 + ".unptned(a string) STORED AS TEXTFILE");
 
     String[] unptn_data = new String[] { "ten", "twenty" };
@@ -2144,27 +2134,25 @@ public class TestReplicationScenarios {
     verifyRun("SELECT a from " + replDbName1 + ".unptned ORDER BY a", unptn_data);
     verifyIfTableNotExist(replDbName2, "unptned");
 
-    run("ALTER TABLE " + dbName1 + ".unptned RENAME TO " + dbName2 + ".unptned_renamed");
+    verifyFail("ALTER TABLE " + dbName1 + ".unptned RENAME TO " + dbName2 + ".unptned_renamed");
 
     incrementalLoadAndVerify(dbName1, bootstrap1.lastReplId, replDbName1);
     incrementalLoadAndVerify(dbName2, bootstrap2.lastReplId, replDbName2);
 
-    verifyIfTableNotExist(replDbName1, "unptned");
+    verifyIfTableNotExist(replDbName2, "unptned");
     verifyIfTableNotExist(replDbName1, "unptned_renamed");
-    verifyRun("SELECT a from " + replDbName2 + ".unptned_renamed ORDER BY a", unptn_data);
+    verifyRun("SELECT a from " + replDbName1 + ".unptned ORDER BY a", unptn_data);
   }
 
   @Test
   public void testRenamePartitionedTableAcrossDatabases() throws IOException {
     String testName = "renamePartitionedTableAcrossDatabases";
     LOG.info("Testing " + testName);
-    String dbName1 = testName + "_" + tid + "_1";
-    String dbName2 = testName + "_" + tid + "_2";
+    String dbName1 = createDB(testName+"_1");
+    String dbName2 = createDB(testName+"_2");
     String replDbName1 = dbName1 + "_dupe";
     String replDbName2 = dbName2 + "_dupe";
 
-    run("CREATE DATABASE " + dbName1);
-    run("CREATE DATABASE " + dbName2);
     run("CREATE TABLE " + dbName1 + ".ptned(a string) partitioned by (b int) STORED AS TEXTFILE");
 
     String[] ptn_data = new String[] { "fifteen", "fourteen" };
@@ -2179,14 +2167,14 @@ public class TestReplicationScenarios {
     verifyRun("SELECT a from " + replDbName1 + ".ptned where (b=1) ORDER BY a", ptn_data);
     verifyIfTableNotExist(replDbName2, "ptned");
 
-    run("ALTER TABLE " + dbName1 + ".ptned RENAME TO " + dbName2 + ".ptned_renamed");
+    verifyFail("ALTER TABLE " + dbName1 + ".ptned RENAME TO " + dbName2 + ".ptned_renamed");
 
     incrementalLoadAndVerify(dbName1, bootstrap1.lastReplId, replDbName1);
     incrementalLoadAndVerify(dbName2, bootstrap2.lastReplId, replDbName2);
 
-    verifyIfTableNotExist(replDbName1, "ptned");
+    verifyIfTableNotExist(replDbName2, "ptned_renamed");
     verifyIfTableNotExist(replDbName1, "ptned_renamed");
-    verifyRun("SELECT a from " + replDbName2 + ".ptned_renamed where (b=1) ORDER BY a", ptn_data);
+    verifyRun("SELECT a from " + replDbName1 + ".ptned where (b=1) ORDER BY a", ptn_data);
   }
 
   @Test
@@ -2363,9 +2351,8 @@ public class TestReplicationScenarios {
   public void testExchangePartition() throws IOException {
     String testName = "exchangePartition";
     LOG.info("Testing " + testName);
-    String dbName = testName + "_" + tid;
+    String dbName = createDB(testName);
 
-    run("CREATE DATABASE " + dbName);
     run("CREATE TABLE " + dbName + ".ptned_src(a string) partitioned by (b int, c int) STORED AS TEXTFILE");
     run("CREATE TABLE " + dbName + ".ptned_dest(a string) partitioned by (b int, c int) STORED AS TEXTFILE");
 
@@ -2456,9 +2443,8 @@ public class TestReplicationScenarios {
   public void testTruncateTable() throws IOException {
     String testName = "truncateTable";
     LOG.info("Testing " + testName);
-    String dbName = testName + "_" + tid;
 
-    run("CREATE DATABASE " + dbName);
+    String dbName = createDB(testName);
     run("CREATE TABLE " + dbName + ".unptned(a string) STORED AS TEXTFILE");
 
     advanceDumpDir();
@@ -2516,9 +2502,8 @@ public class TestReplicationScenarios {
   public void testTruncatePartitionedTable() throws IOException {
     String testName = "truncatePartitionedTable";
     LOG.info("Testing " + testName);
-    String dbName = testName + "_" + tid;
+    String dbName = createDB(testName);
 
-    run("CREATE DATABASE " + dbName);
     run("CREATE TABLE " + dbName + ".ptned_1(a string) PARTITIONED BY (b int) STORED AS TEXTFILE");
     run("CREATE TABLE " + dbName + ".ptned_2(a string) PARTITIONED BY (b int) STORED AS TEXTFILE");
 
@@ -2580,9 +2565,8 @@ public class TestReplicationScenarios {
   public void testTruncateWithCM() throws IOException {
     String testName = "truncateWithCM";
     LOG.info("Testing " + testName);
-    String dbName = testName + "_" + tid;
+    String dbName = createDB(testName);
 
-    run("CREATE DATABASE " + dbName);
     run("CREATE TABLE " + dbName + ".unptned(a string) STORED AS TEXTFILE");
 
     advanceDumpDir();
@@ -3219,9 +3203,8 @@ public class TestReplicationScenarios {
 
   @Test
   public void testReplStatusWithCluase() throws IOException {
-    String dbName = testName.getMethodName();
+    String dbName = createDB(testName.getMethodName());
 
-    run("CREATE DATABASE " + dbName);
     advanceDumpDir();
     run("REPL DUMP " + dbName);
     String replDumpLocn = getResult(0,0);
@@ -3233,10 +3216,104 @@ public class TestReplicationScenarios {
     verifyFail("REPL STATUS " + dbName + "_dupe with ('hive.metastore.uris' = 'thrift://localhost:9999')");
   }
 
-  private static String createDB(String name) {
+  @Test
+  public void testDumpNonReplDatabase() throws IOException {
+    String dbName = createDBNonRepl(testName.getMethodName());
+    verifyFail("REPL DUMP " + dbName);
+    verifyFail("REPL DUMP " + dbName + " from 1 ");
+    run("alter database " + dbName + " set dbproperties ('repl.source.for' = '1, 2, 3')");
+    assertTrue(run("REPL DUMP " + dbName, true));
+    assertTrue(run("REPL DUMP " + dbName + " from 1 ", true));
+    dbName = createDBNonRepl(testName.getMethodName() + "_case");
+    run("alter database " + dbName + " set dbproperties ('repl.SOURCE.for' = '1, 2, 3')");
+    assertTrue(run("REPL DUMP " + dbName, true));
+    assertTrue(run("REPL DUMP " + dbName + " from 1 ", true));
+  }
+
+  @Test
+  public void testRecycleFileNonReplDatabase() throws IOException {
+    String dbName = createDBNonRepl(testName.getMethodName());
+
+    String cmDir = hconf.getVar(HiveConf.ConfVars.REPLCMDIR);
+    Path path = new Path(cmDir);
+    FileSystem fs = path.getFileSystem(hconf);
+    FileStatus[] statuses = fs.listStatus(path);
+    long fileCount = statuses.length;
+
+    run("CREATE TABLE " + dbName + ".normal(a int)");
+    run("INSERT INTO " + dbName + ".normal values (1)");
+
+    long fileCountAfter = fs.listStatus(path).length;
+    assertTrue(fileCount == fileCountAfter);
+
+    run("INSERT INTO " + dbName + ".normal values (3)");
+    run("TRUNCATE TABLE " + dbName + ".normal");
+
+    fileCountAfter = fs.listStatus(path).length;
+    assertTrue(fileCount == fileCountAfter);
+
+    run("INSERT INTO " + dbName + ".normal values (4)");
+    run("ALTER TABLE " + dbName + ".normal RENAME to " + dbName + ".normal1");
+    verifyRun("SELECT count(*) from " + dbName + ".normal1", new String[]{"1"});
+
+    fileCountAfter = fs.listStatus(path).length;
+    assertTrue(fileCount == fileCountAfter);
+
+    run("INSERT INTO " + dbName + ".normal1 values (5)");
+    run("DROP TABLE " + dbName + ".normal1");
+
+    fileCountAfter = fs.listStatus(path).length;
+    assertTrue(fileCount == fileCountAfter);
+  }
+
+  @Test
+  public void testRecycleFile() throws IOException {
+    String dbName = createDB(testName.getMethodName());
+
+    String cmDir = hconf.getVar(HiveConf.ConfVars.REPLCMDIR);
+    Path path = new Path(cmDir);
+    FileSystem fs = path.getFileSystem(hconf);
+    FileStatus[] statuses = fs.listStatus(path);
+    long fileCount = statuses.length;
+
+    run("CREATE TABLE " + dbName + ".normal(a int)");
+    run("INSERT INTO " + dbName + ".normal values (1)");
+
+    long fileCountAfter = fs.listStatus(path).length;
+    assertTrue(fileCount == fileCountAfter);
+
+    run("INSERT INTO " + dbName + ".normal values (3)");
+    run("TRUNCATE TABLE " + dbName + ".normal");
+
+    fileCountAfter = fs.listStatus(path).length;
+    assertTrue(fileCount != fileCountAfter);
+
+    run("INSERT INTO " + dbName + ".normal values (4)");
+    run("ALTER TABLE " + dbName + ".normal RENAME to " + dbName + ".normal1");
+    verifyRun("SELECT count(*) from " + dbName + ".normal1", new String[]{"1"});
+
+    assertTrue(fs.listStatus(path).length != fileCountAfter);
+    fileCountAfter = fs.listStatus(path).length;
+
+    run("INSERT INTO " + dbName + ".normal1 values (5)");
+    run("DROP TABLE " + dbName + ".normal1");
+
+    assertTrue(fs.listStatus(path).length != fileCountAfter);
+    fileCountAfter = fs.listStatus(path).length;
+  }
+
+  private static String createDBNonRepl(String name) {
     LOG.info("Testing " + name);
     String dbName = name + "_" + tid;
     run("CREATE DATABASE " + dbName);
+    return dbName;
+  }
+
+  private static String createDB(String name) {
+    LOG.info("Testing " + name);
+    String dbName = name + "_" + tid;
+    run("CREATE DATABASE " + dbName + " WITH DBPROPERTIES ( '" +
+            SOURCE_OF_REPLICATION + "' = '1,2,3')");
     return dbName;
   }
 

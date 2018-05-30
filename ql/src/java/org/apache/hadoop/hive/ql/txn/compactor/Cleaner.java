@@ -19,6 +19,7 @@ package org.apache.hadoop.hive.ql.txn.compactor;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.hadoop.hive.metastore.ReplChangeManager;
 import org.apache.hadoop.hive.metastore.txn.TxnStore;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -33,10 +34,13 @@ import org.apache.hadoop.hive.metastore.api.ShowLocksResponse;
 import org.apache.hadoop.hive.metastore.api.ShowLocksResponseElement;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.txn.CompactionInfo;
 import org.apache.hadoop.hive.ql.io.AcidUtils;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.StringUtils;
+import org.apache.hadoop.hive.ql.metadata.Hive;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
 
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
@@ -260,7 +264,7 @@ public class Cleaner extends CompactorThread {
         new ValidReadTxnList(new long[0], ci.highestTxnId) : new ValidReadTxnList();
 
       if (runJobAsSelf(ci.runAs)) {
-        removeFiles(location, txnList);
+        removeFiles(location, txnList, ci);
       } else {
         LOG.info("Cleaning as user " + ci.runAs + " for " + ci.getFullPartitionName());
         UserGroupInformation ugi = UserGroupInformation.createProxyUser(ci.runAs,
@@ -268,7 +272,7 @@ public class Cleaner extends CompactorThread {
         ugi.doAs(new PrivilegedExceptionAction<Object>() {
           @Override
           public Object run() throws Exception {
-            removeFiles(location, txnList);
+            removeFiles(location, txnList, ci);
             return null;
           }
         });
@@ -287,7 +291,7 @@ public class Cleaner extends CompactorThread {
     }
   }
 
-  private void removeFiles(String location, ValidTxnList txnList) throws IOException {
+  private void removeFiles(String location, ValidTxnList txnList, CompactionInfo ci) throws IOException, HiveException, MetaException {
     AcidUtils.Directory dir = AcidUtils.getAcidState(new Path(location), conf, txnList);
     List<FileStatus> obsoleteDirs = dir.getObsolete();
     List<Path> filesToDelete = new ArrayList<Path>(obsoleteDirs.size());
@@ -302,8 +306,12 @@ public class Cleaner extends CompactorThread {
     LOG.info("About to remove " + filesToDelete.size() + " obsolete directories from " + location);
     FileSystem fs = filesToDelete.get(0).getFileSystem(conf);
 
+    Database db = Hive.get().getDatabase(ci.dbname);
     for (Path dead : filesToDelete) {
       LOG.debug("Going to delete path " + dead.toString());
+      if (ReplChangeManager.isSourceOfReplication(db)) {
+        ReplChangeManager.getInstance((HiveConf)conf).recycle(dead, ReplChangeManager.RecycleType.MOVE, true);
+      }
       fs.delete(dead, true);
     }
   }

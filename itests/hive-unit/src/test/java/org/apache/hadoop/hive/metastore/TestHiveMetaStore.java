@@ -2948,6 +2948,7 @@ public abstract class TestHiveMetaStore extends TestCase {
       params.clear();
       params.put("transactional", "false");
       t = new Table();
+      t.setDbName(dbName);
       t.setParameters(params);
       client.alter_table(dbName, tblName, t);
       Assert.assertTrue("Expected exception", false);

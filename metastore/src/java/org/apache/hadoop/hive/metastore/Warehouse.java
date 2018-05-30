@@ -233,12 +233,18 @@ public class Warehouse {
     cm.recycle(file, RecycleType.COPY, true);
   }
 
-  public boolean deleteDir(Path f, boolean recursive) throws MetaException {
-    return deleteDir(f, recursive, false);
+  public boolean deleteDir(Path f, boolean recursive, Database db) throws MetaException {
+    return deleteDir(f, recursive, false, db);
   }
 
-  public boolean deleteDir(Path f, boolean recursive, boolean ifPurge) throws MetaException {
-    cm.recycle(f, RecycleType.MOVE, ifPurge);
+  public boolean deleteDir(Path f, boolean recursive, boolean ifPurge, Database db) throws MetaException {
+    return deleteDir(f, recursive, ifPurge, ReplChangeManager.isSourceOfReplication(db));
+  }
+
+  public boolean deleteDir(Path f, boolean recursive, boolean ifPurge, boolean needCmRecycle) throws MetaException {
+    if (needCmRecycle) {
+      cm.recycle(f, RecycleType.MOVE, ifPurge);
+    }
     FileSystem fs = getFs(f);
     return fsHandler.deleteDir(fs, f, recursive, ifPurge, conf);
   }

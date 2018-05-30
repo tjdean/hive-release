@@ -132,7 +132,7 @@ import org.apache.hadoop.hive.ql.exec.FunctionUtils;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.index.HiveIndexHandler;
 import org.apache.hadoop.hive.ql.io.AcidUtils;
-import org.apache.hadoop.hive.common.log.InPlaceUpdate;
+import org.apache.hadoop.hive.metastore.ReplChangeManager;
 import org.apache.hadoop.hive.ql.log.PerfLogger;
 import org.apache.hadoop.hive.metastore.SynchronizedMetaStoreClient;
 import org.apache.hadoop.hive.ql.optimizer.listbucketingpruner.ListBucketingPrunerUtils;
@@ -1519,8 +1519,10 @@ public class Hive {
       }
 
       if ((loadFileType == LoadFileType.REPLACE_ALL) || (oldPart == null && !isAcid)) {
+        boolean needRecycle = !tbl.isTemporary()
+                && ReplChangeManager.isSourceOfReplication(Hive.get().getDatabase(tbl.getDbName()));
         replaceFiles(tbl.getPath(), loadPath, newPartPath, oldPartPath, getConf(),
-            isSrcLocal, newFiles);
+            isSrcLocal, newFiles, needRecycle);
       } else {
         FileSystem fs = tbl.getDataLocation().getFileSystem(conf);
         Hive.copyFiles(conf, loadPath, newPartPath, fs, isSrcLocal, isAcid,
@@ -1895,7 +1897,9 @@ private void constructOneLBLocationMap(FileStatus fSta,
     }
     if (loadFileType == LoadFileType.REPLACE_ALL) {
       Path tableDest = tbl.getPath();
-      replaceFiles(tableDest, loadPath, tableDest, tableDest, conf, isSrcLocal, newFiles);
+      boolean needRecycle = !tbl.isTemporary()
+              && ReplChangeManager.isSourceOfReplication(Hive.get().getDatabase(tbl.getDbName()));
+      replaceFiles(tableDest, loadPath, tableDest, tableDest, conf, isSrcLocal, newFiles, needRecycle);
     } else {
       FileSystem fs;
       try {
@@ -3369,9 +3373,11 @@ private void constructOneLBLocationMap(FileStatus fSta,
    *          If the source directory is LOCAL
    * @param newFiles
    *          Output the list of new files replaced in the destination path
+   * @param needRecycle
+   *          if recyle to cm root is required.
    */
   protected void replaceFiles(Path tablePath, Path srcf, Path destf, Path oldPath, HiveConf conf,
-          boolean isSrcLocal, List<Path> newFiles) throws HiveException {
+          boolean isSrcLocal, List<Path> newFiles, boolean needRecycle) throws HiveException {
     try {
 
       FileSystem destFs = destf.getFileSystem(conf);
@@ -3404,7 +3410,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
               // existing content might result in incorrect (extra) data.
               // But not sure why we changed not to delete the oldPath in HIVE-8750 if it is
               // not the destf or its subdir?
-              if (conf.getBoolVar(HiveConf.ConfVars.REPLCMENABLED)) {
+              if (conf.getBoolVar(HiveConf.ConfVars.REPLCMENABLED) && needRecycle) {
                 recycleDirToCmPath(oldPath, false);
               }
               oldPathDeleted = trashFilesUnderDir(oldFs, oldPath, conf);

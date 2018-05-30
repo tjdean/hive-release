@@ -52,7 +52,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-
+import static org.apache.hadoop.hive.metastore.ReplChangeManager.SOURCE_OF_REPLICATION;
 import static org.mockito.Mockito.when;
 
 /**
@@ -104,7 +104,7 @@ public class TestHiveAuthorizerCheckInvocation {
     runCmd("create table " + tableName
         + " (i int, j int, k string) partitioned by (city string, `date` string) ");
     runCmd("create view " + viewName + " as select * from " + tableName);
-    runCmd("create database " + dbName);
+    runCmd("create database " + dbName + " WITH DBPROPERTIES ('" + SOURCE_OF_REPLICATION + "' = '1,2,3')");
     runCmd("create table " + dbName + "." + inDbTableName + "(i int)");
     // Need a separate table for ACID testing since it has to be bucketed and it has to be Acid
     runCmd("create table " + acidTableName + " (i int, j int, k int) clustered by (k) into 2 buckets " +
