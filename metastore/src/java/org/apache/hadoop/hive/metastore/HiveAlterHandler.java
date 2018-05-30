@@ -227,7 +227,8 @@ public class HiveAlterHandler implements AlterHandler {
                 + " already exists : " + destPath);
           }
           // check that src exists and also checks permissions necessary, rename src to dest
-          if (srcFs.exists(srcPath) && wh.renameDir(srcPath, destPath, true)) {
+          if (srcFs.exists(srcPath) && wh.renameDir(srcPath, destPath,
+                  ReplChangeManager.isSourceOfReplication(msdb.getDatabase(dbname)))) {
             dataWasMoved = true;
           }
         } catch (IOException | MetaException e) {
@@ -363,6 +364,8 @@ public class HiveAlterHandler implements AlterHandler {
     Partition oldPart = null;
     String oldPartLoc = null;
     String newPartLoc = null;
+    Database db = null;
+
     List<MetaStoreEventListener> transactionalListeners = null;
     if (handler != null) {
       transactionalListeners = handler.getTransactionalListeners();
@@ -452,9 +455,10 @@ public class HiveAlterHandler implements AlterHandler {
         msdb.alterPartition(dbname, name, part_vals, new_part);
       } else {
         try {
+          db = msdb.getDatabase(dbname);
           // if tbl location is available use it
           // else derive the tbl location from database location
-          destPath = wh.getPartitionPath(msdb.getDatabase(dbname), tbl, new_part.getValues());
+          destPath = wh.getPartitionPath(db, tbl, new_part.getValues());
           destPath = constructRenamedPath(destPath, new Path(new_part.getSd().getLocation()));
         } catch (NoSuchObjectException e) {
           LOG.debug(e);
@@ -529,7 +533,7 @@ public class HiveAlterHandler implements AlterHandler {
           if (srcFs.exists(srcPath)) {
             //if destPath's parent path doesn't exist, we should mkdir it
             Path destParentPath = destPath.getParent();
-            if (!wh.mkdirs(destParentPath, true)) {
+            if (!wh.mkdirs(destParentPath, ReplChangeManager.isSourceOfReplication(db))) {
                 throw new IOException("Unable to create path " + destParentPath);
             }
 

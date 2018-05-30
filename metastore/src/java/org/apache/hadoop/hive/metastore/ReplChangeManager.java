@@ -21,6 +21,7 @@ package org.apache.hadoop.hive.metastore;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +37,7 @@ import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.fs.Trash;
 import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.DFSConfigKeys;
+import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
@@ -59,6 +61,7 @@ public class ReplChangeManager {
   private static final String ORIG_LOC_TAG = "user.original-loc";
   static final String REMAIN_IN_TRASH_TAG = "user.remain-in-trash";
   private static final String URI_FRAGMENT_SEPARATOR = "#";
+  public static final String SOURCE_OF_REPLICATION = "repl.source.for";
 
   public enum RecycleType {
     MOVE,
@@ -76,6 +79,7 @@ public class ReplChangeManager {
     public FileInfo(FileSystem srcFs, Path sourcePath) {
       this(srcFs, sourcePath, null, null, true);
     }
+
     public FileInfo(FileSystem srcFs, Path sourcePath, Path cmPath, String checkSum, boolean useSourcePath) {
       this.srcFs = srcFs;
       this.sourcePath = sourcePath;
@@ -84,30 +88,39 @@ public class ReplChangeManager {
       this.useSourcePath = useSourcePath;
       this.copyDone = false;
     }
+
     public FileSystem getSrcFs() {
       return srcFs;
     }
+
     public Path getSourcePath() {
       return sourcePath;
     }
+
     public Path getCmPath() {
       return cmPath;
     }
+
     public String getCheckSum() {
       return checkSum;
     }
+
     public boolean isUseSourcePath() {
       return useSourcePath;
     }
+
     public void setUseSourcePath(boolean useSourcePath) {
       this.useSourcePath = useSourcePath;
     }
+
     public boolean isCopyDone() {
       return copyDone;
     }
+
     public void setCopyDone(boolean copyDone) {
       this.copyDone = copyDone;
     }
+
     public Path getEffectivePath() {
       if (useSourcePath) {
         return sourcePath;
@@ -154,8 +167,8 @@ public class ReplChangeManager {
   // with "_". We find at least 2 use cases:
   // 1. For har files, _index and _masterindex is required files
   // 2. _success file is required for Oozie to indicate availability of data source
-  private static final PathFilter hiddenFileFilter = new PathFilter(){
-    public boolean accept(Path p){
+  private static final PathFilter hiddenFileFilter = new PathFilter() {
+    public boolean accept(Path p) {
       return !p.getName().startsWith(".");
     }
   };
@@ -171,7 +184,7 @@ public class ReplChangeManager {
    * @return int
    * @throws MetaException
    */
-  int recycle(Path path, RecycleType type, boolean ifPurge) throws MetaException {
+  public int recycle(Path path, RecycleType type, boolean ifPurge) throws MetaException {
     if (!enabled) {
       return 0;
     }
@@ -275,7 +288,7 @@ public class ReplChangeManager {
     FileChecksum checksum = fs.getFileChecksum(path);
     if (checksum != null) {
       checksumString = StringUtils.byteToHexString(
-          checksum.getBytes(), 0, checksum.getLength());
+              checksum.getBytes(), 0, checksum.getLength());
     }
     return checksumString;
   }
@@ -294,10 +307,10 @@ public class ReplChangeManager {
           throws IOException, MetaException {
     String newFileName = name + "_" + checkSum;
     int maxLength = conf.getInt(DFSConfigKeys.DFS_NAMENODE_MAX_COMPONENT_LENGTH_KEY,
-        DFSConfigKeys.DFS_NAMENODE_MAX_COMPONENT_LENGTH_DEFAULT);
+            DFSConfigKeys.DFS_NAMENODE_MAX_COMPONENT_LENGTH_DEFAULT);
 
     if (newFileName.length() > maxLength) {
-      newFileName = newFileName.substring(0, maxLength-1);
+      newFileName = newFileName.substring(0, maxLength - 1);
     }
 
     return new Path(cmRootUri, newFileName);
@@ -313,7 +326,7 @@ public class ReplChangeManager {
    * @return Corresponding FileInfo object
    */
   public static FileInfo getFileInfo(Path src, String checksumString, String srcCMRootURI,
-      HiveConf hiveConf) throws MetaException {
+                                     HiveConf hiveConf) throws MetaException {
     try {
       FileSystem srcFs = src.getFileSystem(hiveConf);
       if (checksumString == null) {
@@ -352,8 +365,8 @@ public class ReplChangeManager {
   // Currently using fileuri#checksum#cmrooturi as the format
   public static String encodeFileUri(String fileUriStr, String fileChecksum) throws IOException {
     if ((fileChecksum != null) && (cmroot != null)) {
-      String encodedUri =  fileUriStr + URI_FRAGMENT_SEPARATOR + fileChecksum
-                        + URI_FRAGMENT_SEPARATOR + FileUtils.makeQualified(cmroot, hiveConf);
+      String encodedUri = fileUriStr + URI_FRAGMENT_SEPARATOR + fileChecksum
+              + URI_FRAGMENT_SEPARATOR + FileUtils.makeQualified(cmroot, hiveConf);
       LOG.debug("Encoded URI: " + encodedUri);
       return encodedUri;
     } else {
@@ -411,7 +424,7 @@ public class ReplChangeManager {
 
         for (FileStatus file : files) {
           long modifiedTime = file.getModificationTime();
-          if (now - modifiedTime > secRetain*1000) {
+          if (now - modifiedTime > secRetain * 1000) {
             try {
               if (fs.getXAttrs(file.getPath()).containsKey(REMAIN_IN_TRASH_TAG)) {
                 boolean succ = Trash.moveToAppropriateTrash(fs, file.getPath(), hiveConf);
@@ -447,13 +460,32 @@ public class ReplChangeManager {
   static void scheduleCMClearer(HiveConf hiveConf) {
     if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.REPLCMENABLED)) {
       ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
-          new BasicThreadFactory.Builder()
-          .namingPattern("cmclearer-%d")
-          .daemon(true)
-          .build());
+              new BasicThreadFactory.Builder()
+                      .namingPattern("cmclearer-%d")
+                      .daemon(true)
+                      .build());
       executor.scheduleAtFixedRate(new CMClearer(hiveConf.get(HiveConf.ConfVars.REPLCMDIR.varname),
-          hiveConf.getTimeVar(ConfVars.REPLCMRETIAN, TimeUnit.SECONDS), hiveConf),
-          0, hiveConf.getTimeVar(ConfVars.REPLCMINTERVAL, TimeUnit.SECONDS), TimeUnit.SECONDS);
+                      hiveConf.getTimeVar(ConfVars.REPLCMRETIAN, TimeUnit.SECONDS), hiveConf),
+              0, hiveConf.getTimeVar(ConfVars.REPLCMINTERVAL, TimeUnit.SECONDS), TimeUnit.SECONDS);
     }
+  }
+
+  public static boolean isSourceOfReplication(Database db) {
+    assert (db != null);
+    String replPolicyIds = getReplPolicyIdString(db);
+    return !(replPolicyIds == null || replPolicyIds.isEmpty());
+  }
+
+  public static String getReplPolicyIdString(Database db) {
+    if (db != null) {
+      Map<String, String> m = db.getParameters();
+      if ((m != null) && (m.containsKey(SOURCE_OF_REPLICATION))) {
+        String replPolicyId = m.get(SOURCE_OF_REPLICATION);
+        LOG.debug("repl policy for database {} is {}", db.getName(), replPolicyId);
+        return replPolicyId;
+      }
+      LOG.debug("Repl policy is not set for database ", db.getName());
+    }
+    return null;
   }
 }
