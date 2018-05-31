@@ -457,7 +457,7 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
                   dpCtx.getNumDPCols(),
                   isSkewedStoredAsDirs(tbd),
                   work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID,
-                        work.getLoadTableWork().getCurrentTransactionId(), hasFollowingStatsTask(),
+                        SessionState.get().getTxnMgr().getCurrentTxnId(), hasFollowingStatsTask(),
                   work.getLoadTableWork().getWriteType());
             String loadTime = "\t Time taken to load dynamic partitions: "  +
                     (System.currentTimeMillis() - startTime)/1000.0 + " seconds";
