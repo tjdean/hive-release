@@ -2006,7 +2006,7 @@ public class HiveConf extends Configuration {
         "However, if it is on, and the predicted number of entries in hashtable for a given join \n" +
         "input is larger than this number, the join will not be converted to a mapjoin. \n" +
         "The value \"-1\" means no limit."),
-    HIVECONVERTJOINMAXSHUFFLESIZE("hive.auto.convert.join.shuffle.max.size", 10000000L,
+    HIVECONVERTJOINMAXSHUFFLESIZE("hive.auto.convert.join.shuffle.max.size", 10000000000L,
        "If hive.auto.convert.join.noconditionaltask is off, this parameter does not take affect. \n" +
        "However, if it is on, and the predicted size of the larger input for a given join is greater \n" +
        "than this number, the join will not be converted to a dynamically partitioned hash join. \n" +
@@ -2373,6 +2373,8 @@ public class HiveConf extends Configuration {
         "in the number of rows filtered by a certain operator, which in turn might lead to overprovision or\n" +
         "underprovision of resources. This factor is applied to the cardinality estimation of IN clauses in\n" +
         "filter operators."),
+    HIVE_STATS_IN_MIN_RATIO("hive.stats.filter.in.min.ratio", (float) 0.05,
+        "Output estimation of an IN filter can't be lower than this ratio"),
     // Concurrency
     HIVE_SUPPORT_CONCURRENCY("hive.support.concurrency", false,
         "Whether Hive supports concurrency control or not. \n" +
@@ -2391,6 +2393,10 @@ public class HiveConf extends Configuration {
     HIVE_LOCK_QUERY_STRING_MAX_LENGTH("hive.lock.query.string.max.length", 1000000,
         "The maximum length of the query string to store in the lock.\n" +
         "The default value is 1000000, since the data limit of a znode is 1MB"),
+    HIVE_MM_ALLOW_ORIGINALS("hive.mm.allow.originals", false,
+        "Whether to allow original files in MM tables. Conversion to MM may be expensive if\n" +
+        "this is set to false, however unless MAPREDUCE-7086 fix is present, queries that\n" +
+        "read MM tables with original files will fail. The default in Hive 3.0 is false."),
 
      // Zookeeper related configs
     HIVE_ZOOKEEPER_QUORUM("hive.zookeeper.quorum", "",
@@ -3540,6 +3546,10 @@ public class HiveConf extends Configuration {
         "1. chosen : use VectorUDFAdaptor for a small set of UDFs that were chosen for good performance\n" +
         "2. all    : use VectorUDFAdaptor for all UDFs"
     ),
+    HIVE_TEST_VECTOR_ADAPTOR_OVERRIDE("hive.test.vectorized.adaptor.override", false,
+        "internal use only, used to force always using the VectorUDFAdaptor.\n" +
+        "The default is false, of course",
+        true),
     HIVE_VECTORIZATION_PTF_ENABLED("hive.vectorized.execution.ptf.enabled", true,
         "This flag should be set to true to enable vectorized mode of the PTF of query execution.\n" +
         "The default value is true."),
