@@ -31,6 +31,7 @@ import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
 import org.apache.hadoop.hive.ql.parse.SemanticAnalyzer;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.io.IOUtils;
+import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Collections2;
@@ -177,6 +178,11 @@ public class Utils {
     }
 
     if (replicationSpec.isInReplicationScope()) {
+      if (!hiveConf.getBoolVar(HiveConf.ConfVars.REPL_INCLUDE_EXTERNAL_TABLES) &&
+              MetaStoreUtils.isExternalTable(tableHandle.getTTable()) && !replicationSpec.isMetadataOnly()) {
+        return false;
+      }
+
       boolean isAcidTable = AcidUtils.isAcidTable(tableHandle);
       if (isAcidTable) {
         return hiveConf.getBoolVar(HiveConf.ConfVars.REPL_DUMP_INCLUDE_ACID_TABLES);
