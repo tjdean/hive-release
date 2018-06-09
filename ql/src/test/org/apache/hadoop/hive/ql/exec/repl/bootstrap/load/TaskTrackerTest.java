@@ -1,6 +1,7 @@
 package org.apache.hadoop.hive.ql.exec.repl.bootstrap.load;
 
 import org.apache.hadoop.hive.ql.exec.Task;
+import org.apache.hadoop.hive.ql.exec.repl.util.TaskTracker;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;

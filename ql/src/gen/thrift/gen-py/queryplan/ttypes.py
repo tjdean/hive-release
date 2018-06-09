@@ -160,6 +160,7 @@ class StageType:
   REPL_DUMP = 12
   REPL_BOOTSTRAP_LOAD = 13
   REPL_STATE_LOG = 14
+  REPL_INCREMENTAL_LOAD = 15
 
   _VALUES_TO_NAMES = {
     0: "CONDITIONAL",
@@ -177,6 +178,7 @@ class StageType:
     12: "REPL_DUMP",
     13: "REPL_BOOTSTRAP_LOAD",
     14: "REPL_STATE_LOG",
+    15: "REPL_INCREMENTAL_LOAD",
   }
 
   _NAMES_TO_VALUES = {
@@ -195,6 +197,7 @@ class StageType:
     "REPL_DUMP": 12,
     "REPL_BOOTSTRAP_LOAD": 13,
     "REPL_STATE_LOG": 14,
+    "REPL_INCREMENTAL_LOAD": 15,
   }
 
 

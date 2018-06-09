@@ -1047,6 +1047,7 @@ public class TestJdbcWithMiniHS2 {
     Statement stmt = hs2Conn.createStatement();
     try {
       stmt.execute("set hive.repl.rootdir = " + testPathName);
+      stmt.executeQuery("alter database default set dbproperties ('repl.source.for' = '1, 2, 3')");
       ResultSet rs = stmt.executeQuery("repl dump default");
       ResultSetMetaData rsMeta = rs.getMetaData();
       assertEquals(2, rsMeta.getColumnCount());
