@@ -68,6 +68,7 @@ import org.apache.calcite.plan.RelOptRuleCall;
 import org.apache.calcite.plan.hep.HepPlanner;
 import org.apache.calcite.plan.hep.HepProgramBuilder;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.RelVisitor;
 import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.type.RelDataType;
@@ -112,6 +113,7 @@ import org.apache.hadoop.hive.metastore.RetryingMetaStoreClient;
 import org.apache.hadoop.hive.metastore.SynchronizedMetaStoreClient;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.Warehouse;
+import org.apache.hadoop.hive.metastore.ReplChangeManager;
 import org.apache.hadoop.hive.metastore.api.AggrStats;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
 import org.apache.hadoop.hive.metastore.api.CheckConstraintsRequest;
@@ -176,6 +178,7 @@ import org.apache.hadoop.hive.ql.exec.SerializationUtilities;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.io.AcidUtils;
 import org.apache.hadoop.hive.ql.lockmgr.DbTxnManager;
+import org.apache.hadoop.hive.ql.lockmgr.LockException;
 import org.apache.hadoop.hive.ql.log.PerfLogger;
 import org.apache.hadoop.hive.ql.optimizer.calcite.HiveRelFactories;
 import org.apache.hadoop.hive.ql.optimizer.calcite.RelOptHiveTable;
@@ -1339,7 +1342,7 @@ public class Hive {
    * @return the list of materialized views available for rewriting
    * @throws HiveException
    */
-  public List<RelOptMaterialization> getAllValidMaterializedViews(boolean forceMVContentsUpToDate, ValidTxnWriteIdList txnList)
+  public List<RelOptMaterialization> getAllValidMaterializedViews(boolean forceMVContentsUpToDate, String validTxnsList)
       throws HiveException {
     // Final result
     List<RelOptMaterialization> result = new ArrayList<>();
@@ -1351,7 +1354,7 @@ public class Hive {
           // Bail out: empty list
           continue;
         }
-        result.addAll(getValidMaterializedViews(dbName, materializedViewNames, forceMVContentsUpToDate, txnList));
+        result.addAll(getValidMaterializedViews(dbName, materializedViewNames, forceMVContentsUpToDate, validTxnsList));
       }
       return result;
     } catch (Exception e) {
@@ -1360,12 +1363,12 @@ public class Hive {
   }
 
   public List<RelOptMaterialization> getValidMaterializedView(String dbName, String materializedViewName,
-      boolean forceMVContentsUpToDate, ValidTxnWriteIdList txnList) throws HiveException {
-    return getValidMaterializedViews(dbName, ImmutableList.of(materializedViewName), forceMVContentsUpToDate, txnList);
+      boolean forceMVContentsUpToDate, String validTxnsList) throws HiveException {
+    return getValidMaterializedViews(dbName, ImmutableList.of(materializedViewName), forceMVContentsUpToDate, validTxnsList);
   }
 
   private List<RelOptMaterialization> getValidMaterializedViews(String dbName, List<String> materializedViewNames,
-      boolean forceMVContentsUpToDate, ValidTxnWriteIdList txnList) throws HiveException {
+      boolean forceMVContentsUpToDate, String validTxnsList) throws HiveException {
     final boolean tryIncrementalRewriting =
         HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_MATERIALIZED_VIEW_REWRITING_INCREMENTAL);
     final long defaultDiff =
@@ -1420,7 +1423,7 @@ public class Hive {
         }
 
         if (outdated && (!tryIncrementalRewriting || materializationInvInfo == null
-            || txnList == null || materializationInvInfo.isSourceTablesUpdateDeleteModified())) {
+            || validTxnsList == null || materializationInvInfo.isSourceTablesUpdateDeleteModified())) {
           // We will not try partial rewriting either because the config specification, this
           // is a rebuild over some non-transactional table, or there were update/delete
           // operations in the source tables (not supported yet)
@@ -1449,7 +1452,7 @@ public class Hive {
               // We will rewrite it to include the filters on transaction list
               // so we can produce partial rewritings
               materialization = augmentMaterializationWithTimeInformation(
-                  materialization, txnList, new ValidTxnWriteIdList(
+                  materialization, validTxnsList, new ValidTxnWriteIdList(
                       materializationInvInfo.getValidTxnList()));
             }
             result.add(materialization);
@@ -1472,7 +1475,7 @@ public class Hive {
               // We will rewrite it to include the filters on transaction list
               // so we can produce partial rewritings
               materialization = augmentMaterializationWithTimeInformation(
-                  materialization, txnList, new ValidTxnWriteIdList(
+                  materialization, validTxnsList, new ValidTxnWriteIdList(
                       materializationInvInfo.getValidTxnList()));
             }
             result.add(materialization);
@@ -1496,8 +1499,24 @@ public class Hive {
    * its invalidation.
    */
   private static RelOptMaterialization augmentMaterializationWithTimeInformation(
-      RelOptMaterialization materialization, ValidTxnWriteIdList currentTxnList,
-      ValidTxnWriteIdList materializationTxnList) {
+      RelOptMaterialization materialization, String validTxnsList,
+      ValidTxnWriteIdList materializationTxnList) throws LockException {
+    // Extract tables used by the query which will in turn be used to generate
+    // the corresponding txn write ids
+    List<String> tablesUsed = new ArrayList<>();
+    new RelVisitor() {
+      @Override
+      public void visit(RelNode node, int ordinal, RelNode parent) {
+        if (node instanceof TableScan) {
+          TableScan ts = (TableScan) node;
+          tablesUsed.add(((RelOptHiveTable) ts.getTable()).getHiveTableMD().getFullyQualifiedName());
+        }
+        super.visit(node, ordinal, parent);
+      }
+    }.go(materialization.queryRel);
+    ValidTxnWriteIdList currentTxnList =
+        SessionState.get().getTxnMgr().getValidWriteIds(tablesUsed, validTxnsList);
+    // Augment
     final RexBuilder rexBuilder = materialization.queryRel.getCluster().getRexBuilder();
     final HepProgramBuilder augmentMaterializationProgram = new HepProgramBuilder()
         .addRuleInstance(new HiveAugmentMaterializationRule(rexBuilder, currentTxnList, materializationTxnList));
@@ -1599,6 +1618,23 @@ public class Hive {
   public Database getDatabase(String dbName) throws HiveException {
     try {
       return getMSC().getDatabase(dbName);
+    } catch (NoSuchObjectException e) {
+      return null;
+    } catch (Exception e) {
+      throw new HiveException(e);
+    }
+  }
+
+  /**
+   * Get the database by name.
+   * @param catName catalog name
+   * @param dbName the name of the database.
+   * @return a Database object if this database exists, null otherwise.
+   * @throws HiveException
+   */
+  public Database getDatabase(String catName, String dbName) throws HiveException {
+    try {
+      return getMSC().getDatabase(catName, dbName);
     } catch (NoSuchObjectException e) {
       return null;
     } catch (Exception e) {
@@ -1737,8 +1773,10 @@ public class Hive {
           //for fullAcid tables we don't delete files for commands with OVERWRITE - we create a new
           // base_x.  (there is Insert Overwrite and Load Data Overwrite)
           boolean isAutoPurge = "true".equalsIgnoreCase(tbl.getProperty("auto.purge"));
+          boolean needRecycle = !tbl.isTemporary()
+                  && ReplChangeManager.isSourceOfReplication(Hive.get().getDatabase(tbl.getDbName()));
           replaceFiles(tbl.getPath(), loadPath, destPath, oldPartPath, getConf(), isSrcLocal,
-              isAutoPurge, newFiles, FileUtils.HIDDEN_FILES_PATH_FILTER, !tbl.isTemporary());
+              isAutoPurge, newFiles, FileUtils.HIDDEN_FILES_PATH_FILTER, needRecycle);
         } else {
           FileSystem fs = tbl.getDataLocation().getFileSystem(conf);
           copyFiles(conf, loadPath, destPath, fs, isSrcLocal, isAcidIUDoperation,
@@ -2304,8 +2342,10 @@ private void constructOneLBLocationMap(FileStatus fSta,
       if (loadFileType == LoadFileType.REPLACE_ALL && !isTxnTable) {
         //for fullAcid we don't want to delete any files even for OVERWRITE see HIVE-14988/HIVE-17361
         boolean isAutopurge = "true".equalsIgnoreCase(tbl.getProperty("auto.purge"));
+        boolean needRecycle = !tbl.isTemporary()
+                && ReplChangeManager.isSourceOfReplication(Hive.get().getDatabase(tbl.getDbName()));
         replaceFiles(tblPath, loadPath, destPath, tblPath, conf, isSrcLocal, isAutopurge,
-            newFiles, FileUtils.HIDDEN_FILES_PATH_FILTER, !tbl.isTemporary());
+            newFiles, FileUtils.HIDDEN_FILES_PATH_FILTER, needRecycle);
       } else {
         try {
           FileSystem fs = tbl.getDataLocation().getFileSystem(conf);

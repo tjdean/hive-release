@@ -120,7 +120,8 @@ import com.google.common.base.Preconditions;
  *
  */
 @Description(name = "get_splits", value = "_FUNC_(string,int) - "
-    + "Returns an array of length int serialized splits for the referenced tables string.")
+    + "Returns an array of length int serialized splits for the referenced tables string."
+    + " Passing length 0 returns only schema data for the compiled query.")
 @UDFType(deterministic = false)
 public class GenericUDTFGetSplits extends GenericUDTF {
   private static final Logger LOG = LoggerFactory.getLogger(GenericUDTFGetSplits.class);
@@ -271,6 +272,10 @@ public class GenericUDTFGetSplits extends GenericUDTF {
       }
       List<Task<?>> roots = plan.getRootTasks();
       Schema schema = convertSchema(plan.getResultSchema());
+      if(num == 0) {
+        //Schema only
+        return new PlanFragment(null, schema, null);
+      }
       boolean fetchTask = plan.getFetchTask() != null;
       TezWork tezWork;
       if (roots == null || roots.size() != 1 || !(roots.get(0) instanceof TezTask)) {
@@ -288,8 +293,10 @@ public class GenericUDTFGetSplits extends GenericUDTF {
 
         String tableName = "table_"+UUID.randomUUID().toString().replaceAll("[^A-Za-z0-9 ]", "");
 
-        String ctas = "create temporary table " + tableName + " as " + query;
+        String storageFormatString = getTempTableStorageFormatString(conf);
+        String ctas = "create temporary table " + tableName + " " + storageFormatString + " as " + query;
         LOG.info("Materializing the query for LLAPIF; CTAS: " + ctas);
+        driver.releaseLocksAndCommitOrRollback(false);
         driver.releaseResources();
         HiveConf.setVar(conf, ConfVars.HIVE_EXECUTION_MODE, originalMode);
         cpr = driver.run(ctas, false);
@@ -360,6 +367,14 @@ public class GenericUDTFGetSplits extends GenericUDTF {
 
   public InputSplit[] getSplits(JobConf job, int numSplits, TezWork work, Schema schema, ApplicationId applicationId)
     throws IOException {
+
+    if(numSplits == 0) {
+      //Schema only
+      LlapInputSplit schemaSplit = new LlapInputSplit(
+          0, new byte[0], new byte[0], new byte[0],
+          new SplitLocationInfo[0], schema, "", new byte[0]);
+      return new InputSplit[] { schemaSplit };
+    }
 
     DAG dag = DAG.create(work.getName());
     dag.setCredentials(job.getCredentials());
@@ -659,6 +674,18 @@ public class GenericUDTFGetSplits extends GenericUDTF {
     }
     Schema Schema = new Schema(colDescs);
     return Schema;
+  }
+
+  private String getTempTableStorageFormatString(HiveConf conf) {
+    String formatString = "";
+    String storageFormatOption =
+        conf.getVar(HiveConf.ConfVars.LLAP_EXTERNAL_SPLITS_TEMP_TABLE_STORAGE_FORMAT).toLowerCase();
+    if (storageFormatOption.equals("text")) {
+      formatString = "stored as textfile";
+    } else if (storageFormatOption.equals("orc")) {
+      formatString = "stored as orc";
+    }
+    return formatString;
   }
 
   @Override
