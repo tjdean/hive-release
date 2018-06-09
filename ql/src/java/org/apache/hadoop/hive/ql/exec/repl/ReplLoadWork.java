@@ -15,13 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hive.ql.exec.repl.bootstrap;
+package org.apache.hadoop.hive.ql.exec.repl;
 
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.DatabaseEvent;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.filesystem.BootstrapEventsIterator;
+import org.apache.hadoop.hive.ql.exec.repl.incremental.IncrementalLoadTasksBuilder;
 import org.apache.hadoop.hive.ql.plan.Explain;
 import org.apache.hadoop.hive.ql.session.LineageState;
+import org.apache.hadoop.hive.ql.exec.repl.incremental.IncrementalLoadEventsIterator;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -33,9 +35,11 @@ public class ReplLoadWork implements Serializable {
   final String dbNameToLoadIn;
   final String tableNameToLoadIn;
   final String dumpDirectory;
-  private final BootstrapEventsIterator iterator;
+  private final BootstrapEventsIterator bootstrapIterator;
+  private final IncrementalLoadEventsIterator incrementalIterator;
   private int loadTaskRunCount = 0;
   private DatabaseEvent.State state = null;
+  private final IncrementalLoadTasksBuilder incrementalLoadTaskBuilder;
 
   /**
    * These are sessionState objects that are copied over to work to allow for parallel execution.
@@ -43,26 +47,26 @@ public class ReplLoadWork implements Serializable {
    * taken care when using other methods.
    */
   final LineageState sessionStateLineageState;
-  public final long currentTransactionId;
 
   public ReplLoadWork(HiveConf hiveConf, String dumpDirectory, String dbNameToLoadIn,
-      String tableNameToLoadIn, LineageState lineageState, long currentTransactionId) throws IOException {
+      String tableNameToLoadIn, LineageState lineageState, boolean isIncrementalDump) throws IOException {
     this.tableNameToLoadIn = tableNameToLoadIn;
     this.dumpDirectory = dumpDirectory;
-    this.iterator = new BootstrapEventsIterator(dumpDirectory, dbNameToLoadIn, hiveConf);
-    this.dbNameToLoadIn = dbNameToLoadIn;
+    if (isIncrementalDump) {
+      incrementalIterator = new IncrementalLoadEventsIterator(dumpDirectory, hiveConf);
+      this.bootstrapIterator = null;
+      incrementalLoadTaskBuilder = new IncrementalLoadTasksBuilder(dbNameToLoadIn, tableNameToLoadIn, dumpDirectory,
+              incrementalIterator, hiveConf);
+    } else {
+      this.bootstrapIterator = new BootstrapEventsIterator(dumpDirectory, dbNameToLoadIn, hiveConf);
+      incrementalIterator = null;
+      incrementalLoadTaskBuilder = null;
+    }this.dbNameToLoadIn = dbNameToLoadIn;
     sessionStateLineageState = lineageState;
-    this.currentTransactionId = currentTransactionId;
-  }
-
-  public ReplLoadWork(HiveConf hiveConf, String dumpDirectory, String dbNameOrPattern,
-                      LineageState lineageState, long currentTransactionId)
-      throws IOException {
-    this(hiveConf, dumpDirectory, dbNameOrPattern, null, lineageState, currentTransactionId);
   }
 
   public BootstrapEventsIterator iterator() {
-    return iterator;
+    return bootstrapIterator;
   }
 
   int executedLoadTask() {
@@ -79,5 +83,17 @@ public class ReplLoadWork implements Serializable {
 
   boolean hasDbState() {
     return state != null;
+  }
+
+  public boolean isIncrementalLoad() {
+    return incrementalIterator != null;
+  }
+
+  public IncrementalLoadEventsIterator getIncrementalIterator() {
+    return incrementalIterator;
+  }
+
+  public IncrementalLoadTasksBuilder getIncrementalLoadTaskBuilder() {
+    return incrementalLoadTaskBuilder;
   }
 }

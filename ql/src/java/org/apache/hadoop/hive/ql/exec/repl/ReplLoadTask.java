@@ -15,14 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hive.ql.exec.repl.bootstrap;
+package org.apache.hadoop.hive.ql.exec.repl;
 
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.ql.DriverContext;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.exec.TaskFactory;
-import org.apache.hadoop.hive.ql.exec.repl.ReplStateLogWork;
+import org.apache.hadoop.hive.ql.exec.repl.incremental.IncrementalLoadTasksBuilder;
+import org.apache.hadoop.hive.ql.exec.repl.util.AddDependencyToLeaves;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.BootstrapEvent;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.DatabaseEvent;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.FunctionEvent;
@@ -31,7 +32,7 @@ import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.TableEvent;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.filesystem.BootstrapEventsIterator;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.LoadDatabase;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.LoadFunction;
-import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.TaskTracker;
+import org.apache.hadoop.hive.ql.exec.repl.util.TaskTracker;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.table.LoadPartitions;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.table.LoadTable;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.table.TableContext;
@@ -41,6 +42,7 @@ import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.parse.repl.ReplLogger;
 import org.apache.hadoop.hive.ql.plan.api.StageType;
 import org.apache.hadoop.hive.ql.ErrorMsg;
+import org.apache.hadoop.hive.ql.session.SessionState;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -54,7 +56,7 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
 
   @Override
   public String getName() {
-    return "REPL_BOOTSTRAP_LOAD";
+    return (work.isIncrementalLoad() ? "REPL_INCREMENTAL_LOAD" : "REPL_BOOTSTRAP_LOAD");
   }
 
   /**
@@ -68,9 +70,18 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
 
   @Override
   protected int execute(DriverContext driverContext) {
+    if (work.isIncrementalLoad()) {
+      return executeIncrementalLoad(driverContext);
+    } else {
+      return executeBootStrapLoad(driverContext);
+    }
+  }
+
+  private int executeBootStrapLoad(DriverContext driverContext) {
     try {
       int maxTasks = conf.getIntVar(HiveConf.ConfVars.REPL_APPROX_MAX_LOAD_TASKS);
-      Context context = new Context(work.dumpDirectory, conf, db, work.sessionStateLineageState, work.currentTransactionId);
+      Context context = new Context(work.dumpDirectory, conf, db, work.sessionStateLineageState,
+              SessionState.get().getTxnMgr().getCurrentTxnId());
       TaskTracker loadTaskTracker = new TaskTracker(maxTasks);
       /*
           for now for simplicity we are doing just one directory ( one database ), come back to use
@@ -183,7 +194,9 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
         }
       }
       boolean addAnotherLoadTask = iterator.hasNext() || loadTaskTracker.hasReplicationState();
-      createBuilderTask(scope.rootTasks, addAnotherLoadTask);
+      if (addAnotherLoadTask) {
+        createBuilderTask(scope.rootTasks);
+      }
       if (!iterator.hasNext()) {
         loadTaskTracker.update(updateDatabaseLastReplID(maxTasks, context, scope));
         work.updateDbEventState(null);
@@ -215,8 +228,7 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
     if (scope.rootTasks.isEmpty()) {
       scope.rootTasks.add(replLogTask);
     } else {
-      DAGTraversal.traverse(scope.rootTasks,
-          new AddDependencyToLeaves(Collections.singletonList(replLogTask)));
+      DAGTraversal.traverse(scope.rootTasks, new AddDependencyToLeaves(replLogTask));
     }
   }
 
@@ -278,19 +290,30 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
     }
   }
 
-  private void createBuilderTask(List<Task<? extends Serializable>> rootTasks,
-      boolean shouldCreateAnotherLoadTask) {
-  /*
-    use loadTask as dependencyCollection
-   */
-    if (shouldCreateAnotherLoadTask) {
-      Task<ReplLoadWork> loadTask = TaskFactory.get(work, conf, true);
-      DAGTraversal.traverse(rootTasks, new AddDependencyToLeaves(loadTask));
-    }
+  private void createBuilderTask(List<Task<? extends Serializable>> rootTasks) {
+    // Use loadTask as dependencyCollection
+    Task<ReplLoadWork> loadTask = TaskFactory.get(work, conf);
+    DAGTraversal.traverse(rootTasks, new AddDependencyToLeaves(loadTask));
   }
 
   @Override
   public StageType getType() {
-    return StageType.REPL_BOOTSTRAP_LOAD;
+    return work.isIncrementalLoad() ? StageType.REPL_INCREMENTAL_LOAD : StageType.REPL_BOOTSTRAP_LOAD;
+  }
+
+  private int executeIncrementalLoad(DriverContext driverContext) {
+    try {
+      IncrementalLoadTasksBuilder load = work.getIncrementalLoadTaskBuilder();
+      this.childTasks = Collections.singletonList(load.execute(driverContext, db, LOG));
+      if (work.getIncrementalIterator().hasNext()) {
+        // attach a load task at the tail of task list to start the next iteration.
+        createBuilderTask(this.childTasks);
+      }
+      return 0;
+    } catch (Exception e) {
+      LOG.error("failed replication", e);
+      setException(e);
+      return 1;
+    }
   }
 }

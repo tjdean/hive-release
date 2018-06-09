@@ -21,10 +21,11 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.ql.exec.repl.ReplUtils;
+import org.apache.hadoop.hive.ql.exec.repl.util.ReplUtils;
 import org.apache.hadoop.hive.ql.parse.repl.PathBuilder;
 import org.apache.hadoop.hive.ql.session.DependencyResolver;
 import org.apache.hadoop.hive.shims.Utils;
@@ -44,6 +45,8 @@ import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.hadoop.hive.ql.exec.repl.incremental.IncrementalLoadTasksBuilder;
+import org.junit.Assert;
 
 import java.io.IOException;
 import java.net.URI;
@@ -75,10 +78,11 @@ public class TestReplicationScenariosAcrossInstances {
   protected static final Logger LOG = LoggerFactory.getLogger(TestReplicationScenarios.class);
   private static WarehouseInstance primary, replica;
   private String primaryDbName, replicatedDbName;
+  private static HiveConf conf;
 
   @BeforeClass
   public static void classLevelSetup() throws Exception {
-    Configuration conf = new Configuration();
+    conf = new HiveConf(TestReplicationScenariosAcrossInstances.class);
     conf.set("dfs.client.use.datanode.hostname", "true");
     conf.set("hadoop.proxyuser." + Utils.getUGI().getShortUserName() + ".hosts", "*");
     MiniDFSCluster miniDFSCluster =
@@ -1067,8 +1071,8 @@ public class TestReplicationScenariosAcrossInstances {
     replica.run("use " + replicatedDbName)
             .run("repl status " + replicatedDbName)
             .verifyResult("null")
-            .run("show tables")
-            .verifyResults(new String[] { "t1" });
+            .run("show tables like t2")
+            .verifyResults(new String[] {  });
 
     // Retry with different dump should fail.
     replica.loadFailure(replicatedDbName, tuple2.dumpLocation);
@@ -1082,10 +1086,6 @@ public class TestReplicationScenariosAcrossInstances {
         if (!args.dbName.equalsIgnoreCase(replicatedDbName)) {
           LOG.warn("Verifier - DB: " + String.valueOf(args.dbName));
           return false;
-        }
-        if (args.tblName != null) {
-          LOG.warn("Verifier - Table: " + String.valueOf(args.tblName));
-          return (args.tblName.equals("t2") || args.tblName.equals("t3"));
         }
         return true;
       }
@@ -1138,11 +1138,12 @@ public class TestReplicationScenariosAcrossInstances {
         }
         if (args.ptnValues != null) {
           if (!args.tblName.equalsIgnoreCase("t2")) {
-            LOG.warn("Verifier - Table: " + String.valueOf(args.tblName));
+            LOG.warn("Verifier - Fail Table: " + String.valueOf(args.tblName));
             return false;
           }
           return args.ptnValues.get(0).equals("india");
         }
+        LOG.warn("Verifier - Table: " + String.valueOf(args.tblName));
         return true;
       }
     };
@@ -1156,14 +1157,10 @@ public class TestReplicationScenariosAcrossInstances {
     replica.run("use " + replicatedDbName)
             .run("repl status " + replicatedDbName)
             .verifyResult("null")
-            .run("show tables")
-            .verifyResults(new String[] { "t1", "t2" })
-            .run("select id from t1")
-            .verifyResults(Arrays.asList("10"))
+            .run("show tables like 't2'")
+            .verifyResults(new String[] { "t2" })
             .run("select country from t2 order by country")
-            .verifyResults(Arrays.asList("india"))
-            .run("show functions like '" + replicatedDbName + "*'")
-            .verifyResult(replicatedDbName + ".testFunctionOne");
+            .verifyResults(Arrays.asList("india"));
 
     // Retry with different dump should fail.
     replica.loadFailure(replicatedDbName, tuple2.dumpLocation);
@@ -1204,5 +1201,55 @@ public class TestReplicationScenariosAcrossInstances {
             .verifyResults(Arrays.asList("india", "uk", "us"))
             .run("show functions like '" + replicatedDbName + "*'")
             .verifyResult(replicatedDbName + ".testFunctionOne");
+  }
+
+  @Test
+  public void testIncrementalDumpMultiIteration() throws Throwable {
+    WarehouseInstance.Tuple bootstrapTuple = primary.dump(primaryDbName, null);
+
+    replica.load(replicatedDbName, bootstrapTuple.dumpLocation)
+            .status(replicatedDbName)
+            .verifyResult(bootstrapTuple.lastReplicationId);
+
+    WarehouseInstance.Tuple incremental = primary.run("use " + primaryDbName)
+            .run("create table table1 (id int) partitioned by (country string)")
+            .run("create table table2 (id int)")
+            .run("create table table3 (id int) partitioned by (country string)")
+            .run("insert into table1 partition(country='india') values(1)")
+            .run("insert into table2 values(2)")
+            .run("insert into table3 partition(country='india') values(3)")
+            .dump(primaryDbName, bootstrapTuple.lastReplicationId);
+
+    replica.load(replicatedDbName, incremental.dumpLocation, Arrays.asList("'hive.repl.approx.max.load.tasks'='2'"))
+            .status(replicatedDbName)
+            .verifyResult(incremental.lastReplicationId)
+            .run("use " + replicatedDbName)
+            .run("select id from table1")
+            .verifyResults(new String[] { "1" })
+            .run("select * from table2")
+            .verifyResults(new String[] { "2" })
+            .run("select id from table3")
+            .verifyResults(new String[] { "3" });
+    assert(IncrementalLoadTasksBuilder.numIteration > 1);
+
+    incremental = primary.run("use " + primaryDbName)
+            .run("create table  table5 (key int, value int) partitioned by (load_date date) " +
+                    "clustered by(key) into 2 buckets stored as orc")
+            .run("create table table4 (i int, j int)")
+            .run("insert into table4 values (1,2)")
+            .dump(primaryDbName, incremental.lastReplicationId);
+
+    Path path = new Path(incremental.dumpLocation);
+    FileSystem fs = path.getFileSystem(conf);
+    FileStatus[] fileStatus = fs.listStatus(path);
+    int numEvents = fileStatus.length - 1; //one is metadata file
+
+    replica.load(replicatedDbName, incremental.dumpLocation, Arrays.asList("'hive.repl.approx.max.load.tasks'='1'"))
+            .run("use " + replicatedDbName)
+            .run("show tables")
+            .verifyResults(new String[] {"table1", "table2", "table3", "table4", "table5" })
+            .run("select i from table4")
+            .verifyResult("1");
+    Assert.assertEquals(IncrementalLoadTasksBuilder.numIteration, numEvents);
   }
 }
