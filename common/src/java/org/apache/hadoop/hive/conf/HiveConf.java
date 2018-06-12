@@ -2071,7 +2071,7 @@ public class HiveConf extends Configuration {
     HIVE_ENFORCE_NOT_NULL_CONSTRAINT("hive.constraint.notnull.enforce", true,
         "Should \"IS NOT NULL \" constraint be enforced?"),
 
-    HIVE_AUTO_SORTMERGE_JOIN("hive.auto.convert.sortmerge.join", false,
+    HIVE_AUTO_SORTMERGE_JOIN("hive.auto.convert.sortmerge.join", true,
         "Will the join be automatically converted to a sort-merge join, if the joined tables pass the criteria for sort-merge join."),
     HIVE_AUTO_SORTMERGE_JOIN_REDUCE("hive.auto.convert.sortmerge.join.reduce.side", true,
         "Whether hive.auto.convert.sortmerge.join (if enabled) should be applied to reduce side."),
@@ -2394,7 +2394,7 @@ public class HiveConf extends Configuration {
     HIVE_LOCK_QUERY_STRING_MAX_LENGTH("hive.lock.query.string.max.length", 1000000,
         "The maximum length of the query string to store in the lock.\n" +
         "The default value is 1000000, since the data limit of a znode is 1MB"),
-    HIVE_MM_ALLOW_ORIGINALS("hive.mm.allow.originals", false,
+    HIVE_MM_ALLOW_ORIGINALS("hive.mm.allow.originals", true,
         "Whether to allow original files in MM tables. Conversion to MM may be expensive if\n" +
         "this is set to false, however unless MAPREDUCE-7086 fix is present, queries that\n" +
         "read MM tables with original files will fail. The default in Hive 3.0 is false."),
@@ -3787,7 +3787,7 @@ public class HiveConf extends Configuration {
         "LLAP IO memory usage; 'cache' (the default) uses data and metadata cache with a\n" +
         "custom off-heap allocator, 'none' doesn't use either (this mode may result in\n" +
         "significant performance degradation)"),
-    LLAP_ALLOCATOR_MIN_ALLOC("hive.llap.io.allocator.alloc.min", "16Kb", new SizeValidator(),
+    LLAP_ALLOCATOR_MIN_ALLOC("hive.llap.io.allocator.alloc.min", "4Kb", new SizeValidator(),
         "Minimum allocation possible from LLAP buddy allocator. Allocations below that are\n" +
         "padded to minimum allocation. For ORC, should generally be the same as the expected\n" +
         "compression buffer size, or next lowest power of 2. Must be a power of 2."),
@@ -4165,6 +4165,11 @@ public class HiveConf extends Configuration {
     LLAP_EXTERNAL_SPLITS_TEMP_TABLE_STORAGE_FORMAT("hive.llap.external.splits.temp.table.storage.format",
         "orc", new StringSet("default", "text", "orc"),
         "Storage format for temp tables created using LLAP external client"),
+    LLAP_EXTERNAL_SPLITS_ORDER_BY_FORCE_SINGLE_SPLIT("hive.llap.external.splits.order.by.force.single.split",
+      true,
+      "If LLAP external clients submits ORDER BY queries, force return a single split to guarantee reading\n" +
+        "data out in ordered way. Setting this to false will let external clients read data out in parallel\n" +
+        "losing the ordering (external clients are responsible for guaranteeing the ordering)"),
     LLAP_ENABLE_GRACE_JOIN_IN_LLAP("hive.llap.enable.grace.join.in.llap", false,
         "Override if grace join should be allowed to run in llap."),
 
