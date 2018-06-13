@@ -33,6 +33,7 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.ql.CommandNeedRetryException;
@@ -133,6 +134,8 @@ class WarehouseInstance implements Closeable {
     hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
     hiveConf.set(HiveConf.ConfVars.POSTEXECHOOKS.varname, "");
     hiveConf.set(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY.varname, "false");
+    hiveConf.set(HiveConf.ConfVars.METASTORE_RAW_STORE_IMPL.varname,
+            "org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore");
     System.setProperty(HiveConf.ConfVars.PREEXECHOOKS.varname, " ");
     System.setProperty(HiveConf.ConfVars.POSTEXECHOOKS.varname, " ");
 
@@ -258,6 +261,20 @@ class WarehouseInstance implements Closeable {
     return run(replStatusCmd);
   }
 
+  WarehouseInstance loadFailure(String replicatedDbName, String dumpLocation) throws Throwable {
+    runFailure("REPL LOAD " + replicatedDbName + " FROM '" + dumpLocation + "'");
+    return this;
+  }
+
+  WarehouseInstance loadFailure(String replicatedDbName, String dumpLocation, List<String> withClauseOptions)
+          throws Throwable {
+    String replLoadCmd = "REPL LOAD " + replicatedDbName + " FROM '" + dumpLocation + "'";
+    if (!withClauseOptions.isEmpty()) {
+      replLoadCmd += " WITH (" + StringUtils.join(withClauseOptions, ",") + ")";
+    }
+    return runFailure(replLoadCmd);
+  }
+
   WarehouseInstance verifyResult(String data) throws IOException {
     verifyResults(data == null ? new String[] {} : new String[] { data });
     return this;
@@ -331,15 +348,39 @@ class WarehouseInstance implements Closeable {
   }
 
   public Database getDatabase(String dbName) throws Exception {
-    return client.getDatabase(dbName);
+    try {
+      return client.getDatabase(dbName);
+    } catch (NoSuchObjectException e) {
+      return null;
+    }
+  }
+
+  public List<String> getAllTables(String dbName) throws Exception {
+    return client.getAllTables(dbName);
   }
 
   public Table getTable(String dbName, String tableName) throws Exception {
-    return client.getTable(dbName, tableName);
+    try {
+      return client.getTable(dbName, tableName);
+    } catch (NoSuchObjectException e) {
+      return null;
+    }
+  }
+
+  public List<Partition> getAllPartitions(String dbName, String tableName) throws Exception {
+    try {
+      return client.listPartitions(dbName, tableName, Short.MAX_VALUE);
+    } catch (NoSuchObjectException e) {
+      return null;
+    }
   }
 
   public Partition getPartition(String dbName, String tableName, List<String> partValues) throws Exception {
-    return client.getPartition(dbName, tableName, partValues);
+    try {
+      return client.getPartition(dbName, tableName, partValues);
+    } catch (NoSuchObjectException e) {
+      return null;
+    }
   }
 
   ReplicationV1CompatRule getReplivationV1CompatRule(List<String> testsToSkip) {

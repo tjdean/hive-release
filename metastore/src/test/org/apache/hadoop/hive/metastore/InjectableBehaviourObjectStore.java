@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,9 +19,13 @@
 package org.apache.hadoop.hive.metastore;
 
 import java.util.List;
+import org.apache.hadoop.hive.metastore.api.Function;
+import org.apache.hadoop.hive.metastore.api.InvalidObjectException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NotificationEventRequest;
 import org.apache.hadoop.hive.metastore.api.NotificationEventResponse;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
+import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
 
 import static org.junit.Assert.assertEquals;
@@ -39,8 +43,8 @@ public class InjectableBehaviourObjectStore extends ObjectStore {
   /**
    * A utility class that allows people injecting behaviour to determine if their injections occurred.
    */
-  public static abstract class BehaviourInjection<T,F>
-      implements com.google.common.base.Function<T,F>{
+  public static abstract class BehaviourInjection<T, F>
+      implements com.google.common.base.Function<T, F>{
     protected boolean injectionPathCalled = false;
     protected boolean nonInjectedPathCalled = false;
 
@@ -49,17 +53,35 @@ public class InjectableBehaviourObjectStore extends ObjectStore {
       assertEquals(expectedInjectionCalled, injectionPathCalled);
       assertEquals(expectedNonInjectedPathCalled, nonInjectedPathCalled);
     }
-  };
+  }
 
-  private static com.google.common.base.Function<Table,Table> getTableModifier =
+  /**
+   * A utility class to pass the arguments of the caller to the stub method.
+   */
+  public class CallerArguments {
+    public String dbName;
+    public String tblName;
+    public List<String> ptnValues;
+    public String funcName;
+
+    public CallerArguments(String dbName) {
+      this.dbName = dbName;
+    }
+  }
+
+  private static com.google.common.base.Function<Table, Table> getTableModifier =
       com.google.common.base.Functions.identity();
+  private static com.google.common.base.Function<Partition, Partition> getPartitionModifier =
+          com.google.common.base.Functions.identity();
   private static com.google.common.base.Function<List<String>, List<String>> listPartitionNamesModifier =
           com.google.common.base.Functions.identity();
   private static com.google.common.base.Function<NotificationEventResponse, NotificationEventResponse>
           getNextNotificationModifier = com.google.common.base.Functions.identity();
 
+  private static com.google.common.base.Function<CallerArguments, Boolean> callerVerifier = null;
+
   // Methods to set/reset getTable modifier
-  public static void setGetTableBehaviour(com.google.common.base.Function<Table,Table> modifier){
+  public static void setGetTableBehaviour(com.google.common.base.Function<Table, Table> modifier){
     if (modifier == null) {
       getTableModifier = com.google.common.base.Functions.identity();
     } else {
@@ -71,13 +93,22 @@ public class InjectableBehaviourObjectStore extends ObjectStore {
     setGetTableBehaviour(null);
   }
 
+  // Methods to set/reset getPartition modifier
+  public static void setGetPartitionBehaviour(com.google.common.base.Function<Partition, Partition> modifier){
+    if (modifier == null) {
+      getPartitionModifier = com.google.common.base.Functions.identity();
+    } else {
+      getPartitionModifier = modifier;
+    }
+  }
+
+  public static void resetGetPartitionBehaviour(){
+    setGetPartitionBehaviour(null);
+  }
+
   // Methods to set/reset listPartitionNames modifier
   public static void setListPartitionNamesBehaviour(com.google.common.base.Function<List<String>, List<String>> modifier){
-    if (modifier == null) {
-      listPartitionNamesModifier = com.google.common.base.Functions.identity();
-    } else {
-      listPartitionNamesModifier = modifier;
-    }
+    listPartitionNamesModifier = (modifier == null)? com.google.common.base.Functions.identity() : modifier;
   }
 
   public static void resetListPartitionNamesBehaviour(){
@@ -87,21 +118,32 @@ public class InjectableBehaviourObjectStore extends ObjectStore {
   // Methods to set/reset getNextNotification modifier
   public static void setGetNextNotificationBehaviour(
           com.google.common.base.Function<NotificationEventResponse,NotificationEventResponse> modifier){
-    if (modifier == null) {
-      getNextNotificationModifier = com.google.common.base.Functions.identity();
-    } else {
-      getNextNotificationModifier = modifier;
-    }
+    getNextNotificationModifier = (modifier == null)? com.google.common.base.Functions.identity() : modifier;
   }
 
   public static void resetGetNextNotificationBehaviour(){
     setGetNextNotificationBehaviour(null);
   }
 
+  // Methods to set/reset caller checker
+  public static void setCallerVerifier(com.google.common.base.Function<CallerArguments, Boolean> verifier){
+    callerVerifier = verifier;
+  }
+
+  public static void resetCallerVerifier(){
+    setCallerVerifier(null);
+  }
+
   // ObjectStore methods to be overridden with injected behavior
   @Override
   public Table getTable(String dbName, String tableName) throws MetaException {
     return getTableModifier.apply(super.getTable(dbName, tableName));
+  }
+
+  @Override
+  public Partition getPartition(String dbName, String tableName,
+                                List<String> partVals) throws NoSuchObjectException, MetaException {
+    return getPartitionModifier.apply(super.getPartition(dbName, tableName, partVals));
   }
 
   @Override
@@ -113,4 +155,50 @@ public class InjectableBehaviourObjectStore extends ObjectStore {
   public NotificationEventResponse getNextNotification(NotificationEventRequest rqst) {
     return getNextNotificationModifier.apply(super.getNextNotification(rqst));
   }
+
+  @Override
+  public void createTable(Table tbl) throws InvalidObjectException, MetaException {
+    if (callerVerifier != null) {
+      CallerArguments args = new CallerArguments(tbl.getDbName());
+      args.tblName = tbl.getTableName();
+      Boolean success = callerVerifier.apply(args);
+      if ((success != null) && !success) {
+        throw new MetaException("InjectableBehaviourObjectStore: Invalid Create Table operation on DB: "
+                + args.dbName + " table: " + args.tblName);
+      }
+    }
+    super.createTable(tbl);
+  }
+
+  @Override
+  public void createFunction(Function func) throws InvalidObjectException, MetaException {
+    if (callerVerifier != null) {
+      CallerArguments args = new CallerArguments(func.getDbName());
+      args.funcName = func.getFunctionName();
+      Boolean success = callerVerifier.apply(args);
+      if ((success != null) && !success) {
+        throw new MetaException("InjectableBehaviourObjectStore: Invalid Create Function operation on DB: "
+                + args.dbName + " function: " + args.funcName);
+      }
+    }
+    super.createFunction(func);
+  }
+
+  @Override
+  public Partition getPartitionWithAuth(String dbName, String tblName,
+                                        List<String> partVals, String userName, List<String> groupNames)
+          throws MetaException, NoSuchObjectException, InvalidObjectException {
+    if (callerVerifier != null) {
+      CallerArguments args = new CallerArguments(dbName);
+      args.tblName = tblName;
+      args.ptnValues = partVals;
+      Boolean success = callerVerifier.apply(args);
+      if ((success != null) && !success) {
+        throw new MetaException("InjectableBehaviourObjectStore: Invalid Get Partition operation on DB: "
+                + args.dbName + " table: " + args.tblName);
+      }
+    }
+    return super.getPartitionWithAuth(dbName, tblName, partVals, userName, groupNames);
+  }
+
 }
