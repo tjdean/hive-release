@@ -175,7 +175,7 @@ public class CompactorMR {
         launchCompactionJob(jobMinorCompact,
           null, CompactionType.MINOR, null,
           parsedDeltas.subList(jobSubId * maxDeltastoHandle, (jobSubId + 1) * maxDeltastoHandle),
-          maxDeltastoHandle, -1);
+          maxDeltastoHandle, -1, ci.id, jobName);
       }
       //now recompute state since we've done minor compactions and have different 'best' set of deltas
       dir = AcidUtils.getAcidState(new Path(sd.getLocation()), conf, txns);
@@ -213,14 +213,15 @@ public class CompactorMR {
     }
 
     launchCompactionJob(job, baseDir, ci.type, dirsToSearch, dir.getCurrentDirectories(),
-      dir.getCurrentDirectories().size(), dir.getObsolete().size());
+      dir.getCurrentDirectories().size(), dir.getObsolete().size(), ci.id, jobName);
 
     su.gatherStats();
   }
   private void launchCompactionJob(JobConf job, Path baseDir, CompactionType compactionType,
                                    StringableList dirsToSearch,
                                    List<AcidUtils.ParsedDelta> parsedDeltas,
-                                   int curDirNumber, int obsoleteDirNumber) throws IOException {
+                                   int curDirNumber, int obsoleteDirNumber,
+                                   long id, String jobName) throws IOException {
     job.setBoolean(IS_MAJOR, compactionType == CompactionType.MAJOR);
     if(dirsToSearch == null) {
       dirsToSearch = new StringableList();
@@ -246,9 +247,22 @@ public class CompactorMR {
       job.getJobName() + "' to " + job.getQueueName() + " queue.  " +
       "(current delta dirs count=" + curDirNumber +
       ", obsolete delta dirs count=" + obsoleteDirNumber + ". TxnIdRange[" + minTxn + "," + maxTxn + "]");
-    RunningJob rj = JobClient.runJob(job);
-    LOG.info("Submitted compaction job '" + job.getJobName() + "' with jobID=" + rj.getID());
-    rj.waitForCompletion();
+    JobClient jc = null;
+    try {
+      jc = new JobClient(job);
+      RunningJob rj = jc.submitJob(job);
+      LOG.info("Submitted compaction job '" + job.getJobName() +
+          "' with jobID=" + rj.getID() + " compaction ID=" + id);
+      rj.waitForCompletion();
+      if (!rj.isSuccessful()) {
+        throw new IOException(compactionType == CompactionType.MAJOR ? "Major" : "Minor" +
+               " compactor job failed for " + jobName + "! Hadoop JobId: " + rj.getID());
+      }
+    } finally {
+      if (jc!=null) {
+        jc.close();
+      }
+    }
   }
   /**
    * Set the column names and types into the job conf for the input format
