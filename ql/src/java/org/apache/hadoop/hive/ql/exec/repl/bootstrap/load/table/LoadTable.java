@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.table;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.exec.ReplCopyTask;
@@ -27,18 +28,20 @@ import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.exec.TaskFactory;
 import org.apache.hadoop.hive.ql.exec.Utilities;
 import org.apache.hadoop.hive.ql.exec.repl.ReplUtils;
+import org.apache.hadoop.hive.ql.exec.repl.ReplUtils.ReplLoadOpType;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.TableEvent;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.TaskTracker;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.util.Context;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.util.PathUtils;
-import org.apache.hadoop.hive.ql.hooks.ReadEntity;
-import org.apache.hadoop.hive.ql.hooks.WriteEntity;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.parse.EximUtil;
 import org.apache.hadoop.hive.ql.parse.ImportSemanticAnalyzer;
 import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.parse.repl.ReplLogger;
+import org.apache.hadoop.hive.ql.plan.DDLWork;
+import org.apache.hadoop.hive.ql.plan.DropTableDesc;
 import org.apache.hadoop.hive.ql.plan.ImportTableDesc;
 import org.apache.hadoop.hive.ql.plan.LoadTableDesc;
 import org.apache.hadoop.hive.ql.plan.LoadTableDesc.LoadFileType;
@@ -85,7 +88,6 @@ public class LoadTable {
       // Executed if relevant, and used to contain all the other details about the table if not.
       ImportTableDesc tableDesc = tableContext.overrideProperties(event.tableDesc(dbName));
       Table table = ImportSemanticAnalyzer.tableIfExists(tableDesc, context.hiveDb);
-      ReplicationSpec replicationSpec = event.replicationSpec();
 
       // Normally, on import, trying to create a table or a partition in a db that does not yet exist
       // is a error condition. However, in the case of a REPL LOAD, it is possible that we are trying
@@ -103,24 +105,23 @@ public class LoadTable {
         }
       }
 
-      if (table == null) {
-        // If table doesn't exist, allow creating a new one only if the database state is older than the update.
-        if ((parentDb != null) && (!replicationSpec
-            .allowReplacementInto(parentDb.getParameters()))) {
-          // If the target table exists and is newer or same as current update based on repl.last.id, then just noop it.
+      Task<?> tblRootTask = null;
+      ReplLoadOpType loadTblType = getLoadTableType(table);
+      switch (loadTblType) {
+        case LOAD_NEW:
+          break;
+        case LOAD_REPLACE:
+          tblRootTask = dropTableTask(table);
+          break;
+        case LOAD_SKIP:
           return tracker;
-        }
-      } else {
-        if (!replicationSpec.allowReplacementInto(table.getParameters())) {
-          // If the target table exists and is newer or same as current update based on repl.last.id, then just noop it.
-          return tracker;
-        }
+        default:
+          break;
       }
 
       if (tableDesc.getLocation() == null) {
         tableDesc.setLocation(location(tableDesc, parentDb));
       }
-
 
   /* Note: In the following section, Metadata-only import handling logic is
      interleaved with regular repl-import logic. The rule of thumb being
@@ -131,11 +132,7 @@ public class LoadTable {
      or in the case of an unpartitioned table. In all other cases, it should
      behave like a noop or a pure MD alter.
   */
-      if (table == null) {
-        newTableTasks(tableDesc);
-      } else {
-        existingTableTasks(tableDesc, table, replicationSpec);
-      }
+      newTableTasks(tableDesc, tblRootTask);
 
       // Set Checkpoint task as dependant to create table task. So, if same dump is retried for
       // bootstrap, we skip current table update.
@@ -157,46 +154,38 @@ public class LoadTable {
     }
   }
 
-  private void existingTableTasks(ImportTableDesc tblDesc, Table table,
-      ReplicationSpec replicationSpec) {
-    if (!table.isPartitioned()) {
-
-      LOG.debug("table non-partitioned");
-      if (!replicationSpec.allowReplacementInto(table.getParameters())) {
-        return; // silently return, table is newer than our replacement.
-      }
-
-      Task<? extends Serializable> alterTableTask = alterTableTask(tblDesc, replicationSpec);
-      if (replicationSpec.isMetadataOnly()) {
-        tracker.addTask(alterTableTask);
-      } else {
-        Task<?> loadTableTask =
-            loadTableTask(table, replicationSpec, table.getDataLocation(), event.metadataPath());
-        alterTableTask.addDependentTask(loadTableTask);
-        tracker.addTask(alterTableTask);
-      }
+  private ReplLoadOpType getLoadTableType(Table table) throws InvalidOperationException, HiveException {
+    if (table == null) {
+      return ReplLoadOpType.LOAD_NEW;
     }
+    if (ReplUtils.replCkptStatus(table.getDbName(), table.getParameters(), context.dumpDirectory)) {
+      return ReplLoadOpType.LOAD_SKIP;
+    }
+    return ReplLoadOpType.LOAD_REPLACE;
   }
 
-  private void newTableTasks(ImportTableDesc tblDesc) throws SemanticException {
-    Table table;
-    table = new Table(tblDesc.getDatabaseName(), tblDesc.getTableName());
-    // Either we're dropping and re-creating, or the table didn't exist, and we're creating.
+  private void newTableTasks(ImportTableDesc tblDesc, Task<?> tblRootTask) throws Exception {
+    Table table = new Table(tblDesc.getDatabaseName(), tblDesc.getTableName());
+    ReplicationSpec replicationSpec = event.replicationSpec();
     Task<?> createTableTask =
-        tblDesc.getCreateTableTask(new HashSet<ReadEntity>(), new HashSet<WriteEntity>( ),
-            context.hiveConf);
-    if (event.replicationSpec().isMetadataOnly()) {
-      tracker.addTask(createTableTask);
+        tblDesc.getCreateTableTask(new HashSet<>(), new HashSet<>(), context.hiveConf);
+    if (tblRootTask == null) {
+      tblRootTask = createTableTask;
+    } else {
+      tblRootTask.addDependentTask(createTableTask);
+    }
+    if (replicationSpec.isMetadataOnly()) {
+      tracker.addTask(tblRootTask);
       return;
     }
     if (!isPartitioned(tblDesc)) {
       LOG.debug("adding dependent CopyWork/MoveWork for table");
       Task<?> loadTableTask =
-          loadTableTask(table, event.replicationSpec(), new Path(tblDesc.getLocation()),
+          loadTableTask(table, replicationSpec, new Path(tblDesc.getLocation()),
               event.metadataPath());
       createTableTask.addDependentTask(loadTableTask);
     }
-    tracker.addTask(createTableTask);
+    tracker.addTask(tblRootTask);
   }
 
   private String location(ImportTableDesc tblDesc, Database parentDb)
@@ -230,13 +219,10 @@ public class LoadTable {
     return copyTask;
   }
 
-  private Task<? extends Serializable> alterTableTask(ImportTableDesc tableDesc,
-      ReplicationSpec replicationSpec) {
-    tableDesc.setReplaceMode(true);
-    if ((replicationSpec != null) && (replicationSpec.isInReplicationScope())) {
-      tableDesc.setReplicationSpec(replicationSpec);
-    }
-    return tableDesc.getCreateTableTask(new HashSet<ReadEntity>(), new HashSet<WriteEntity>(),
-        context.hiveConf);
+  private Task<?> dropTableTask(Table table) {
+    assert(table != null);
+    DropTableDesc dropTblDesc = new DropTableDesc(table.getDbName() + "." + table.getTableName(),
+            false, true, true, event.replicationSpec(), false);
+    return TaskFactory.get(new DDLWork(new HashSet<>(), new HashSet<>(), dropTblDesc), context.hiveConf, true);
   }
 }

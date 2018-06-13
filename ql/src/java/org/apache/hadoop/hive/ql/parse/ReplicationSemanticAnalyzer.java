@@ -310,9 +310,12 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
     // import job in its place.
 
     try {
-
+      assert(path != null);
       Path loadPath = new Path(path);
       final FileSystem fs = loadPath.getFileSystem(conf);
+
+      // Make fully qualified path for further use.
+      loadPath = fs.makeQualified(loadPath);
 
       if (!fs.exists(loadPath)) {
         // supposed dump path does not exist.
