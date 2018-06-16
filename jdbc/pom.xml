@@ -217,6 +217,7 @@
                   <exclude>com.zaxxer:*</exclude>
                   <exclude>javax.xml.*:*</exclude>
                   <exclude>org.apache.htrace:*</exclude>
+                  <exclude>org.threadly:*</exclude>
                   <exclude>org.json:*</exclude>
                   <exclude>xerces:*</exclude>
                   <exclude>xml-apis:*</exclude>
