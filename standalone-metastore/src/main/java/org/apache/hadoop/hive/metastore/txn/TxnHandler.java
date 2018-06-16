@@ -168,6 +168,19 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
   //todo: make these like OperationType and remove above char constatns
   enum TxnStatus {OPEN, ABORTED, COMMITTED, UNKNOWN}
 
+  public enum TxnType {
+    DEFAULT(0), REPL_CREATED(1), READ_ONLY(2);
+
+    private final int value;
+    TxnType(int value) {
+      this.value = value;
+    }
+
+    public int getValue() {
+      return value;
+    }
+  }
+
   // Lock states
   static final protected char LOCK_ACQUIRED = 'a';
   static final protected char LOCK_WAITING = 'w';
@@ -561,6 +574,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
           throws SQLException, MetaException {
     int numTxns = rqst.getNum_txns();
     ResultSet rs = null;
+    TxnType txnType = TxnType.DEFAULT;
     try {
       if (rqst.isSetReplPolicy()) {
         List<Long> targetTxnIdList = getTargetTxnIdList(rqst.getReplPolicy(), rqst.getReplSrcTxnIds(), stmt);
@@ -574,6 +588,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
                   rqst.getReplPolicy() + " and Source transaction id : " + rqst.getReplSrcTxnIds().toString());
           return targetTxnIdList;
         }
+        txnType = TxnType.REPL_CREATED;
       }
 
       String s = sqlGenerator.addForUpdateClause("select ntxn_next from NEXT_TXN_ID");
@@ -595,10 +610,10 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
       for (long i = first; i < first + numTxns; i++) {
         txnIds.add(i);
         rows.add(i + "," + quoteChar(TXN_OPEN) + "," + now + "," + now + ","
-                + quoteString(rqst.getUser()) + "," + quoteString(rqst.getHostname()));
+                + quoteString(rqst.getUser()) + "," + quoteString(rqst.getHostname()) + "," + txnType.getValue());
       }
       List<String> queries = sqlGenerator.createInsertValuesStmt(
-              "TXNS (txn_id, txn_state, txn_started, txn_last_heartbeat, txn_user, txn_host)", rows);
+            "TXNS (txn_id, txn_state, txn_started, txn_last_heartbeat, txn_user, txn_host, txn_type)", rows);
       for (String q : queries) {
         LOG.debug("Going to execute update <" + q + ">");
         stmt.execute(q);
@@ -829,11 +844,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
     throws NoSuchTxnException, TxnAbortedException, MetaException {
     MaterializationsRebuildLockHandler materializationsRebuildLockHandler =
         MaterializationsRebuildLockHandler.get();
-    String fullyQualifiedName = null;
-    String dbName = null;
-    String tblName = null;
-    long writeId = 0L;
-    long timestamp = 0L;
+    List<TransactionRegistryInfo> txnComponents = new ArrayList<>();
     boolean isUpdateDelete = false;
     long txnid = rqst.getTxnid();
     long sourceTxnId = -1;
@@ -998,12 +1009,10 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
         s = "select ctc_database, ctc_table, ctc_writeid, ctc_timestamp from COMPLETED_TXN_COMPONENTS where ctc_txnid = " + txnid;
         LOG.debug("Going to extract table modification information for invalidation cache <" + s + ">");
         rs = stmt.executeQuery(s);
-        if (rs.next()) {
-          dbName = rs.getString(1);
-          tblName = rs.getString(2);
-          fullyQualifiedName = Warehouse.getQualifiedName(dbName, tblName);
-          writeId = rs.getLong(3);
-          timestamp = rs.getTimestamp(4, Calendar.getInstance(TimeZone.getTimeZone("UTC"))).getTime();
+        while (rs.next()) {
+          // We only enter in this loop if the transaction actually affected any table
+          txnComponents.add(new TransactionRegistryInfo(rs.getString(1), rs.getString(2),
+              rs.getLong(3), rs.getTimestamp(4, Calendar.getInstance(TimeZone.getTimeZone("UTC"))).getTime()));
         }
         s = "delete from TXN_COMPONENTS where tc_txnid = " + txnid;
         LOG.debug("Going to execute update <" + s + ">");
@@ -1033,18 +1042,22 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
 
         MaterializationsInvalidationCache materializationsInvalidationCache =
             MaterializationsInvalidationCache.get();
-        if (materializationsInvalidationCache.containsMaterialization(dbName, tblName) &&
-            !materializationsRebuildLockHandler.readyToCommitResource(dbName, tblName, txnid)) {
-          throw new MetaException(
-              "Another process is rebuilding the materialized view " + fullyQualifiedName);
+        for (TransactionRegistryInfo info : txnComponents) {
+          if (materializationsInvalidationCache.containsMaterialization(info.dbName, info.tblName) &&
+              !materializationsRebuildLockHandler.readyToCommitResource(info.dbName, info.tblName, txnid)) {
+            throw new MetaException(
+                "Another process is rebuilding the materialized view " + info.fullyQualifiedName);
+          }
         }
         LOG.debug("Going to commit");
         close(rs);
         dbConn.commit();
 
         // Update registry with modifications
-        materializationsInvalidationCache.notifyTableModification(
-            dbName, tblName, writeId, timestamp, isUpdateDelete);
+        for (TransactionRegistryInfo info : txnComponents) {
+          materializationsInvalidationCache.notifyTableModification(
+              info.dbName, info.tblName, info.writeId, info.timestamp, isUpdateDelete);
+        }
       } catch (SQLException e) {
         LOG.debug("Going to rollback");
         rollbackDBConn(dbConn);
@@ -1055,8 +1068,8 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
         close(commitIdRs);
         close(lockHandle, stmt, dbConn);
         unlockInternal();
-        if (fullyQualifiedName != null) {
-          materializationsRebuildLockHandler.unlockResource(dbName, tblName, txnid);
+        for (TransactionRegistryInfo info : txnComponents) {
+          materializationsRebuildLockHandler.unlockResource(info.dbName, info.tblName, txnid);
         }
       }
     } catch (RetryException e) {
@@ -4226,7 +4239,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
       while(true) {
         stmt = dbConn.createStatement();
         String s = " txn_id from TXNS where txn_state = '" + TXN_OPEN +
-          "' and txn_last_heartbeat <  " + (now - timeout);
+            "' and txn_last_heartbeat <  " + (now - timeout) + " and txn_type != " + TxnType.REPL_CREATED.getValue();
         //safety valve for extreme cases
         s = sqlGenerator.addLimitClause(10 * TIMED_OUT_TXN_ABORT_BATCH_SIZE, s);
         LOG.debug("Going to execute query <" + s + ">");
@@ -4788,4 +4801,21 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
       throw new UnsupportedOperationException();
     }
   };
+
+  private class TransactionRegistryInfo {
+    final String dbName;
+    final String tblName;
+    final String fullyQualifiedName;
+    final long writeId;
+    final long timestamp;
+
+    public TransactionRegistryInfo (String dbName, String tblName, long writeId, long timestamp) {
+      this.dbName = dbName;
+      this.tblName = tblName;
+      this.fullyQualifiedName = Warehouse.getQualifiedName(dbName, tblName);
+      this.writeId = writeId;
+      this.timestamp = timestamp;
+    }
+  }
+
 }
