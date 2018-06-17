@@ -175,6 +175,9 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   private final boolean localMetaStore;
   private final MetaStoreFilterHook filterHook;
 
+  //copied from ErrorMsg.java
+  private static final String REPL_EVENTS_MISSING_IN_METASTORE = "Notification events are missing in the meta store.";
+
   private Map<String, String> currentMetaVars;
 
   // for thrift connects
@@ -2086,7 +2089,7 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
                   + "Probably, cleaner would've cleaned it up. "
                   + "Try setting higher value for hive.metastore.event.db.listener.timetolive. "
                   + "Also, bootstrap the system again to get back the consistent replicated state.");
-          throw new IllegalStateException("Notification events are missing.");
+          throw new IllegalStateException(REPL_EVENTS_MISSING_IN_METASTORE);
         }
         if ((filter != null) && filter.accept(e)) {
           filtered.addToEvents(e);

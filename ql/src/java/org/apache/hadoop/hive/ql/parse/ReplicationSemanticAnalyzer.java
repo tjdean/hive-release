@@ -107,7 +107,7 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
         try {
           initReplDump(ast);
         } catch (HiveException e) {
-          throw new SemanticException("repl dump failed " + e.getMessage());
+          throw new SemanticException(e.getMessage(), e);
         }
         analyzeReplDump(ast);
         break;
@@ -138,8 +138,9 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
       Database database = db.getDatabase(dbName);
       if (database != null) {
         if (!ReplChangeManager.isSourceOfReplication(database)) {
-          throw new SemanticException("Cannot dump database " + dbName +
-                  " as it is not a source of replication");
+          LOG.error("Cannot dump database " + dbNameOrPattern +
+                  " as it is not a source of replication (repl.source.for)");
+          throw new SemanticException(ErrorMsg.REPL_DATABASE_IS_NOT_SOURCE_OF_REPLICATION.getMsg());
         }
       } else {
         throw new SemanticException("Cannot dump database " + dbName + " as it does not exist");
@@ -319,7 +320,8 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
 
       if (!fs.exists(loadPath)) {
         // supposed dump path does not exist.
-        throw new FileNotFoundException(loadPath.toUri().toString());
+        LOG.error("File not found " + loadPath.toUri().toString());
+        throw new FileNotFoundException(ErrorMsg.REPL_LOAD_PATH_NOT_FOUND.getMsg());
       }
 
       // Now, the dumped path can be one of three things:
@@ -460,7 +462,7 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
 
     } catch (Exception e) {
       // TODO : simple wrap & rethrow for now, clean up with error codes
-      throw new SemanticException(e);
+      throw new SemanticException(e.getMessage(), e);
     }
   }
 

@@ -60,6 +60,7 @@ import org.junit.rules.TestName;
 import org.junit.rules.TestRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.hadoop.hive.ql.ErrorMsg;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -815,7 +816,7 @@ public class TestReplicationScenarios {
   }
 
   @Test
-  public void testIncrementalReplWithEventsMissing() throws IOException, TException {
+  public void testIncrementalReplWithEventsMissing() throws Exception {
     String testName = "incrementalReplWithEventsMissing";
     String dbName = createDB(testName);
     String replDbName = dbName + "_dupe";
@@ -861,9 +862,33 @@ public class TestReplicationScenarios {
     InjectableBehaviourObjectStore.setGetNextNotificationBehaviour(eventIdSkipper);
 
     advanceDumpDir();
-    verifyFail("REPL DUMP " + dbName + " FROM " + replDumpId);
+    CommandProcessorResponse ret = driver.run("REPL DUMP " + dbName + " FROM " + replDumpId);
+    assertTrue(ret.getResponseCode() == ErrorMsg.REPL_EVENTS_MISSING_IN_METASTORE.getErrorCode());
     eventIdSkipper.assertInjectionsPerformed(true,false);
     InjectableBehaviourObjectStore.resetGetNextNotificationBehaviour(); // reset the behaviour
+  }
+
+  @Test
+  public void testLoadCmPathMissing() throws Exception {
+    String dbName = createDB(testName.getMethodName());
+    run("CREATE TABLE " + dbName + ".normal(a int)");
+    run("INSERT INTO " + dbName + ".normal values (1)");
+
+    advanceDumpDir();
+    run("repl dump " + dbName, true);
+    String dumpLocation = getResult(0, 0);
+
+    run("DROP TABLE " + dbName + ".normal");
+
+    String cmDir = hconf.getVar(HiveConf.ConfVars.REPLCMDIR);
+    Path path = new Path(cmDir);
+    FileSystem fs = path.getFileSystem(hconf);
+    fs.delete(path);
+
+    CommandProcessorResponse ret = driver.run("REPL LOAD " + dbName + " FROM '" + dumpLocation + "'");
+    assertTrue(ret.getResponseCode() == ErrorMsg.REPL_FILE_MISSING_FROM_SRC_AND_CM_PATH.getErrorCode());
+    run("drop database " + dbName, true);
+    fs.create(path, false);
   }
 
   @Test

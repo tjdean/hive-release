@@ -31,6 +31,7 @@ import org.apache.hadoop.hive.ql.parse.LoadSemanticAnalyzer;
 import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.parse.repl.CopyUtils;
+import org.apache.hadoop.hive.ql.ErrorMsg;
 
 import javax.security.auth.login.LoginException;
 import java.io.BufferedWriter;
@@ -102,7 +103,7 @@ public class FileOperations {
         logger.info("writeFilesList failed", e);
         if (repeat >= FileUtils.MAX_IO_ERROR_RETRY) {
           logger.error("exporting data files in dir : " + dataFileListPath + " to " + exportRootDataDir + " failed");
-          throw e;
+          throw new IOException(ErrorMsg.REPL_FILE_SYSTEM_OPERATION_RETRY.getMsg());
         }
 
         int sleepTime = FileUtils.getSleepTime(repeat - 1);
