@@ -44,6 +44,7 @@ import org.apache.hadoop.hive.ql.DriverContext;
 import org.apache.hadoop.hive.ql.parse.LoadSemanticAnalyzer;
 import org.apache.hadoop.hive.ql.plan.api.StageType;
 import org.apache.hadoop.util.StringUtils;
+import org.apache.hadoop.hive.ql.ErrorMsg;
 
 public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
 
@@ -156,7 +157,7 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
     } catch (Exception e) {
       console.printError("Failed with exception " + e.getMessage(), "\n"
           + StringUtils.stringifyException(e));
-      return (1);
+      return ErrorMsg.getErrorMsg(e.getMessage()).getErrorCode();
     }
   }
 

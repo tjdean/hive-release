@@ -466,7 +466,14 @@ public enum ErrorMsg {
       " (={2}). This is controlled by hive.limit.query.max.table.partition.", true),
   OP_NOT_ALLOWED_IN_AUTOCOMMIT(20006, "Operation {0} is not allowed when autoCommit=true.", true),//todo: better SQLState?
   OP_NOT_ALLOWED_IN_TXN(20007, "Operation {0} is not allowed in a transaction.  TransactionID={1}.", true),
-  OP_NOT_ALLOWED_WITHOUT_TXN(2008, "Operation {0} is not allowed since autoCommit=false and there is no active transaction", true),
+  OP_NOT_ALLOWED_WITHOUT_TXN(20008, "Operation {0} is not allowed since autoCommit=false and there is no active transaction", true),
+  //if the error message is changed for REPL_EVENTS_MISSING_IN_METASTORE, then need modification in getNextNotification
+  //method in HiveMetaStoreClient
+  REPL_EVENTS_MISSING_IN_METASTORE(20009, "Notification events are missing in the meta store."),
+  REPL_BOOTSTRAP_LOAD_PATH_NOT_VALID(20010, "Target database is bootstrapped from some other path."),
+  REPL_FILE_MISSING_FROM_SRC_AND_CM_PATH(20011, "File is missing from both source and cm path."),
+  REPL_LOAD_PATH_NOT_FOUND(20012, "Load path does not exist."),
+  REPL_DATABASE_IS_NOT_SOURCE_OF_REPLICATION(20013, "Source of replication (repl.source.for) is not set in the database properties."),
   MUST_ENFORCE_BUCKETING(29999, "hive.enforce.bucketing must be true for an Acid write to ''{0}''", true),
 
   //========================== 30000 range starts here ========================//
@@ -530,7 +537,8 @@ public enum ErrorMsg {
   CONCATENATE_UNSUPPORTED_PARTITION_ARCHIVED(30032, "Concatenate/Merge can not be performed on archived partitions"),
   CONCATENATE_UNSUPPORTED_TABLE_NON_NATIVE(30033, "Concatenate/Merge can not be performed on non-native tables"),
   CONCATENATE_UNSUPPORTED_TABLE_NOT_MANAGED(30034, "Concatenate/Merge can only be performed on managed tables"),
-  CONCATENATE_UNSUPPORTED_TABLE_TRANSACTIONAL(30035, "Concatenate/Merge can not be performed on transactional tables")
+  CONCATENATE_UNSUPPORTED_TABLE_TRANSACTIONAL(30035, "Concatenate/Merge can not be performed on transactional tables"),
+  REPL_FILE_SYSTEM_OPERATION_RETRY(30036, "Replication file system operation retry expired.")
   ;
 
   private int errorCode;

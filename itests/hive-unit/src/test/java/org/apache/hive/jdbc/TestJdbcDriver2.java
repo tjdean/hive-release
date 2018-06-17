@@ -40,6 +40,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.hadoop.hive.ql.ErrorMsg;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -2802,5 +2803,26 @@ public void testParseUrlHttpMode() throws SQLException, JdbcUriParseException,
       mycon.close();
     }
 
+  }
+
+  @Test
+  public void testReplErrorScenarios() throws Exception {
+    HiveStatement stmt = (HiveStatement) con.createStatement();
+
+    try {
+      // source of replication not set
+      stmt.execute("repl dump default");
+    } catch(SQLException e){
+      assertTrue(e.getErrorCode() == ErrorMsg.REPL_DATABASE_IS_NOT_SOURCE_OF_REPLICATION.getErrorCode());
+    }
+
+    try {
+      // invalid load path
+      stmt.execute("repl load default1 from '/tmp/junk'");
+    } catch(SQLException e){
+      assertTrue(e.getErrorCode() == ErrorMsg.REPL_LOAD_PATH_NOT_FOUND.getErrorCode());
+    }
+
+    stmt.close();
   }
 }
