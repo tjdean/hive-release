@@ -2825,4 +2825,26 @@ public void testParseUrlHttpMode() throws SQLException, JdbcUriParseException,
 
     stmt.close();
   }
+
+  @Test
+  public void testGetStmt() throws Exception {
+    HiveStatement stmt = (HiveStatement) con.createStatement();
+    stmt.executeAsync("alter database default set dbproperties ('repl.source.for' = '1, 2, 3')");
+    String queryId = stmt.getQueryId();
+    assertFalse(queryId.isEmpty());
+    stmt.execute("kill query '" + queryId + "'");
+
+    stmt.executeAsync("repl status default with ('hive.query.id' = 'hiveCustomTag')");
+    queryId = stmt.getQueryId();
+    assertTrue("hiveCustomTag".equals(queryId));
+    stmt.execute("kill query '" + queryId + "'");
+
+    stmt.executeAsync("select count(*) from " + dataTypeTableName);
+    queryId = stmt.getQueryId();
+    assertFalse("hiveCustomTag".equals(queryId));
+    assertFalse(queryId.isEmpty());
+    stmt.execute("kill query '" + queryId + "'");
+
+    stmt.close();
+  }
 }

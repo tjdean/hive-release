@@ -26,6 +26,23 @@ import org.apache.hive.service.cli.operation.Operation;
 import org.apache.hive.service.cli.operation.OperationManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hive.ql.session.SessionState;
+import org.apache.hadoop.yarn.api.ApplicationClientProtocol;
+import org.apache.hadoop.yarn.api.protocolrecords.ApplicationsRequestScope;
+import org.apache.hadoop.yarn.api.protocolrecords.GetApplicationsRequest;
+import org.apache.hadoop.yarn.api.protocolrecords.GetApplicationsResponse;
+import org.apache.hadoop.yarn.api.records.ApplicationId;
+import org.apache.hadoop.yarn.api.records.ApplicationReport;
+import org.apache.hadoop.yarn.client.ClientRMProxy;
+import org.apache.hadoop.yarn.client.api.YarnClient;
+import org.apache.hadoop.yarn.exceptions.YarnException;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 public class KillQueryImpl implements KillQuery {
   private final static Logger LOG = LoggerFactory.getLogger(KillQueryImpl.class);
@@ -46,8 +63,51 @@ public class KillQueryImpl implements KillQuery {
         OperationHandle handle = operation.getHandle();
         operationManager.cancelOperation(handle);
       }
+      killChildYarnJobs(SessionState.getSessionConf(), queryId);
     } catch (HiveSQLException e) {
       throw new HiveException(e);
+    }
+  }
+
+  public static Set<ApplicationId> getChildYarnJobs(Configuration conf, String tag) {
+    Set<ApplicationId> childYarnJobs = new HashSet<ApplicationId>();
+    GetApplicationsRequest gar = GetApplicationsRequest.newInstance();
+    gar.setScope(ApplicationsRequestScope.OWN);
+    gar.setApplicationTags(Collections.singleton(tag));
+
+    try {
+      ApplicationClientProtocol proxy = ClientRMProxy.createRMProxy(conf, ApplicationClientProtocol.class);
+      GetApplicationsResponse apps = proxy.getApplications(gar);
+      List<ApplicationReport> appsList = apps.getApplicationList();
+      for(ApplicationReport appReport : appsList) {
+        childYarnJobs.add(appReport.getApplicationId());
+      }
+    } catch (YarnException | IOException ioe) {
+      throw new RuntimeException("Exception occurred while finding child jobs", ioe);
+    }
+
+    if (childYarnJobs.isEmpty()) {
+      LOG.info("No child applications found");
+    } else {
+      LOG.info("Found child YARN applications: " + StringUtils.join(childYarnJobs, ","));
+    }
+
+    return childYarnJobs;
+  }
+
+  public static void killChildYarnJobs(Configuration conf, String tag) {
+    try {
+      Set<ApplicationId> childYarnJobs = getChildYarnJobs(conf, tag);
+      if (!childYarnJobs.isEmpty()) {
+        YarnClient yarnClient = YarnClient.createYarnClient();
+        yarnClient.init(conf);
+        yarnClient.start();
+        for (ApplicationId app : childYarnJobs) {
+          yarnClient.killApplication(app);
+        }
+      }
+    } catch (IOException | YarnException ye) {
+      throw new RuntimeException("Exception occurred while killing child job(s)", ye);
     }
   }
 }

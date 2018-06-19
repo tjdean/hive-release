@@ -3460,7 +3460,7 @@ public class TestReplicationScenarios {
     run("REPL DUMP " + dbName + " FROM " + prevReplDumpId);
     String lastDumpLocn = getResult(0, 0);
     String lastReplDumpId = getResult(0, 1, true);
-    run("REPL LOAD " + dbName + "_dupe FROM '" + lastDumpLocn + "'");
+    run("REPL LOAD " + dbName + "_dupe FROM '" + lastDumpLocn + "' with ('hive.query.id' = 'hiveCustomTag')");
     verifyRun("REPL STATUS " + dbName + "_dupe", lastReplDumpId);
     if (tblName != null){
       verifyRun("REPL STATUS " + dbName + "_dupe." + tblName, lastReplDumpId);
