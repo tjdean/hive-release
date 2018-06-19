@@ -18,6 +18,7 @@
 package org.apache.hadoop.hive.ql.parse;
 
 import org.antlr.runtime.tree.Tree;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -230,6 +231,11 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
               conf.set(config.getKey(), config.getValue());
             }
 
+            String queryId = replConfigs.get(HiveConf.ConfVars.HIVEQUERYID.varname);
+            if (!StringUtils.isEmpty(queryId)) {
+              super.conf.setVar(HiveConf.ConfVars.HIVEQUERYID, queryId);
+            }
+
             // As hive conf is changed, need to get the Hive DB again with it.
             try {
               db = Hive.get(conf);
@@ -373,6 +379,11 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
         if (null != replConfigs) {
           for (Map.Entry<String, String> config : replConfigs.entrySet()) {
             conf.set(config.getKey(), config.getValue());
+          }
+
+          String queryId = replConfigs.get(HiveConf.ConfVars.HIVEQUERYID.varname);
+          if (!StringUtils.isEmpty(queryId)) {
+            super.conf.setVar(HiveConf.ConfVars.HIVEQUERYID, queryId);
           }
 
           // As hive conf is changed, need to get the Hive DB again with it.
