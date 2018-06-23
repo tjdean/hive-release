@@ -1556,6 +1556,8 @@ public class HiveConf extends Configuration {
     HIVE_STRICT_CHECKS_BUCKETING("hive.strict.checks.bucketing", true,
         "Enabling strict bucketing checks disallows the following:\n" +
         "  Load into bucketed tables."),
+    HIVE_LOAD_DATA_OWNER("hive.load.data.owner", "",
+        "Set the owner of files loaded using load data in managed tables."),
 
     @Deprecated
     HIVEMAPREDMODE("hive.mapred.mode", null,
@@ -1886,7 +1888,7 @@ public class HiveConf extends Configuration {
         "Maximum fraction of heap that can be used by Parquet file writers in one task.\n" +
         "It is for avoiding OutOfMemory error in tasks. Work with Parquet 1.6.0 and above.\n" +
         "This config parameter is defined in Parquet, so that it does not start with 'hive.'."),
-    HIVE_PARQUET_TIMESTAMP_SKIP_CONVERSION("hive.parquet.timestamp.skip.conversion", true,
+    HIVE_PARQUET_TIMESTAMP_SKIP_CONVERSION("hive.parquet.timestamp.skip.conversion", false,
       "Current Hive implementation of parquet stores timestamps to UTC, this flag allows skipping of the conversion" +
       "on reading parquet files from other tools"),
     HIVE_INT_TIMESTAMP_CONVERSION_IN_SECONDS("hive.int.timestamp.conversion.in.seconds", false,
