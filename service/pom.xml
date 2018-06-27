@@ -168,6 +168,12 @@
           <version>${hadoop-23.version}</version>
           <optional>true</optional>
         </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-yarn-client</artifactId>
+          <version>${hadoop-23.version}</version>
+          <optional>true</optional>
+        </dependency>
       </dependencies>
     </profile>
   </profiles>

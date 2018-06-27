@@ -356,7 +356,7 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
       ReplLoadWork replLoadWork =
               new ReplLoadWork(conf, loadPath.toString(), dbNameOrPattern, tblNameOrPattern,
                       SessionState.get().getLineageState(), evDump);
-      rootTasks.add(TaskFactory.get(replLoadWork, conf, evDump));
+      rootTasks.add(TaskFactory.get(replLoadWork, conf, true));
     } catch (Exception e) {
       // TODO : simple wrap & rethrow for now, clean up with error codes
       throw new SemanticException(e.getMessage(), e);

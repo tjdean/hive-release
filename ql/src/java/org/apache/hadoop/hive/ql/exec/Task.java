@@ -169,11 +169,18 @@ public abstract class Task<T extends Serializable> implements Serializable, Node
       if (hiveHistory != null) {
         hiveHistory.logPlanProgress(queryPlan);
       }
-      String queryTag = conf.getVar(HIVEQUERYID);
-      if (!org.apache.commons.lang.StringUtils.isEmpty(queryTag)) {
-        LOG.debug("Tag set is " + queryTag);
-        conf.set(MRJobConfig.JOB_TAGS, queryTag);
+
+      // MacroSemanticAnalyzer is not setting the config in the task.
+      if (conf != null) {
+        String queryTag = conf.getVar(HIVEQUERYID);
+        if (!org.apache.commons.lang.StringUtils.isEmpty(queryTag)) {
+          LOG.debug("Tag set is " + queryTag);
+          conf.set(MRJobConfig.JOB_TAGS, queryTag);
+        }
+      } else {
+        LOG.info("Tag set is not set as conf is null ");
       }
+
       int retval = execute(driverContext);
       this.setDone();
       if (hiveHistory != null) {
@@ -385,6 +392,10 @@ public abstract class Task<T extends Serializable> implements Serializable, Node
 
   public void setConf(HiveConf conf) {
     this.conf = conf;
+  }
+
+  public HiveConf getConf() {
+    return conf;
   }
 
   public void setWork(T work) {
