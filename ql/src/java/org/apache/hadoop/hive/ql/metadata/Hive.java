@@ -19,6 +19,7 @@
 package org.apache.hadoop.hive.ql.metadata;
 
 import static org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_STORAGE;
+import static org.apache.hadoop.hive.ql.ErrorMsg.METASTORE_COULD_NOT_INITIATE;
 import static org.apache.hadoop.hive.serde.serdeConstants.COLLECTION_DELIM;
 import static org.apache.hadoop.hive.serde.serdeConstants.ESCAPE_CHAR;
 import static org.apache.hadoop.hive.serde.serdeConstants.FIELD_DELIM;
@@ -1404,7 +1405,7 @@ public class Hive {
     } catch (NoSuchObjectException e) {
       return null;
     } catch (Exception e) {
-      throw new HiveException(e);
+      throw new HiveException(e.getMessage(), e);
     }
   }
 
@@ -3591,7 +3592,12 @@ private void constructOneLBLocationMap(FileStatus fSta,
         LOG.error(msg, e);
         throw new MetaException(msg + "\n" + StringUtils.stringifyException(e));
       }
-      metaStoreClient = createMetaStoreClient();
+
+      try {
+        metaStoreClient = createMetaStoreClient();
+      } catch (Exception e) {
+        throw new RuntimeException(METASTORE_COULD_NOT_INITIATE.getMsg(), e);
+      }
     }
     return metaStoreClient;
   }

@@ -887,6 +887,10 @@ public class TestReplicationScenarios {
 
     CommandProcessorResponse ret = driver.run("REPL LOAD " + dbName + " FROM '" + dumpLocation + "'");
     assertTrue(ret.getResponseCode() == ErrorMsg.REPL_FILE_MISSING_FROM_SRC_AND_CM_PATH.getErrorCode());
+
+    ret = driver.run("REPL LOAD " + dbName + " FROM '" + dumpLocation + "' with ('hive.metastore.uris'='junk')");
+    assertTrue(ret.getResponseCode() == ErrorMsg.METASTORE_COULD_NOT_INITIATE.getErrorCode());
+
     run("drop database " + dbName, true);
     fs.create(path, false);
   }
