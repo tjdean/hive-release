@@ -42,6 +42,7 @@ import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.metastore.api.Order;
 import org.apache.hadoop.hive.ql.Context;
 import org.apache.hadoop.hive.ql.DriverContext;
+import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.exec.mr.MapRedTask;
 import org.apache.hadoop.hive.ql.exec.mr.MapredLocalTask;
 import org.apache.hadoop.hive.ql.hooks.LineageInfo.DataContainer;
@@ -87,7 +88,9 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
 
   @Override
   public boolean canExecuteInParallel(){
-    return true;
+    // parallel execution is disabled as move task is doing metastore operations like
+    // load / delete partitions etc.
+    return false;
   }
 
   private void moveFile(Path sourcePath, Path targetPath, boolean isDfsDir)
@@ -560,7 +563,9 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
     } catch (Exception e) {
       console.printError("Failed with exception " + e.getMessage(), "\n"
           + StringUtils.stringifyException(e));
-      return (1);
+      LOG.info("move task failed", e);
+      setException(e);
+      return (ErrorMsg.getErrorMsg(e.getMessage()).getErrorCode());
     }
   }
   /**

@@ -39,6 +39,8 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.FileNotFoundException;
+import static org.apache.hadoop.hive.ql.ErrorMsg.FILE_NOT_FOUND;
 
 public class FileOperations {
   private static Log logger = LogFactory.getLog(FileOperations.class);
@@ -80,6 +82,27 @@ public class FileOperations {
     new CopyUtils(distCpDoAsUser, hiveConf).doCopy(exportRootDataDir, srcPaths);
   }
 
+  private void writeFilesList(FileStatus[] fileStatuses, BufferedWriter writer)
+          throws IOException {
+    for (FileStatus fileStatus : fileStatuses) {
+      if (fileStatus.isDirectory()) {
+        // Write files inside the sub-directory.
+        Path subDir = fileStatus.getPath();
+        writeFilesList(listFilesInDir(subDir), writer);
+      } else {
+        writer.write(encodedUri(fileStatus));
+        writer.newLine();
+      }
+    }
+  }
+
+  private FileStatus[] listFilesInDir(Path path) throws IOException {
+    return dataFileSystem.listStatus(path, p -> {
+      String name = p.getName();
+      return !name.startsWith("_") && !name.startsWith(".");
+    });
+  }
+
   /**
    * This needs the root data directory to which the data needs to be exported to.
    * The data export here is a list of files either in table/partition that are written to the _files
@@ -91,14 +114,13 @@ public class FileOperations {
     while (!done) {
       // This is only called for replication that handles MM tables; no need for mmCtx.
       try (BufferedWriter writer = writer()) {
-        FileStatus[] fileStatuses =
-                LoadSemanticAnalyzer.matchFilesOrDir(dataFileSystem, dataFileListPath);
-        for (FileStatus fileStatus : fileStatuses) {
-          writer.write(encodedUri(fileStatus));
-          writer.newLine();
-        }
+        writeFilesList(listFilesInDir(dataFileListPath), writer);
         done = true;
       } catch (IOException e) {
+        if (e instanceof FileNotFoundException) {
+          logger.error("exporting data files in dir : " + dataFileListPath + " to " + exportRootDataDir + " failed");
+          throw new FileNotFoundException(FILE_NOT_FOUND.format(e.getMessage()));
+        }
         repeat++;
         logger.info("writeFilesList failed", e);
         if (repeat >= FileUtils.MAX_IO_ERROR_RETRY) {

@@ -470,10 +470,13 @@ public enum ErrorMsg {
   //if the error message is changed for REPL_EVENTS_MISSING_IN_METASTORE, then need modification in getNextNotification
   //method in HiveMetaStoreClient
   REPL_EVENTS_MISSING_IN_METASTORE(20009, "Notification events are missing in the meta store."),
-  REPL_BOOTSTRAP_LOAD_PATH_NOT_VALID(20010, "Target database is bootstrapped from some other path."),
+  REPL_BOOTSTRAP_LOAD_PATH_NOT_VALID(20017, "Load path {0} not valid as target database is bootstrapped " +
+          "from some other path : {1}.", "64000", true),
   REPL_FILE_MISSING_FROM_SRC_AND_CM_PATH(20011, "File is missing from both source and cm path."),
   REPL_LOAD_PATH_NOT_FOUND(20012, "Load path does not exist."),
   REPL_DATABASE_IS_NOT_SOURCE_OF_REPLICATION(20013, "Source of replication (repl.source.for) is not set in the database properties."),
+  FILE_NOT_FOUND(20014, "File not found: {0}", "64000", true),
+
   MUST_ENFORCE_BUCKETING(29999, "hive.enforce.bucketing must be true for an Acid write to ''{0}''", true),
 
   //========================== 30000 range starts here ========================//
