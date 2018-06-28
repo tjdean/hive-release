@@ -71,6 +71,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Assert;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -3172,6 +3173,68 @@ public class TestReplicationScenarios {
       LOG.error("Failed to list files in: " + warehouse, e);
       assert(false);
     }
+  }
+
+  @Test
+  public void testDumpWithTableDirMissing() throws Exception {
+    String dbName = createDB(testName.getMethodName());
+    run("CREATE TABLE " + dbName + ".normal(a int)", true);
+    run("INSERT INTO " + dbName + ".normal values (1)", true);
+
+    Path path = new Path(System.getProperty("test.warehouse.dir", ""));
+    path = new Path(path, dbName.toLowerCase() + ".db");
+    path = new Path(path, "normal");
+    FileSystem fs = path.getFileSystem(hconf);
+    fs.delete(path);
+
+    advanceDumpDir();
+    CommandProcessorResponse ret = driver.run("REPL DUMP " + dbName);
+    Assert.assertEquals(ret.getResponseCode(), ErrorMsg.FILE_NOT_FOUND.getErrorCode());
+
+    run("DROP TABLE " + dbName + ".normal", true);
+    run("drop database " + dbName, true);
+  }
+
+  @Test
+  public void testDumpWithPartitionDirMissing() throws Exception {
+    String dbName = createDB(testName.getMethodName());
+    run("CREATE TABLE " + dbName + ".normal(a int) PARTITIONED BY (part int)", true);
+    run("INSERT INTO " + dbName + ".normal partition (part= 124) values (1)", true);
+
+    Path path = new Path(System.getProperty("test.warehouse.dir",""));
+    path = new Path(path, dbName.toLowerCase()+".db");
+    path = new Path(path, "normal");
+    path = new Path(path, "part=124");
+    FileSystem fs = path.getFileSystem(hconf);
+    fs.delete(path);
+
+    advanceDumpDir();
+    CommandProcessorResponse ret = driver.run("REPL DUMP " + dbName);
+    Assert.assertEquals(ret.getResponseCode(), ErrorMsg.FILE_NOT_FOUND.getErrorCode());
+
+    run("DROP TABLE " + dbName + ".normal", true);
+    run("drop database " + dbName, true);
+  }
+
+  @Test
+  public void testDumpWithEmptyTables() throws IOException {
+    String dbName = createDB(testName.getMethodName());
+    run("CREATE TABLE " + dbName + ".normal (a int) PARTITIONED BY (part int)", true);
+    run("CREATE TABLE " + dbName + ".normal_part (a int) PARTITIONED BY (part int)", true);
+    run("ALTER TABLE " + dbName + ".normal_part ADD PARTITION (b=1)", true);
+
+    advanceDumpDir();
+    run("REPL DUMP " + dbName, true);
+    String dumpLocation = getResult(0, 0);
+    run("REPL LOAD " + dbName + "_dupe FROM '" + dumpLocation + "'", true);
+
+    run("use " + dbName + "_dupe", true);
+    verifyRun("show tables", new String[]{"normal", "normal_part"});
+
+    run("DROP TABLE " + dbName + ".normal", true);
+    run("DROP TABLE " + dbName + ".normal_part", true);
+    run("drop database " + dbName, true);
+    run("drop database " + dbName + "_dupe", true);
   }
 
   @Test

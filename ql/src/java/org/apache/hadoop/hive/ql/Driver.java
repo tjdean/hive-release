@@ -1651,6 +1651,9 @@ public class Driver implements CommandProcessor {
           + org.apache.hadoop.util.StringUtils.stringifyException(e));
       return (12);
     } finally {
+      if (downstreamError != null) {
+        LOG.info("task failed with ", downstreamError);
+      }
       LOG.info("Resetting the caller context to " + originalCallerContext);
       ShimLoader.getHadoopShims().setHadoopCallerContext(originalCallerContext);
       if (SessionState.get() != null) {

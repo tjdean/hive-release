@@ -35,6 +35,7 @@ import org.apache.hadoop.hive.ql.plan.ImportTableDesc;
 import org.apache.hadoop.hive.ql.stats.StatsUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
+import org.apache.hadoop.hive.ql.ErrorMsg;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -115,9 +116,8 @@ public class ReplUtils {
       if (props.get(REPL_CHECKPOINT_KEY).equals(dumpRoot)) {
         return true;
       }
-      throw new InvalidOperationException("REPL LOAD with Dump: " + dumpRoot
-              + " is not allowed as the target DB: " + dbName
-              + " is already bootstrap loaded by another Dump " + props.get(REPL_CHECKPOINT_KEY));
+      throw new InvalidOperationException(ErrorMsg.REPL_BOOTSTRAP_LOAD_PATH_NOT_VALID.format(dumpRoot,
+              props.get(REPL_CHECKPOINT_KEY)));
     }
     return false;
   }

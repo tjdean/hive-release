@@ -71,6 +71,7 @@ class WarehouseInstance implements Closeable {
   HiveConf hiveConf;
   MiniDFSCluster miniDFSCluster;
   private HiveMetaStoreClient client;
+  public final Path warehouseRoot;
 
   private static int uniqueIdentifier = 0;
 
@@ -84,7 +85,7 @@ class WarehouseInstance implements Closeable {
     assert miniDFSCluster.isDataNodeUp();
     DistributedFileSystem fs = miniDFSCluster.getFileSystem();
 
-    Path warehouseRoot = mkDir(fs, "/warehouse" + uniqueIdentifier);
+    warehouseRoot = mkDir(fs, "/warehouse" + uniqueIdentifier);
     if (StringUtils.isNotEmpty(keyNameForEncryptedZone)) {
       fs.createEncryptionZone(warehouseRoot, keyNameForEncryptedZone);
     }
@@ -187,7 +188,7 @@ class WarehouseInstance implements Closeable {
   WarehouseInstance run(String command) throws Throwable {
     CommandProcessorResponse ret = driver.run(command);
     if (ret.getException() != null) {
-      throw ret.getException();
+      throw new RuntimeException("command exeution failed for " + command + ret.getException());
     }
     return this;
   }
@@ -198,6 +199,10 @@ class WarehouseInstance implements Closeable {
       throw new RuntimeException("command execution passed for a invalid command" + command);
     }
     return this;
+  }
+
+  public CommandProcessorResponse runCommand(String command) throws Throwable {
+    return driver.run(command);
   }
 
   Tuple dump(String dbName, String lastReplicationId, List<String> withClauseOptions)

@@ -27,13 +27,17 @@ import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
 import org.apache.hadoop.hive.ql.parse.repl.dump.io.FileOperations;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.hadoop.hive.ql.metadata.HiveException;
 
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.LinkedList;
+import java.util.concurrent.Future;
 
 import static org.apache.hadoop.hive.ql.parse.repl.dump.TableExport.AuthEntities;
 import static org.apache.hadoop.hive.ql.parse.repl.dump.TableExport.Paths;
@@ -63,9 +67,10 @@ class PartitionExport {
     this.queue = new ArrayBlockingQueue<>(2 * nThreads);
   }
 
-  void write(final ReplicationSpec forReplicationSpec) throws InterruptedException {
+  void write(final ReplicationSpec forReplicationSpec) throws InterruptedException, HiveException {
+    List<Future<?>> futures = new LinkedList<>();
     ExecutorService producer = Executors.newFixedThreadPool(1);
-    producer.submit(new Runnable() {
+    futures.add(producer.submit(new Runnable() {
       @Override
       public void run() {
         for (Partition partition : partitionIterable) {
@@ -77,7 +82,7 @@ class PartitionExport {
           }
         }
       }
-    });
+    }));
     producer.shutdown();
 
     ThreadFactory namingThreadFactory =
@@ -96,7 +101,7 @@ class PartitionExport {
         continue;
       }
       LOG.debug("scheduling partition dump {}", partition.getName());
-      consumer.submit(new Runnable() {
+      futures.add(consumer.submit(new Runnable() {
         @Override
         public void run() {
           String partitionName = partition.getName();
@@ -110,12 +115,20 @@ class PartitionExport {
                   .export(forReplicationSpec);
             LOG.debug("Thread: {}, finish partition dump {}", threadName, partitionName);
           } catch (Exception e) {
-            throw new RuntimeException("Error while export of data files", e);
+            throw new RuntimeException(e.getMessage(), e);
           }
         }
-      });
+      }));
     }
     consumer.shutdown();
+    for (Future<?> future : futures) {
+      try {
+        future.get();
+      } catch (Exception e) {
+        LOG.error("failed", e.getCause());
+        throw new HiveException(e.getCause().getMessage(), e.getCause());
+      }
+    }
     // may be drive this via configuration as well.
     consumer.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
   }

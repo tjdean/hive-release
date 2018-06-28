@@ -47,6 +47,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.hadoop.hive.ql.exec.repl.incremental.IncrementalLoadTasksBuilder;
 import org.junit.Assert;
+import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
+import org.apache.hadoop.hive.ql.ErrorMsg;
+import org.junit.Assert;
 
 import java.io.IOException;
 import java.net.URI;
@@ -1075,7 +1078,9 @@ public class TestReplicationScenariosAcrossInstances {
             .verifyResults(new String[] {  });
 
     // Retry with different dump should fail.
-    replica.loadFailure(replicatedDbName, tuple2.dumpLocation);
+    CommandProcessorResponse ret = replica.runCommand("REPL LOAD " + replicatedDbName +
+            " FROM '" + tuple2.dumpLocation + "'");
+    Assert.assertEquals(ret.getResponseCode(), ErrorMsg.REPL_BOOTSTRAP_LOAD_PATH_NOT_VALID.getErrorCode());
 
     // Verify if create table is not called on table t1 but called for t2 and t3.
     callerVerifier = new BehaviourInjection<CallerArguments, Boolean>() {
@@ -1163,7 +1168,9 @@ public class TestReplicationScenariosAcrossInstances {
             .verifyResults(Arrays.asList("india"));
 
     // Retry with different dump should fail.
-    replica.loadFailure(replicatedDbName, tuple2.dumpLocation);
+    CommandProcessorResponse ret = replica.runCommand("REPL LOAD " + replicatedDbName +
+            " FROM '" + tuple2.dumpLocation + "'");
+    Assert.assertEquals(ret.getResponseCode(), ErrorMsg.REPL_BOOTSTRAP_LOAD_PATH_NOT_VALID.getErrorCode());
 
     // Verify if no create table/function calls. Only add partitions.
     callerVerifier = new BehaviourInjection<CallerArguments, Boolean>() {
