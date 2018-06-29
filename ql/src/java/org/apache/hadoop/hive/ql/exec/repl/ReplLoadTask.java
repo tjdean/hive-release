@@ -304,11 +304,7 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
   private int executeIncrementalLoad(DriverContext driverContext) {
     try {
       IncrementalLoadTasksBuilder load = work.getIncrementalLoadTaskBuilder();
-      this.childTasks = Collections.singletonList(load.execute(driverContext, db, LOG));
-      if (work.getIncrementalIterator().hasNext()) {
-        // attach a load task at the tail of task list to start the next iteration.
-        createBuilderTask(this.childTasks);
-      }
+      this.childTasks = Collections.singletonList(load.execute(driverContext, db, LOG, work));
       return 0;
     } catch (Exception e) {
       LOG.error("failed replication", e);
