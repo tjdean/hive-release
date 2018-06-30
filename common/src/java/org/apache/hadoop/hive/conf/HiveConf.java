@@ -1611,13 +1611,13 @@ public class HiveConf extends Configuration {
             "choosing the plan with lower cost among possible plans containing a materialized view\n" +
             "  costbased: Fully cost-based strategy, always use plan with lower cost, independently on whether " +
             "it uses a materialized view or not"),
-    HIVE_MATERIALIZED_VIEW_REWRITING_TIME_WINDOW("hive.materializedview.rewriting.time.window", "0s", new TimeValidator(TimeUnit.SECONDS),
+    HIVE_MATERIALIZED_VIEW_REWRITING_TIME_WINDOW("hive.materializedview.rewriting.time.window", "0min", new TimeValidator(TimeUnit.MINUTES),
         "Time window, specified in seconds, after which outdated materialized views become invalid for automatic query rewriting.\n" +
-        "For instance, if a materialized view is created and afterwards one of its source tables is changed at " +
-        "moment in time t0, the materialized view will not be considered for rewriting anymore after t0 plus " +
-        "the value assigned to this property. Default value 0 means that the materialized view cannot be " +
-        "outdated to be used automatically in query rewriting."),
-    HIVE_MATERIALIZED_VIEW_REWRITING_INCREMENTAL("hive.materializedview.rewriting.incremental", true,
+        "For instance, if more time than the value assigned to the property has passed since the materialized view " +
+        "was created or rebuilt, and one of its source tables has changed since, the materialized view will not be " +
+        "considered for rewriting. Default value 0 means that the materialized view cannot be " +
+        "outdated to be used automatically in query rewriting. Value -1 means to skip this check."),
+    HIVE_MATERIALIZED_VIEW_REWRITING_INCREMENTAL("hive.materializedview.rewriting.incremental", false,
         "Whether to try to execute incremental rewritings based on outdated materializations and\n" +
         "current content of tables. Default value of true effectively amounts to enabling incremental\n" +
         "rebuild for the materializations too."),
@@ -1625,24 +1625,12 @@ public class HiveConf extends Configuration {
         "Whether to try to execute incremental rebuild for the materialized views. Incremental rebuild\n" +
         "tries to modify the original materialization contents to reflect the latest changes to the\n" +
         "materialized view source tables, instead of rebuilding the contents fully. Incremental rebuild\n" +
-        "is based on the materialized view algebraic incremental rewriting. Hence, this requires\n" +
-        "hive.materializedview.rewriting.incremental to be true."),
+        "is based on the materialized view algebraic incremental rewriting."),
     HIVE_MATERIALIZED_VIEW_FILE_FORMAT("hive.materializedview.fileformat", "ORC",
         new StringSet("none", "TextFile", "SequenceFile", "RCfile", "ORC"),
         "Default file format for CREATE MATERIALIZED VIEW statement"),
     HIVE_MATERIALIZED_VIEW_SERDE("hive.materializedview.serde",
         "org.apache.hadoop.hive.ql.io.orc.OrcSerde", "Default SerDe used for materialized views"),
-    HIVE_MATERIALIZATIONS_INVALIDATION_CACHE_IMPL("hive.metastore.materializations.invalidation.impl", "DEFAULT",
-        new StringSet("DEFAULT", "DISABLE"),
-        "The implementation that we should use for the materializations invalidation cache. \n" +
-            "  DEFAULT: Default implementation for invalidation cache\n" +
-            "  DISABLE: Disable invalidation cache (debugging purposes)"),
-    HIVE_MATERIALIZATIONS_INVALIDATION_CACHE_CLEAN_FREQUENCY("hive.metastore.materializations.invalidation.clean.frequency",
-        "3600s", new TimeValidator(TimeUnit.SECONDS), "Frequency at which timer task runs to remove unnecessary transactions information from" +
-        "materializations invalidation cache."),
-    HIVE_MATERIALIZATIONS_INVALIDATION_CACHE_EXPIRY_DURATION("hive.metastore.materializations.invalidation.max.duration",
-        "86400s", new TimeValidator(TimeUnit.SECONDS), "Maximum duration for query producing a materialization. After this time, transactions" +
-        "information that is not relevant for materializations can be removed from invalidation cache."),
 
     // hive.mapjoin.bucket.cache.size has been replaced by hive.smbjoin.cache.row,
     // need to remove by hive .13. Also, do not change default (see SMB operator)
@@ -2845,6 +2833,12 @@ public class HiveConf extends Configuration {
     HIVE_STRICT_MANAGED_TABLES("hive.strict.managed.tables", false,
         "Whether strict managed tables mode is enabled. With this mode enabled, " +
         "only transactional tables (both full and insert-only) are allowed to be created as managed tables"),
+
+    HIVE_EXTERNALTABLE_PURGE_DEFAULT("hive.external.table.purge.default", false,
+        "Set to true to set external.table.purge=true on newly created external tables," +
+        " which will specify that the table data should be deleted when the table is dropped." +
+        " Set to false maintain existing behavior that external tables do not delete data" +
+        " when the table is dropped."),
 
     HIVE_ERROR_ON_EMPTY_PARTITION("hive.error.on.empty.partition", false,
         "Whether to throw an exception if dynamic partition insert generates empty results."),
