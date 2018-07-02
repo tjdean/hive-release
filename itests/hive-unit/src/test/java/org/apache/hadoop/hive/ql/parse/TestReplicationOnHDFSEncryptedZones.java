@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 
 import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.METASTORE_AGGREGATE_STATS_CACHE_ENABLED;
@@ -142,5 +143,44 @@ public class TestReplicationOnHDFSEncryptedZones {
         .verifyResult(tuple.lastReplicationId)
         .run("select value from encrypted_table")
         .verifyResults(new String[] { "value1", "value2" });
+  }
+
+  @Ignore("ignoring this as all test cases in this file are failing and once we get the one original"
+              + "test here that passed to work we should uncomment this as well.")
+  @Test
+  public void testReplicationOfTruncateTableInIncrementalReplicationPhase() throws Throwable {
+    WarehouseInstance.Tuple tuple = primary
+        .run("use " + primaryDbName)
+        .run("create table t1 (id int)")
+        .run("insert into table t1 values (10)")
+        .dump(primaryDbName, null);
+
+    DFSTestUtil.createKey("test_key124", miniDFSCluster, conf);
+
+    WarehouseInstance replica = new WarehouseInstance(LOG, miniDFSCluster,
+        new HashMap<String, String>() {{
+          put(HiveConf.ConfVars.HIVE_IN_TEST.varname, "false");
+          put(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.varname, "false");
+          put(HiveConf.ConfVars.HIVE_DISTCP_DOAS_USER.varname,
+              UserGroupInformation.getCurrentUser().getUserName());
+        }}, "test_key124");
+
+    replica.load(replicatedDbName, tuple.dumpLocation)
+        .run("use " + replicatedDbName)
+        .run("select * from t1")
+        .verifyResults(Collections.singletonList("10"));
+
+    WarehouseInstance.Tuple incrementalTuple = primary
+        .run("use " + primaryDbName)
+        .run("truncate table t1")
+        .run("select * From t1")
+        .verifyResults(Collections.emptyList())
+        .dump(primaryDbName, tuple.lastReplicationId);
+
+    replica.load(replicatedDbName, incrementalTuple.dumpLocation)
+        .run("use " + replicatedDbName)
+        .run("select * from t1")
+        .verifyResults(Collections.emptyList());
+
   }
 }
