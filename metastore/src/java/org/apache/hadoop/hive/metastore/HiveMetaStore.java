@@ -1969,8 +1969,10 @@ public class HiveMetaStore extends ThriftHiveMetastore {
             HdfsFileStatus status = shim.getFullFileStatus(getHiveConf(), fs, location);
             FileStatus targetStatus = fs.getFileStatus(location);
             String targetGroup = targetStatus == null ? null : targetStatus.getGroup();
+            LOG.debug("deleting location " + location);
             wh.deleteDir(location, true, isAutopurge, db);
             fs.mkdirs(location);
+            LOG.debug("created location " + location);
             try {
               shim.setFullFileStatus(getHiveConf(), status, targetGroup, fs, location, true);
             } catch (Exception e) {
@@ -1982,7 +1984,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
               continue;
             }
             for (final FileStatus status : statuses) {
-              wh.deleteDir(location, true, isAutopurge, db);
+              LOG.debug("deleting location " + status.getPath());
+              wh.deleteDir(status.getPath(), true, isAutopurge, db);
             }
           }
         }
