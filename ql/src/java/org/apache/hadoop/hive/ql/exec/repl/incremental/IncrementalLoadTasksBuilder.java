@@ -82,7 +82,7 @@ public class IncrementalLoadTasksBuilder {
 
   public Task<? extends Serializable> execute(DriverContext driverContext, Hive hive, Log log,
                                               ReplLoadWork loadWork) throws Exception {
-    Task<? extends Serializable> evTaskRoot = TaskFactory.get(new DependencyCollectionWork(), conf);
+    Task<? extends Serializable> evTaskRoot = TaskFactory.get(new DependencyCollectionWork(), conf, true);
     Task<? extends Serializable> taskChainTail = evTaskRoot;
     Long lastReplayedEvent = null;
     this.log = log;
@@ -135,7 +135,7 @@ public class IncrementalLoadTasksBuilder {
         ReplStateLogWork replStateLogWork = new ReplStateLogWork(replLogger,
                 dir.getPath().getName(),
                 eventDmd.getDumpType().toString());
-        Task<? extends Serializable> barrierTask = TaskFactory.get(replStateLogWork, conf);
+        Task<? extends Serializable> barrierTask = TaskFactory.get(replStateLogWork, conf, true);
         AddDependencyToLeaves function = new AddDependencyToLeaves(barrierTask);
         DAGTraversal.traverse(evTasks, function);
         log.debug("Updated taskChainTail from " + taskChainTail.getClass() + taskChainTail.getId()
@@ -148,12 +148,12 @@ public class IncrementalLoadTasksBuilder {
 
     if (iterator.hasNext()) {
       // add load task to start the next iteration
-      taskChainTail.addDependentTask(TaskFactory.get(loadWork, conf));
+      taskChainTail.addDependentTask(TaskFactory.get(loadWork, conf, true));
     } else {
       Map<String, String> dbProps = new HashMap<>();
       dbProps.put(ReplicationSpec.KEY.CURR_STATE_ID.toString(), String.valueOf(lastReplayedEvent));
       ReplStateLogWork replStateLogWork = new ReplStateLogWork(replLogger, dbProps);
-      Task<? extends Serializable> barrierTask = TaskFactory.get(replStateLogWork, conf);
+      Task<? extends Serializable> barrierTask = TaskFactory.get(replStateLogWork, conf, true);
       taskChainTail.addDependentTask(barrierTask);
       log.debug("Added " + taskChainTail.getClass() + ":" + taskChainTail.getId()
               + " as a precursor of barrier task "
@@ -287,7 +287,7 @@ public class IncrementalLoadTasksBuilder {
     }
 
     // Create a barrier task for dependency collection of import tasks
-    Task<? extends Serializable> barrierTask = TaskFactory.get(new DependencyCollectionWork(), conf);
+    Task<? extends Serializable> barrierTask = TaskFactory.get(new DependencyCollectionWork(), conf, true);
 
     // Link import tasks to the barrier task which will in-turn linked with repl state update tasks
     for (Task<? extends Serializable> t : importTasks){
