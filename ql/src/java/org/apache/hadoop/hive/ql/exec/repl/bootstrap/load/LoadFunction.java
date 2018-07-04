@@ -68,7 +68,7 @@ public class LoadFunction {
   private void createFunctionReplLogTask(List<Task<? extends Serializable>> functionTasks,
                                          String functionName) {
     ReplStateLogWork replLogWork = new ReplStateLogWork(replLogger, functionName);
-    Task<ReplStateLogWork> replLogTask = TaskFactory.get(replLogWork, context.hiveConf);
+    Task<ReplStateLogWork> replLogTask = TaskFactory.get(replLogWork, context.hiveConf, true);
     DAGTraversal.traverse(functionTasks, new AddDependencyToLeaves(replLogTask));
   }
 

@@ -91,7 +91,7 @@ public class ReplUtils {
   public static Task<?> getTableReplLogTask(ImportTableDesc tableDesc, ReplLogger replLogger, HiveConf conf)
           throws SemanticException {
     ReplStateLogWork replLogWork = new ReplStateLogWork(replLogger, tableDesc.getTableName(), tableDesc.tableType());
-    return TaskFactory.get(replLogWork, conf);
+    return TaskFactory.get(replLogWork, conf, true);
   }
 
   public static Task<?> getTableCheckpointTask(ImportTableDesc tableDesc, HashMap<String, String> partSpec,
@@ -106,7 +106,7 @@ public class ReplUtils {
     if (partSpec != null) {
       alterTblDesc.setPartSpec(partSpec);
     }
-    return TaskFactory.get(new DDLWork(new HashSet<>(), new HashSet<>(), alterTblDesc), conf);
+    return TaskFactory.get(new DDLWork(new HashSet<>(), new HashSet<>(), alterTblDesc), conf, true);
   }
 
   public static boolean replCkptStatus(String dbName, Map<String, String> props, String dumpRoot)
