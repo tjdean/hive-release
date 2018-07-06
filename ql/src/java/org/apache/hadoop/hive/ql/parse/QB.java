@@ -407,6 +407,10 @@ public class QB {
     this.viewDesc = viewDesc;
   }
 
+  public boolean isView() {
+    return viewDesc != null;
+  }
+
   public QBSubQuery getHavingClauseSubQueryPredicate() {
     return havingClauseSubQueryPredicate;
   }
@@ -426,6 +430,10 @@ public class QB {
       return Collections.emptyList();
     }
     return encryptedTargetTablePaths;
+  }
+
+  public boolean isMultiDestQuery() {
+    return qbp != null && qbp.getClauseNamesForDest() != null && qbp.getClauseNamesForDest().size() > 1;
   }
 
   public HashMap<String, Table> getViewToTabSchema() {

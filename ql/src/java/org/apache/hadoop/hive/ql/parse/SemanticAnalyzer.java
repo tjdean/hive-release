@@ -10477,13 +10477,25 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
   }
 
   void analyzeInternal(ASTNode ast, PlannerContextFactory pcf) throws SemanticException {
-    // 1. Generate Resolved Parse tree from syntax tree
     LOG.info("Starting Semantic Analysis");
     PlannerContext plannerCtx = pcf.create();
+    // 1. Generate Resolved Parse tree from syntax tree
+    boolean needsTransform = needsTransform();
     //change the location of position alias process here
     processPositionAlias(ast);
     if (!genResolvedParseTree(ast, plannerCtx)) {
       return;
+    }
+    
+    ASTNode finalAST;
+    if (isCBOExecuted() && needsTransform &&
+        (qb.isCTAS() || qb.isView() || qb.isMultiDestQuery())) {
+      // If we use CBO and we may apply masking/filtering policies, we create a copy of the ast.
+      // The reason is that the generation of the operator tree may modify the initial ast,
+      // but if we need to parse for a second time, we would like to parse the unmodified ast.
+      finalAST = (ASTNode) ParseDriver.adaptor.dupTree(ast);
+    } else {
+      finalAST = ast;
     }
 
     // 2. Gen OP Tree from resolved Parse Tree
@@ -10492,19 +10504,20 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     if (!unparseTranslator.isEnabled() &&
             (tableMask.isEnabled() && analyzeRewrite == null)) {
       // Here we rewrite the * and also the masking table
-      ASTNode tree = rewriteASTWithMaskAndFilter(tableMask, ast, ctx.getTokenRewriteStream(),
-              ctx, db, tabNameToTabObject, ignoredTokens);
-      if (tree != ast) {
+      ASTNode rewrittenAST = rewriteASTWithMaskAndFilter(tableMask, finalAST, ctx.getTokenRewriteStream(),
+          ctx, db, tabNameToTabObject, ignoredTokens);
+      if (finalAST != rewrittenAST) {
+        finalAST = rewrittenAST;
         plannerCtx = pcf.create();
         ctx.setSkipTableMasking(true);
         init(true);
         //change the location of position alias process here
-        processPositionAlias(tree);
-        genResolvedParseTree(tree, plannerCtx);
+        processPositionAlias(finalAST);
+        genResolvedParseTree(finalAST, plannerCtx);
         if (this instanceof CalcitePlanner) {
           ((CalcitePlanner) this).resetCalciteConfiguration();
         }
-        sinkOp = genOPTree(tree, plannerCtx);
+        sinkOp = genOPTree(finalAST, plannerCtx);
       }
     }
 
@@ -12695,6 +12708,11 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     dot.addChild(new ASTNode(new CommonToken(HiveParser.Identifier, col)));
     selexpr.addChild(dot);
     return selexpr;
+  }
+
+  private boolean needsTransform() {
+    return SessionState.get().getAuthorizerV2() != null &&
+        SessionState.get().getAuthorizerV2().needTransform();
   }
 
   private void copyInfoToQueryProperties(QueryProperties queryProperties) {
