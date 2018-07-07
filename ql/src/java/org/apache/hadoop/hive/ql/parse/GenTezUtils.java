@@ -219,7 +219,7 @@ public class GenTezUtils {
     roots.addAll(context.eventOperatorSet);
 
     // need to clone the plan.
-    List<Operator<?>> newRoots = SerializationUtilities.cloneOperatorTree(roots, indexForTezUnion);
+    List<Operator<?>> newRoots = SerializationUtilities.cloneOperatorTree(roots);
 
     // we're cloning the operator plan but we're retaining the original work. That means
     // that root operators have to be replaced with the cloned ops. The replacement map
@@ -503,7 +503,12 @@ public class GenTezUtils {
   }
 
   public static EdgeType determineEdgeType(BaseWork preceedingWork, BaseWork followingWork, ReduceSinkOperator reduceSinkOperator) {
-    if(reduceSinkOperator.getConf().isForwarding()) {
+    // The 1-1 edge should also work for sorted cases, however depending on the details of the shuffle
+    // this might end up writing multiple compressed files or end up using an in-memory partitioned kv writer
+    // the condition about ordering = false can be removed at some point with a tweak to the unordered writer
+    // to never split a single output across multiple files (and never attempt a final merge)
+    if (reduceSinkOperator.getConf().isForwarding() && 
+        !reduceSinkOperator.getConf().isOrdering()) {
       return EdgeType.ONE_TO_ONE_EDGE;
     }
     if (followingWork instanceof ReduceWork) {

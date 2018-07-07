@@ -44,6 +44,11 @@
   <description>A base for other temporary directories.</description>
 </property>
 
+<property>
+  <name>hive.execution.engine</name>
+  <value>mr</value>
+</property>
+
 <!--
 <property>
   <name>hive.exec.reducers.max</name>
@@ -336,6 +341,16 @@
 
 <property>
   <name>hive.query.results.cache.enabled</name>
+  <value>false</value>
+</property>
+
+<property>
+  <name>hbase.unsafe.stream.capability.enforce</name>
+  <value>false</value>
+</property>
+
+<property>
+  <name>hbase.procedure.store.wal.use.hsync</name>
   <value>false</value>
 </property>
 

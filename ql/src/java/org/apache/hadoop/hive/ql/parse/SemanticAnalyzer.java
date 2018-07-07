@@ -2732,6 +2732,16 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     case HiveParser.TOK_CHARSETLITERAL:
     case HiveParser.KW_TRUE:
     case HiveParser.KW_FALSE:
+    case HiveParser.TOK_INTERVAL_DAY_LITERAL:
+    case HiveParser.TOK_INTERVAL_DAY_TIME:
+    case HiveParser.TOK_INTERVAL_DAY_TIME_LITERAL:
+    case HiveParser.TOK_INTERVAL_HOUR_LITERAL:
+    case HiveParser.TOK_INTERVAL_MINUTE_LITERAL:
+    case HiveParser.TOK_INTERVAL_MONTH_LITERAL:
+    case HiveParser.TOK_INTERVAL_SECOND_LITERAL:
+    case HiveParser.TOK_INTERVAL_YEAR_LITERAL:
+    case HiveParser.TOK_INTERVAL_YEAR_MONTH:
+    case HiveParser.TOK_INTERVAL_YEAR_MONTH_LITERAL:
       break;
 
     case HiveParser.TOK_FUNCTION:
@@ -12118,8 +12128,9 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
   }
 
   void analyzeInternal(ASTNode ast, PlannerContextFactory pcf) throws SemanticException {
-    // 1. Generate Resolved Parse tree from syntax tree
     LOG.info("Starting Semantic Analysis");
+    // 1. Generate Resolved Parse tree from syntax tree
+    boolean needsTransform = needsTransform();
     //change the location of position alias process here
     processPositionAlias(ast);
     PlannerContext plannerCtx = pcf.create();
@@ -12139,12 +12150,22 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     // Otherwise we have to wait until after the masking/filtering step.
     boolean isCacheEnabled = isResultsCacheEnabled();
     QueryResultsCache.LookupInfo lookupInfo = null;
-    boolean needsTransform = needsTransform();
     if (isCacheEnabled && !needsTransform && queryTypeCanUseCache()) {
       lookupInfo = createLookupInfoForQuery(ast);
       if (checkResultsCache(lookupInfo)) {
         return;
       }
+    }
+
+    ASTNode finalAST;
+    if (isCBOExecuted() && needsTransform &&
+        (qb.isCTAS() || qb.isView() || qb.isMaterializedView() || qb.isMultiDestQuery())) {
+      // If we use CBO and we may apply masking/filtering policies, we create a copy of the ast.
+      // The reason is that the generation of the operator tree may modify the initial ast,
+      // but if we need to parse for a second time, we would like to parse the unmodified ast.
+      finalAST = (ASTNode) ParseDriver.adaptor.dupTree(ast);
+    } else {
+      finalAST = ast;
     }
 
     // 2. Gen OP Tree from resolved Parse Tree
@@ -12153,19 +12174,20 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     if (!unparseTranslator.isEnabled() &&
         (tableMask.isEnabled() && analyzeRewrite == null)) {
       // Here we rewrite the * and also the masking table
-      ASTNode tree = rewriteASTWithMaskAndFilter(tableMask, ast, ctx.getTokenRewriteStream(),
+      ASTNode rewrittenAST = rewriteASTWithMaskAndFilter(tableMask, finalAST, ctx.getTokenRewriteStream(),
           ctx, db, tabNameToTabObject, ignoredTokens);
-      if (tree != ast) {
+      if (finalAST != rewrittenAST) {
+        finalAST = rewrittenAST;
         plannerCtx = pcf.create();
         ctx.setSkipTableMasking(true);
         init(true);
         //change the location of position alias process here
-        processPositionAlias(tree);
-        genResolvedParseTree(tree, plannerCtx);
+        processPositionAlias(finalAST);
+        genResolvedParseTree(finalAST, plannerCtx);
         if (this instanceof CalcitePlanner) {
           ((CalcitePlanner) this).resetCalciteConfiguration();
         }
-        sinkOp = genOPTree(tree, plannerCtx);
+        sinkOp = genOPTree(finalAST, plannerCtx);
       }
     }
 
@@ -12173,7 +12195,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     // In the case that row or column masking/filtering was required, the cache must be checked
     // here, after applying the masking/filtering rewrite rules to the AST.
     if (isCacheEnabled && needsTransform && queryTypeCanUseCache()) {
-      lookupInfo = createLookupInfoForQuery(ast);
+      lookupInfo = createLookupInfoForQuery(finalAST);
       if (checkResultsCache(lookupInfo)) {
         return;
       }
@@ -13041,7 +13063,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
             throw new SemanticException(ErrorMsg.CTAS_PARCOL_COEXISTENCE.getMsg());
           }
         }
-        if (isExt) {
+        if (!conf.getBoolVar(ConfVars.HIVE_CTAS_EXTERNAL_TABLES) && isExt) {
           throw new SemanticException(ErrorMsg.CTAS_EXTTBL_COEXISTENCE.getMsg());
         }
         command_type = CTAS;
@@ -13174,7 +13196,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     case CREATE_TABLE: // REGULAR CREATE TABLE DDL
       tblProps = addDefaultProperties(
           tblProps, isExt, storageFormat, dbDotTab, sortCols, isMaterialization, isTemporary);
-      addDbAndTabToOutputs(qualifiedTabName, TableType.MANAGED_TABLE, tblProps);
+      addDbAndTabToOutputs(qualifiedTabName, TableType.MANAGED_TABLE, isTemporary, tblProps);
 
       CreateTableDesc crtTblDesc = new CreateTableDesc(dbDotTab, isExt, isTemporary, cols, partCols,
           bucketCols, sortCols, numBuckets, rowFormatParams.fieldDelim,
@@ -13198,7 +13220,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
     case CTLT: // create table like <tbl_name>
       tblProps = addDefaultProperties(
           tblProps, isExt, storageFormat, dbDotTab, sortCols, isMaterialization, isTemporary);
-      addDbAndTabToOutputs(qualifiedTabName, TableType.MANAGED_TABLE, tblProps);
+      addDbAndTabToOutputs(qualifiedTabName, TableType.MANAGED_TABLE, isTemporary, tblProps);
 
       if (isTemporary) {
         Table likeTable = getTable(likeTableName, false);
@@ -13278,7 +13300,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
 
       tblProps = addDefaultProperties(
           tblProps, isExt, storageFormat, dbDotTab, sortCols, isMaterialization, isTemporary);
-      addDbAndTabToOutputs(qualifiedTabName, TableType.MANAGED_TABLE, tblProps);
+      addDbAndTabToOutputs(qualifiedTabName, TableType.MANAGED_TABLE, isTemporary, tblProps);
       tableDesc = new CreateTableDesc(qualifiedTabName[0], dbDotTab, isExt, isTemporary, cols,
           partCols, bucketCols, sortCols, numBuckets, rowFormatParams.fieldDelim,
           rowFormatParams.fieldEscape, rowFormatParams.collItemDelim, rowFormatParams.mapKeyDelim,
@@ -13302,13 +13324,14 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
 
   /** Adds entities for create table/create view. */
   private void addDbAndTabToOutputs(String[] qualifiedTabName, TableType type,
-      Map<String, String> tblProps) throws SemanticException {
+      boolean isTemporary, Map<String, String> tblProps) throws SemanticException {
     Database database  = getDatabase(qualifiedTabName[0]);
     outputs.add(new WriteEntity(database, WriteEntity.WriteType.DDL_SHARED));
 
     Table t = new Table(qualifiedTabName[0], qualifiedTabName[1]);
     t.setParameters(tblProps);
     t.setTableType(type);
+    t.setTemporary(isTemporary);
     outputs.add(new WriteEntity(t, WriteEntity.WriteType.DDL_NO_LOCK));
   }
 
@@ -13409,7 +13432,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           storageFormat.getInputFormat(), storageFormat.getOutputFormat(),
           location, storageFormat.getSerde(), storageFormat.getStorageHandler(),
           storageFormat.getSerdeProps());
-      addDbAndTabToOutputs(qualTabName, TableType.MATERIALIZED_VIEW, tblProps);
+      addDbAndTabToOutputs(qualTabName, TableType.MATERIALIZED_VIEW, false, tblProps);
       queryState.setCommandType(HiveOperation.CREATE_MATERIALIZED_VIEW);
     } else {
       createVwDesc = new CreateViewDesc(
@@ -13418,7 +13441,7 @@ public class SemanticAnalyzer extends BaseSemanticAnalyzer {
           storageFormat.getOutputFormat(), storageFormat.getSerde());
       rootTasks.add(TaskFactory.get(new DDLWork(getInputs(), getOutputs(),
           createVwDesc)));
-      addDbAndTabToOutputs(qualTabName, TableType.VIRTUAL_VIEW, tblProps);
+      addDbAndTabToOutputs(qualTabName, TableType.VIRTUAL_VIEW, false, tblProps);
       queryState.setCommandType(HiveOperation.CREATEVIEW);
     }
     qb.setViewDesc(createVwDesc);
