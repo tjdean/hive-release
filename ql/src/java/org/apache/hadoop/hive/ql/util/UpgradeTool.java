@@ -45,6 +45,8 @@ import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.api.hive_metastoreConstants;
 import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
+import org.apache.hadoop.hive.metastore.utils.FileUtils;
+import org.apache.hadoop.hive.metastore.utils.FileUtils.RemoteIteratorWithFilter;
 import org.apache.hadoop.hive.ql.io.AcidUtils;
 import org.apache.hadoop.hive.ql.io.BucketCodec;
 import org.apache.hadoop.hive.ql.metadata.Hive;
@@ -249,7 +251,8 @@ public class UpgradeTool {
       //Known deltas
       Map<Integer, List<Path>> deltaToFileMap = new HashMap<>();
       FileSystem fs = FileSystem.get(conf);
-      RemoteIterator<LocatedFileStatus> iter = fs.listFiles(p, true);
+      RemoteIteratorWithFilter iter =
+          new RemoteIteratorWithFilter(fs.listFiles(p, true), RemoteIteratorWithFilter.HIDDEN_FILES_FULL_PATH_FILTER);
       Function<Integer, List<Path>> makeList = new Function<Integer, List<Path>>() {//lambda?
         @Override
         public List<Path> apply(Integer aVoid) {
@@ -291,6 +294,16 @@ public class UpgradeTool {
         /* create delta and move each files to it.  HIVE-19750 ensures wer have reserved
          * enough write IDs to do this.*/
         Path deltaDir = new Path(p, AcidUtils.deltaSubdir(ent.getKey(), ent.getKey()));
+        if (execute) {
+          if (!fs.mkdirs(deltaDir)) {
+            String msg = "Failed to create directory " + deltaDir;
+            LOG.error(msg);
+            throw new IllegalStateException(msg);
+          }
+        }
+        // Add to list of FS commands
+        makeDirectoryCommand(deltaDir, pw);
+
         for (Path file : ent.getValue()) {
           Path newFile = new Path(deltaDir, stripCopySuffix(file.getName()));
           LOG.debug("need to rename: " + file + " to " + newFile);
@@ -317,7 +330,8 @@ public class UpgradeTool {
     }
     List<RenamePair> renames = new ArrayList<>();
     FileSystem fs = FileSystem.get(conf);
-    RemoteIterator<LocatedFileStatus> iter = fs.listFiles(p, true);
+    RemoteIteratorWithFilter iter =
+        new RemoteIteratorWithFilter(fs.listFiles(p, true), RemoteIteratorWithFilter.HIDDEN_FILES_FULL_PATH_FILTER);
     /**
      * count some heuristics - bad file is something not in {@link AcidUtils#ORIGINAL_PATTERN} or
      * {@link AcidUtils#ORIGINAL_PATTERN_COPY} format.  This has to be renamed for acid to work.
@@ -348,6 +362,16 @@ public class UpgradeTool {
       }
       int wrtieId = fileId / numBuckets + 1;//start with delta_1 (not delta_0)
       Path deltaDir = new Path(p, AcidUtils.deltaSubdir(wrtieId, wrtieId));
+      if (execute) {
+        if (!fs.mkdirs(deltaDir)) {
+          String msg = "Failed to create directory " + deltaDir;
+          LOG.error(msg);
+          throw new IllegalStateException(msg);
+        }
+      }
+      // Add to list of FS commands
+      makeDirectoryCommand(deltaDir, pw);
+
       Path newPath =
           new Path(deltaDir, String.format(AcidUtils.BUCKET_DIGITS, fileId % numBuckets)+ "_0");
       /*we could track reason for rename in RenamePair so that the decision can be made later to
@@ -391,6 +415,9 @@ public class UpgradeTool {
     //https://hadoop.apache.org/docs/r3.0.0-alpha2/hadoop-project-dist/hadoop-common/FileSystemShell.html#mv
     println(pw, "hadoop fs -mv " + file + " " + newFile + ";");
   }
+  private static void makeDirectoryCommand(Path dir, PrintWriter pw) {
+    println(pw, "hadoop fs -mkdir " + dir + ";");
+  }
 
   private static void println(PrintWriter pw, String msg) {
     if (pw != null) {
@@ -417,6 +444,7 @@ public class UpgradeTool {
       return newPath;
     }
   }
+
   /**
    * @param location - path to a partition (or table if not partitioned) dir
    */
