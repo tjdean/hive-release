@@ -72,6 +72,7 @@ import org.apache.hadoop.hive.ql.udf.generic.GenericUDFToBinary;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFToChar;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFToDate;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFToDecimal;
+import org.apache.hadoop.hive.ql.udf.generic.GenericUDFToString;
 import org.apache.hadoop.hive.ql.udf.generic.GenericUDFToVarchar;
 import org.apache.hadoop.hive.serde2.objectinspector.ConstantObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.ObjectInspectorUtils;
@@ -239,7 +240,7 @@ public class RexNodeConverter {
           if (udfClassName.equals("UDFToBoolean") || udfClassName.equals("UDFToByte")
               || udfClassName.equals("UDFToDouble") || udfClassName.equals("UDFToInteger")
               || udfClassName.equals("UDFToLong") || udfClassName.equals("UDFToShort")
-              || udfClassName.equals("UDFToFloat") || udfClassName.equals("UDFToString"))
+              || udfClassName.equals("UDFToFloat"))
             castExpr = true;
         }
       }
@@ -255,6 +256,7 @@ public class RexNodeConverter {
     if (childRexNodeLst != null && childRexNodeLst.size() == 1) {
       GenericUDF udf = func.getGenericUDF();
       if ((udf instanceof GenericUDFToChar) || (udf instanceof GenericUDFToVarchar)
+          || (udf instanceof GenericUDFToString)
           || (udf instanceof GenericUDFToDecimal) || (udf instanceof GenericUDFToDate)
           || (udf instanceof GenericUDFToBinary) || castExprUsingUDFBridge(udf)) {
         castExpr = cluster.getRexBuilder().makeAbstractCast(

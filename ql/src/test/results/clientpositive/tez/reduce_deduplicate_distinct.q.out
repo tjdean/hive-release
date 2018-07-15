@@ -40,7 +40,7 @@ Stage-0
          File Output Operator [FS_7]
             compressed:false
             Statistics:Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
-            table:{"input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat","serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"}
+            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Group By Operator [GBY_5]
             |  aggregations:["count(DISTINCT KEY._col1:0._col0)","count(DISTINCT KEY._col1:1._col0)"]
             |  keys:KEY._col0 (type: int)
@@ -101,7 +101,7 @@ Stage-0
          File Output Operator [FS_12]
             compressed:false
             Statistics:Num rows: 1 Data size: 5 Basic stats: COMPLETE Column stats: NONE
-            table:{"input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat","serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"}
+            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Group By Operator [GBY_10]
             |  aggregations:["count(DISTINCT KEY._col1:0._col0)","count(DISTINCT KEY._col1:1._col0)"]
             |  keys:KEY._col0 (type: int)
@@ -176,7 +176,7 @@ Stage-0
          File Output Operator [FS_12]
             compressed:false
             Statistics:Num rows: 1 Data size: 5 Basic stats: COMPLETE Column stats: NONE
-            table:{"input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat","serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"}
+            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Group By Operator [GBY_10]
             |  aggregations:["count(DISTINCT KEY._col1:0._col0)","count(DISTINCT KEY._col1:1._col0)"]
             |  keys:KEY._col0 (type: int)
@@ -251,7 +251,7 @@ Stage-0
          File Output Operator [FS_12]
             compressed:false
             Statistics:Num rows: 1 Data size: 5 Basic stats: COMPLETE Column stats: NONE
-            table:{"input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat","serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"}
+            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Group By Operator [GBY_10]
             |  aggregations:["count(DISTINCT KEY._col1:0._col0)","count(DISTINCT KEY._col1:1._col0)"]
             |  keys:KEY._col0 (type: int)
@@ -326,7 +326,7 @@ Stage-0
          File Output Operator [FS_12]
             compressed:false
             Statistics:Num rows: 1 Data size: 5 Basic stats: COMPLETE Column stats: NONE
-            table:{"input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat","serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe"}
+            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Group By Operator [GBY_10]
             |  aggregations:["count(DISTINCT KEY._col1:0._col0)","count(DISTINCT KEY._col1:1._col0)"]
             |  keys:KEY._col0 (type: int)

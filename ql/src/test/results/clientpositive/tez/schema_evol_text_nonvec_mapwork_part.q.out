@@ -2067,7 +2067,7 @@ Stage-0
          Reducer 2
          File Output Operator [FS_4]
             compressed:false
-            Statistics:Num rows: 10 Data size: 306 Basic stats: COMPLETE Column stats: NONE
+            Statistics:Num rows: 10 Data size: 380 Basic stats: COMPLETE Column stats: NONE
             table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Select Operator [SEL_3]
             |  outputColumnNames:["_col0","_col1","_col2","_col3","_col4","_col5"]
@@ -2098,16 +2098,16 @@ POSTHOOK: Input: default@part_change_numeric_group_string_group_floating_string@
 POSTHOOK: Input: default@part_change_numeric_group_string_group_floating_string@part=2
 #### A masked pattern was here ####
 insert_num	part	c1	c2	c3	b
-1	1	-23866739993	753.7028	-3651.672121	original
-10	1	17	90000.0	7.54072151E8	new
-2	1	-10.3	-2.0	-29.0764	original
-3	1	-832222222	255.0	4957.0	original
-4	1	847492223	0.0	20435.0	original
+1	1	-23866739993.000000000000000000	753.7028	-3651.672121	original
+10	1	17.000000000000000000	90000.0	7.54072151E8	new
+2	1	-10.300000000000000000	-2.0	-29.0764	original
+3	1	-832222222.000000000000000000	255.0	4957.0	original
+4	1	847492223.000000000000000000	0.0	20435.0	original
 5	2	30.774	20.31	46114.284799488	new
 6	2	-66475.561431	52927714	7203778961	new
 7	2	256	32768	31889	new
 8	2	5555	40000	-719017797	new
-9	1	100	5000.0	5443.0	new
+9	1	100.000000000000000000	5000.0	5443.0	new
 PREHOOK: query: drop table part_change_numeric_group_string_group_floating_string
 PREHOOK: type: DROPTABLE
 PREHOOK: Input: default@part_change_numeric_group_string_group_floating_string
@@ -2228,7 +2228,7 @@ Stage-0
          Reducer 2
          File Output Operator [FS_4]
             compressed:false
-            Statistics:Num rows: 10 Data size: 1095 Basic stats: COMPLETE Column stats: NONE
+            Statistics:Num rows: 10 Data size: 1169 Basic stats: COMPLETE Column stats: NONE
             table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Select Operator [SEL_3]
             |  outputColumnNames:["_col0","_col1","_col2","_col3","_col4","_col5"]
@@ -2259,11 +2259,11 @@ POSTHOOK: Input: default@part_change_numeric_group_string_group_floating_char@pa
 POSTHOOK: Input: default@part_change_numeric_group_string_group_floating_char@part=2
 #### A masked pattern was here ####
 insert_num	part	c1	c2	c3	b
-1	1	-23866739993                                      	753.7028                                          	-3651.672121                                      	original
+1	1	-23866739993.000000000000000000                   	753.7028                                          	-3651.672121                                      	original
 10	1	NULL	90000.0                                           	7.54072151E8                                      	new
-2	1	-10.3                                             	-2.0                                              	-29.0764                                          	original
-3	1	9000000000                                        	-255.0                                            	4957.0                                            	original
-4	1	-999999999999                                     	0.0                                               	20435.0                                           	original
+2	1	-10.300000000000000000                            	-2.0                                              	-29.0764                                          	original
+3	1	9000000000.000000000000000000                     	-255.0                                            	4957.0                                            	original
+4	1	-999999999999.000000000000000000                  	0.0                                               	20435.0                                           	original
 5	2	30.774                                            	20.31                                             	46114.284799488                                   	new
 6	2	-66475.561431                                     	52927714                                          	7203778961                                        	new
 7	2	256                                               	32768                                             	31889                                             	new
@@ -2389,7 +2389,7 @@ Stage-0
          Reducer 2
          File Output Operator [FS_4]
             compressed:false
-            Statistics:Num rows: 10 Data size: 316 Basic stats: COMPLETE Column stats: NONE
+            Statistics:Num rows: 10 Data size: 390 Basic stats: COMPLETE Column stats: NONE
             table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Select Operator [SEL_3]
             |  outputColumnNames:["_col0","_col1","_col2","_col3","_col4","_col5"]
@@ -2422,7 +2422,7 @@ POSTHOOK: Input: default@part_change_numeric_group_string_group_floating_char_tr
 insert_num	part	c1	c2	c3	b
 1	1	-238667	753.702	-3651.6	original
 10	1	NULL	90000.0	7540721	new
-2	1	-10.3  	-2.0   	-29.076	original
+2	1	-10.300	-2.0   	-29.076	original
 3	1	8322222	-255.0 	4957.0 	original
 4	1	8474922	0.0    	20435.0	original
 5	2	30.774 	20.31  	46114.2	new
@@ -2550,7 +2550,7 @@ Stage-0
          Reducer 2
          File Output Operator [FS_4]
             compressed:false
-            Statistics:Num rows: 10 Data size: 304 Basic stats: COMPLETE Column stats: NONE
+            Statistics:Num rows: 10 Data size: 368 Basic stats: COMPLETE Column stats: NONE
             table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Select Operator [SEL_3]
             |  outputColumnNames:["_col0","_col1","_col2","_col3","_col4","_col5"]
@@ -2581,16 +2581,16 @@ POSTHOOK: Input: default@part_change_numeric_group_string_group_floating_varchar
 POSTHOOK: Input: default@part_change_numeric_group_string_group_floating_varchar@part=2
 #### A masked pattern was here ####
 insert_num	part	c1	c2	c3	b
-1	1	-2.38667407E10	753.7028	-3651.672121	original
-10	1	17.0	90000.0	754072151	new
-2	1	-10.3	-2.0	-29.0764	original
-3	1	8.9999995E9	-255.0	4957	original
-4	1	-1.0E12	0.0	20435	original
+1	1	-2.38667407E10	753.7028	-3651.672121000000000000	original
+10	1	17.0	90000.0	754072151.000000000000000000	new
+2	1	-10.3	-2.0	-29.076400000000000000	original
+3	1	8.9999995E9	-255.0	4957.000000000000000000	original
+4	1	-1.0E12	0.0	20435.000000000000000000	original
 5	2	30.774	20.31	46114.284799488	new
 6	2	-66475.561431	52927714	7203778961	new
 7	2	256	32768	31889	new
 8	2	5555	40000	-719017797	new
-9	1	100.0	5000.0	5443	new
+9	1	100.0	5000.0	5443.000000000000000000	new
 PREHOOK: query: drop table part_change_numeric_group_string_group_floating_varchar
 PREHOOK: type: DROPTABLE
 PREHOOK: Input: default@part_change_numeric_group_string_group_floating_varchar
@@ -2711,7 +2711,7 @@ Stage-0
          Reducer 2
          File Output Operator [FS_4]
             compressed:false
-            Statistics:Num rows: 10 Data size: 288 Basic stats: COMPLETE Column stats: NONE
+            Statistics:Num rows: 10 Data size: 362 Basic stats: COMPLETE Column stats: NONE
             table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Select Operator [SEL_3]
             |  outputColumnNames:["_col0","_col1","_col2","_col3","_col4","_col5"]
@@ -2743,15 +2743,15 @@ POSTHOOK: Input: default@part_change_numeric_group_string_group_floating_varchar
 #### A masked pattern was here ####
 insert_num	part	c1	c2	c3	b
 1	1	-238667	753.702	-3651.6	original
-10	1	17	90000.0	7540721	new
-2	1	-10.3	-2.0	-29.076	original
+10	1	17.0000	90000.0	7540721	new
+2	1	-10.300	-2.0	-29.076	original
 3	1	9000000	-255.0	4957.0	original
 4	1	-999999	0.0	20435.0	original
 5	2	30.774	20.31	46114.2	new
 6	2	-66475.	5292771	7203778	new
 7	2	256	32768	31889	new
 8	2	5555	40000	-719017	new
-9	1	100	5000.0	5443.0	new
+9	1	100.000	5000.0	5443.0	new
 PREHOOK: query: drop table part_change_numeric_group_string_group_floating_varchar_trunc
 PREHOOK: type: DROPTABLE
 PREHOOK: Input: default@part_change_numeric_group_string_group_floating_varchar_trunc
@@ -3383,7 +3383,7 @@ Stage-0
          Reducer 2
          File Output Operator [FS_4]
             compressed:false
-            Statistics:Num rows: 10 Data size: 332 Basic stats: COMPLETE Column stats: NONE
+            Statistics:Num rows: 10 Data size: 446 Basic stats: COMPLETE Column stats: NONE
             table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Select Operator [SEL_3]
             |  outputColumnNames:["_col0","_col1","_col2","_col3","_col4","_col5","_col6","_col7","_col8"]
@@ -3550,7 +3550,7 @@ Stage-0
          Reducer 2
          File Output Operator [FS_4]
             compressed:false
-            Statistics:Num rows: 10 Data size: 331 Basic stats: COMPLETE Column stats: NONE
+            Statistics:Num rows: 10 Data size: 445 Basic stats: COMPLETE Column stats: NONE
             table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Select Operator [SEL_3]
             |  outputColumnNames:["_col0","_col1","_col2","_col3","_col4","_col5","_col6","_col7"]
@@ -3714,7 +3714,7 @@ Stage-0
          Reducer 2
          File Output Operator [FS_4]
             compressed:false
-            Statistics:Num rows: 10 Data size: 315 Basic stats: COMPLETE Column stats: NONE
+            Statistics:Num rows: 10 Data size: 429 Basic stats: COMPLETE Column stats: NONE
             table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Select Operator [SEL_3]
             |  outputColumnNames:["_col0","_col1","_col2","_col3","_col4","_col5","_col6"]
@@ -3875,7 +3875,7 @@ Stage-0
          Reducer 2
          File Output Operator [FS_4]
             compressed:false
-            Statistics:Num rows: 10 Data size: 297 Basic stats: COMPLETE Column stats: NONE
+            Statistics:Num rows: 10 Data size: 411 Basic stats: COMPLETE Column stats: NONE
             table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Select Operator [SEL_3]
             |  outputColumnNames:["_col0","_col1","_col2","_col3","_col4","_col5"]
@@ -4033,7 +4033,7 @@ Stage-0
          Reducer 2
          File Output Operator [FS_4]
             compressed:false
-            Statistics:Num rows: 10 Data size: 203 Basic stats: COMPLETE Column stats: NONE
+            Statistics:Num rows: 10 Data size: 335 Basic stats: COMPLETE Column stats: NONE
             table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
             Select Operator [SEL_3]
             |  outputColumnNames:["_col0","_col1","_col2","_col3"]

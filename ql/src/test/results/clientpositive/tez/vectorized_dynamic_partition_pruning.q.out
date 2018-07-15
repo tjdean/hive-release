@@ -1699,32 +1699,32 @@ STAGE PLANS:
             Map Operator Tree:
                 TableScan
                   alias: srcpart
-                  filterExpr: UDFToString((hr * 2)) is not null (type: boolean)
+                  filterExpr: CAST( (hr * 2) AS STRING) is not null (type: boolean)
                   Statistics: Num rows: 2000 Data size: 21248 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
-                    predicate: UDFToString((hr * 2)) is not null (type: boolean)
+                    predicate: CAST( (hr * 2) AS STRING) is not null (type: boolean)
                     Statistics: Num rows: 1000 Data size: 10624 Basic stats: COMPLETE Column stats: NONE
                     Reduce Output Operator
-                      key expressions: UDFToString((hr * 2)) (type: string)
+                      key expressions: CAST( (hr * 2) AS STRING) (type: string)
                       sort order: +
-                      Map-reduce partition columns: UDFToString((hr * 2)) (type: string)
+                      Map-reduce partition columns: CAST( (hr * 2) AS STRING) (type: string)
                       Statistics: Num rows: 1000 Data size: 10624 Basic stats: COMPLETE Column stats: NONE
         Map 4 
             Map Operator Tree:
                 TableScan
                   alias: srcpart_double_hour
-                  filterExpr: (UDFToString(hr) is not null and (hour = 11)) (type: boolean)
+                  filterExpr: (CAST( hr AS STRING) is not null and (hour = 11)) (type: boolean)
                   Statistics: Num rows: 2 Data size: 188 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
-                    predicate: (UDFToString(hr) is not null and (hour = 11)) (type: boolean)
+                    predicate: (CAST( hr AS STRING) is not null and (hour = 11)) (type: boolean)
                     Statistics: Num rows: 1 Data size: 94 Basic stats: COMPLETE Column stats: NONE
                     Reduce Output Operator
-                      key expressions: UDFToString(hr) (type: string)
+                      key expressions: CAST( hr AS STRING) (type: string)
                       sort order: +
-                      Map-reduce partition columns: UDFToString(hr) (type: string)
+                      Map-reduce partition columns: CAST( hr AS STRING) (type: string)
                       Statistics: Num rows: 1 Data size: 94 Basic stats: COMPLETE Column stats: NONE
                     Select Operator
-                      expressions: UDFToString(hr) (type: string)
+                      expressions: CAST( hr AS STRING) (type: string)
                       outputColumnNames: _col0
                       Statistics: Num rows: 1 Data size: 94 Basic stats: COMPLETE Column stats: NONE
                       Group By Operator
@@ -1734,7 +1734,7 @@ STAGE PLANS:
                         Statistics: Num rows: 1 Data size: 94 Basic stats: COMPLETE Column stats: NONE
                         Dynamic Partitioning Event Operator
                           Target Input: srcpart
-                          Partition key expr: UDFToString((hr * 2))
+                          Partition key expr: CAST( (hr * 2) AS STRING)
                           Statistics: Num rows: 1 Data size: 94 Basic stats: COMPLETE Column stats: NONE
                           Target column: hr
                           Target Vertex: Map 1
@@ -1745,8 +1745,8 @@ STAGE PLANS:
                 condition map:
                      Inner Join 0 to 1
                 keys:
-                  0 UDFToString((hr * 2)) (type: string)
-                  1 UDFToString(hr) (type: string)
+                  0 CAST( (hr * 2) AS STRING) (type: string)
+                  1 CAST( hr AS STRING) (type: string)
                 Statistics: Num rows: 1100 Data size: 11686 Basic stats: COMPLETE Column stats: NONE
                 Group By Operator
                   aggregations: count()

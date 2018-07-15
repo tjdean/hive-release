@@ -43,7 +43,7 @@ public class CastDecimalToString extends DecimalToStringUnaryUDF {
 
   @Override
   protected void func(BytesColumnVector outV, DecimalColumnVector inV, int i) {
-    String s = inV.vector[i].getHiveDecimal().toString();
+    String s = inV.vector[i].getHiveDecimal().toFormatString(inV.scale);
     byte[] b = null;
     try {
       b = s.getBytes("UTF-8");
