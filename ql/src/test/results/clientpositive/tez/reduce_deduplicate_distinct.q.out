@@ -75,11 +75,37 @@ STAGE PLANS:
                       output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                       serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
 
-  Stage: Stage-0
-    Fetch Operator
-      limit: -1
-      Processor Tree:
-        ListSink
+Stage-0
+   Fetch Operator
+      limit:-1
+      Stage-1
+         Reducer 2
+         File Output Operator [FS_7]
+            compressed:false
+            Statistics:Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
+            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
+            Group By Operator [GBY_5]
+            |  aggregations:["count(DISTINCT KEY._col1:0._col0)","count(DISTINCT KEY._col1:1._col0)"]
+            |  keys:KEY._col0 (type: int)
+            |  outputColumnNames:["_col0","_col1","_col2"]
+            |  Statistics:Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
+            |<-Map 1 [SIMPLE_EDGE]
+               Reduce Output Operator [RS_4]
+                  key expressions:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                  Map-reduce partition columns:_col0 (type: int)
+                  sort order:+++
+                  Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
+                  Group By Operator [GBY_3]
+                     aggregations:["count(DISTINCT _col1)","count(DISTINCT _col2)"]
+                     keys:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                     outputColumnNames:["_col0","_col1","_col2","_col3","_col4"]
+                     Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
+                     Select Operator [SEL_1]
+                        outputColumnNames:["_col0","_col1","_col2"]
+                        Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
+                        TableScan [TS_0]
+                           alias:count_distinct_test
+                           Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
 
 PREHOOK: query: select id,count(distinct key),count(distinct name)
 from count_distinct_test
@@ -170,11 +196,51 @@ STAGE PLANS:
                       output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                       serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
 
-  Stage: Stage-0
-    Fetch Operator
-      limit: -1
-      Processor Tree:
-        ListSink
+Stage-0
+   Fetch Operator
+      limit:-1
+      Stage-1
+         Reducer 3
+         File Output Operator [FS_12]
+            compressed:false
+            Statistics:Num rows: 1 Data size: 5 Basic stats: COMPLETE Column stats: NONE
+            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
+            Group By Operator [GBY_10]
+            |  aggregations:["count(DISTINCT KEY._col1:0._col0)","count(DISTINCT KEY._col1:1._col0)"]
+            |  keys:KEY._col0 (type: int)
+            |  outputColumnNames:["_col0","_col1","_col2"]
+            |  Statistics:Num rows: 1 Data size: 5 Basic stats: COMPLETE Column stats: NONE
+            |<-Reducer 2 [SIMPLE_EDGE]
+               Reduce Output Operator [RS_9]
+                  key expressions:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                  Map-reduce partition columns:_col0 (type: int)
+                  sort order:+++
+                  Statistics:Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
+                  Group By Operator [GBY_8]
+                     aggregations:["count(DISTINCT _col1)","count(DISTINCT _col2)"]
+                     keys:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                     outputColumnNames:["_col0","_col1","_col2","_col3","_col4"]
+                     Statistics:Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
+                     Group By Operator [GBY_5]
+                     |  keys:KEY._col0 (type: int), KEY._col1 (type: int), KEY._col2 (type: int)
+                     |  outputColumnNames:["_col0","_col1","_col2"]
+                     |  Statistics:Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
+                     |<-Map 1 [SIMPLE_EDGE]
+                        Reduce Output Operator [RS_4]
+                           key expressions:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                           Map-reduce partition columns:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                           sort order:+++
+                           Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
+                           Group By Operator [GBY_3]
+                              keys:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                              outputColumnNames:["_col0","_col1","_col2"]
+                              Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
+                              Select Operator [SEL_1]
+                                 outputColumnNames:["_col0","_col1","_col2"]
+                                 Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
+                                 TableScan [TS_0]
+                                    alias:count_distinct_test
+                                    Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
 
 PREHOOK: query: select id,count(Distinct key),count(Distinct name)
 from (select id,key,name from count_distinct_test group by id,key,name)m
@@ -265,11 +331,51 @@ STAGE PLANS:
                       output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                       serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
 
-  Stage: Stage-0
-    Fetch Operator
-      limit: -1
-      Processor Tree:
-        ListSink
+Stage-0
+   Fetch Operator
+      limit:-1
+      Stage-1
+         Reducer 3
+         File Output Operator [FS_12]
+            compressed:false
+            Statistics:Num rows: 1 Data size: 5 Basic stats: COMPLETE Column stats: NONE
+            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
+            Group By Operator [GBY_10]
+            |  aggregations:["count(DISTINCT KEY._col1:0._col0)","count(DISTINCT KEY._col1:1._col0)"]
+            |  keys:KEY._col0 (type: int)
+            |  outputColumnNames:["_col0","_col1","_col2"]
+            |  Statistics:Num rows: 1 Data size: 5 Basic stats: COMPLETE Column stats: NONE
+            |<-Reducer 2 [SIMPLE_EDGE]
+               Reduce Output Operator [RS_9]
+                  key expressions:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                  Map-reduce partition columns:_col0 (type: int)
+                  sort order:+++
+                  Statistics:Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
+                  Group By Operator [GBY_8]
+                     aggregations:["count(DISTINCT _col1)","count(DISTINCT _col2)"]
+                     keys:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                     outputColumnNames:["_col0","_col1","_col2","_col3","_col4"]
+                     Statistics:Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
+                     Group By Operator [GBY_5]
+                     |  keys:KEY._col0 (type: int), KEY._col1 (type: int), KEY._col2 (type: int)
+                     |  outputColumnNames:["_col0","_col1","_col2"]
+                     |  Statistics:Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
+                     |<-Map 1 [SIMPLE_EDGE]
+                        Reduce Output Operator [RS_4]
+                           key expressions:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                           Map-reduce partition columns:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                           sort order:+++
+                           Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
+                           Group By Operator [GBY_3]
+                              keys:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                              outputColumnNames:["_col0","_col1","_col2"]
+                              Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
+                              Select Operator [SEL_1]
+                                 outputColumnNames:["_col0","_col1","_col2"]
+                                 Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
+                                 TableScan [TS_0]
+                                    alias:count_distinct_test
+                                    Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
 
 PREHOOK: query: select id,count(Distinct name),count(Distinct key)
 from (select id,key,name from count_distinct_test group by id,name,key)m
@@ -360,11 +466,51 @@ STAGE PLANS:
                       output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                       serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
 
-  Stage: Stage-0
-    Fetch Operator
-      limit: -1
-      Processor Tree:
-        ListSink
+Stage-0
+   Fetch Operator
+      limit:-1
+      Stage-1
+         Reducer 3
+         File Output Operator [FS_12]
+            compressed:false
+            Statistics:Num rows: 1 Data size: 5 Basic stats: COMPLETE Column stats: NONE
+            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
+            Group By Operator [GBY_10]
+            |  aggregations:["count(DISTINCT KEY._col1:0._col0)","count(DISTINCT KEY._col1:1._col0)"]
+            |  keys:KEY._col0 (type: int)
+            |  outputColumnNames:["_col0","_col1","_col2"]
+            |  Statistics:Num rows: 1 Data size: 5 Basic stats: COMPLETE Column stats: NONE
+            |<-Reducer 2 [SIMPLE_EDGE]
+               Reduce Output Operator [RS_9]
+                  key expressions:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                  Map-reduce partition columns:_col0 (type: int)
+                  sort order:+++
+                  Statistics:Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
+                  Group By Operator [GBY_8]
+                     aggregations:["count(DISTINCT _col1)","count(DISTINCT _col2)"]
+                     keys:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                     outputColumnNames:["_col0","_col1","_col2","_col3","_col4"]
+                     Statistics:Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
+                     Group By Operator [GBY_5]
+                     |  keys:KEY._col0 (type: int), KEY._col1 (type: int), KEY._col2 (type: int)
+                     |  outputColumnNames:["_col0","_col1","_col2"]
+                     |  Statistics:Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
+                     |<-Map 1 [SIMPLE_EDGE]
+                        Reduce Output Operator [RS_4]
+                           key expressions:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                           Map-reduce partition columns:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                           sort order:+++
+                           Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
+                           Group By Operator [GBY_3]
+                              keys:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                              outputColumnNames:["_col0","_col1","_col2"]
+                              Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
+                              Select Operator [SEL_1]
+                                 outputColumnNames:["_col0","_col1","_col2"]
+                                 Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
+                                 TableScan [TS_0]
+                                    alias:count_distinct_test
+                                    Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
 
 PREHOOK: query: select id,count(Distinct key),count(Distinct name)
 from (select id,key,name from count_distinct_test group by id,key,name)m
@@ -455,11 +601,51 @@ STAGE PLANS:
                       output format: org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat
                       serde: org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe
 
-  Stage: Stage-0
-    Fetch Operator
-      limit: -1
-      Processor Tree:
-        ListSink
+Stage-0
+   Fetch Operator
+      limit:-1
+      Stage-1
+         Reducer 3
+         File Output Operator [FS_12]
+            compressed:false
+            Statistics:Num rows: 1 Data size: 5 Basic stats: COMPLETE Column stats: NONE
+            table:{"serde:":"org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe","input format:":"org.apache.hadoop.mapred.TextInputFormat","output format:":"org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat"}
+            Group By Operator [GBY_10]
+            |  aggregations:["count(DISTINCT KEY._col1:0._col0)","count(DISTINCT KEY._col1:1._col0)"]
+            |  keys:KEY._col0 (type: int)
+            |  outputColumnNames:["_col0","_col1","_col2"]
+            |  Statistics:Num rows: 1 Data size: 5 Basic stats: COMPLETE Column stats: NONE
+            |<-Reducer 2 [SIMPLE_EDGE]
+               Reduce Output Operator [RS_9]
+                  key expressions:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                  Map-reduce partition columns:_col0 (type: int)
+                  sort order:+++
+                  Statistics:Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
+                  Group By Operator [GBY_8]
+                     aggregations:["count(DISTINCT _col1)","count(DISTINCT _col2)"]
+                     keys:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                     outputColumnNames:["_col0","_col1","_col2","_col3","_col4"]
+                     Statistics:Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
+                     Group By Operator [GBY_5]
+                     |  keys:KEY._col0 (type: int), KEY._col1 (type: int), KEY._col2 (type: int)
+                     |  outputColumnNames:["_col0","_col1","_col2"]
+                     |  Statistics:Num rows: 2 Data size: 10 Basic stats: COMPLETE Column stats: NONE
+                     |<-Map 1 [SIMPLE_EDGE]
+                        Reduce Output Operator [RS_4]
+                           key expressions:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                           Map-reduce partition columns:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                           sort order:+++
+                           Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
+                           Group By Operator [GBY_3]
+                              keys:_col0 (type: int), _col1 (type: int), _col2 (type: int)
+                              outputColumnNames:["_col0","_col1","_col2"]
+                              Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
+                              Select Operator [SEL_1]
+                                 outputColumnNames:["_col0","_col1","_col2"]
+                                 Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
+                                 TableScan [TS_0]
+                                    alias:count_distinct_test
+                                    Statistics:Num rows: 5 Data size: 25 Basic stats: COMPLETE Column stats: NONE
 
 PREHOOK: query: select id,count(Distinct name),count(Distinct key)
 from (select id,key,name from count_distinct_test group by id,name,key)m
