@@ -693,16 +693,21 @@ final class SearchArgumentImpl implements SearchArgument {
      * @param expr the expression to find the leaves in
      * @param leafCache the list of all of the leaves
      * @param lookup a map that is used to uniquify the leaves
+     * @param visitedParent a non-leaf node which was already rewritten for leafs
      * @return The potentially modified expression
      */
     private ExpressionTree buildLeafList(ExpressionTree expr,
                                          List<PredicateLeaf> leafCache,
-                                         Map<PredicateLeaf,
-                                             ExpressionTree> lookup) {
+                                         Map<PredicateLeaf, ExpressionTree> lookup,
+                                         List<ExpressionTree> visitedParent) {
       if (expr.children != null) {
+        if (visitedParent.contains(expr)) {
+          return expr;
+        }
+        visitedParent.add(expr);
         for(int i=0; i < expr.children.size(); ++i) {
           expr.children.set(i, buildLeafList(expr.children.get(i), leafCache,
-              lookup));
+              lookup, visitedParent));
         }
       } else if (expr.operator == ExpressionTree.Operator.LEAF) {
         PredicateLeaf leaf = leafCache.get(expr.leaf);
@@ -743,7 +748,7 @@ final class SearchArgumentImpl implements SearchArgument {
       expr = convertToCNF(expr);
       expr = flatten(expr);
       expr =  buildLeafList(expr, leaves,
-          new HashMap<PredicateLeaf, ExpressionTree>());
+          new HashMap<PredicateLeaf, ExpressionTree>(), new ArrayList<>());
       return expr;
     }
 
