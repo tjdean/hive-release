@@ -54,6 +54,7 @@ public class DriverContext {
   private static final SessionState.LogHelper console = new SessionState.LogHelper(LOG);
 
   private static final int SLEEP_TIME = 2000;
+  private static final int SLEEP_TIME_INIT = 100;
 
   private Queue<Task<? extends Serializable>> runnable;
   private Queue<TaskRunner> running;
@@ -106,6 +107,8 @@ public class DriverContext {
    * @return The result object for any completed/failed task
    */
   public synchronized TaskRunner pollFinished() throws InterruptedException {
+    int repeat = 0;
+    int sleepTime = SLEEP_TIME_INIT;
     while (!shutdown) {
       Iterator<TaskRunner> it = running.iterator();
       while (it.hasNext()) {
@@ -115,7 +118,10 @@ public class DriverContext {
           return runner;
         }
       }
-      wait(SLEEP_TIME);
+      sleepTime = (sleepTime >= SLEEP_TIME ? SLEEP_TIME : SLEEP_TIME_INIT * (int)(Math.pow(2.0, repeat)));
+      repeat++;
+      LOG.info("Task runner sleeping for " + sleepTime + " milliseconds for retry num " + repeat);
+      wait(sleepTime);
     }
     return null;
   }

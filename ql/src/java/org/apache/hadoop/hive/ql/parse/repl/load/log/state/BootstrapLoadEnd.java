@@ -43,11 +43,15 @@ public class BootstrapLoadEnd extends ReplState {
   @JsonProperty
   private String lastReplId;
 
+  @JsonProperty
+  private Long loadExecutionTime;
+
   public BootstrapLoadEnd(String dbName,
                           long numTables,
                           long numFunctions,
                           String dumpDir,
-                          String lastReplId) {
+                          String lastReplId,
+                          long loadStartTime) {
     this.dbName = dbName;
     this.loadType = DumpType.BOOTSTRAP;
     this.numTables = numTables;
@@ -55,5 +59,6 @@ public class BootstrapLoadEnd extends ReplState {
     this.loadEndTime = System.currentTimeMillis() / 1000;
     this.dumpDir = dumpDir;
     this.lastReplId = lastReplId;
+    this.loadExecutionTime = this.loadEndTime - loadStartTime;
   }
 }

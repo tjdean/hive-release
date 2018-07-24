@@ -57,6 +57,11 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
   }
 
   @Override
+  public boolean canExecuteInParallel(){
+    return true;
+  }
+
+  @Override
   protected int execute(DriverContext driverContext) {
     LOG.debug("ReplCopyTask.execute()");
     FileSystem dstFs = null;

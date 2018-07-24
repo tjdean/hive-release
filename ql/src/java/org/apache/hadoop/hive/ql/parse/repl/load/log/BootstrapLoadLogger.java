@@ -29,6 +29,7 @@ public class BootstrapLoadLogger extends ReplLogger {
   private long numFunctions;
   private long tableSeqNo;
   private long functionSeqNo;
+  private Long loadStartTime;
 
   public BootstrapLoadLogger(String dbName, String dumpDir, long numTables, long numFunctions) {
     this.dbName = dbName;
@@ -37,11 +38,13 @@ public class BootstrapLoadLogger extends ReplLogger {
     this.numFunctions = numFunctions;
     this.tableSeqNo = 0;
     this.functionSeqNo = 0;
+    this.loadStartTime = 0L;
   }
 
   @Override
   public void startLog() {
     (new BootstrapLoadBegin(dbName, dumpDir, numTables, numFunctions)).log(LogTag.START);
+    this.loadStartTime = System.currentTimeMillis() / 1000;
   }
 
   @Override
@@ -60,7 +63,7 @@ public class BootstrapLoadLogger extends ReplLogger {
 
   @Override
   public void endLog(String lastReplId) {
-    (new BootstrapLoadEnd(dbName, numTables, numFunctions, dumpDir, lastReplId))
+    (new BootstrapLoadEnd(dbName, numTables, numFunctions, dumpDir, lastReplId, loadStartTime))
             .log(LogTag.END);
   }
 }
