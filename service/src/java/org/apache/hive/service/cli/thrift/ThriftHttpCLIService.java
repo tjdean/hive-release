@@ -24,6 +24,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import org.eclipse.jetty.io.Connection;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.ws.rs.HttpMethod;
@@ -80,7 +81,19 @@ public class ThriftHttpCLIService extends ThriftCLIService {
       httpServer.setThreadPool(threadPool);
 
       // Connector configs
-      SelectChannelConnector connector = new SelectChannelConnector();
+      SelectChannelConnector connector = new SelectChannelConnector() {
+          @Override
+          protected void connectionOpened(Connection connection) {
+            super.connectionOpened(connection);
+            openConnection();
+          }
+
+          @Override
+          protected void connectionClosed(Connection connection) {
+            super.connectionClosed(connection);
+            closeConnection();
+          }
+        };
       // Configure header size
       int requestHeaderSize =
           hiveConf.getIntVar(ConfVars.HIVE_SERVER2_THRIFT_HTTP_REQUEST_HEADER_SIZE);
@@ -107,7 +120,19 @@ public class ThriftHttpCLIService extends ThriftCLIService {
           Arrays.toString(sslContextFactory.getExcludeProtocols()));
         sslContextFactory.setKeyStorePath(keyStorePath);
         sslContextFactory.setKeyStorePassword(keyStorePassword);
-        connector = new SslSelectChannelConnector(sslContextFactory);
+        connector = new SslSelectChannelConnector(sslContextFactory) {
+          @Override
+          protected void connectionOpened(Connection connection) {
+            super.connectionOpened(connection);
+            openConnection();
+          }
+
+          @Override
+          protected void connectionClosed(Connection connection) {
+            super.connectionClosed(connection);
+            closeConnection();
+          }
+        };
       }
       connector.setPort(portNum);
       // Linux:yes, Windows:no
@@ -144,33 +169,6 @@ public class ThriftHttpCLIService extends ThriftCLIService {
         LOG.warn("XSRF filter disabled");
       }
 
-      context.addEventListener(new ServletContextListener() {
-        @Override
-        public void contextInitialized(ServletContextEvent servletContextEvent) {
-          Metrics metrics = MetricsFactory.getInstance();
-          if (metrics != null) {
-            try {
-              metrics.incrementCounter(MetricsConstant.OPEN_CONNECTIONS);
-              metrics.incrementCounter(MetricsConstant.CUMULATIVE_CONNECTION_COUNT);
-            } catch (Exception e) {
-              LOG.warn("Error reporting HS2 open connection operation to Metrics system", e);
-            }
-          }
-        }
-
-        @Override
-        public void contextDestroyed(ServletContextEvent servletContextEvent) {
-          Metrics metrics = MetricsFactory.getInstance();
-          if (metrics != null) {
-            try {
-              metrics.decrementCounter(MetricsConstant.OPEN_CONNECTIONS);
-            } catch (Exception e) {
-              LOG.warn("Error reporting HS2 close connection operation to Metrics system", e);
-            }
-          }
-        }
-      });
-
       final String httpPath = getHttpPath(hiveConf
           .getVar(HiveConf.ConfVars.HIVE_SERVER2_THRIFT_HTTP_PATH));
       httpServer.setHandler(context);
@@ -189,6 +187,29 @@ public class ThriftHttpCLIService extends ThriftCLIService {
           "Error starting HiveServer2: could not start "
               + ThriftHttpCLIService.class.getSimpleName(), t);
       System.exit(-1);
+    }
+  }
+
+  private void openConnection() {
+    Metrics metrics = MetricsFactory.getInstance();
+    if (metrics != null) {
+      try {
+        metrics.incrementCounter(MetricsConstant.OPEN_CONNECTIONS);
+        metrics.incrementCounter(MetricsConstant.CUMULATIVE_CONNECTION_COUNT);
+      } catch (Exception e) {
+        LOG.warn("Error reporting HS2 open connection operation to Metrics system", e);
+      }
+    }
+  }
+
+  private void closeConnection() {
+    Metrics metrics = MetricsFactory.getInstance();
+    if (metrics != null) {
+      try {
+        metrics.decrementCounter(MetricsConstant.OPEN_CONNECTIONS);
+      } catch (Exception e) {
+        LOG.warn("Error reporting HS2 close connection operation to Metrics system", e);
+      }
     }
   }
 
