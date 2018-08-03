@@ -18,6 +18,7 @@
 package org.apache.hadoop.hive.ql.exec.repl;
 
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.DatabaseEvent;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.filesystem.BootstrapEventsIterator;
 import org.apache.hadoop.hive.ql.exec.repl.incremental.IncrementalLoadTasksBuilder;
@@ -40,6 +41,7 @@ public class ReplLoadWork implements Serializable {
   private int loadTaskRunCount = 0;
   private DatabaseEvent.State state = null;
   private final IncrementalLoadTasksBuilder incrementalLoadTaskBuilder;
+  private Task<? extends Serializable> rootTask;
 
   /**
    * These are sessionState objects that are copied over to work to allow for parallel execution.
@@ -63,6 +65,7 @@ public class ReplLoadWork implements Serializable {
       incrementalLoadTaskBuilder = null;
     }this.dbNameToLoadIn = dbNameToLoadIn;
     sessionStateLineageState = lineageState;
+    rootTask = null;
   }
 
   public BootstrapEventsIterator iterator() {
@@ -95,5 +98,13 @@ public class ReplLoadWork implements Serializable {
 
   public IncrementalLoadTasksBuilder getIncrementalLoadTaskBuilder() {
     return incrementalLoadTaskBuilder;
+  }
+
+  public Task<? extends Serializable> getRootTask() {
+    return rootTask;
+  }
+
+  public void setRootTask(Task<? extends Serializable> rootTask) {
+    this.rootTask = rootTask;
   }
 }
