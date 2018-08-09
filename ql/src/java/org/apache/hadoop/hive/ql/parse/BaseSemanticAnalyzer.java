@@ -142,6 +142,16 @@ public abstract class BaseSemanticAnalyzer {
     return false;
   }
 
+  private String queryTag = null;
+
+  public String getQueryTag() {
+    return queryTag;
+  }
+
+  public void setQueryTag(String queryTag) {
+    this.queryTag = queryTag;
+  }
+
   class RowFormatParams {
     String fieldDelim = null;
     String fieldEscape = null;

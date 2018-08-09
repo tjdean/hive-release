@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.common.metrics.common.Metrics;
@@ -173,7 +174,15 @@ public class OperationManager extends AbstractService {
     return null;
   }
 
-  private String getQueryId(Operation operation) {
+  public String getQueryTag(Operation operation) {
+    if (operation instanceof SQLOperation) {
+      SQLOperation sqlOperation = (SQLOperation) operation;
+      return sqlOperation.getQueryTag();
+    }
+    return null;
+  }
+
+  public String getQueryId(Operation operation) {
     if (operation instanceof SQLOperation) {
       SQLOperation sqlOperation = (SQLOperation) operation;
       return sqlOperation.getQueryId();
@@ -325,6 +334,19 @@ public class OperationManager extends AbstractService {
       if (operation instanceof SQLOperation) {
         SQLOperation sqlOperation = (SQLOperation) operation;
         if (sqlOperation.getQueryId().equals(queryId)) {
+          return sqlOperation;
+        }
+      }
+    }
+    return null;
+  }
+
+  public Operation getOperationByQueryTag(String queryTag) {
+    for (Operation operation : getOperations()) {
+      if (operation instanceof SQLOperation) {
+        SQLOperation sqlOperation = (SQLOperation) operation;
+        String operationTag = sqlOperation.getQueryTag();
+        if (operationTag != null && operationTag.equals(queryTag)) {
           return sqlOperation;
         }
       }

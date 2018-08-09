@@ -43,7 +43,6 @@ import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.ql.session.SessionState.LogHelper;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.mapreduce.MRJobConfig;
-import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVEQUERYID;
 
 /**
  * Task implementation.
@@ -172,13 +171,7 @@ public abstract class Task<T extends Serializable> implements Serializable, Node
 
       // MacroSemanticAnalyzer is not setting the config in the task.
       if (conf != null) {
-        String queryTag = conf.getVar(HIVEQUERYID);
-        if (!org.apache.commons.lang.StringUtils.isEmpty(queryTag)) {
-          LOG.debug("Tag set is " + queryTag);
-          conf.set(MRJobConfig.JOB_TAGS, queryTag);
-        }
-      } else {
-        LOG.info("Tag set is not set as conf is null ");
+        LOG.debug("[Mahesh] Tag set is " + conf.get(MRJobConfig.JOB_TAGS));
       }
 
       int retval = execute(driverContext);

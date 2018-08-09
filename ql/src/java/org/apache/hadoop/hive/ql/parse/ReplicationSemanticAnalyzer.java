@@ -25,6 +25,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.ql.ErrorMsg;
+import org.apache.hadoop.hive.ql.QueryState;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.exec.TaskFactory;
 import org.apache.hadoop.hive.ql.exec.repl.ReplDumpWork;
@@ -39,6 +40,8 @@ import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.metastore.ReplChangeManager;
 
+import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVEQUERYID;
+import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.HIVEQUERYTAG;
 import static org.apache.hadoop.hive.ql.parse.HiveParser.TOK_DBNAME;
 import static org.apache.hadoop.hive.ql.parse.HiveParser.TOK_LIMIT;
 import static org.apache.hadoop.hive.ql.parse.HiveParser.TOK_REPL_CONFIG;
@@ -136,13 +139,7 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
     int currNode = 1;
     while (currNode < numChildren) {
       if (ast.getChild(currNode).getType() == TOK_REPL_CONFIG) {
-        Map<String, String> replConfigs
-            = DDLSemanticAnalyzer.getProps((ASTNode) ast.getChild(currNode).getChild(0));
-        if (null != replConfigs) {
-          for (Map.Entry<String, String> config : replConfigs.entrySet()) {
-            conf.set(config.getKey(), config.getValue());
-          }
-        }
+        setConfigs((ASTNode) ast.getChild(currNode).getChild(0));
       } else if (ast.getChild(currNode).getType() == TOK_TABNAME) {
         // optional tblName was specified.
         tblNameOrPattern = PlanUtils.stripQuotes(ast.getChild(currNode).getChild(0).getText());
@@ -210,6 +207,45 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
     }
   }
 
+  private void setConfigs(ASTNode node) throws SemanticException {
+    Map<String, String> replConfigs = DDLSemanticAnalyzer.getProps(node);
+    if (null == replConfigs) {
+      return;
+    }
+    for (Map.Entry<String, String> config : replConfigs.entrySet()) {
+      String key = config.getKey();
+      if (!key.equalsIgnoreCase(HiveConf.ConfVars.HIVEQUERYID.varname) &&
+              !key.equalsIgnoreCase(HiveConf.ConfVars.HIVEQUERYTAG.varname)) {
+        conf.set(key, config.getValue());
+      }
+    }
+
+    String queryTag = replConfigs.get(HiveConf.ConfVars.HIVEQUERYTAG.varname);
+
+    // if user has not set query tag using HIVEQUERYTAG, then check if its set using HIVEQUERYID
+    if (StringUtils.isEmpty(queryTag)) {
+      queryTag = replConfigs.get(HiveConf.ConfVars.HIVEQUERYID.varname);
+    }
+
+    if (!StringUtils.isEmpty(queryTag)) {
+      conf.setVar(HiveConf.ConfVars.HIVEQUERYTAG, queryTag);
+      QueryState.setMapReduceJobTag(conf, queryTag);
+      super.setQueryTag(queryTag);
+    }
+
+    // tag the mapred jobs with query id also, so that user can kill them using query id.
+    if (!StringUtils.isEmpty(conf.getVar(HiveConf.ConfVars.HIVEQUERYID)))   {
+      QueryState.setMapReduceJobTag(conf, conf.getVar(HiveConf.ConfVars.HIVEQUERYID));
+    }
+
+    // As hive conf is changed, need to get the Hive DB again with it.
+    try {
+      db = Hive.get(conf);
+    } catch (HiveException e) {
+      throw new SemanticException(e);
+    }
+  }
+
   // REPL LOAD
   private void initReplLoad(ASTNode ast) throws SemanticException {
     path = PlanUtils.stripQuotes(ast.getChild(0).getText());
@@ -224,25 +260,7 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
           tblNameOrPattern = PlanUtils.stripQuotes(childNode.getChild(0).getText());
           break;
         case TOK_REPL_CONFIG:
-          Map<String, String> replConfigs
-                  = DDLSemanticAnalyzer.getProps((ASTNode) childNode.getChild(0));
-          if (null != replConfigs) {
-            for (Map.Entry<String, String> config : replConfigs.entrySet()) {
-              conf.set(config.getKey(), config.getValue());
-            }
-
-            String queryId = replConfigs.get(HiveConf.ConfVars.HIVEQUERYID.varname);
-            if (!StringUtils.isEmpty(queryId)) {
-              super.conf.setVar(HiveConf.ConfVars.HIVEQUERYID, queryId);
-            }
-
-            // As hive conf is changed, need to get the Hive DB again with it.
-            try {
-              db = Hive.get(conf);
-            } catch (HiveException e) {
-              throw new SemanticException(e);
-            }
-          }
+          setConfigs((ASTNode) childNode.getChild(0));
           break;
         default:
           throw new SemanticException("Unrecognized token in REPL LOAD statement");
@@ -374,25 +392,7 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
         tblNameOrPattern = PlanUtils.stripQuotes(childNode.getChild(0).getText());
         break;
       case TOK_REPL_CONFIG:
-        Map<String, String> replConfigs
-            = DDLSemanticAnalyzer.getProps((ASTNode) childNode.getChild(0));
-        if (null != replConfigs) {
-          for (Map.Entry<String, String> config : replConfigs.entrySet()) {
-            conf.set(config.getKey(), config.getValue());
-          }
-
-          String queryId = replConfigs.get(HiveConf.ConfVars.HIVEQUERYID.varname);
-          if (!StringUtils.isEmpty(queryId)) {
-            super.conf.setVar(HiveConf.ConfVars.HIVEQUERYID, queryId);
-          }
-
-          // As hive conf is changed, need to get the Hive DB again with it.
-          try {
-            db = Hive.get(conf);
-          } catch (HiveException e) {
-            throw new SemanticException(e);
-          }
-        }
+        setConfigs((ASTNode) childNode.getChild(0));
         break;
       default:
         throw new SemanticException("Unrecognized token in REPL STATUS statement");

@@ -166,6 +166,8 @@ public class Driver implements CommandProcessor {
   // HS2 operation handle guid string
   private String operationId;
 
+  private String queryTag = null;
+
   private boolean checkConcurrency() {
     boolean supportConcurrency = conf.getBoolVar(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY);
     if (!supportConcurrency) {
@@ -478,6 +480,10 @@ public class Driver implements CommandProcessor {
       } else {
         sem.analyze(tree, ctx);
       }
+
+      // Set the query tag to be used by kill query to get the operation using the tag.
+      setQueryTag(sem.getQueryTag());
+
       // Record any ACID compliant FileSinkOperators we saw so we can add our transaction ID to
       // them later.
       acidSinks = sem.getAcidFileSinks();
@@ -1926,5 +1932,13 @@ public class Driver implements CommandProcessor {
 
   public String getQueryId() {
     return conf.getVar(ConfVars.HIVEQUERYID);
+  }
+
+  public String getQueryTag() {
+    return queryTag;
+  }
+
+  public void setQueryTag(String queryTag) {
+    this.queryTag = queryTag;
   }
 }

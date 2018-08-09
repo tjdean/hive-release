@@ -18,12 +18,14 @@
 
 package org.apache.hive.service.server;
 
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.session.KillQuery;
 import org.apache.hive.service.cli.HiveSQLException;
 import org.apache.hive.service.cli.OperationHandle;
 import org.apache.hive.service.cli.operation.Operation;
 import org.apache.hive.service.cli.operation.OperationManager;
+import org.apache.hive.service.cli.operation.SQLOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.apache.commons.lang.StringUtils;
@@ -53,37 +55,17 @@ public class KillQueryImpl implements KillQuery {
     this.operationManager = operationManager;
   }
 
-  @Override
-  public void killQuery(String queryId) throws HiveException {
-    try {
-      Operation operation = operationManager.getOperationByQueryId(queryId);
-      if (operation == null) {
-        LOG.info("Query not found: " + queryId);
-      } else {
-        OperationHandle handle = operation.getHandle();
-        operationManager.cancelOperation(handle);
-      }
-      killChildYarnJobs(SessionState.getSessionConf(), queryId);
-    } catch (HiveSQLException e) {
-      throw new HiveException(e);
-    }
-  }
-
-  public static Set<ApplicationId> getChildYarnJobs(Configuration conf, String tag) {
+  public static Set<ApplicationId> getChildYarnJobs(Configuration conf, String tag) throws IOException, YarnException {
     Set<ApplicationId> childYarnJobs = new HashSet<ApplicationId>();
     GetApplicationsRequest gar = GetApplicationsRequest.newInstance();
     gar.setScope(ApplicationsRequestScope.OWN);
     gar.setApplicationTags(Collections.singleton(tag));
 
-    try {
-      ApplicationClientProtocol proxy = ClientRMProxy.createRMProxy(conf, ApplicationClientProtocol.class);
-      GetApplicationsResponse apps = proxy.getApplications(gar);
-      List<ApplicationReport> appsList = apps.getApplicationList();
-      for(ApplicationReport appReport : appsList) {
-        childYarnJobs.add(appReport.getApplicationId());
-      }
-    } catch (YarnException | IOException ioe) {
-      throw new RuntimeException("Exception occurred while finding child jobs", ioe);
+    ApplicationClientProtocol proxy = ClientRMProxy.createRMProxy(conf, ApplicationClientProtocol.class);
+    GetApplicationsResponse apps = proxy.getApplications(gar);
+    List<ApplicationReport> appsList = apps.getApplicationList();
+    for(ApplicationReport appReport : appsList) {
+      childYarnJobs.add(appReport.getApplicationId());
     }
 
     if (childYarnJobs.isEmpty()) {
@@ -97,6 +79,9 @@ public class KillQueryImpl implements KillQuery {
 
   public static void killChildYarnJobs(Configuration conf, String tag) {
     try {
+      if (tag == null) {
+        return;
+      }
       Set<ApplicationId> childYarnJobs = getChildYarnJobs(conf, tag);
       if (!childYarnJobs.isEmpty()) {
         YarnClient yarnClient = YarnClient.createYarnClient();
@@ -108,6 +93,44 @@ public class KillQueryImpl implements KillQuery {
       }
     } catch (IOException | YarnException ye) {
       throw new RuntimeException("Exception occurred while killing child job(s)", ye);
+    }
+  }
+
+  @Override
+  public void killQuery(String queryId, HiveConf conf) throws HiveException {
+    try {
+      String queryTag = null;
+
+      Operation operation = operationManager.getOperationByQueryId(queryId);
+      if (operation == null) {
+        // Check if user has passed the query tag to kill the operation. This is possible if the application
+        // restarts and it does not have the proper query id. The tag can be used in that case to kill the query.
+        operation = operationManager.getOperationByQueryTag(queryId);
+        if (operation == null) {
+          LOG.info("Query not found: " + queryId);
+        }
+      } else {
+        // This is the normal flow, where the query is tagged and user wants to kill the query using the query id.
+        queryTag = operationManager.getQueryTag(operation);
+      }
+
+      if (queryTag == null) {
+        //use query id as tag if user wanted to kill only the yarn jobs after hive server restart. The yarn jobs are
+        //tagged with query id by default. This will cover the case where the application after restarts wants to kill
+        //the yarn jobs with query tag. The query tag can be passed as query id.
+        queryTag = queryId;
+      }
+
+      LOG.info("Killing yarn jobs for query id : " + queryId + " using tag :" + queryTag);
+      killChildYarnJobs(conf, queryTag);
+
+      if (operation != null) {
+        OperationHandle handle = operation.getHandle();
+        operationManager.cancelOperation(handle);
+      }
+    } catch (HiveSQLException e) {
+      LOG.error("Kill query failed for query " + queryId, e);
+      throw new HiveException(e.getMessage(), e);
     }
   }
 }

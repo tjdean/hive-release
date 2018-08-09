@@ -574,11 +574,7 @@ public class CLIService extends CompositeService implements ICLIService {
   public String getQueryId(TOperationHandle opHandle) throws HiveSQLException {
     Operation operation = sessionManager.getOperationManager().getOperation(
         new OperationHandle(opHandle));
-    if (operation instanceof SQLOperation) {
-      SQLOperation sqlOperation = (SQLOperation) operation;
-      return sqlOperation.getQueryId();
-    }
-    return null;
+    return sessionManager.getOperationManager().getQueryId(operation);
   }
 
   public SessionManager getSessionManager() {
