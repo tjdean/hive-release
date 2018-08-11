@@ -27,6 +27,7 @@ import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore.HMSHandler;
 import org.apache.hadoop.hive.metastore.MetaStoreEventListener;
+import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.RawStore;
 import org.apache.hadoop.hive.metastore.RawStoreProxy;
 import org.apache.hadoop.hive.metastore.ReplChangeManager;
@@ -132,9 +133,11 @@ public class DbNotificationListener extends MetaStoreEventListener {
   @Override
   public void onCreateTable(CreateTableEvent tableEvent) throws MetaException {
     Table t = tableEvent.getTable();
+    FileIterator fileIter = MetaStoreUtils.isExternalTable(t)
+                              ? null : new FileIterator(t.getSd().getLocation());
     NotificationEvent event =
-        new NotificationEvent(0, now(), EventType.CREATE_TABLE.toString(), msgFactory
-            .buildCreateTableMessage(t, new FileIterator(t.getSd().getLocation())).toString());
+        new NotificationEvent(0, now(), EventType.CREATE_TABLE.toString(),
+                msgFactory.buildCreateTableMessage(t, fileIter).toString());
     event.setDbName(t.getDbName());
     event.setTableName(t.getTableName());
     process(event, tableEvent);
@@ -269,9 +272,10 @@ public class DbNotificationListener extends MetaStoreEventListener {
   @Override
   public void onAddPartition(AddPartitionEvent partitionEvent) throws MetaException {
     Table t = partitionEvent.getTable();
+    PartitionFilesIterator fileIter = MetaStoreUtils.isExternalTable(t)
+            ? null : new PartitionFilesIterator(partitionEvent.getPartitionIterator(), t);
     String msg = msgFactory
-        .buildAddPartitionMessage(t, partitionEvent.getPartitionIterator(),
-            new PartitionFilesIterator(partitionEvent.getPartitionIterator(), t)).toString();
+        .buildAddPartitionMessage(t, partitionEvent.getPartitionIterator(), fileIter).toString();
     NotificationEvent event =
         new NotificationEvent(0, now(), EventType.ADD_PARTITION.toString(), msg);
     event.setDbName(t.getDbName());
