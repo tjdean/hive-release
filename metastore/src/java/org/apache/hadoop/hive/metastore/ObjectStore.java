@@ -323,6 +323,7 @@ public class ObjectStore implements RawStore, Configurable {
         initializeHelper(dsProps);
         return; // If we reach here, we succeed.
       } catch (Exception e){
+        shutdown();
         numTries--;
         boolean retriable = isRetriableException(e);
         if ((numTries > 0) && retriable){
@@ -384,6 +385,8 @@ public class ObjectStore implements RawStore, Configurable {
     LOG.info("ObjectStore, initialize called");
     prop = dsProps;
     pm = getPersistenceManager();
+    LOG.info(String.format("RawStore: %s, with PersistenceManager: %s" +
+            " created in the thread with id: %d", this, pm, Thread.currentThread().getId()));
     try {
       String productName = MetaStoreDirectSql.getProductName(pm);
       sqlGenerator = new SQLGenerator(
@@ -402,8 +405,6 @@ public class ObjectStore implements RawStore, Configurable {
       }
       directSql = new MetaStoreDirectSql(pm, hiveConf, schema);
     }
-    LOG.debug("RawStore: " + this + ", with PersistenceManager: " + pm +
-        " created in the thread with id: " + Thread.currentThread().getId());
   }
 
   /**
@@ -527,6 +528,7 @@ public class ObjectStore implements RawStore, Configurable {
 
   @Override
   public void shutdown() {
+    LOG.info(String.format("RawStore: %s, with PersistenceManager: %s will be shutdown", this, pm));
     if (pm != null) {
       LOG.debug("RawStore: " + this + ", with PersistenceManager: " + pm +
           " will be shutdown");
