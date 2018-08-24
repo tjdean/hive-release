@@ -95,6 +95,7 @@ import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.tools.DistCp;
 import org.apache.hadoop.tools.DistCpOptions;
 import org.apache.hadoop.tools.DistCpOptions.FileAttribute;
+import org.apache.hadoop.tools.OptionsParser;
 import org.apache.hadoop.util.Progressable;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tez.test.MiniTezCluster;
@@ -1308,25 +1309,39 @@ public class Hadoop23Shims extends HadoopShimsSecure {
 
   @Override
   public boolean runDistCp(List<Path> srcPaths, Path dst, Configuration conf) throws IOException {
-    DistCpOptions options = new DistCpOptions(srcPaths, dst);
-    options.setSyncFolder(true);
-    options.setSkipCRC(true);
-    options.preserve(FileAttribute.BLOCKSIZE);
-
     // Creates the command-line parameters for distcp
     List<String> params = constructDistCpParams(srcPaths, dst, conf);
+
+    DistCpOptions options = OptionsParser.parse(params.toArray(new String[0]));
+    options.setBlocking(true);
+
+    Path target = options.getTargetPath();
+    FileSystem targetFS = target.getFileSystem(conf);
+    boolean targetExists = targetFS.exists(target);
+    options.setTargetPathExists(targetExists);
+    conf.setBoolean("distcp.target.path.exists", targetExists);
 
     try {
       conf.setBoolean("mapred.mapper.new-api", true);
       DistCp distcp = new DistCp(conf, options);
+      LOG.info("Running distcp job with options " + options);
+
+      // Below code  with call to distcp.run is replaced with execute to fix the memory leak caused by not closing
+      // the job. All the options which are set in run method of distcp are done here and then execute is
+      //called to make sure fix of HIVE-13704 is taken care of. There is a chance that distcp may add some
+      //options later internally and we may miss to add those. To avoid this, in hive/hdfs 3.0, distcp should call
+      // execute within  try-with-resources.
+      Job job = distcp.execute();
+      job.close();
+      return true;
 
       // HIVE-13704 states that we should use run() instead of execute() due to a hadoop known issue
       // added by HADOOP-10459
-      if (distcp.run(params.toArray(new String[0])) == 0) {
-        return true;
-      } else {
-        return false;
-      }
+      //if (distcp.run(params.toArray(new String[0])) == 0) {
+        //return true;
+      //} else {
+        //return false;
+      //}
     } catch (Exception e) {
       throw new IOException("Cannot execute DistCp process: " + e, e);
     } finally {
