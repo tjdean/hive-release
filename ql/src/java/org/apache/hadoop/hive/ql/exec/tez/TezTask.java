@@ -700,6 +700,13 @@ public class TezTask extends Task<TezWork> {
     }
 
     @Override
+    public DAGStatus waitForCompletion(long ms) throws IOException, TezException, InterruptedException {
+       synchronized (dagClient) {
+         return dagClient.waitForCompletion();
+       }
+    }
+
+    @Override
     public DAGStatus waitForCompletionWithStatusUpdates(@Nullable Set<StatusGetOpts> statusGetOpts)
         throws IOException, TezException, InterruptedException {
       synchronized (dagClient) {
