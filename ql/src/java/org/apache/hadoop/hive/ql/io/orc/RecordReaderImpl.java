@@ -2366,9 +2366,16 @@ class RecordReaderImpl implements RecordReader {
     ByteBuffer tailBuf = ByteBuffer.allocate(tailLength);
     file.seek(offset);
     file.readFully(tailBuf.array(), tailBuf.arrayOffset(), tailLength);
-    return OrcProto.StripeFooter.parseFrom(InStream.create("footer",
-        new ByteBuffer[]{tailBuf}, new long[]{0}, tailLength, codec,
-        bufferSize));
+    return OrcProto.StripeFooter.parseFrom(
+        PBUtils.createCodedInputStream(
+            InStream.create("footer",
+                new ByteBuffer[]{tailBuf},
+                new long[]{0},
+                tailLength,
+                codec,
+                bufferSize)
+        )
+    );
   }
 
   static enum Location {
@@ -3346,9 +3353,16 @@ class RecordReaderImpl implements RecordReader {
           byte[] buffer = new byte[(int) stream.getLength()];
           file.seek(offset);
           file.readFully(buffer);
-          indexes[col] = OrcProto.RowIndex.parseFrom(InStream.create("index",
-              new ByteBuffer[] {ByteBuffer.wrap(buffer)}, new long[]{0},
-              stream.getLength(), codec, bufferSize));
+          indexes[col] = OrcProto.RowIndex.parseFrom(
+              PBUtils.createCodedInputStream(
+                  InStream.create("index",
+                      new ByteBuffer[] {ByteBuffer.wrap(buffer)},
+                      new long[]{0},
+                      stream.getLength(),
+                      codec,
+                      bufferSize)
+              )
+          );
         }
       }
       offset += stream.getLength();
