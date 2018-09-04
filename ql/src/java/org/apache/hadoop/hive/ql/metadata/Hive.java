@@ -1519,7 +1519,9 @@ public class Hive {
         newFiles = Collections.synchronizedList(new ArrayList<Path>());
       }
 
-      if ((loadFileType == LoadFileType.REPLACE_ALL) || (oldPart == null && !isAcid)) {
+      if (loadFileType == LoadFileType.IGNORE) {
+        LOG.info(" ignoring replace file for partition " + newPartPath);
+      } else if ((loadFileType == LoadFileType.REPLACE_ALL) || (oldPart == null && !isAcid)) {
         boolean needRecycle = !tbl.isTemporary()
                 && ReplChangeManager.isSourceOfReplication(Hive.get().getDatabase(tbl.getDbName()));
         replaceFiles(tbl.getPath(), loadPath, newPartPath, oldPartPath, getConf(),
@@ -1896,7 +1898,10 @@ private void constructOneLBLocationMap(FileStatus fSta,
     if (conf.getBoolVar(ConfVars.FIRE_EVENTS_FOR_DML) && !tbl.isTemporary()) {
       newFiles = Collections.synchronizedList(new ArrayList<Path>());
     }
-    if (loadFileType == LoadFileType.REPLACE_ALL) {
+
+    if (loadFileType == LoadFileType.IGNORE) {
+      LOG.info(" ignoring move file for " + loadPath);
+    } else if (loadFileType == LoadFileType.REPLACE_ALL) {
       Path tableDest = tbl.getPath();
       boolean needRecycle = !tbl.isTemporary()
               && ReplChangeManager.isSourceOfReplication(Hive.get().getDatabase(tbl.getDbName()));
@@ -3489,7 +3494,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
    * @return true if deletion successful
    * @throws IOException
    */
-  private boolean trashFilesUnderDir(final FileSystem fs, Path f, final Configuration conf)
+  public boolean trashFilesUnderDir(final FileSystem fs, Path f, final Configuration conf)
       throws IOException {
     FileStatus[] statuses = fs.listStatus(f, FileUtils.HIDDEN_FILES_PATH_FILTER);
     boolean result = true;

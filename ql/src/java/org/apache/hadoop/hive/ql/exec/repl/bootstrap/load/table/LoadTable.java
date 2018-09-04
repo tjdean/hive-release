@@ -18,6 +18,7 @@
 package org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.table;
 
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
@@ -204,13 +205,26 @@ public class LoadTable {
   private Task<?> loadTableTask(Table table, ReplicationSpec replicationSpec, Path tgtPath,
       Path fromURI) {
     Path dataPath = new Path(fromURI, EximUtil.DATA_PATH_NAME);
-    Path tmpPath = PathUtils.getExternalTmpPath(tgtPath, context.pathInfo);
+
+    // if move optimization is enabled, copy the files directly to the target path. No need to create the staging dir.
+    LoadFileType loadFileType;
+    if (replicationSpec.isInReplicationScope() &&
+            context.hiveConf.getBoolVar(HiveConf.ConfVars.REPL_ENABLE_MOVE_OPTIMIZATION)) {
+      loadFileType = LoadFileType.IGNORE;
+    } else {
+      tgtPath = PathUtils.getExternalTmpPath(tgtPath, context.pathInfo);
+      loadFileType = replicationSpec.isReplace() ? LoadFileType.REPLACE_ALL : LoadFileType.OVERWRITE_EXISTING;
+    }
+
+    LOG.debug("adding dependent CopyWork/AddPart/MoveWork for table "
+            + table.getCompleteName() + " with source location: "
+            + dataPath.toString() + " and target location " + tgtPath.toString());
+
     Task<?> copyTask =
-        ReplCopyTask.getLoadCopyTask(replicationSpec, dataPath, tmpPath, context.hiveConf);
+        ReplCopyTask.getLoadCopyTask(replicationSpec, dataPath, tgtPath, context.hiveConf, false, false);
 
     LoadTableDesc loadTableWork = new LoadTableDesc(
-        tmpPath, Utilities.getTableDesc(table), new TreeMap<String, String>(),
-        replicationSpec.isReplace() ? LoadFileType.REPLACE_ALL : LoadFileType.OVERWRITE_EXISTING);
+            tgtPath, Utilities.getTableDesc(table), new TreeMap<String, String>(), loadFileType);
     MoveWork moveWork =
         new MoveWork(new HashSet<>(), new HashSet<>(), loadTableWork, null,
             false, context.sessionStateLineageState);

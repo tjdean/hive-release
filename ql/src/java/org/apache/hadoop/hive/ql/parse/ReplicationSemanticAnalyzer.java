@@ -23,7 +23,9 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.QueryState;
 import org.apache.hadoop.hive.ql.exec.Task;
@@ -52,6 +54,8 @@ import static org.apache.hadoop.hive.ql.parse.HiveParser.TOK_TABNAME;
 import static org.apache.hadoop.hive.ql.parse.HiveParser.TOK_TO;
 
 import java.io.FileNotFoundException;
+import java.net.URI;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +82,8 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
   private static final String dumpSchema = "dump_dir,last_repl_id#string,string";
 
   public static final String FUNCTIONS_ROOT_DIR_NAME = "_functions";
+
+  private static final List<String> CLOUD_SCHEME_PREFIXES = Arrays.asList("s3a", "wasb");
 
   ReplicationSemanticAnalyzer(HiveConf conf) throws SemanticException {
     super(conf);
@@ -246,6 +252,21 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
     }
   }
 
+  public static boolean isCloudFS(Path filePath, org.apache.hadoop.conf.Configuration conf) throws Exception {
+    if (filePath == null) {
+      throw new HiveException("filePath cannot be null or empty");
+    }
+
+    URI uri = filePath.toUri();
+    String scheme = uri.getScheme();
+    scheme = StringUtils.isBlank(scheme) ? FileSystem.get(uri, conf).getScheme() : scheme;
+    if (StringUtils.isBlank(scheme)) {
+      throw new HiveException("Cannot get valid scheme for " + filePath);
+    }
+
+    return CLOUD_SCHEME_PREFIXES.contains(scheme.toLowerCase().trim());
+  }
+
   // REPL LOAD
   private void initReplLoad(ASTNode ast) throws SemanticException {
     path = PlanUtils.stripQuotes(ast.getChild(0).getText());
@@ -330,6 +351,17 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
         // supposed dump path does not exist.
         LOG.error("File not found " + loadPath.toUri().toString());
         throw new FileNotFoundException(ErrorMsg.REPL_LOAD_PATH_NOT_FOUND.getMsg());
+      }
+
+      try {
+        Warehouse wh = new Warehouse(conf);
+        Path filePath = wh.getWhRoot();
+        if (isCloudFS(filePath, conf)) {
+          conf.setBoolVar(HiveConf.ConfVars.REPL_ENABLE_MOVE_OPTIMIZATION, true);
+          LOG.info(" Set move optimization to true for warehouse " + filePath.toString());
+        }
+      } catch (Exception e) {
+        throw new SemanticException(e.getMessage(), e);
       }
 
       // Now, the dumped path can be one of three things:

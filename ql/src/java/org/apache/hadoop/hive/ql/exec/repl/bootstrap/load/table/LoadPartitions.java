@@ -18,6 +18,7 @@
 package org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.table;
 
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.Database;
@@ -221,18 +222,30 @@ public class LoadPartitions {
     Path sourceWarehousePartitionLocation = new Path(partSpec.getLocation());
     Path replicaWarehousePartitionLocation = locationOnReplicaWarehouse(table, partSpec);
     partSpec.setLocation(replicaWarehousePartitionLocation.toString());
+
+    // if move optimization is enabled, copy the files directly to the target path. No need to create the staging dir.
+    LoadFileType loadFileType;
+    if (event.replicationSpec().isInReplicationScope() &&
+            context.hiveConf.getBoolVar(HiveConf.ConfVars.REPL_ENABLE_MOVE_OPTIMIZATION)) {
+      loadFileType = LoadFileType.IGNORE;
+    } else {
+      replicaWarehousePartitionLocation =
+              PathUtils.getExternalTmpPath(replicaWarehousePartitionLocation, context.pathInfo);
+      loadFileType = event.replicationSpec().isReplace() ? LoadFileType.REPLACE_ALL : LoadFileType.OVERWRITE_EXISTING;
+    }
+
     LOG.debug("adding dependent CopyWork/AddPart/MoveWork for partition "
             + partSpecToString(partSpec.getPartSpec()) + " with source location: "
-            + partSpec.getLocation());
+            + partSpec.getLocation() + " and target location " + replicaWarehousePartitionLocation.toString());
 
-    Path tmpPath = PathUtils.getExternalTmpPath(replicaWarehousePartitionLocation, context.pathInfo);
     Task<?> copyTask = ReplCopyTask.getLoadCopyTask(
         event.replicationSpec(),
         sourceWarehousePartitionLocation,
-        tmpPath,
-        context.hiveConf
+            replicaWarehousePartitionLocation,
+        context.hiveConf, false, false
     );
-    Task<?> movePartitionTask = movePartitionTask(table, partSpec, tmpPath);
+
+    Task<?> movePartitionTask = movePartitionTask(table, partSpec, replicaWarehousePartitionLocation, loadFileType);
 
     // Set Checkpoint task as dependant to add partition tasks. So, if same dump is retried for
     // bootstrap, we skip current partition update.
@@ -259,10 +272,9 @@ public class LoadPartitions {
    * This will create the move of partition data from temp path to actual path
    */
   private Task<?> movePartitionTask(Table table, AddPartitionDesc.OnePartitionDesc partSpec,
-      Path tmpPath) {
+      Path tmpPath, LoadFileType loadFileType) {
     LoadTableDesc loadTableWork = new LoadTableDesc(
-        tmpPath, Utilities.getTableDesc(table), partSpec.getPartSpec(),
-        event.replicationSpec().isReplace() ? LoadFileType.REPLACE_ALL : LoadFileType.OVERWRITE_EXISTING);
+        tmpPath, Utilities.getTableDesc(table), partSpec.getPartSpec(), loadFileType);
     loadTableWork.setInheritTableSpecs(false);
     MoveWork work =
         new MoveWork(new HashSet<>(), new HashSet<>(), loadTableWork, null,

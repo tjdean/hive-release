@@ -53,7 +53,8 @@ public class LoadTableDesc extends org.apache.hadoop.hive.ql.plan.LoadDesc
   public enum LoadFileType {
     REPLACE_ALL,        // Remove all existing data before copy/move
     KEEP_EXISTING,      // If any file exist while copy, then just duplicate the file
-    OVERWRITE_EXISTING  // If any file exist while copy, then just overwrite the file
+    OVERWRITE_EXISTING,  // If any file exist while copy, then just overwrite the file
+    IGNORE              // No need to move the file, used in case of replication to s3
   }
 
   public LoadTableDesc(final Path sourcePath,

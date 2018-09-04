@@ -25,6 +25,7 @@ import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
 import org.apache.hadoop.hive.ql.plan.CopyWork;
 import org.apache.hadoop.hive.ql.plan.ReplCopyWork;
 import org.apache.hadoop.hive.ql.parse.repl.CopyUtils;
+import org.apache.hadoop.hive.ql.metadata.Hive;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -46,6 +47,9 @@ import org.apache.hadoop.hive.ql.plan.api.StageType;
 import org.apache.hadoop.util.StringUtils;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 
+import static org.apache.hadoop.hive.common.FileUtils.HIDDEN_FILES_PATH_FILTER;
+import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.REPL_ENABLE_MOVE_OPTIMIZATION;
+
 public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
 
   private static final long serialVersionUID = 1L;
@@ -66,7 +70,10 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
     LOG.debug("ReplCopyTask.execute()");
     FileSystem dstFs = null;
     Path toPath = null;
+
     try {
+      Hive hiveDb = Hive.get(conf);
+
       Path fromPath = work.getFromPath();
       toPath = work.getToPath();
 
@@ -130,6 +137,18 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
         }
       }
 
+      // in case of move optimization, file is directly copied to destination. So we need to clear the old content, if
+      // its a replace (insert overwrite ) operation.
+      if (work.getDeleteDestIfExist() && dstFs.exists(toPath)) {
+        LOG.debug(" path " + toPath + " is cleaned before renaming");
+        if (conf.getBoolVar(HiveConf.ConfVars.REPLCMENABLED) && work.getNeedRecycle()) {
+          hiveDb.recycleDirToCmPath(toPath, work.getIsAutoPerge());
+        }
+        if (!hiveDb.trashFilesUnderDir(dstFs, toPath, conf)) {
+          throw new IllegalStateException("could not delete " + toPath.getName());
+        }
+      }
+
       LOG.debug("ReplCopyTask numFiles: " + srcFiles.size());
       boolean inheritPerms = conf.getBoolVar(HiveConf.ConfVars.HIVE_WAREHOUSE_SUBDIR_INHERIT_PERMS);
       if (!FileUtils.mkdir(dstFs, toPath, inheritPerms, conf)) {
@@ -151,6 +170,15 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
         if (dstFs.exists(destFile)) {
           String destFileWithSourceName = srcFile.getSourcePath().getName();
           Path newDestFile = new Path(toPath, destFileWithSourceName);
+
+          // if the new file exist then delete it before renaming, to avoid rename failure. If the copy is done
+          // directly to table path (bypassing staging directory) then there might be some stale files from previous
+          // incomplete/failed load. No need of recycle as this is a case of stale file.
+          if (dstFs.exists(newDestFile)) {
+            LOG.debug(" file " + newDestFile + " is deleted before renaming");
+            dstFs.delete(newDestFile, true);
+          }
+
           boolean result = dstFs.rename(destFile, newDestFile);
           if (!result) {
             throw new IllegalStateException(
@@ -218,11 +246,17 @@ public class ReplCopyTask extends Task<ReplCopyWork> implements Serializable {
     return "REPL_COPY";
   }
 
-  public static Task<?> getLoadCopyTask(ReplicationSpec replicationSpec, Path srcPath, Path dstPath, HiveConf conf) {
+  public static Task<?> getLoadCopyTask(ReplicationSpec replicationSpec, Path srcPath, Path dstPath,
+                                        HiveConf conf, boolean isAutoPurge, boolean needRecycle) {
     Task<?> copyTask = null;
     LOG.debug("ReplCopyTask:getLoadCopyTask: "+srcPath + "=>" + dstPath);
     if ((replicationSpec != null) && replicationSpec.isInReplicationScope()){
       ReplCopyWork rcwork = new ReplCopyWork(srcPath, dstPath, false);
+      if (replicationSpec.isReplace() &&  conf.getBoolVar(REPL_ENABLE_MOVE_OPTIMIZATION)) {
+        rcwork.setDeleteDestIfExist(true);
+        rcwork.setAutoPurge(isAutoPurge);
+        rcwork.setNeedRecycle(needRecycle);
+      }
       LOG.debug("ReplCopyTask:\trcwork");
       if (replicationSpec.isLazy()) {
         LOG.debug("ReplCopyTask:\tlazy");

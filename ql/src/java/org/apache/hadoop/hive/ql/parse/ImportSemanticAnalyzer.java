@@ -73,6 +73,7 @@ import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.mapred.OutputFormat;
 import org.datanucleus.util.StringUtils;
+import org.apache.hadoop.hive.metastore.ReplChangeManager;
 
 /**
  * ImportSemanticAnalyzer.
@@ -365,13 +366,36 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
   }
 
   private static Task<?> loadTable(URI fromURI, Table table, boolean replace, Path tgtPath,
-                            ReplicationSpec replicationSpec, EximUtil.SemanticAnalyzerWrapperContext x) {
+                            ReplicationSpec replicationSpec, EximUtil.SemanticAnalyzerWrapperContext x) throws HiveException {
     Path dataPath = new Path(fromURI.toString(), EximUtil.DATA_PATH_NAME);
-    Path tmpPath = x.getCtx().getExternalTmpPath(tgtPath);
-    Task<?> copyTask = ReplCopyTask.getLoadCopyTask(replicationSpec, dataPath, tmpPath, x.getConf());
-    LoadTableDesc loadTableWork = new LoadTableDesc(tmpPath,
-        Utilities.getTableDesc(table), new TreeMap<>(),
-        replace ? LoadFileType.REPLACE_ALL : LoadFileType.OVERWRITE_EXISTING);
+
+    // if move optimization is enabled, copy the files directly to the target path. No need to create the staging dir.
+    LoadFileType loadFileType;
+    boolean isAutoPurge;
+    boolean needRecycle;
+    if (replicationSpec.isInReplicationScope() &&
+        x.getCtx().getConf().getBoolean(HiveConf.ConfVars.REPL_ENABLE_MOVE_OPTIMIZATION.varname, false)) {
+      loadFileType = LoadFileType.IGNORE;
+      isAutoPurge = "true".equalsIgnoreCase(table.getProperty("auto.purge"));
+      if (table.isTemporary()) {
+        needRecycle = false;
+      } else {
+        org.apache.hadoop.hive.metastore.api.Database db = x.getHive().getDatabase(table.getDbName());
+        needRecycle = db != null && ReplChangeManager.isSourceOfReplication(db);
+      }
+    } else {
+      tgtPath = x.getCtx().getExternalTmpPath(tgtPath);
+      loadFileType = replace ? LoadFileType.REPLACE_ALL : LoadFileType.OVERWRITE_EXISTING;
+      needRecycle = false;
+      isAutoPurge = false;
+    }
+
+    x.getLOG().debug("adding dependent CopyWork/AddPart/MoveWork for table "
+            + table.getCompleteName()
+            + " with source location: " + dataPath.toString() + " to target location " + tgtPath.toString());
+    Task<?> copyTask = ReplCopyTask.getLoadCopyTask(replicationSpec, dataPath, tgtPath, x.getConf(), isAutoPurge, needRecycle);
+    LoadTableDesc loadTableWork = new LoadTableDesc(tgtPath,
+        Utilities.getTableDesc(table), new TreeMap<>(), loadFileType);
     Task<?> loadTableTask = TaskFactory.get(new MoveWork(x.getInputs(),
         x.getOutputs(), loadTableWork, null, false, SessionState.get().getLineageState()),
             x.getConf(), true);
@@ -438,19 +462,39 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     } else {
       String srcLocation = partSpec.getLocation();
       fixLocationInPartSpec(fs, tblDesc, table, wh, replicationSpec, partSpec, x);
+      Path tgtLocation = new Path(partSpec.getLocation());
+
+      // if move optimization is enabled, copy the files directly to the target path. No need to create the staging dir.
+      LoadFileType loadFileType;
+      boolean isAutoPurge;
+      boolean needRecycle;
+      if (replicationSpec.isInReplicationScope() &&
+          x.getCtx().getConf().getBoolean(HiveConf.ConfVars.REPL_ENABLE_MOVE_OPTIMIZATION.varname, false)) {
+        loadFileType = LoadFileType.IGNORE;
+        isAutoPurge = "true".equalsIgnoreCase(table.getProperty("auto.purge"));
+        if (table.isTemporary()) {
+          needRecycle = false;
+        } else {
+          org.apache.hadoop.hive.metastore.api.Database db = x.getHive().getDatabase(table.getDbName());
+          needRecycle = db != null && ReplChangeManager.isSourceOfReplication(db);
+        }
+      } else {
+        tgtLocation = x.getCtx().getExternalTmpPath(tgtLocation);
+        loadFileType = replicationSpec.isReplace() ? LoadFileType.REPLACE_ALL : LoadFileType.OVERWRITE_EXISTING;
+        isAutoPurge = false;
+        needRecycle = false;
+      }
+
       x.getLOG().debug("adding dependent CopyWork/AddPart/MoveWork for partition "
           + partSpecToString(partSpec.getPartSpec())
-          + " with source location: " + srcLocation);
-      Path tgtLocation = new Path(partSpec.getLocation());
-      Path tmpPath = x.getCtx().getExternalTmpPath(tgtLocation);
+          + " with source location: " + srcLocation + " to target location " + tgtLocation);
+
       Task<?> copyTask = ReplCopyTask.getLoadCopyTask(
-          replicationSpec, new Path(srcLocation), tmpPath, x.getConf());
+          replicationSpec, new Path(srcLocation), tgtLocation, x.getConf(), isAutoPurge, needRecycle);
       Task<?> addPartTask = TaskFactory.get(new DDLWork(x.getInputs(),
-          x.getOutputs(), addPartitionDesc), x.getConf(), true);
-      LoadTableDesc loadTableWork = new LoadTableDesc(tmpPath,
-          Utilities.getTableDesc(table),
-          partSpec.getPartSpec(),
-          replicationSpec.isReplace() ? LoadFileType.REPLACE_ALL : LoadFileType.OVERWRITE_EXISTING);
+              x.getOutputs(), addPartitionDesc), x.getConf(), true);
+      LoadTableDesc loadTableWork = new LoadTableDesc(tgtLocation,
+          Utilities.getTableDesc(table), partSpec.getPartSpec(), loadFileType);
       loadTableWork.setInheritTableSpecs(false);
       Task<?> loadPartTask = TaskFactory.get(new MoveWork(
           x.getInputs(), x.getOutputs(), loadTableWork, null, false,

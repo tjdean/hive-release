@@ -35,6 +35,7 @@ import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore.Behaviour
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.api.NotificationEvent;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -1058,7 +1059,7 @@ public class TestReplicationScenariosAcrossInstances {
         }
         if (args.tblName != null) {
           LOG.warn("Verifier - Table: " + String.valueOf(args.tblName));
-          return args.tblName.equals("t1");
+          return !args.tblName.equals("t2");
         }
         return true;
       }
@@ -1275,5 +1276,113 @@ public class TestReplicationScenariosAcrossInstances {
             .verifyResult("t1")
             .run("show partitions t1")
             .verifyResults(new String[] { "country=india", "country=us" });
+  }
+
+  public void testMoveOptimizationBootstrapReplLoadRetryAfterFailure() throws Throwable {
+    String replicatedDbName_CM = replicatedDbName + "_CM";
+    WarehouseInstance.Tuple tuple = primary
+            .run("use " + primaryDbName)
+            .run("create table t2 (place string) partitioned by (country string)")
+            .run("insert into table t2 partition(country='india') values ('bangalore')")
+            .dump(primaryDbName, null);
+
+    testMoveOptimization(primaryDbName, replicatedDbName, replicatedDbName_CM, "t2",
+            "ADD_PARTITION", tuple);
+  }
+
+  @Test
+  public void testMoveOptimizationIncrementalFailureAfterCopyReplace() throws Throwable {
+    List<String> withConfigs = Arrays.asList("'hive.repl.enable.move.optimization'='true'");
+    String replicatedDbName_CM = replicatedDbName + "_CM";
+    WarehouseInstance.Tuple tuple = primary.run("use " + primaryDbName)
+            .run("create table t2 (place string) partitioned by (country string)")
+            .run("insert into table t2 partition(country='india') values ('bangalore')")
+            .run("create table t1 (place string) partitioned by (country string)")
+            .run("insert into table t1 partition(country='india') values ('delhi')")
+            .dump(primaryDbName, null);
+    replica.load(replicatedDbName, tuple.dumpLocation, withConfigs);
+    replica.load(replicatedDbName_CM, tuple.dumpLocation, withConfigs);
+    replica.run("alter database " + replicatedDbName + " set DBPROPERTIES ('" + SOURCE_OF_REPLICATION + "' = '1,2,3')")
+      .run("alter database " + replicatedDbName_CM + " set DBPROPERTIES ('" + SOURCE_OF_REPLICATION + "' = '1,2,3')");
+
+    tuple = primary.run("use " + primaryDbName)
+            .run("insert overwrite table " + primaryDbName + ".t1  partition(country='india') select place from t2")
+            .dump(primaryDbName, tuple.lastReplicationId);
+
+    testMoveOptimization(primaryDbName, replicatedDbName, replicatedDbName_CM, "t1", "INSERT", tuple);
+  }
+
+  @Test
+  public void testMoveOptimizationIncrementalFailureAfterCopy() throws Throwable {
+    List<String> withConfigs = Arrays.asList("'hive.repl.enable.move.optimization'='true'");
+    String replicatedDbName_CM = replicatedDbName + "_CM";
+    WarehouseInstance.Tuple tuple = primary.run("use " + primaryDbName)
+            .run("create table t2 (place string) partitioned by (country string)")
+            .run("ALTER TABLE t2 ADD PARTITION (country='india')")
+            .dump(primaryDbName, null);
+    replica.load(replicatedDbName, tuple.dumpLocation, withConfigs);
+    replica.load(replicatedDbName_CM, tuple.dumpLocation, withConfigs);
+    replica.run("alter database " + replicatedDbName + " set DBPROPERTIES ('" + SOURCE_OF_REPLICATION + "' = '1,2,3')")
+            .run("alter database " + replicatedDbName_CM + " set DBPROPERTIES ('" + SOURCE_OF_REPLICATION + "' = '1,2,3')");
+
+    tuple = primary.run("use " + primaryDbName)
+            .run("insert into table t2 partition(country='india') values ('bangalore')")
+            .dump(primaryDbName, tuple.lastReplicationId);
+
+    testMoveOptimization(primaryDbName, replicatedDbName, replicatedDbName_CM, "t2", "INSERT", tuple);
+  }
+
+  private void testMoveOptimization(String primarydb, String replicadb, String replicatedDbName_CM,
+                                    String tbl,  String eventType, WarehouseInstance.Tuple tuple) throws Throwable {
+    List<String> withConfigs = Arrays.asList("'hive.repl.enable.move.optimization'='true'");
+
+    // fail add notification for given event type.
+    BehaviourInjection<NotificationEvent, Boolean> callerVerifier
+            = new BehaviourInjection<NotificationEvent, Boolean>() {
+      @Nullable
+      @Override
+      public Boolean apply(@Nullable NotificationEvent entry) {
+        if (entry.getEventType().equalsIgnoreCase(eventType) && entry.getTableName().equalsIgnoreCase(tbl)) {
+          injectionPathCalled = true;
+          LOG.warn("Verifier - DB: " + String.valueOf(entry.getDbName())
+                  + " Table: " + String.valueOf(entry.getTableName())
+                  + " Event: " + String.valueOf(entry.getEventType()));
+          return false;
+        }
+        return true;
+      }
+    };
+
+    InjectableBehaviourObjectStore.setAddNotificationModifier(callerVerifier);
+    try {
+      replica.loadFailure(replicadb, tuple.dumpLocation, withConfigs);
+    } finally {
+      InjectableBehaviourObjectStore.resetAddNotificationModifier();
+    }
+
+    callerVerifier.assertInjectionsPerformed(true, false);
+    replica.load(replicadb, tuple.dumpLocation, withConfigs);
+
+    replica.run("use " + replicadb)
+            .run("select country from " + tbl + " where country == 'india'")
+            .verifyResults(Arrays.asList("india"));
+
+    primary.run("use " + primarydb)
+            .run("drop table " + tbl);
+
+    InjectableBehaviourObjectStore.setAddNotificationModifier(callerVerifier);
+    try {
+      replica.loadFailure(replicatedDbName_CM, tuple.dumpLocation, withConfigs);
+    } finally {
+      InjectableBehaviourObjectStore.resetAddNotificationModifier();
+    }
+
+    callerVerifier.assertInjectionsPerformed(true, false);
+    replica.load(replicatedDbName_CM, tuple.dumpLocation, withConfigs);
+
+    replica.run("use " + replicatedDbName_CM)
+            .run("select country from " + tbl + " where country == 'india'")
+            .verifyResults(Arrays.asList("india"))
+            .run(" drop database if exists " + replicatedDbName_CM + " cascade");
   }
 }
