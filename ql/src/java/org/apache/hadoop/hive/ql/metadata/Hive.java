@@ -2973,10 +2973,13 @@ private void constructOneLBLocationMap(FileStatus fSta,
     } else {
       //copy if across file system or encryption zones.
       LOG.info("Copying source " + srcf + " to " + destf + " because HDFS encryption zones are different.");
-      FileUtils.copy(srcFs, srcf, destFs, destf,
+      if (!FileUtils.copy(srcFs, srcf, destFs, destf,
           true,    // delete source
           false, // overwrite destination
-          conf);
+          conf)) {
+        LOG.error("Copy failed for source: " + srcf + " to destination: " + destf);
+        throw new IOException("File copy failed.");
+      }
     }
     return destf;
   }
