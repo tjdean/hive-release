@@ -184,21 +184,4 @@ public class InjectableBehaviourObjectStore extends ObjectStore {
     super.createFunction(func);
   }
 
-  @Override
-  public Partition getPartitionWithAuth(String dbName, String tblName,
-                                        List<String> partVals, String userName, List<String> groupNames)
-          throws MetaException, NoSuchObjectException, InvalidObjectException {
-    if (callerVerifier != null) {
-      CallerArguments args = new CallerArguments(dbName);
-      args.tblName = tblName;
-      args.ptnValues = partVals;
-      Boolean success = callerVerifier.apply(args);
-      if ((success != null) && !success) {
-        throw new MetaException("InjectableBehaviourObjectStore: Invalid Get Partition operation on DB: "
-                + args.dbName + " table: " + args.tblName);
-      }
-    }
-    return super.getPartitionWithAuth(dbName, tblName, partVals, userName, groupNames);
-  }
-
 }

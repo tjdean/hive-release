@@ -1067,9 +1067,12 @@ public class TestReplicationScenariosAcrossInstances {
 
     // Trigger bootstrap dump which just creates table t1 and other tables (t2, t3) and constraints not loaded.
     List<String> withConfigs = Arrays.asList("'hive.repl.approx.max.load.tasks'='1'");
-    replica.loadFailure(replicatedDbName, tuple.dumpLocation, withConfigs);
-    InjectableBehaviourObjectStore.resetCallerVerifier(); // reset the behaviour
-    callerVerifier.assertInjectionsPerformed(true, false);
+    try {
+      replica.loadFailure(replicatedDbName, tuple.dumpLocation, withConfigs);
+      callerVerifier.assertInjectionsPerformed(true, false);
+    } finally {
+      InjectableBehaviourObjectStore.resetCallerVerifier(); // reset the behaviour
+    }
 
     replica.run("use " + replicatedDbName)
             .run("repl status " + replicatedDbName)
@@ -1097,11 +1100,14 @@ public class TestReplicationScenariosAcrossInstances {
     };
     InjectableBehaviourObjectStore.setCallerVerifier(callerVerifier);
 
-    // Retry with same dump with which it was already loaded should resume the bootstrap load.
-    // This time, it completes by adding table t2 and t3.
-    replica.load(replicatedDbName, tuple.dumpLocation);
-    InjectableBehaviourObjectStore.resetCallerVerifier(); // reset the behaviour
-    callerVerifier.assertInjectionsPerformed(true, false);
+    try {
+      // Retry with same dump with which it was already loaded should resume the bootstrap load.
+      // This time, it completes by adding table t2 and t3.
+      replica.load(replicatedDbName, tuple.dumpLocation);
+      callerVerifier.assertInjectionsPerformed(true, false);
+    } finally {
+      InjectableBehaviourObjectStore.resetCallerVerifier(); // reset the behaviour
+    }
 
     replica.run("use " + replicatedDbName)
             .run("repl status " + replicatedDbName)
@@ -1114,8 +1120,6 @@ public class TestReplicationScenariosAcrossInstances {
   public void testBootstrapReplLoadRetryAfterFailureForPartitions() throws Throwable {
     WarehouseInstance.Tuple tuple = primary
             .run("use " + primaryDbName)
-            .run("create table t1 (id int)")
-            .run("insert into table t1 values (10)")
             .run("create table t2 (place string) partitioned by (country string)")
             .run("insert into table t2 partition(country='india') values ('bangalore')")
             .run("insert into table t2 partition(country='uk') values ('london')")
@@ -1130,56 +1134,47 @@ public class TestReplicationScenariosAcrossInstances {
             .dump(primaryDbName, null);
 
     // Inject a behavior where REPL LOAD failed when try to load table "t2" and partition "uk".
-    // So, table "t1" and "t2" will exist and partition "india" will exist, rest failed as operation failed.
+    // So, table "t2" will exist and partition "india" will exist, rest failed as operation failed.
+    BehaviourInjection<Partition, Partition> getPartitionStub
+            = new BehaviourInjection<Partition, Partition>() {
+      @Nullable
+      @Override
+      public Partition apply(@Nullable Partition ptn) {
+        if (ptn.getValues().get(0).equals("india")) {
+          injectionPathCalled = true;
+          LOG.warn("####getPartition Stub called");
+          return null;
+        }
+        return ptn;
+      }
+    };
+    InjectableBehaviourObjectStore.setGetPartitionBehaviour(getPartitionStub);
+
+    List<String> withConfigs = Arrays.asList("'hive.repl.approx.max.load.tasks'='1'");
+    replica.loadFailure(replicatedDbName, tuple.dumpLocation, withConfigs);
+    InjectableBehaviourObjectStore.resetGetPartitionBehaviour(); // reset the behaviour
+    getPartitionStub.assertInjectionsPerformed(true, false);
+
+    replica.run("use " + replicatedDbName)
+            .run("repl status " + replicatedDbName)
+            .verifyResult("null")
+            .run("show tables")
+            .verifyResults(new String[] {"t2" })
+            .run("select country from t2 order by country")
+            .verifyResults(Arrays.asList("india"))
+            .run("show functions like '" + replicatedDbName + "*'")
+            .verifyResult(replicatedDbName + ".testFunctionOne");
+
+    // Retry with different dump should fail.
+    replica.loadFailure(replicatedDbName, tuple2.dumpLocation);
+
+    // Verify if no create table/function calls. Only add partitions.
     BehaviourInjection<CallerArguments, Boolean> callerVerifier
             = new BehaviourInjection<CallerArguments, Boolean>() {
       @Nullable
       @Override
       public Boolean apply(@Nullable CallerArguments args) {
-        injectionPathCalled = true;
-        if (!args.dbName.equalsIgnoreCase(replicatedDbName)) {
-          LOG.warn("Verifier - DB: " + String.valueOf(args.dbName));
-          return false;
-        }
-        if (args.ptnValues != null) {
-          if (!args.tblName.equalsIgnoreCase("t2")) {
-            LOG.warn("Verifier - Fail Table: " + String.valueOf(args.tblName));
-            return false;
-          }
-          return args.ptnValues.get(0).equals("india");
-        }
-        LOG.warn("Verifier - Table: " + String.valueOf(args.tblName));
-        return true;
-      }
-    };
-    InjectableBehaviourObjectStore.setCallerVerifier(callerVerifier);
-
-    List<String> withConfigs = Arrays.asList("'hive.repl.approx.max.load.tasks'='1'");
-    replica.loadFailure(replicatedDbName, tuple.dumpLocation, withConfigs);
-    InjectableBehaviourObjectStore.resetCallerVerifier(); // reset the behaviour
-    callerVerifier.assertInjectionsPerformed(true, false);
-
-    replica.run("use " + replicatedDbName)
-            .run("repl status " + replicatedDbName)
-            .verifyResult("null")
-            .run("show tables like 't2'")
-            .verifyResults(new String[] { "t2" })
-            .run("select country from t2 order by country")
-            .verifyResults(Arrays.asList("india"));
-
-    // Retry with different dump should fail.
-    CommandProcessorResponse ret = replica.runCommand("REPL LOAD " + replicatedDbName +
-            " FROM '" + tuple2.dumpLocation + "'");
-    Assert.assertEquals(ret.getResponseCode(), ErrorMsg.REPL_BOOTSTRAP_LOAD_PATH_NOT_VALID.getErrorCode());
-
-    // Verify if no create table/function calls. Only add partitions.
-    callerVerifier = new BehaviourInjection<CallerArguments, Boolean>() {
-      @Nullable
-      @Override
-      public Boolean apply(@Nullable CallerArguments args) {
-        if (!args.dbName.equalsIgnoreCase(replicatedDbName)
-                || ((args.ptnValues == null) && (args.tblName != null))
-                || (args.funcName != null)) {
+        if (!args.dbName.equalsIgnoreCase(replicatedDbName) || (args.tblName != null) || (args.funcName != null)) {
           injectionPathCalled = true;
           LOG.warn("Verifier - DB: " + String.valueOf(args.dbName)
                   + " Table: " + String.valueOf(args.tblName)
@@ -1191,19 +1186,20 @@ public class TestReplicationScenariosAcrossInstances {
     };
     InjectableBehaviourObjectStore.setCallerVerifier(callerVerifier);
 
-    // Retry with same dump with which it was already loaded should resume the bootstrap load.
-    // This time, it completes by adding remaining partitions.
-    replica.load(replicatedDbName, tuple.dumpLocation);
-    InjectableBehaviourObjectStore.resetCallerVerifier(); // reset the behaviour
-    callerVerifier.assertInjectionsPerformed(false, false);
+    try {
+      // Retry with same dump with which it was already loaded should resume the bootstrap load.
+      // This time, it completes by adding remaining partitions.
+      replica.load(replicatedDbName, tuple.dumpLocation);
+      callerVerifier.assertInjectionsPerformed(false, false);
+    } finally {
+      InjectableBehaviourObjectStore.resetCallerVerifier(); // reset the behaviour
+    }
 
     replica.run("use " + replicatedDbName)
             .run("repl status " + replicatedDbName)
             .verifyResult(tuple.lastReplicationId)
             .run("show tables")
-            .verifyResults(new String[] { "t1", "t2" })
-            .run("select id from t1")
-            .verifyResults(Arrays.asList("10"))
+            .verifyResults(new String[] { "t2" })
             .run("select country from t2 order by country")
             .verifyResults(Arrays.asList("india", "uk", "us"))
             .run("show functions like '" + replicatedDbName + "*'")

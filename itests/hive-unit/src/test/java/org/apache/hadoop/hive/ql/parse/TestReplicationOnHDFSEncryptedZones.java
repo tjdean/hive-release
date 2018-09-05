@@ -91,12 +91,16 @@ public class TestReplicationOnHDFSEncryptedZones {
 
   @Test
   public void targetAndSourceHaveDifferentEncryptionZoneKeys() throws Throwable {
-    DFSTestUtil.createKey("test_key123", miniDFSCluster, conf);
+    MiniDFSCluster replicaMiniDFSCluster =
+            new MiniDFSCluster.Builder(conf).numDataNodes(1).format(true).build();
+    DFSTestUtil.createKey("test_key123", replicaMiniDFSCluster, conf);
 
-    WarehouseInstance replica = new WarehouseInstance(LOG, miniDFSCluster,
+    WarehouseInstance replica = new WarehouseInstance(LOG, replicaMiniDFSCluster,
         new HashMap<String, String>() {{
           put(HiveConf.ConfVars.HIVE_IN_TEST.varname, "false");
           put(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS.varname, "false");
+          put(HiveConf.ConfVars.HIVE_DISTCP_DOAS_USER.varname,
+                  UserGroupInformation.getCurrentUser().getUserName());
         }}, "test_key123");
 
     WarehouseInstance.Tuple tuple =
