@@ -1155,15 +1155,15 @@ public class TestReplicationScenariosAcrossInstances {
     InjectableBehaviourObjectStore.resetGetPartitionBehaviour(); // reset the behaviour
     getPartitionStub.assertInjectionsPerformed(true, false);
 
+    // For Hadoop-2, the functions are loaded only after table load and hence remove the validation for
+    // functions. It is done after the successful REPL LOAD.
     replica.run("use " + replicatedDbName)
             .run("repl status " + replicatedDbName)
             .verifyResult("null")
             .run("show tables")
             .verifyResults(new String[] {"t2" })
             .run("select country from t2 order by country")
-            .verifyResults(Arrays.asList("india"))
-            .run("show functions like '" + replicatedDbName + "*'")
-            .verifyResult(replicatedDbName + ".testFunctionOne");
+            .verifyResults(Arrays.asList("india"));
 
     // Retry with different dump should fail.
     replica.loadFailure(replicatedDbName, tuple2.dumpLocation);
@@ -1174,7 +1174,7 @@ public class TestReplicationScenariosAcrossInstances {
       @Nullable
       @Override
       public Boolean apply(@Nullable CallerArguments args) {
-        if (!args.dbName.equalsIgnoreCase(replicatedDbName) || (args.tblName != null) || (args.funcName != null)) {
+        if (!args.dbName.equalsIgnoreCase(replicatedDbName) || (args.tblName != null)) {
           injectionPathCalled = true;
           LOG.warn("Verifier - DB: " + String.valueOf(args.dbName)
                   + " Table: " + String.valueOf(args.tblName)
