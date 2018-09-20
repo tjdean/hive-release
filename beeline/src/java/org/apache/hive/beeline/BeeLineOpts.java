@@ -114,6 +114,7 @@ class BeeLineOpts implements Completer {
   private Map<String, String> hiveVariables = new HashMap<String, String>();
   private Map<String, String> hiveConfVariables = new HashMap<String, String>();
   private boolean helpAsked;
+  private boolean beelineSiteUrlsAsked;
 
   private String lastConnectedUrl = null;
 
@@ -678,7 +679,16 @@ class BeeLineOpts implements Completer {
   public boolean isHelpAsked() {
     return helpAsked;
   }
+  
+  public void setBeelineSiteUrlsAsked(boolean beelineSiteUrlsAsked) {
+    this.beelineSiteUrlsAsked = beelineSiteUrlsAsked;
+  }
 
+  public boolean isBeelineSiteUrlsAsked() {
+    return beelineSiteUrlsAsked;
+  }
+
+  
   public String getLastConnectedUrl(){
     return lastConnectedUrl;
   }
