@@ -308,6 +308,10 @@ public class Hive {
     hiveDB.set(hive);
   }
 
+  public static Hive getThreadLocal() {
+    return hiveDB.get();
+  }
+
   public static void closeCurrent() {
     hiveDB.remove();
   }

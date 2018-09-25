@@ -138,6 +138,7 @@ import org.apache.hadoop.hive.metastore.api.UnknownDBException;
 import org.apache.hadoop.hive.metastore.api.UnknownPartitionException;
 import org.apache.hadoop.hive.metastore.api.UnknownTableException;
 import org.apache.hadoop.hive.metastore.api.UnlockRequest;
+import org.apache.hadoop.hive.common.LogUtils;
 import org.apache.hadoop.hive.metastore.partition.spec.PartitionSpecProxy;
 import org.apache.hadoop.hive.metastore.txn.TxnUtils;
 import org.apache.hadoop.hive.shims.ShimLoader;
@@ -154,6 +155,7 @@ import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Hive Metastore Client.
@@ -179,6 +181,8 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   private static final String REPL_EVENTS_MISSING_IN_METASTORE = "Notification events are missing in the meta store.";
 
   private Map<String, String> currentMetaVars;
+
+  private static final AtomicInteger connCount = new AtomicInteger(0);
 
   // for thrift connects
   private int retries = 5;
@@ -489,6 +493,11 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
           try {
             transport.open();
             isConnected = true;
+            LOG.info("Opened a connection to metastore, current connections: " + connCount.incrementAndGet());
+            if (LOG.isTraceEnabled()) {
+              LOG.trace("", new LogUtils.StackTraceLogger("METASTORE CONNECTION TRACE - open - " +
+                      System.identityHashCode(this)));
+            }
           } catch (TTransportException e) {
             tte = e;
             if (LOG.isDebugEnabled()) {
@@ -568,6 +577,11 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
     // just in case, we make this call.
     if ((transport != null) && transport.isOpen()) {
       transport.close();
+      LOG.info("Closed a connection to metastore, current connections: " + connCount.decrementAndGet());
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("", new LogUtils.StackTraceLogger("METASTORE CONNECTION TRACE - close - " +
+                System.identityHashCode(this)));
+      }
     }
   }
 
