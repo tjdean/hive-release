@@ -118,11 +118,16 @@ public class TestObjectStore {
   public void testConcurrentAddNotifications() throws ExecutionException, InterruptedException {
 
     final int NUM_THREADS = 10;
-    CyclicBarrier cyclicBarrier = new CyclicBarrier(NUM_THREADS,
-        () -> LoggerFactory.getLogger("test")
-            .debug(NUM_THREADS + " threads going to add notification"));
+    final CyclicBarrier cyclicBarrier = new CyclicBarrier(NUM_THREADS,
+              new Runnable() {
+                @Override
+                public void run() {
+                  LoggerFactory.getLogger("test")
+                        .debug(NUM_THREADS + " threads going to add notification");
+                }
+        });
 
-    HiveConf conf = new HiveConf();
+    final HiveConf conf = new HiveConf();
     conf.set(HiveConf.ConfVars.METASTORE_EXPRESSION_PROXY_CLASS.varname,
         MockPartitionExpressionForMetastore.class.getCanonicalName());
     /*
@@ -153,7 +158,9 @@ public class TestObjectStore {
       final int n = i;
 
       executorService.execute(
-          () -> {
+          new Runnable() {
+            @Override
+            public void run() {
             ObjectStore store = new ObjectStore();
             store.setConf(conf);
 
@@ -170,6 +177,7 @@ public class TestObjectStore {
             }
             store.addNotificationEvent(dbEvent);
             System.out.println("FINISH NOTIFICATION");
+            }
           });
     }
     executorService.shutdown();
@@ -192,3 +200,4 @@ public class TestObjectStore {
     }
   }
 }
+

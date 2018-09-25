@@ -7350,12 +7350,14 @@ public class ObjectStore implements RawStore, Configurable {
 
   private void lockForUpdate() throws MetaException {
     String selectQuery = "select NEXT_EVENT_ID from NOTIFICATION_SEQUENCE";
-    String selectForUpdateQuery = sqlGenerator.addForUpdateClause(selectQuery);
-    new RetryingExecutor(hiveConf, () -> {
+    final String selectForUpdateQuery = sqlGenerator.addForUpdateClause(selectQuery);
+    new RetryingExecutor(hiveConf, new RetryingExecutor.Command() {
+      public void process() {
       Query query = pm.newQuery("javax.jdo.query.SQL", selectForUpdateQuery);
       query.setUnique(true);
       // only need to execute it to get db Lock
       query.execute();
+      }
     }).run();
   }
 
