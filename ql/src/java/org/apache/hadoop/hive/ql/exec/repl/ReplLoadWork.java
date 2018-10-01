@@ -51,14 +51,14 @@ public class ReplLoadWork implements Serializable {
   final LineageState sessionStateLineageState;
 
   public ReplLoadWork(HiveConf hiveConf, String dumpDirectory, String dbNameToLoadIn,
-      String tableNameToLoadIn, LineageState lineageState, boolean isIncrementalDump) throws IOException {
+      String tableNameToLoadIn, LineageState lineageState, boolean isIncrementalDump, Long eventTo) throws IOException {
     this.tableNameToLoadIn = tableNameToLoadIn;
     this.dumpDirectory = dumpDirectory;
     if (isIncrementalDump) {
       incrementalIterator = new IncrementalLoadEventsIterator(dumpDirectory, hiveConf);
       this.bootstrapIterator = null;
       incrementalLoadTaskBuilder = new IncrementalLoadTasksBuilder(dbNameToLoadIn, tableNameToLoadIn, dumpDirectory,
-              incrementalIterator, hiveConf);
+              incrementalIterator, hiveConf, eventTo);
     } else {
       this.bootstrapIterator = new BootstrapEventsIterator(dumpDirectory, dbNameToLoadIn, hiveConf);
       incrementalIterator = null;
