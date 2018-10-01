@@ -1197,6 +1197,10 @@ public class WriterImpl implements Writer, MemoryManager.Callback {
           HiveConf.ConfVars.HIVE_ORC_ROW_INDEX_STRIDE_DICTIONARY_CHECK.
             defaultBoolVal);
       doneDictionaryCheck = false;
+      if (dictionaryKeySizeThreshold <= 0.0) {
+        useDictionaryEncoding = false;
+        doneDictionaryCheck = true;
+      }
     }
 
     /**
