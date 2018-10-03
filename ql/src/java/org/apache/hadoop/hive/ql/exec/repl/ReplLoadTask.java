@@ -119,6 +119,10 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
           if (dbTracker.hasTasks()) {
             scope.rootTasks.addAll(dbTracker.tasks());
             scope.database = true;
+          } else {
+            // Scope might have set to database in some previous iteration of loop, so reset it to false if database
+            // tracker has no tasks.
+            scope.database = false;
           }
           dbTracker.debugLog("database");
           break;
@@ -139,7 +143,12 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
           if (!scope.database && tableTracker.hasTasks()) {
             scope.rootTasks.addAll(tableTracker.tasks());
             scope.table = true;
+          } else {
+            // Scope might have set to table in some previous iteration of loop, so reset it to false if table
+            // tracker has no tasks.
+            scope.table = false;
           }
+
           /*
             for table replication if we reach the max number of tasks then for the next run we will
             try to reload the same table again, this is mainly for ease of understanding the code

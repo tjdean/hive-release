@@ -82,6 +82,8 @@ public class InjectableBehaviourObjectStore extends ObjectStore {
 
   private static com.google.common.base.Function<NotificationEvent, Boolean> addNotificationEventModifier = null;
 
+  private static com.google.common.base.Function<CallerArguments, Boolean> alterTableModifier = null;
+
   // Methods to set/reset getTable modifier
   public static void setGetTableBehaviour(com.google.common.base.Function<Table, Table> modifier){
     if (modifier == null) {
@@ -144,6 +146,14 @@ public class InjectableBehaviourObjectStore extends ObjectStore {
     setAddNotificationModifier(null);
   }
 
+  public static void setAlterTableModifier(com.google.common.base.Function<CallerArguments, Boolean> modifier) {
+    alterTableModifier = modifier;
+  }
+
+  public static void resetAlterTableModifier() {
+    setAlterTableModifier(null);
+  }
+
   // ObjectStore methods to be overridden with injected behavior
   @Override
   public Table getTable(String dbName, String tableName) throws MetaException {
@@ -164,6 +174,20 @@ public class InjectableBehaviourObjectStore extends ObjectStore {
   @Override
   public NotificationEventResponse getNextNotification(NotificationEventRequest rqst) {
     return getNextNotificationModifier.apply(super.getNextNotification(rqst));
+  }
+
+  @Override
+  public void alterTable(String dbname, String name, Table newTable) throws InvalidObjectException, MetaException {
+    if (alterTableModifier != null) {
+      CallerArguments args = new CallerArguments(dbname);
+      args.tblName = name;
+      Boolean success = alterTableModifier.apply(args);
+      if ((success != null) && !success) {
+        throw new MetaException("InjectableBehaviourObjectStore: Invalid alterTable operation on DB: "
+                + dbname + " table: " + name);
+      }
+    }
+    super.alterTable(dbname, name, newTable);
   }
 
   @Override
