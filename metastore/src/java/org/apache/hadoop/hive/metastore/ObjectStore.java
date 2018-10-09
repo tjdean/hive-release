@@ -387,7 +387,7 @@ public class ObjectStore implements RawStore, Configurable {
       String productName = MetaStoreDirectSql.getProductName(pm);
       sqlGenerator = new SQLGenerator(
           DatabaseProduct.determineDatabaseProduct(productName),
-          new HiveConf(hiveConf, ObjectStore.class));
+          hiveConf);
     } catch (Exception e) {
       LOG.error("error trying to figure out the database product", e);
       throw new RuntimeException(e);
