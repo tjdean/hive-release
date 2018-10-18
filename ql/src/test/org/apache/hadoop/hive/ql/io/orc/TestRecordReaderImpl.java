@@ -479,69 +479,69 @@ public class TestRecordReaderImpl {
     PredicateLeaf pred = TestSearchArgumentImpl.createPredicateLeaf(
         PredicateLeaf.Operator.NULL_SAFE_EQUALS, PredicateLeaf.Type.INTEGER, "x", 15L, null);
     // Date to Integer conversion is not possible.
-    assertEquals(TruthValue.YES_NO,
+    assertEquals(TruthValue.YES_NO_NULL,
         RecordReaderImpl.evaluatePredicateProto(createDateStats(10, 100), pred, null));
 
     // Date to Float conversion is also not possible.
     pred = TestSearchArgumentImpl.createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
         PredicateLeaf.Type.FLOAT, "x", 15.0, null);
-    assertEquals(TruthValue.YES_NO,
+    assertEquals(TruthValue.YES_NO_NULL,
         RecordReaderImpl.evaluatePredicateProto(createDateStats(10, 100), pred, null));
 
     pred = TestSearchArgumentImpl.createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
         PredicateLeaf.Type.STRING, "x", "15", null);
-    assertEquals(TruthValue.NO,
+    assertEquals(TruthValue.YES_NO_NULL,
         RecordReaderImpl.evaluatePredicateProto(createDateStats(10, 100), pred, null));
 
     pred = TestSearchArgumentImpl.createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
         PredicateLeaf.Type.STRING, "x", "1970-01-11", null);
-    assertEquals(TruthValue.YES_NO,
+    assertEquals(TruthValue.YES_NO_NULL,
         RecordReaderImpl.evaluatePredicateProto(createDateStats(10, 100), pred, null));
 
     pred = TestSearchArgumentImpl.createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
         PredicateLeaf.Type.STRING, "x", "15.1", null);
-    assertEquals(TruthValue.NO,
+    assertEquals(TruthValue.YES_NO_NULL,
         RecordReaderImpl.evaluatePredicateProto(createDateStats(10, 100), pred, null));
 
     pred = TestSearchArgumentImpl.createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
         PredicateLeaf.Type.STRING, "x", "__a15__1", null);
-    assertEquals(TruthValue.NO,
+    assertEquals(TruthValue.YES_NO_NULL,
         RecordReaderImpl.evaluatePredicateProto(createDateStats(10, 100), pred, null));
 
     pred = TestSearchArgumentImpl.createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
         PredicateLeaf.Type.STRING, "x", "2000-01-16", null);
-    assertEquals(TruthValue.NO,
+    assertEquals(TruthValue.YES_NO_NULL,
         RecordReaderImpl.evaluatePredicateProto(createDateStats(10, 100), pred, null));
 
     pred = TestSearchArgumentImpl.createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
         PredicateLeaf.Type.STRING, "x", "1970-01-16", null);
-    assertEquals(TruthValue.YES_NO,
+    assertEquals(TruthValue.YES_NO_NULL,
         RecordReaderImpl.evaluatePredicateProto(createDateStats(10, 100), pred, null));
 
     pred = TestSearchArgumentImpl.createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
         PredicateLeaf.Type.DATE, "x", new DateWritable(15).get(), null);
-    assertEquals(TruthValue.YES_NO,
+    assertEquals(TruthValue.YES_NO_NULL,
         RecordReaderImpl.evaluatePredicateProto(createDateStats(10, 100), pred, null));
 
     pred = TestSearchArgumentImpl.createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
         PredicateLeaf.Type.DATE, "x", new DateWritable(150).get(), null);
-    assertEquals(TruthValue.NO,
+    assertEquals(TruthValue.YES_NO_NULL,
         RecordReaderImpl.evaluatePredicateProto(createDateStats(10, 100), pred, null));
 
     // Date to Decimal conversion is also not possible.
     pred = TestSearchArgumentImpl.createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
         PredicateLeaf.Type.DECIMAL, "x", HiveDecimal.create(15), null);
-    assertEquals(TruthValue.YES_NO,
+    assertEquals(TruthValue.YES_NO_NULL,
         RecordReaderImpl.evaluatePredicateProto(createDateStats(10, 100), pred, null));
 
     pred = TestSearchArgumentImpl.createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
         PredicateLeaf.Type.TIMESTAMP, "x", new Timestamp(15), null);
-    assertEquals(TruthValue.NO,
+    assertEquals(TruthValue.YES_NO_NULL,
         RecordReaderImpl.evaluatePredicateProto(createDateStats(10, 100), pred, null));
 
     pred = TestSearchArgumentImpl.createPredicateLeaf(PredicateLeaf.Operator.NULL_SAFE_EQUALS,
         PredicateLeaf.Type.TIMESTAMP, "x", new Timestamp(15L * 24L * 60L * 60L * 1000L), null);
-    assertEquals(TruthValue.YES_NO,
+    assertEquals(TruthValue.YES_NO_NULL,
         RecordReaderImpl.evaluatePredicateProto(createDateStats(10, 100), pred, null));
   }
 
@@ -1448,10 +1448,10 @@ public class TestRecordReaderImpl {
       bf.addLong((new DateWritable(i)).getDays());
     }
     ColumnStatistics cs = ColumnStatisticsImpl.deserialize(createDateStats(10, 100));
-    assertEquals(TruthValue.NO, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
+    assertEquals(TruthValue.YES_NO_NULL, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
 
     bf.addLong((new DateWritable(15)).getDays());
-    assertEquals(TruthValue.YES_NO, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
+    assertEquals(TruthValue.YES_NO_NULL, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
   }
 
   @Test
@@ -1464,7 +1464,7 @@ public class TestRecordReaderImpl {
       bf.addLong((new DateWritable(i)).getDays());
     }
     ColumnStatistics cs = ColumnStatisticsImpl.deserialize(createDateStats(10, 100));
-    assertEquals(TruthValue.NO_NULL, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
+    assertEquals(TruthValue.YES_NO_NULL, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
 
     bf.addLong((new DateWritable(15)).getDays());
     assertEquals(TruthValue.YES_NO_NULL, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
@@ -1483,7 +1483,7 @@ public class TestRecordReaderImpl {
       bf.addLong((new DateWritable(i)).getDays());
     }
     ColumnStatistics cs = ColumnStatisticsImpl.deserialize(createDateStats(10, 100));
-    assertEquals(TruthValue.NO_NULL, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
+    assertEquals(TruthValue.YES_NO_NULL, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
 
     bf.addLong((new DateWritable(19)).getDays());
     assertEquals(TruthValue.YES_NO_NULL, RecordReaderImpl.evaluatePredicate(cs, pred, bf));
