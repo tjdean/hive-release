@@ -236,20 +236,11 @@ public class TestDbNotificationListener {
         DbNotificationListener.class.getName());
     conf.setVar(HiveConf.ConfVars.METASTORE_EVENT_LISTENERS, MockMetaStoreEventListener.class.getName());
     conf.setVar(HiveConf.ConfVars.METASTORE_EVENT_DB_LISTENER_TTL, String.valueOf(EVENTS_TTL) + "s");
+    conf.setVar(HiveConf.ConfVars.METASTORE_EVENT_DB_LISTENER_CLEAN_INTERVAL, String.valueOf(CLEANUP_SLEEP_TIME) + "s");
     conf.setBoolVar(HiveConf.ConfVars.HIVE_SUPPORT_CONCURRENCY, false);
     conf.setBoolVar(HiveConf.ConfVars.FIRE_EVENTS_FOR_DML, true);
     conf.setVar(HiveConf.ConfVars.DYNAMICPARTITIONINGMODE, "nonstrict");
     conf.setVar(HiveConf.ConfVars.METASTORE_RAW_STORE_IMPL, DummyRawStoreFailEvent.class.getName());
-    Class dbNotificationListener =
-        Class.forName("org.apache.hive.hcatalog.listener.DbNotificationListener");
-    Class[] classes = dbNotificationListener.getDeclaredClasses();
-    for (Class c : classes) {
-      if (c.getName().endsWith("CleanerThread")) {
-        Field sleepTimeField = c.getDeclaredField("sleepTime");
-        sleepTimeField.setAccessible(true);
-        sleepTimeField.set(null, CLEANUP_SLEEP_TIME * 1000);
-      }
-    }
     conf.setVar(HiveConf.ConfVars.HIVE_AUTHORIZATION_MANAGER,
         "org.apache.hadoop.hive.ql.security.authorization.plugin.sqlstd.SQLStdHiveAuthorizerFactory");
     SessionState.start(new CliSessionState(conf));

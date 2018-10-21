@@ -124,6 +124,13 @@ public class DbNotificationListener extends MetaStoreEventListener {
       cleaner.setTimeToLive(hiveConf.getTimeVar(HiveConf.ConfVars.METASTORE_EVENT_DB_LISTENER_TTL,
           TimeUnit.SECONDS));
     }
+
+    if (key.equals(HiveConf.ConfVars.METASTORE_EVENT_DB_LISTENER_CLEAN_INTERVAL.toString())) {
+      hiveConf.set(HiveConf.ConfVars.METASTORE_EVENT_DB_LISTENER_CLEAN_INTERVAL.name(),
+              tableEvent.getNewValue());
+      cleaner.setCleanupInterval(hiveConf.getTimeVar(HiveConf.ConfVars.METASTORE_EVENT_DB_LISTENER_CLEAN_INTERVAL,
+              TimeUnit.MILLISECONDS));
+    }
   }
 
   /**
@@ -517,13 +524,15 @@ public class DbNotificationListener extends MetaStoreEventListener {
   private static class CleanerThread extends Thread {
     private RawStore rs;
     private int ttl;
-    static private long sleepTime = 60000;
+    private long sleepTime;
 
     CleanerThread(HiveConf conf, RawStore rs) {
       super("DB-Notification-Cleaner");
       this.rs = rs;
       setTimeToLive(conf.getTimeVar(HiveConf.ConfVars.METASTORE_EVENT_DB_LISTENER_TTL,
           TimeUnit.SECONDS));
+      setCleanupInterval(conf.getTimeVar(HiveConf.ConfVars.METASTORE_EVENT_DB_LISTENER_CLEAN_INTERVAL,
+              TimeUnit.MILLISECONDS));
       setDaemon(true);
     }
 
@@ -554,5 +563,8 @@ public class DbNotificationListener extends MetaStoreEventListener {
       else ttl = (int)configTtl;
     }
 
+    public void setCleanupInterval(long configInterval) {
+      sleepTime = configInterval;
+    }
   }
 }
