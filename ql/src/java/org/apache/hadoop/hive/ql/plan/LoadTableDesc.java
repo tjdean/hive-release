@@ -54,7 +54,9 @@ public class LoadTableDesc extends org.apache.hadoop.hive.ql.plan.LoadDesc
     REPLACE_ALL,        // Remove all existing data before copy/move
     KEEP_EXISTING,      // If any file exist while copy, then just duplicate the file
     OVERWRITE_EXISTING,  // If any file exist while copy, then just overwrite the file
-    IGNORE              // No need to move the file, used in case of replication to s3
+    IGNORE              // No need to move the file, used in case of replication to s3. If load type is set to ignore,
+                        // then only the file operations(move/rename) is ignored at load table/partition method. Other
+                        // operations like statistics update, event notification happens as usual.
   }
 
   public LoadTableDesc(final Path sourcePath,
