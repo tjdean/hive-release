@@ -1146,6 +1146,9 @@ public class HiveConf extends Configuration {
 
     HIVE_ORC_ZEROCOPY("hive.exec.orc.zerocopy", false,
         "Use zerocopy reads with ORC. (This requires Hadoop 2.3 or later.)"),
+    HIVE_ORC_MAX_DISK_RANGE_CHUNK_LIMIT("hive.exec.orc.max.disk.range.chunk.limit", Integer.MAX_VALUE - 1024, "" +
+      "Max chunk size for orc disk range list. Disk ranges greater than this length will be chunked into smaller " +
+      "segments"),
 
     HIVE_LAZYSIMPLE_EXTENDED_BOOLEAN_LITERAL("hive.lazysimple.extended_boolean_literal", false,
         "LazySimpleSerde uses this property to determine if it treats 'T', 't', 'F', 'f',\n" +

@@ -869,7 +869,7 @@
           <redirectTestOutputToFile>true</redirectTestOutputToFile>
           <reuseForks>false</reuseForks>
           <failIfNoTests>false</failIfNoTests>
-          <argLine>-Xmx2048m -XX:MaxPermSize=512m</argLine>
+          <argLine>-Xmx4096m -XX:MaxPermSize=512m</argLine>
           <trimStackTrace>false</trimStackTrace>
           <additionalClasspathElements>
             <additionalClasspathElement>${test.tmp.dir}/conf</additionalClasspathElement>
