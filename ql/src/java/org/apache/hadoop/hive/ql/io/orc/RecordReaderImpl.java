@@ -92,6 +92,7 @@ class RecordReaderImpl implements RecordReader {
 
   private final ByteBufferAllocatorPool pool = new ByteBufferAllocatorPool();
   private final ZeroCopyReaderShim zcr;
+  private final int maxDiskRangeChunkLimit;
 
   public final static class Index {
     OrcProto.RowIndex[] rowGroupIndex;
@@ -218,7 +219,7 @@ class RecordReaderImpl implements RecordReader {
     final boolean zeroCopy = (conf != null)
         && (HiveConf.getBoolVar(conf, HIVE_ORC_ZEROCOPY));
     zcr = zeroCopy ? RecordReaderUtils.createZeroCopyShim(file, codec, pool) : null;
-
+    maxDiskRangeChunkLimit = HiveConf.getIntVar(conf, HiveConf.ConfVars.HIVE_ORC_MAX_DISK_RANGE_CHUNK_LIMIT);
     firstRow = skippedRows;
     totalRowCount = rows;
     boolean skipCorrupt = HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_ORC_SKIP_CORRUPT_DATA);
@@ -865,7 +866,7 @@ class RecordReaderImpl implements RecordReader {
     long end = start + stripe.getDataLength();
     // explicitly trigger 1 big read
     DiskRangeList toRead = new DiskRangeList(start, end);
-    bufferChunks = RecordReaderUtils.readDiskRanges(file, zcr, stripe.getOffset(), toRead, false);
+    bufferChunks = RecordReaderUtils.readDiskRanges(file, zcr, stripe.getOffset(), toRead, false, maxDiskRangeChunkLimit);
     List<OrcProto.Stream> streamDescriptions = stripeFooter.getStreamsList();
     createStreams(
         streamDescriptions, bufferChunks, null, codec, bufferSize, streams);
@@ -1002,11 +1003,13 @@ class RecordReaderImpl implements RecordReader {
             indexes, included, includedRowGroups, codec != null,
             stripeFooter.getColumnsList(), types, bufferSize, true);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("chunks = " + RecordReaderUtils.stringifyDiskRanges(toRead));
+      LOG.debug("chunks = " + RecordReaderUtils.stringifyDiskRanges(toRead) + " of file: " + path + " " +
+        "maxDiskRangeChunkLimit: " + maxDiskRangeChunkLimit);
     }
-    bufferChunks = RecordReaderUtils.readDiskRanges(file, zcr, stripe.getOffset(), toRead, false);
+    bufferChunks = RecordReaderUtils.readDiskRanges(file, zcr, stripe.getOffset(), toRead, false, maxDiskRangeChunkLimit);
     if (LOG.isDebugEnabled()) {
-      LOG.debug("merge = " + RecordReaderUtils.stringifyDiskRanges(bufferChunks));
+      LOG.debug("merge = " + RecordReaderUtils.stringifyDiskRanges(bufferChunks) + " of file: " + path + " " +
+        "maxDiskRangeChunkLimit: " + maxDiskRangeChunkLimit);
     }
 
     createStreams(streamList, bufferChunks, included, codec, bufferSize, streams);
@@ -1243,5 +1246,9 @@ class RecordReaderImpl implements RecordReader {
 
     // if we aren't to the right row yet, advance in the stripe.
     advanceToNextRow(reader, rowNumber, true);
+  }
+
+  public int getMaxDiskRangeChunkLimit() {
+    return maxDiskRangeChunkLimit;
   }
 }

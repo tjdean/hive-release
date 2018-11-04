@@ -233,8 +233,10 @@ public class RecordReaderUtils {
                                  ZeroCopyReaderShim zcr,
                                  long base,
                                  DiskRangeList range,
-                                 boolean doForceDirect) throws IOException {
-    if (range == null) return null;
+                                 boolean doForceDirect,
+                                 int maxChunkLimit) throws IOException {
+    if (range == null)
+      return null;
     DiskRangeList prev = range.prev;
     if (prev == null) {
       prev = new DiskRangeListMutateHelper(range);
@@ -244,34 +246,51 @@ public class RecordReaderUtils {
         range = range.next;
         continue;
       }
-      int len = (int) (range.getEnd() - range.getOffset());
+      boolean hasReplaced = false;
+      long len = range.getEnd() - range.getOffset();
       long off = range.getOffset();
-      if (zcr != null) {
-        file.seek(base + off);
-        boolean hasReplaced = false;
-        while (len > 0) {
-          ByteBuffer partial = zcr.readBuffer(len, false);
-          BufferChunk bc = new BufferChunk(partial, off);
-          if (!hasReplaced) {
-            range.replaceSelfWith(bc);
-            hasReplaced = true;
-          } else {
-            range.insertAfter(bc);
-          }
-          range = bc;
-          int read = partial.remaining();
-          len -= read;
-          off += read;
+      while (len > 0) {
+        BufferChunk bc;
+
+        // Stripe could be too large to read fully into a single buffer and will need to be chunked
+        int memChunkSize = (len >= maxChunkLimit) ? maxChunkLimit : (int) len;
+        int read = memChunkSize;
+
+        if (!hasReplaced) {
+          file.seek(base + off);
         }
-      } else if (doForceDirect) {
-        file.seek(base + off);
-        ByteBuffer directBuf = ByteBuffer.allocateDirect(len);
-        readDirect(file, len, directBuf);
-        range = range.replaceSelfWith(new BufferChunk(directBuf, range.getOffset()));
-      } else {
-        byte[] buffer = new byte[len];
-        file.readFully((base + off), buffer, 0, buffer.length);
-        range = range.replaceSelfWith(new BufferChunk(ByteBuffer.wrap(buffer), range.getOffset()));
+
+        // create chunk
+        if (zcr != null) {
+          ByteBuffer partial = zcr.readBuffer(memChunkSize, false);
+          bc = new BufferChunk(partial, off);
+          read = partial.remaining();
+        } else {
+          // Don't use HDFS ByteBuffer API because it has no readFully, and is buggy and pointless.
+          byte[] buffer = new byte[memChunkSize];
+          file.readFully((base + off), buffer, 0, buffer.length);
+          ByteBuffer partial;
+          if (doForceDirect) {
+            partial = ByteBuffer.allocateDirect(memChunkSize);
+            partial.put(buffer);
+            partial.position(0);
+            partial.limit(memChunkSize);
+          } else {
+            partial = ByteBuffer.wrap(buffer);
+          }
+          bc = new BufferChunk(partial, off);
+          read = partial.remaining();
+        }
+
+        if (!hasReplaced) {
+          range.replaceSelfWith(bc);
+          hasReplaced = true;
+        } else {
+          range.insertAfter(bc);
+        }
+        range = bc;
+        len -= read;
+        off += read;
       }
       range = range.next;
     }
