@@ -45,6 +45,7 @@ public class ReplicationSpec {
   private boolean isReplace = true; // default is that the import mode is insert overwrite
   private String validWriteIdList = null; // WriteIds snapshot for replicating ACID/MM tables.
   private Type specType = Type.DEFAULT; // DEFAULT means REPL_LOAD or BOOTSTRAP_DUMP or EXPORT
+  private boolean isDoingMigration = false;
 
   // Key definitions related to replication
   public enum KEY {
@@ -386,5 +387,13 @@ public class ReplicationSpec {
     } else {
       return SCOPE.NO_REPL;
     }
+  }
+
+  public boolean isDoingMigration() {
+    return isDoingMigration;
+  }
+
+  public void setDoingMigration() {
+    isDoingMigration = true;
   }
 }
