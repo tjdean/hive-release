@@ -151,6 +151,8 @@ public class WriterImpl implements Writer, MemoryManager.Callback {
   private final OrcFile.CompressionStrategy compressionStrategy;
   private final boolean[] bloomFilterColumns;
   private final double bloomFilterFpp;
+  private final float dictionaryKeySizeThreshold;
+  private final boolean[] directEncodingColumns;
 
   WriterImpl(FileSystem fs,
       Path path,
@@ -203,6 +205,14 @@ public class WriterImpl implements Writer, MemoryManager.Callback {
     if (allColumns == null) {
       allColumns = getColumnNamesFromInspector(inspector);
     }
+    String[] directEncodingColumnsConf = conf.getStrings(
+            HiveConf.ConfVars.HIVE_ORC_DIRECT_ENCODING_COLUMNS.varname,
+            HiveConf.ConfVars.HIVE_ORC_DIRECT_ENCODING_COLUMNS.defaultStrVal);
+    this.directEncodingColumns = OrcUtils.includeColumns(
+            Joiner.on(",").join(directEncodingColumnsConf), allColumns, inspector);
+    this.dictionaryKeySizeThreshold = conf.getFloat(
+            HiveConf.ConfVars.HIVE_ORC_DICTIONARY_KEY_SIZE_THRESHOLD.varname,
+            HiveConf.ConfVars.HIVE_ORC_DICTIONARY_KEY_SIZE_THRESHOLD.defaultFloatVal);
     if (enforceBufferSize) {
       this.bufferSize = bufferSize;
     } else {
@@ -622,6 +632,10 @@ public class WriterImpl implements Writer, MemoryManager.Callback {
      */
     public OrcFile.Version getVersion() {
       return version;
+    }
+
+    public float getDictionaryKeySizeThreshold(int columnId) {
+      return directEncodingColumns[columnId] ? 0.0f : dictionaryKeySizeThreshold;
     }
   }
 
@@ -1188,10 +1202,7 @@ public class WriterImpl implements Writer, MemoryManager.Callback {
       directStreamOutput = writer.createStream(id, OrcProto.Stream.Kind.DATA);
       directLengthOutput = createIntegerWriter(writer.createStream(id,
           OrcProto.Stream.Kind.LENGTH), false, isDirectV2, writer);
-      dictionaryKeySizeThreshold = writer.getConfiguration().getFloat(
-          HiveConf.ConfVars.HIVE_ORC_DICTIONARY_KEY_SIZE_THRESHOLD.varname,
-          HiveConf.ConfVars.HIVE_ORC_DICTIONARY_KEY_SIZE_THRESHOLD.
-              defaultFloatVal);
+      dictionaryKeySizeThreshold = writer.getDictionaryKeySizeThreshold(columnId);
       strideDictionaryCheck = writer.getConfiguration().getBoolean(
           HiveConf.ConfVars.HIVE_ORC_ROW_INDEX_STRIDE_DICTIONARY_CHECK.varname,
           HiveConf.ConfVars.HIVE_ORC_ROW_INDEX_STRIDE_DICTIONARY_CHECK.
