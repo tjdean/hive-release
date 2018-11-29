@@ -1112,6 +1112,8 @@ public class HiveConf extends Configuration {
         "inserted to fit within that space. This will make sure that no stripe written will\n" +
         "cross block boundaries and cause remote reads within a node local task."),
     HIVE_ORC_DEFAULT_COMPRESS("hive.exec.orc.default.compress", "ZLIB", "Define the default compression codec for ORC file"),
+    HIVE_ORC_DIRECT_ENCODING_COLUMNS("hive.exec.orc.column.encoding.direct", "",
+            "Comma-separated list of columns for which dictionary encoding is to be skipped."),
 
     HIVE_ORC_ENCODING_STRATEGY("hive.exec.orc.encoding.strategy", "SPEED", new StringSet("SPEED", "COMPRESSION"),
         "Define the encoding strategy to use while writing data. Changing this will\n" +
