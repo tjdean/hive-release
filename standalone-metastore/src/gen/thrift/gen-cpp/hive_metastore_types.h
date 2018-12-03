@@ -7461,9 +7461,11 @@ inline std::ostream& operator<<(std::ostream& out, const WriteEventInfo& obj)
 }
 
 typedef struct _ReplLastIdInfo__isset {
-  _ReplLastIdInfo__isset() : catalog(false), partition(false) {}
+  _ReplLastIdInfo__isset() : table(false), catalog(false), partitionList(false), needUpdateDBReplId(false) {}
+  bool table :1;
   bool catalog :1;
-  bool partition :1;
+  bool partitionList :1;
+  bool needUpdateDBReplId :1;
 } _ReplLastIdInfo__isset;
 
 class ReplLastIdInfo {
@@ -7471,43 +7473,52 @@ class ReplLastIdInfo {
 
   ReplLastIdInfo(const ReplLastIdInfo&);
   ReplLastIdInfo& operator=(const ReplLastIdInfo&);
-  ReplLastIdInfo() : database(), table(), lastReplId(0), catalog(), partition() {
+  ReplLastIdInfo() : database(), lastReplId(0), table(), catalog(), needUpdateDBReplId(0) {
   }
 
   virtual ~ReplLastIdInfo() throw();
   std::string database;
-  std::string table;
   int64_t lastReplId;
+  std::string table;
   std::string catalog;
-  std::string partition;
+  std::vector<std::string>  partitionList;
+  bool needUpdateDBReplId;
 
   _ReplLastIdInfo__isset __isset;
 
   void __set_database(const std::string& val);
 
-  void __set_table(const std::string& val);
-
   void __set_lastReplId(const int64_t val);
+
+  void __set_table(const std::string& val);
 
   void __set_catalog(const std::string& val);
 
-  void __set_partition(const std::string& val);
+  void __set_partitionList(const std::vector<std::string> & val);
+
+  void __set_needUpdateDBReplId(const bool val);
 
   bool operator == (const ReplLastIdInfo & rhs) const
   {
     if (!(database == rhs.database))
       return false;
-    if (!(table == rhs.table))
-      return false;
     if (!(lastReplId == rhs.lastReplId))
+      return false;
+    if (__isset.table != rhs.__isset.table)
+      return false;
+    else if (__isset.table && !(table == rhs.table))
       return false;
     if (__isset.catalog != rhs.__isset.catalog)
       return false;
     else if (__isset.catalog && !(catalog == rhs.catalog))
       return false;
-    if (__isset.partition != rhs.__isset.partition)
+    if (__isset.partitionList != rhs.__isset.partitionList)
       return false;
-    else if (__isset.partition && !(partition == rhs.partition))
+    else if (__isset.partitionList && !(partitionList == rhs.partitionList))
+      return false;
+    if (__isset.needUpdateDBReplId != rhs.__isset.needUpdateDBReplId)
+      return false;
+    else if (__isset.needUpdateDBReplId && !(needUpdateDBReplId == rhs.needUpdateDBReplId))
       return false;
     return true;
   }
