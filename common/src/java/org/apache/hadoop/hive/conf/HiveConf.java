@@ -1993,6 +1993,9 @@ public class HiveConf extends Configuration {
         "This flag is used in HiveServer2 to enable a user to use HiveServer2 without\n" +
         "turning on Tez for HiveServer2. The user could potentially want to run queries\n" +
         "over Tez without the pool of sessions."),
+    HIVE_SERVER2_TEZ_QUEUE_ACCESS_CHECK("hive.server2.tez.queue.access.check", false,
+        "Whether to check user access to explicitly specified YARN queues. " +
+        "yarn.resourcemanager.webapp.address must be configured to use this."),
 
     // Operation log configuration
     HIVE_SERVER2_LOGGING_OPERATION_ENABLED("hive.server2.logging.operation.enabled", true,
