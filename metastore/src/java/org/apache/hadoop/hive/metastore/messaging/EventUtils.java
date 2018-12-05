@@ -35,7 +35,8 @@ public class EventUtils {
   public interface NotificationFetcher {
     int getBatchSize() throws IOException;
     long getCurrentNotificationEventId() throws IOException;
-    long getDbNotificationEventsCount(long fromEventId, String dbName) throws IOException;
+    long getDbNotificationEventsCount(long fromEventId, String dbName, Long toEventId,
+                                      int limit) throws IOException;
     List<NotificationEvent> getNextNotificationEvents(
         long pos, IMetaStoreClient.NotificationFilter filter) throws IOException;
   }
@@ -77,10 +78,21 @@ public class EventUtils {
     }
 
     @Override
-    public long getDbNotificationEventsCount(long fromEventId, String dbName) throws IOException {
+    public long getDbNotificationEventsCount(long fromEventId, String dbName, Long toEventId,
+                                             int limit) throws IOException {
       try {
+        // Number of events is always bounded by limit, which when non-positive, will result
+        // in no events being counted..
+        if (limit <= 0) {
+          return 0;
+        }
+
         NotificationEventsCountRequest rqst
                 = new NotificationEventsCountRequest(fromEventId, dbName);
+        if (toEventId != null) {
+          rqst.setToEventId(toEventId);
+        }
+        rqst.setLimit(limit);
         return msc.getNotificationEventsCount(rqst).getEventsCount();
       } catch (TException e) {
         throw new IOException(e);

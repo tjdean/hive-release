@@ -40,6 +40,8 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
 
   private static final org.apache.thrift.protocol.TField FROM_EVENT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("fromEventId", org.apache.thrift.protocol.TType.I64, (short)1);
   private static final org.apache.thrift.protocol.TField DB_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("dbName", org.apache.thrift.protocol.TType.STRING, (short)2);
+  private static final org.apache.thrift.protocol.TField TO_EVENT_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("toEventId", org.apache.thrift.protocol.TType.I64, (short)3);
+  private static final org.apache.thrift.protocol.TField LIMIT_FIELD_DESC = new org.apache.thrift.protocol.TField("limit", org.apache.thrift.protocol.TType.I64, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -49,11 +51,15 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
 
   private long fromEventId; // required
   private String dbName; // required
+  private long toEventId; // optional
+  private long limit; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     FROM_EVENT_ID((short)1, "fromEventId"),
-    DB_NAME((short)2, "dbName");
+    DB_NAME((short)2, "dbName"),
+    TO_EVENT_ID((short)3, "toEventId"),
+    LIMIT((short)4, "limit");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -72,6 +78,10 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
           return FROM_EVENT_ID;
         case 2: // DB_NAME
           return DB_NAME;
+        case 3: // TO_EVENT_ID
+          return TO_EVENT_ID;
+        case 4: // LIMIT
+          return LIMIT;
         default:
           return null;
       }
@@ -113,7 +123,10 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
 
   // isset id assignments
   private static final int __FROMEVENTID_ISSET_ID = 0;
+  private static final int __TOEVENTID_ISSET_ID = 1;
+  private static final int __LIMIT_ISSET_ID = 2;
   private byte __isset_bitfield = 0;
+  private static final _Fields optionals[] = {_Fields.TO_EVENT_ID,_Fields.LIMIT};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -121,6 +134,10 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     tmpMap.put(_Fields.DB_NAME, new org.apache.thrift.meta_data.FieldMetaData("dbName", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.TO_EVENT_ID, new org.apache.thrift.meta_data.FieldMetaData("toEventId", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.LIMIT, new org.apache.thrift.meta_data.FieldMetaData("limit", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(NotificationEventsCountRequest.class, metaDataMap);
   }
@@ -147,6 +164,8 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
     if (other.isSetDbName()) {
       this.dbName = other.dbName;
     }
+    this.toEventId = other.toEventId;
+    this.limit = other.limit;
   }
 
   public NotificationEventsCountRequest deepCopy() {
@@ -158,6 +177,10 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
     setFromEventIdIsSet(false);
     this.fromEventId = 0;
     this.dbName = null;
+    setToEventIdIsSet(false);
+    this.toEventId = 0;
+    setLimitIsSet(false);
+    this.limit = 0;
   }
 
   public long getFromEventId() {
@@ -205,6 +228,50 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
     }
   }
 
+  public long getToEventId() {
+    return this.toEventId;
+  }
+
+  public void setToEventId(long toEventId) {
+    this.toEventId = toEventId;
+    setToEventIdIsSet(true);
+  }
+
+  public void unsetToEventId() {
+    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __TOEVENTID_ISSET_ID);
+  }
+
+  /** Returns true if field toEventId is set (has been assigned a value) and false otherwise */
+  public boolean isSetToEventId() {
+    return EncodingUtils.testBit(__isset_bitfield, __TOEVENTID_ISSET_ID);
+  }
+
+  public void setToEventIdIsSet(boolean value) {
+    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __TOEVENTID_ISSET_ID, value);
+  }
+
+  public long getLimit() {
+    return this.limit;
+  }
+
+  public void setLimit(long limit) {
+    this.limit = limit;
+    setLimitIsSet(true);
+  }
+
+  public void unsetLimit() {
+    __isset_bitfield = EncodingUtils.clearBit(__isset_bitfield, __LIMIT_ISSET_ID);
+  }
+
+  /** Returns true if field limit is set (has been assigned a value) and false otherwise */
+  public boolean isSetLimit() {
+    return EncodingUtils.testBit(__isset_bitfield, __LIMIT_ISSET_ID);
+  }
+
+  public void setLimitIsSet(boolean value) {
+    __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __LIMIT_ISSET_ID, value);
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case FROM_EVENT_ID:
@@ -223,6 +290,22 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
       }
       break;
 
+    case TO_EVENT_ID:
+      if (value == null) {
+        unsetToEventId();
+      } else {
+        setToEventId((Long)value);
+      }
+      break;
+
+    case LIMIT:
+      if (value == null) {
+        unsetLimit();
+      } else {
+        setLimit((Long)value);
+      }
+      break;
+
     }
   }
 
@@ -233,6 +316,12 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
 
     case DB_NAME:
       return getDbName();
+
+    case TO_EVENT_ID:
+      return getToEventId();
+
+    case LIMIT:
+      return getLimit();
 
     }
     throw new IllegalStateException();
@@ -249,6 +338,10 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
       return isSetFromEventId();
     case DB_NAME:
       return isSetDbName();
+    case TO_EVENT_ID:
+      return isSetToEventId();
+    case LIMIT:
+      return isSetLimit();
     }
     throw new IllegalStateException();
   }
@@ -284,6 +377,24 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
         return false;
     }
 
+    boolean this_present_toEventId = true && this.isSetToEventId();
+    boolean that_present_toEventId = true && that.isSetToEventId();
+    if (this_present_toEventId || that_present_toEventId) {
+      if (!(this_present_toEventId && that_present_toEventId))
+        return false;
+      if (this.toEventId != that.toEventId)
+        return false;
+    }
+
+    boolean this_present_limit = true && this.isSetLimit();
+    boolean that_present_limit = true && that.isSetLimit();
+    if (this_present_limit || that_present_limit) {
+      if (!(this_present_limit && that_present_limit))
+        return false;
+      if (this.limit != that.limit)
+        return false;
+    }
+
     return true;
   }
 
@@ -300,6 +411,16 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
     list.add(present_dbName);
     if (present_dbName)
       list.add(dbName);
+
+    boolean present_toEventId = true && (isSetToEventId());
+    list.add(present_toEventId);
+    if (present_toEventId)
+      list.add(toEventId);
+
+    boolean present_limit = true && (isSetLimit());
+    list.add(present_limit);
+    if (present_limit)
+      list.add(limit);
 
     return list.hashCode();
   }
@@ -328,6 +449,26 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
     }
     if (isSetDbName()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.dbName, other.dbName);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetToEventId()).compareTo(other.isSetToEventId());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetToEventId()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.toEventId, other.toEventId);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetLimit()).compareTo(other.isSetLimit());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetLimit()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.limit, other.limit);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -363,6 +504,18 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
       sb.append(this.dbName);
     }
     first = false;
+    if (isSetToEventId()) {
+      if (!first) sb.append(", ");
+      sb.append("toEventId:");
+      sb.append(this.toEventId);
+      first = false;
+    }
+    if (isSetLimit()) {
+      if (!first) sb.append(", ");
+      sb.append("limit:");
+      sb.append(this.limit);
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -432,6 +585,22 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 3: // TO_EVENT_ID
+            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+              struct.toEventId = iprot.readI64();
+              struct.setToEventIdIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 4: // LIMIT
+            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+              struct.limit = iprot.readI64();
+              struct.setLimitIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -453,6 +622,16 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
         oprot.writeString(struct.dbName);
         oprot.writeFieldEnd();
       }
+      if (struct.isSetToEventId()) {
+        oprot.writeFieldBegin(TO_EVENT_ID_FIELD_DESC);
+        oprot.writeI64(struct.toEventId);
+        oprot.writeFieldEnd();
+      }
+      if (struct.isSetLimit()) {
+        oprot.writeFieldBegin(LIMIT_FIELD_DESC);
+        oprot.writeI64(struct.limit);
+        oprot.writeFieldEnd();
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -472,6 +651,20 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
       TTupleProtocol oprot = (TTupleProtocol) prot;
       oprot.writeI64(struct.fromEventId);
       oprot.writeString(struct.dbName);
+      BitSet optionals = new BitSet();
+      if (struct.isSetToEventId()) {
+        optionals.set(0);
+      }
+      if (struct.isSetLimit()) {
+        optionals.set(1);
+      }
+      oprot.writeBitSet(optionals, 2);
+      if (struct.isSetToEventId()) {
+        oprot.writeI64(struct.toEventId);
+      }
+      if (struct.isSetLimit()) {
+        oprot.writeI64(struct.limit);
+      }
     }
 
     @Override
@@ -481,6 +674,15 @@ public class NotificationEventsCountRequest implements org.apache.thrift.TBase<N
       struct.setFromEventIdIsSet(true);
       struct.dbName = iprot.readString();
       struct.setDbNameIsSet(true);
+      BitSet incoming = iprot.readBitSet(2);
+      if (incoming.get(0)) {
+        struct.toEventId = iprot.readI64();
+        struct.setToEventIdIsSet(true);
+      }
+      if (incoming.get(1)) {
+        struct.limit = iprot.readI64();
+        struct.setLimitIsSet(true);
+      }
     }
   }
 

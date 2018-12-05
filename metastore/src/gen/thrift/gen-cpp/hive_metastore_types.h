@@ -5871,28 +5871,49 @@ inline std::ostream& operator<<(std::ostream& out, const CurrentNotificationEven
   return out;
 }
 
+typedef struct _NotificationEventsCountRequest__isset {
+  _NotificationEventsCountRequest__isset() : toEventId(false), limit(false) {}
+  bool toEventId :1;
+  bool limit :1;
+} _NotificationEventsCountRequest__isset;
 
 class NotificationEventsCountRequest {
  public:
 
   NotificationEventsCountRequest(const NotificationEventsCountRequest&);
   NotificationEventsCountRequest& operator=(const NotificationEventsCountRequest&);
-  NotificationEventsCountRequest() : fromEventId(0), dbName() {
+  NotificationEventsCountRequest() : fromEventId(0), dbName(), toEventId(0), limit(0) {
   }
 
   virtual ~NotificationEventsCountRequest() throw();
   int64_t fromEventId;
   std::string dbName;
+  int64_t toEventId;
+  int64_t limit;
+
+  _NotificationEventsCountRequest__isset __isset;
 
   void __set_fromEventId(const int64_t val);
 
   void __set_dbName(const std::string& val);
+
+  void __set_toEventId(const int64_t val);
+
+  void __set_limit(const int64_t val);
 
   bool operator == (const NotificationEventsCountRequest & rhs) const
   {
     if (!(fromEventId == rhs.fromEventId))
       return false;
     if (!(dbName == rhs.dbName))
+      return false;
+    if (__isset.toEventId != rhs.__isset.toEventId)
+      return false;
+    else if (__isset.toEventId && !(toEventId == rhs.toEventId))
+      return false;
+    if (__isset.limit != rhs.__isset.limit)
+      return false;
+    else if (__isset.limit && !(limit == rhs.limit))
       return false;
     return true;
   }

@@ -2270,10 +2270,14 @@ class NotificationEventsCountRequest
   include ::Thrift::Struct, ::Thrift::Struct_Union
   FROMEVENTID = 1
   DBNAME = 2
+  TOEVENTID = 3
+  LIMIT = 4
 
   FIELDS = {
     FROMEVENTID => {:type => ::Thrift::Types::I64, :name => 'fromEventId'},
-    DBNAME => {:type => ::Thrift::Types::STRING, :name => 'dbName'}
+    DBNAME => {:type => ::Thrift::Types::STRING, :name => 'dbName'},
+    TOEVENTID => {:type => ::Thrift::Types::I64, :name => 'toEventId', :optional => true},
+    LIMIT => {:type => ::Thrift::Types::I64, :name => 'limit', :optional => true}
   }
 
   def struct_fields; FIELDS; end

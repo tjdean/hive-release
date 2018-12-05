@@ -10042,17 +10042,23 @@ class NotificationEventsCountRequest:
   Attributes:
    - fromEventId
    - dbName
+   - toEventId
+   - limit
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.I64, 'fromEventId', None, None, ), # 1
     (2, TType.STRING, 'dbName', None, None, ), # 2
+    (3, TType.I64, 'toEventId', None, None, ), # 3
+    (4, TType.I64, 'limit', None, None, ), # 4
   )
 
-  def __init__(self, fromEventId=None, dbName=None,):
+  def __init__(self, fromEventId=None, dbName=None, toEventId=None, limit=None,):
     self.fromEventId = fromEventId
     self.dbName = dbName
+    self.toEventId = toEventId
+    self.limit = limit
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -10073,6 +10079,16 @@ class NotificationEventsCountRequest:
           self.dbName = iprot.readString()
         else:
           iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.I64:
+          self.toEventId = iprot.readI64()
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.I64:
+          self.limit = iprot.readI64()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -10091,6 +10107,14 @@ class NotificationEventsCountRequest:
       oprot.writeFieldBegin('dbName', TType.STRING, 2)
       oprot.writeString(self.dbName)
       oprot.writeFieldEnd()
+    if self.toEventId is not None:
+      oprot.writeFieldBegin('toEventId', TType.I64, 3)
+      oprot.writeI64(self.toEventId)
+      oprot.writeFieldEnd()
+    if self.limit is not None:
+      oprot.writeFieldBegin('limit', TType.I64, 4)
+      oprot.writeI64(self.limit)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
@@ -10106,6 +10130,8 @@ class NotificationEventsCountRequest:
     value = 17
     value = (value * 31) ^ hash(self.fromEventId)
     value = (value * 31) ^ hash(self.dbName)
+    value = (value * 31) ^ hash(self.toEventId)
+    value = (value * 31) ^ hash(self.limit)
     return value
 
   def __repr__(self):
