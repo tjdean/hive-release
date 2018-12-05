@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -54,6 +55,7 @@ public class TezSessionPoolManager {
 
   private static List<TezSessionState> openSessions = Collections
       .synchronizedList(new LinkedList<TezSessionState>());
+  private YarnQueueHelper yarnQueueChecker;
 
   public static TezSessionPoolManager getInstance()
       throws Exception {
@@ -120,6 +122,25 @@ public class TezSessionPoolManager {
 
     boolean nonDefaultUser = conf.getBoolVar(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS);
 
+    if(StringUtils.isNotEmpty(queueName) && !nonDefaultUser
+        && HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_SERVER2_TEZ_QUEUE_ACCESS_CHECK)) {
+      this.yarnQueueChecker = new YarnQueueHelper(conf);
+    }
+
+    if (yarnQueueChecker != null) {
+      SessionState ss = SessionState.get();
+      String userName = null;
+      if (ss != null) {
+        userName = ss.getAuthenticator() != null
+            ? ss.getAuthenticator().getUserName() : ss.getUserName();
+      }
+      if (userName == null) {
+        userName = Utils.getUGI().getShortUserName();
+        LOG.info("No session user set; using the UGI user " + userName);
+      }
+      yarnQueueChecker.checkQueueAccess(queueName, userName);
+    }
+
     /*
      * if the user has specified a queue name themselves, we create a new session.
      * also a new session is created if the user tries to submit to a queue using
@@ -129,6 +150,7 @@ public class TezSessionPoolManager {
     if (forceCreate || !(this.inited)
         || ((queueName != null) && (!queueName.isEmpty()))
         || (nonDefaultUser) || (defaultQueuePool == null) || (blockingQueueLength <= 0)) {
+
       LOG.info("QueueName: " + queueName + " nonDefaultUser: " + nonDefaultUser +
           " defaultQueuePool: " + defaultQueuePool +
           " blockingQueueLength: " + blockingQueueLength);
