@@ -114,6 +114,10 @@ public class TezSessionPoolManager {
     }
   }
 
+  private boolean isValidQueueName(String queueName) {
+    return (queueName != null) && (queueName.length() > 0) && (!queueName.equals("null")) && (!queueName.trim().isEmpty());
+  }
+
   private TezSessionState getSession(HiveConf conf, boolean doOpen,
       boolean forceCreate)
       throws Exception {
@@ -122,7 +126,7 @@ public class TezSessionPoolManager {
 
     boolean nonDefaultUser = conf.getBoolVar(HiveConf.ConfVars.HIVE_SERVER2_ENABLE_DOAS);
 
-    if(StringUtils.isNotEmpty(queueName) && !nonDefaultUser
+    if(isValidQueueName(queueName) && !nonDefaultUser
         && HiveConf.getBoolVar(conf, HiveConf.ConfVars.HIVE_SERVER2_TEZ_QUEUE_ACCESS_CHECK)) {
       this.yarnQueueChecker = new YarnQueueHelper(conf);
     }
@@ -138,7 +142,9 @@ public class TezSessionPoolManager {
         userName = Utils.getUGI().getShortUserName();
         LOG.info("No session user set; using the UGI user " + userName);
       }
-      yarnQueueChecker.checkQueueAccess(queueName, userName);
+      if(isValidQueueName(queueName)) {
+        yarnQueueChecker.checkQueueAccess(queueName, userName);
+      }
     }
 
     /*
