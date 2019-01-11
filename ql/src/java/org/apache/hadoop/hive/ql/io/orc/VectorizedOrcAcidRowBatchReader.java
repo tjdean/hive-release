@@ -1122,11 +1122,10 @@ public class VectorizedOrcAcidRowBatchReader
               if (length != -1 && fs.exists(deleteDeltaFile)) {
                 Reader deleteDeltaReader = OrcFile.createReader(deleteDeltaFile,
                     OrcFile.readerOptions(conf).maxLength(length));
-                AcidStats acidStats = OrcAcidUtils.parseAcidStats(deleteDeltaReader);
-                if (acidStats.deletes == 0) {
+                if (deleteDeltaReader.getNumberOfRows() <= 0) {
                   continue; // just a safe check to ensure that we are not reading empty delete files.
                 }
-                totalDeleteEventCount += acidStats.deletes;
+                totalDeleteEventCount += deleteDeltaReader.getNumberOfRows();
                 if (totalDeleteEventCount > maxEventsInMemory) {
                   // ColumnizedDeleteEventRegistry loads all the delete events from all the delete deltas
                   // into memory. To prevent out-of-memory errors, this check is a rough heuristic that
