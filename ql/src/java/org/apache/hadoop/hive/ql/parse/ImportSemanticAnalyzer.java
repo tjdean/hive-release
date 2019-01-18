@@ -338,9 +338,6 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
   private static AddPartitionDesc getBaseAddPartitionDescFromPartition(
       Path fromPath, String dbname,
       ImportTableDesc tblDesc, Partition partition) throws MetaException, SemanticException {
-    if (partition.getParameters() != null){
-      partition.putToParameters(StatsSetupConst.DO_NOT_UPDATE_STATS,"true");
-    }
     AddPartitionDesc partsDesc = new AddPartitionDesc(dbname, tblDesc.getTableName(),
         EximUtil.makePartSpec(tblDesc.getPartCols(), partition.getValues()),
         partition.getSd().getLocation(), partition.getParameters());
@@ -434,7 +431,6 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
       addPartitionDesc.setReplicationSpec(replicationSpec);
     }
     AddPartitionDesc.OnePartitionDesc partSpec = addPartitionDesc.getPartition(0);
-	partSpec.getPartParams().put(StatsSetupConst.DO_NOT_UPDATE_STATS,"true");
     if (ptn == null) {
       fixLocationInPartSpec(fs, tblDesc, table, wh, replicationSpec, partSpec, x);
     } else {
