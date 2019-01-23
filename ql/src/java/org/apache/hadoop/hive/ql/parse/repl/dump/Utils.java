@@ -19,6 +19,7 @@ package org.apache.hadoop.hive.ql.parse.repl.dump;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.common.ValidTxnList;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.NotificationEvent;
@@ -181,11 +182,13 @@ public class Utils {
     }
 
     if (replicationSpec.isInReplicationScope()) {
-      if (!hiveConf.getBoolVar(HiveConf.ConfVars.REPL_INCLUDE_EXTERNAL_TABLES) &&
-              MetaStoreUtils.isExternalTable(tableHandle.getTTable()) && !replicationSpec.isMetadataOnly()) {
+      if (tableHandle.isTemporary()) {
         return false;
       }
-      return !tableHandle.isTemporary();
+
+      if (MetaStoreUtils.isExternalTable(tableHandle.getTTable())) {
+        return hiveConf.getBoolVar(HiveConf.ConfVars.REPL_INCLUDE_EXTERNAL_TABLES) || replicationSpec.isMetadataOnly();
+      }
     }
     return true;
   }
@@ -208,6 +211,7 @@ public class Utils {
           throws IOException {
     if (replicationSpec.isTransactionalTableDump()) {
       try {
+        conf.set(ValidTxnList.VALID_TXNS_KEY, replicationSpec.getValidTxnList());
         return AcidUtils.getValidDataPaths(fromPath, conf, replicationSpec.getValidWriteIdList());
       } catch (FileNotFoundException e) {
         throw new IOException(ErrorMsg.FILE_NOT_FOUND.format(e.getMessage()), e);
