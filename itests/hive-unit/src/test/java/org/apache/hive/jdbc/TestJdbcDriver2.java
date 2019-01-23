@@ -1510,6 +1510,105 @@ public class TestJdbcDriver2 {
     assertTrue(meta.getDatabaseMajorVersion() > -1);
     assertTrue(meta.getDatabaseMinorVersion() > -1);
   }
+  
+  @Test
+  public void testDatabaseMetaDataGetTables() throws SQLException {
+    String dbName = "test_db_metadata_gettables";
+    String tblName = "test_tbl";
+    String tblNameExt = "test_tbl_ext";
+    String viewName = "test_view";
+    List<String> tablesAndViews = new ArrayList<String>(Arrays.asList(tblName, tblNameExt, viewName));
+    Statement stmt = con.createStatement();
+    DatabaseMetaData dbMetadata = con.getMetaData();
+    ResultSet resultSet;
+    // create test database
+    stmt.execute("create database if not exists " + dbName);
+    // create table
+    stmt.execute("create table if not exists " + dbName + "." + tblName + " (col1 int , col2 string)");
+    // create external table
+    stmt.execute("create external table if not exists " + dbName + "." + tblNameExt + " (col1 int , col2 string)");
+    // create view
+    stmt.execute("create view " + dbName + "." + viewName + " as select * from " + dbName + "." + tblName);
+    // get all "TABLE" objects
+    resultSet = dbMetadata.getTables(null, dbName, null, new String[] { "TABLE" });
+    int count = 0;
+    while (resultSet.next()) {
+      String tName = resultSet.getString("TABLE_NAME");
+      assertTrue(tablesAndViews.contains(tName));
+      count++;
+    }
+    assertEquals(count, 2);
+    // get all "VIEW" objects
+    resultSet = dbMetadata.getTables(null, dbName, null, new String[] { "VIEW" });
+    count = 0;
+    while (resultSet.next()) {
+      String tName = resultSet.getString("TABLE_NAME");
+      assertTrue(tablesAndViews.contains(tName));
+      count++;
+    }
+    assertEquals(count, 1);
+    // get all "TABLE" and "VIEW" objects
+    resultSet = dbMetadata.getTables(null, dbName, null, new String[] { "TABLE", "VIEW" });
+    count = 0;
+    while (resultSet.next()) {
+      String tName = resultSet.getString("TABLE_NAME");
+      assertTrue(tablesAndViews.contains(tName));
+      count++;
+    }
+    assertEquals(count, 3);
+    // passing null for table types should return all tables and views
+    resultSet = dbMetadata.getTables(null, dbName, null, null);
+    count = 0;
+    while (resultSet.next()) {
+      String tName = resultSet.getString("TABLE_NAME");
+      assertTrue(tablesAndViews.contains(tName));
+      count++;
+    }
+    assertEquals(count, 3);
+    // passing EXTERNAL_TABLE should not return anything
+    resultSet = dbMetadata.getTables(null, dbName, null, new String[] { "EXTERNAL_TABLE" });
+    count = 0;
+    while (resultSet.next()) {
+      count++;
+    }
+    assertEquals(count, 0);
+    // passing TABLE, EXTERNAL_TABLE should return all tables (EXTERNAL_TABLE will be ignored)
+    resultSet = dbMetadata.getTables(null, dbName, null, new String[] { "TABLE", "EXTERNAL_TABLE" });
+    count = 0;
+    while (resultSet.next()) {
+      String tName = resultSet.getString("TABLE_NAME");
+      assertTrue(tablesAndViews.contains(tName));
+      count++;
+    }
+    assertEquals(count, 2);
+    // passing EXTERNAL TABLE should not return anything
+    resultSet = dbMetadata.getTables(null, dbName, null, new String[] { "EXTERNAL TABLE" });
+    count = 0;
+    while (resultSet.next()) {
+      count++;
+    }
+    assertEquals(count, 0);
+    // passing MANAGED_TABLE should not return anything
+    resultSet = dbMetadata.getTables(null, dbName, null, new String[] { "MANAGED_TABLE" });
+    count = 0;
+    while (resultSet.next()) {
+      count++;
+    }
+    assertEquals(count, 0);
+    // passing junk should not return anything
+    resultSet = dbMetadata.getTables(null, dbName, null, new String[] { "JUNK" });
+    count = 0;
+    while (resultSet.next()) {
+      count++;
+    }
+    assertEquals(count, 0);
+    
+    // clean up
+    stmt.execute("drop view " + dbName + "." + viewName);
+    stmt.execute("drop table " + dbName + "." + tblName);
+    stmt.execute("drop table " + dbName + "." + tblNameExt);
+    stmt.execute("drop database " + dbName);
+  }
 
   @Test
   public void testResultSetColumnNameCaseInsensitive() throws SQLException {

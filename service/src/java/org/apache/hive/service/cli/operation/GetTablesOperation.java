@@ -24,6 +24,7 @@ import java.util.List;
 
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
+import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.TableMeta;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HiveOperationType;
 import org.apache.hadoop.hive.ql.security.authorization.plugin.HivePrivilegeObject;
@@ -49,6 +50,7 @@ public class GetTablesOperation extends MetadataOperation {
   private final String catalogName;
   private final String schemaName;
   private final String tableName;
+  // Contains table types per {@link org.apache.hadoop.hive.metastore.TableType}
   private final List<String> tableTypeList;
   private final RowSet rowSet;
   private final TableTypeMapping tableTypeMapping;
@@ -82,7 +84,23 @@ public class GetTablesOperation extends MetadataOperation {
     if (tableTypes != null) {
       tableTypeList = new ArrayList<String>();
       for (String tableType : tableTypes) {
-        tableTypeList.add(tableTypeMapping.mapToHiveType(tableType.trim()));
+        if (tableMappingStr.equalsIgnoreCase("HIVE")) {
+          tableTypeList.add(tableTypeMapping.mapToHiveType(tableType.trim()));
+        } else {
+          // A table type passed from the client side can only be one of the values returned by
+          // {@link org.apache.hive.jdbc.HiveDatabaseMetaData#getTableTypes}, 
+          // which returns: TABLE, VIEW, INDEX_TABLE
+          if (tableType.equalsIgnoreCase("TABLE")) {
+            tableTypeList.add(TableType.MANAGED_TABLE.toString());
+            tableTypeList.add(TableType.EXTERNAL_TABLE.toString());
+          }
+          if (tableType.equalsIgnoreCase("VIEW")) {
+            tableTypeList.add(TableType.VIRTUAL_VIEW.toString());
+          }
+          if (tableType.equalsIgnoreCase("INDEX_TABLE")) {
+            tableTypeList.add(TableType.INDEX_TABLE.toString());
+          }
+        }
       }
     } else {
       tableTypeList = null;
@@ -106,22 +124,16 @@ public class GetTablesOperation extends MetadataOperation {
       String tablePattern = convertIdentifierPattern(tableName, true);
       for (String dbName : metastoreClient.getDatabases(schemaPattern)) {
         String dbNamePattern = convertIdentifierPattern(dbName, true);
-        for (TableMeta tableMeta :
-                metastoreClient.getTableMeta(dbNamePattern, tablePattern, tableTypeList)) {
-          String tableType = tableTypeMapping.mapToClientType(tableMeta.getTableType());
-          rowSet.addRow(new Object[]{
-                  DEFAULT_HIVE_CATALOG,
-                  tableMeta.getDbName(),
-                  tableMeta.getTableName(),
-                  tableType,
-                  tableMeta.getComments(),
-                  null, null, null, null, null
-          });
-
-          if (LOG.isDebugEnabled()) {
-            String debugMessage = getDebugMessage("table", RESULT_SET_SCHEMA);
-            LOG.debug(String.format("%s %s %s %s %s %s", debugMessage, DEFAULT_HIVE_CATALOG, tableMeta.getDbName(),
-                    tableMeta.getTableName(), tableType, tableMeta.getComments()));
+        if ((tableTypeList == null) || (!tableTypeList.isEmpty())) {
+          for (TableMeta tableMeta : metastoreClient.getTableMeta(dbNamePattern, tablePattern, tableTypeList)) {
+            String tableType = tableTypeMapping.mapToClientType(tableMeta.getTableType());
+            rowSet.addRow(new Object[] { DEFAULT_HIVE_CATALOG, tableMeta.getDbName(), tableMeta.getTableName(),
+                tableType, tableMeta.getComments(), null, null, null, null, null });
+            if (LOG.isDebugEnabled()) {
+              String debugMessage = getDebugMessage("table", RESULT_SET_SCHEMA);
+              LOG.debug(String.format("%s %s %s %s %s %s", debugMessage, DEFAULT_HIVE_CATALOG, tableMeta.getDbName(),
+                  tableMeta.getTableName(), tableType, tableMeta.getComments()));
+            }
           }
         }
         if (LOG.isDebugEnabled() && rowSet.numRows() == 0) {
