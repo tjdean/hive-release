@@ -1790,7 +1790,7 @@ inline std::ostream& operator<<(std::ostream& out, const StorageDescriptor& obj)
 }
 
 typedef struct _Table__isset {
-  _Table__isset() : tableName(false), dbName(false), owner(false), createTime(false), lastAccessTime(false), retention(false), sd(false), partitionKeys(false), parameters(false), viewOriginalText(false), viewExpandedText(false), tableType(false), privileges(false), temporary(true) {}
+  _Table__isset() : tableName(false), dbName(false), owner(false), createTime(false), lastAccessTime(false), retention(false), sd(false), partitionKeys(false), parameters(false), viewOriginalText(false), viewExpandedText(false), tableType(false), privileges(false), temporary(true), colStats(false) {}
   bool tableName :1;
   bool dbName :1;
   bool owner :1;
@@ -1805,6 +1805,7 @@ typedef struct _Table__isset {
   bool tableType :1;
   bool privileges :1;
   bool temporary :1;
+  bool colStats :1;
 } _Table__isset;
 
 class Table {
@@ -1830,6 +1831,7 @@ class Table {
   std::string tableType;
   PrincipalPrivilegeSet privileges;
   bool temporary;
+  ColumnStatistics colStats;
 
   _Table__isset __isset;
 
@@ -1860,6 +1862,8 @@ class Table {
   void __set_privileges(const PrincipalPrivilegeSet& val);
 
   void __set_temporary(const bool val);
+
+  void __set_colStats(const ColumnStatistics& val);
 
   bool operator == (const Table & rhs) const
   {
@@ -1894,6 +1898,10 @@ class Table {
     if (__isset.temporary != rhs.__isset.temporary)
       return false;
     else if (__isset.temporary && !(temporary == rhs.temporary))
+      return false;
+    if (__isset.colStats != rhs.__isset.colStats)
+      return false;
+    else if (__isset.colStats && !(colStats == rhs.colStats))
       return false;
     return true;
   }

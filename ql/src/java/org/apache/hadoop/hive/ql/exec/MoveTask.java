@@ -376,10 +376,21 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
         DataContainer dc = null;
         if (tbd.getPartitionSpec().size() == 0) {
           dc = new DataContainer(table.getTTable());
+          boolean resetStatistics = false;
+          if (hasFollowingStatsTask()) {
+            // If there's a follow-on stats task then the stats will be correct after load, so don't
+            // need to reset the statistics.
+            resetStatistics = false;
+          } else if (!work.getIsInReplicationScope()) {
+            // If the load is not happening during replication and there is not follow-on stats
+            // task, stats will be inaccurate after load and so need to be reset.
+            resetStatistics = true;
+          }
+
           db.loadTable(tbd.getSourcePath(), tbd.getTable().getTableName(), tbd.getLoadFileType(),
               work.isSrcLocal(), isSkewedStoredAsDirs(tbd),
               work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID,
-              hasFollowingStatsTask());
+              resetStatistics);
           if (work.getOutputs() != null) {
             DDLTask.addIfAbsentByName(new WriteEntity(table,
               getWriteType(tbd, work.getLoadTableWork().getWriteType())), work.getOutputs());

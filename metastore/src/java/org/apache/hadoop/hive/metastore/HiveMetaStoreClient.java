@@ -1331,6 +1331,12 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
 
   /** {@inheritDoc} */
   @Override
+  public Table getTable(String dbname, String name, boolean getColumnStats) throws TException {
+    return deepCopy(filterHook.filterTable(client.get_table_with_colstats(dbname, name, getColumnStats)));
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public List<Table> getTableObjectsByName(String dbName, List<String> tableNames)
       throws MetaException, InvalidOperationException, UnknownDBException, TException {
     return deepCopyTables(filterHook.filterTables(

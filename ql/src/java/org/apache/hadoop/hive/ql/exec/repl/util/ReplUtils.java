@@ -19,8 +19,10 @@ package org.apache.hadoop.hive.ql.exec.repl.util;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.TableType;
+import org.apache.hadoop.hive.metastore.api.EnvironmentContext;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.exec.Task;
@@ -28,6 +30,7 @@ import org.apache.hadoop.hive.ql.exec.TaskFactory;
 import org.apache.hadoop.hive.ql.exec.repl.ReplStateLogWork;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.parse.DDLSemanticAnalyzer;
+import org.apache.hadoop.hive.ql.parse.ReplicationSpec;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.parse.repl.ReplLogger;
 import org.apache.hadoop.hive.ql.plan.AlterTableDesc;
@@ -117,6 +120,13 @@ public class ReplUtils {
             StatsUtils.getFullyQualifiedTableName(tableDesc.getDatabaseName(), tableDesc.getTableName()));
     if (partSpec != null) {
       alterTblDesc.setPartSpec(partSpec);
+    }
+
+    ReplicationSpec replSpec = tableDesc.getReplicationSpec();
+    if (replSpec != null && replSpec.isInReplicationScope()) {
+      EnvironmentContext environmentContext = new EnvironmentContext();
+      environmentContext.putToProperties(StatsSetupConst.DO_NOT_UPDATE_STATS, StatsSetupConst.TRUE);
+      alterTblDesc.setEnvironmentContext(environmentContext);
     }
     return TaskFactory.get(new DDLWork(new HashSet<>(), new HashSet<>(), alterTblDesc), conf, true);
   }

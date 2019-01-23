@@ -40,6 +40,7 @@ import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
 import org.apache.hadoop.hive.metastore.events.ListenerEvent;
+import org.apache.hadoop.hive.metastore.events.UpdateTableColumnStatEvent;
 
 import java.util.List;
 import java.util.Map;
@@ -147,6 +148,12 @@ public class MetaStoreListenerNotifier {
             @Override
             public void notify(MetaStoreEventListener listener, ListenerEvent event) throws MetaException {
               listener.onAlterIndex((AlterIndexEvent)event);
+            }
+          })
+          .put(EventType.UPDATE_TABLE_COLUMN_STAT, new EventNotifier() {
+            @Override
+            public void notify(MetaStoreEventListener listener, ListenerEvent event) throws MetaException {
+              listener.onUpdateTableColumnStat((UpdateTableColumnStatEvent) event);
             }
           })
           .build()

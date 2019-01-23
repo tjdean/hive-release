@@ -242,7 +242,8 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
           LOG.debug(
               "analyzeReplDump dumping table: " + tblName + " to db root " + dbRoot.toUri());
           try {
-            HiveWrapper.Tuple<Table> tableTuple = new HiveWrapper(hiveDb, dbName).table(tblName);
+            HiveWrapper.Tuple<Table> tableTuple = new HiveWrapper(hiveDb, dbName).table(tblName,
+                                                                                        conf);
             if (shouldWriteExternalTableLocationInfo
                     && TableType.EXTERNAL_TABLE.equals(tableTuple.object.getTableType())) {
               LOG.debug("Adding table {} to external tables list", tblName);

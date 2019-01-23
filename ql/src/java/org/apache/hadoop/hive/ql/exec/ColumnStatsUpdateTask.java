@@ -21,7 +21,7 @@ package org.apache.hadoop.hive.ql.exec;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -73,8 +73,17 @@ public class ColumnStatsUpdateTask extends Task<ColumnStatsUpdateWork> {
   private ColumnStatistics constructColumnStatsFromInput()
       throws SemanticException, MetaException {
 
+    // If we are replicating the stats, we don't need to construct those again.
+    if (work.getColStats() != null) {
+      ColumnStatistics colStats = work.getColStats();
+      LOG.debug("Got stats through replication for " +
+              colStats.getStatsDesc().getDbName() + "." +
+              colStats.getStatsDesc().getTableName());
+      return colStats;
+    }
+
     String dbName = work.getCurrentDatabaseName();
-    ColumnStatsDesc desc = work.getColStats();
+    ColumnStatsDesc desc = work.getColStatsDesc();
     String tableName = desc.getTableName();
     String partName = work.getPartName();
     List<String> colName = desc.getColName();
@@ -285,7 +294,7 @@ public class ColumnStatsUpdateTask extends Task<ColumnStatsUpdateWork> {
   }
 
   private int persistTableStats() throws HiveException, MetaException,
-      IOException {
+          IOException {
     // Construct a column statistics object from user input
     ColumnStatistics colStats = constructColumnStatsFromInput();
     // Persist the column statistics object to the metastore
@@ -305,7 +314,13 @@ public class ColumnStatsUpdateTask extends Task<ColumnStatsUpdateWork> {
   @Override
   public int execute(DriverContext driverContext) {
     try {
-      if (work.getColStats().isTblLevel()) {
+      boolean isTblLevel;
+      if (work.getColStats() != null) {
+        isTblLevel = work.getColStats().getStatsDesc().isIsTblLevel();
+      } else {
+        isTblLevel = work.getColStatsDesc().isTblLevel();
+      }
+      if (isTblLevel) {
         return persistTableStats();
       } else {
         return persistPartitionStats();

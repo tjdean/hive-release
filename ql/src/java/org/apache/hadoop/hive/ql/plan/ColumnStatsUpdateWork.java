@@ -20,6 +20,8 @@ package org.apache.hadoop.hive.ql.plan;
 
 import java.io.Serializable;
 import java.util.Map;
+
+import org.apache.hadoop.hive.metastore.api.ColumnStatistics;
 import org.apache.hadoop.hive.ql.plan.Explain.Level;
 
 
@@ -34,17 +36,26 @@ import org.apache.hadoop.hive.ql.plan.Explain.Level;
 @Explain(displayName = "Column Stats Update Work", explainLevels = { Level.USER, Level.DEFAULT, Level.EXTENDED })
 public class ColumnStatsUpdateWork implements Serializable {
   private static final long serialVersionUID = 1L;
-  private ColumnStatsDesc colStats;
+  private ColumnStatsDesc colStatsDesc;
   private String partName;
   private Map<String, String> mapProp;
   private String currentDatabaseName;
+  private ColumnStatistics colStats;
 
-  public ColumnStatsUpdateWork(ColumnStatsDesc colStats, String partName,
+  public ColumnStatsUpdateWork(ColumnStatsDesc colStatsDesc, String partName,
                                Map<String, String> mapProp, String currentDatabaseName) {
     this.partName = partName;
-    this.colStats = colStats;
+    this.colStatsDesc = colStatsDesc;
     this.mapProp = mapProp;
     this.currentDatabaseName = currentDatabaseName;
+    this.colStats = null;
+  }
+
+  public ColumnStatsUpdateWork(ColumnStatistics colStats) {
+    this.colStatsDesc = null;
+    this.partName = null;
+    this.mapProp = null;
+    this.colStats = colStats;
   }
 
   @Override
@@ -53,8 +64,8 @@ public class ColumnStatsUpdateWork implements Serializable {
   }
 
   @Explain(displayName = "Column Stats Desc")
-  public ColumnStatsDesc getColStats() {
-    return colStats;
+  public ColumnStatsDesc getColStatsDesc() {
+    return colStatsDesc;
   }
 
   public String getPartName() {
@@ -67,5 +78,9 @@ public class ColumnStatsUpdateWork implements Serializable {
 
   public String getCurrentDatabaseName() {
     return currentDatabaseName;
+  }
+
+  public ColumnStatistics getColStats() {
+    return colStats;
   }
 }

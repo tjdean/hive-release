@@ -27,6 +27,7 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.api.ColumnStatistics;
 import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.Order;
 import org.apache.hadoop.hive.ql.ErrorMsg;
@@ -82,6 +83,7 @@ public class CreateTableDesc extends DDLDesc implements Serializable {
   private boolean replaceMode = false;
   private ReplicationSpec replicationSpec = null;
   private boolean isCTAS = false;
+  private ColumnStatistics colStats = null;
 
   public CreateTableDesc() {
   }
@@ -95,8 +97,8 @@ public class CreateTableDesc extends DDLDesc implements Serializable {
       String storageHandler,
       Map<String, String> serdeProps,
       Map<String, String> tblProps,
-      boolean ifNotExists, List<String> skewedColNames, List<List<String>> skewedColValues) {
-
+      boolean ifNotExists, List<String> skewedColNames, List<List<String>> skewedColValues,
+      ColumnStatistics colStats) {
     this(tableName, isExternal, isTemporary, cols, partCols,
         bucketCols, sortCols, numBuckets, fieldDelim, fieldEscape,
         collItemDelim, mapKeyDelim, lineDelim, comment, inputFormat,
@@ -104,6 +106,7 @@ public class CreateTableDesc extends DDLDesc implements Serializable {
         tblProps, ifNotExists, skewedColNames, skewedColValues);
 
     this.databaseName = databaseName;
+    this.colStats = colStats;
   }
 
   public CreateTableDesc(String databaseName, String tableName, boolean isExternal, boolean isTemporary,
@@ -121,9 +124,9 @@ public class CreateTableDesc extends DDLDesc implements Serializable {
             bucketCols, sortCols, numBuckets, fieldDelim, fieldEscape,
             collItemDelim, mapKeyDelim, lineDelim, comment, inputFormat,
             outputFormat, location, serName, storageHandler, serdeProps,
-            tblProps, ifNotExists, skewedColNames, skewedColValues);
-    this.isCTAS = isCTAS;
+            tblProps, ifNotExists, skewedColNames, skewedColValues, null);
 
+    this.isCTAS = isCTAS;
   }
 
 
@@ -611,5 +614,9 @@ public class CreateTableDesc extends DDLDesc implements Serializable {
 
   public boolean isCTAS() {
     return isCTAS;
+  }
+
+  public ColumnStatistics getColStats() {
+    return colStats;
   }
 }

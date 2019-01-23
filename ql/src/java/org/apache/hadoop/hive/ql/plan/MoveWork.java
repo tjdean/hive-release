@@ -64,6 +64,7 @@ public class MoveWork implements Serializable {
    * List of inserted partitions
    */
   protected List<Partition> movedParts;
+  private boolean isInReplicationScope = false;
 
   public MoveWork() {
     sessionStateLineageState = null;
@@ -147,5 +148,13 @@ public class MoveWork implements Serializable {
 
   public LineageState getLineagState() {
     return sessionStateLineageState;
+  }
+
+  public void setIsInReplicationScope(boolean isInReplicationScope) {
+    this.isInReplicationScope = isInReplicationScope;
+  }
+
+  public boolean getIsInReplicationScope() {
+    return this.isInReplicationScope;
   }
 }

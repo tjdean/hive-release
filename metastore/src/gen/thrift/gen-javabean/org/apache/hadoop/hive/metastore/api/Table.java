@@ -52,6 +52,7 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
   private static final org.apache.thrift.protocol.TField TABLE_TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("tableType", org.apache.thrift.protocol.TType.STRING, (short)12);
   private static final org.apache.thrift.protocol.TField PRIVILEGES_FIELD_DESC = new org.apache.thrift.protocol.TField("privileges", org.apache.thrift.protocol.TType.STRUCT, (short)13);
   private static final org.apache.thrift.protocol.TField TEMPORARY_FIELD_DESC = new org.apache.thrift.protocol.TField("temporary", org.apache.thrift.protocol.TType.BOOL, (short)14);
+  private static final org.apache.thrift.protocol.TField COL_STATS_FIELD_DESC = new org.apache.thrift.protocol.TField("colStats", org.apache.thrift.protocol.TType.STRUCT, (short)15);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -73,6 +74,7 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
   private String tableType; // required
   private PrincipalPrivilegeSet privileges; // optional
   private boolean temporary; // optional
+  private ColumnStatistics colStats; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -89,7 +91,8 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
     VIEW_EXPANDED_TEXT((short)11, "viewExpandedText"),
     TABLE_TYPE((short)12, "tableType"),
     PRIVILEGES((short)13, "privileges"),
-    TEMPORARY((short)14, "temporary");
+    TEMPORARY((short)14, "temporary"),
+    COL_STATS((short)15, "colStats");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -132,6 +135,8 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
           return PRIVILEGES;
         case 14: // TEMPORARY
           return TEMPORARY;
+        case 15: // COL_STATS
+          return COL_STATS;
         default:
           return null;
       }
@@ -177,7 +182,7 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
   private static final int __RETENTION_ISSET_ID = 2;
   private static final int __TEMPORARY_ISSET_ID = 3;
   private byte __isset_bitfield = 0;
-  private static final _Fields optionals[] = {_Fields.PRIVILEGES,_Fields.TEMPORARY};
+  private static final _Fields optionals[] = {_Fields.PRIVILEGES,_Fields.TEMPORARY,_Fields.COL_STATS};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -212,6 +217,8 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, PrincipalPrivilegeSet.class)));
     tmpMap.put(_Fields.TEMPORARY, new org.apache.thrift.meta_data.FieldMetaData("temporary", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.COL_STATS, new org.apache.thrift.meta_data.FieldMetaData("colStats", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT        , "ColumnStatistics")));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Table.class, metaDataMap);
   }
@@ -297,6 +304,9 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
       this.privileges = new PrincipalPrivilegeSet(other.privileges);
     }
     this.temporary = other.temporary;
+    if (other.isSetColStats()) {
+      this.colStats = other.colStats;
+    }
   }
 
   public Table deepCopy() {
@@ -323,6 +333,7 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
     this.privileges = null;
     this.temporary = false;
 
+    this.colStats = null;
   }
 
   public String getTableName() {
@@ -669,6 +680,29 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
     __isset_bitfield = EncodingUtils.setBit(__isset_bitfield, __TEMPORARY_ISSET_ID, value);
   }
 
+  public ColumnStatistics getColStats() {
+    return this.colStats;
+  }
+
+  public void setColStats(ColumnStatistics colStats) {
+    this.colStats = colStats;
+  }
+
+  public void unsetColStats() {
+    this.colStats = null;
+  }
+
+  /** Returns true if field colStats is set (has been assigned a value) and false otherwise */
+  public boolean isSetColStats() {
+    return this.colStats != null;
+  }
+
+  public void setColStatsIsSet(boolean value) {
+    if (!value) {
+      this.colStats = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case TABLE_NAME:
@@ -783,6 +817,14 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
       }
       break;
 
+    case COL_STATS:
+      if (value == null) {
+        unsetColStats();
+      } else {
+        setColStats((ColumnStatistics)value);
+      }
+      break;
+
     }
   }
 
@@ -830,6 +872,9 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
     case TEMPORARY:
       return isTemporary();
 
+    case COL_STATS:
+      return getColStats();
+
     }
     throw new IllegalStateException();
   }
@@ -869,6 +914,8 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
       return isSetPrivileges();
     case TEMPORARY:
       return isSetTemporary();
+    case COL_STATS:
+      return isSetColStats();
     }
     throw new IllegalStateException();
   }
@@ -1012,6 +1059,15 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
         return false;
     }
 
+    boolean this_present_colStats = true && this.isSetColStats();
+    boolean that_present_colStats = true && that.isSetColStats();
+    if (this_present_colStats || that_present_colStats) {
+      if (!(this_present_colStats && that_present_colStats))
+        return false;
+      if (!this.colStats.equals(that.colStats))
+        return false;
+    }
+
     return true;
   }
 
@@ -1088,6 +1144,11 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
     list.add(present_temporary);
     if (present_temporary)
       list.add(temporary);
+
+    boolean present_colStats = true && (isSetColStats());
+    list.add(present_colStats);
+    if (present_colStats)
+      list.add(colStats);
 
     return list.hashCode();
   }
@@ -1240,6 +1301,16 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetColStats()).compareTo(other.isSetColStats());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetColStats()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.colStats, other.colStats);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -1357,6 +1428,16 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
       if (!first) sb.append(", ");
       sb.append("temporary:");
       sb.append(this.temporary);
+      first = false;
+    }
+    if (isSetColStats()) {
+      if (!first) sb.append(", ");
+      sb.append("colStats:");
+      if (this.colStats == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.colStats);
+      }
       first = false;
     }
     sb.append(")");
@@ -1547,6 +1628,15 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 15: // COL_STATS
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+              struct.colStats = new ColumnStatistics();
+              struct.colStats.read(iprot);
+              struct.setColStatsIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -1641,6 +1731,13 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
         oprot.writeBool(struct.temporary);
         oprot.writeFieldEnd();
       }
+      if (struct.colStats != null) {
+        if (struct.isSetColStats()) {
+          oprot.writeFieldBegin(COL_STATS_FIELD_DESC);
+          struct.colStats.write(oprot);
+          oprot.writeFieldEnd();
+        }
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -1701,7 +1798,10 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
       if (struct.isSetTemporary()) {
         optionals.set(13);
       }
-      oprot.writeBitSet(optionals, 14);
+      if (struct.isSetColStats()) {
+        optionals.set(14);
+      }
+      oprot.writeBitSet(optionals, 15);
       if (struct.isSetTableName()) {
         oprot.writeString(struct.tableName);
       }
@@ -1757,12 +1857,15 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
       if (struct.isSetTemporary()) {
         oprot.writeBool(struct.temporary);
       }
+      if (struct.isSetColStats()) {
+        struct.colStats.write(oprot);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, Table struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(14);
+      BitSet incoming = iprot.readBitSet(15);
       if (incoming.get(0)) {
         struct.tableName = iprot.readString();
         struct.setTableNameIsSet(true);
@@ -1841,6 +1944,11 @@ public class Table implements org.apache.thrift.TBase<Table, Table._Fields>, jav
       if (incoming.get(13)) {
         struct.temporary = iprot.readBool();
         struct.setTemporaryIsSet(true);
+      }
+      if (incoming.get(14)) {
+        struct.colStats = new ColumnStatistics();
+        struct.colStats.read(iprot);
+        struct.setColStatsIsSet(true);
       }
     }
   }

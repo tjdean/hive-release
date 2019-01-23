@@ -135,6 +135,13 @@ public class SessionHiveMetaStoreClient extends HiveMetaStoreClient implements I
   @Override
   public org.apache.hadoop.hive.metastore.api.Table getTable(String dbname, String name) throws MetaException,
   TException, NoSuchObjectException {
+    return getTable(dbname, name, false);
+  }
+
+  @Override
+  public org.apache.hadoop.hive.metastore.api.Table getTable(String dbname, String name,
+                                                             boolean getColStats) throws MetaException,
+  TException, NoSuchObjectException {
     // First check temp tables
     org.apache.hadoop.hive.metastore.api.Table table = getTempTable(dbname, name);
     if (table != null) {
@@ -142,7 +149,7 @@ public class SessionHiveMetaStoreClient extends HiveMetaStoreClient implements I
     }
 
     // Try underlying client
-    return super.getTable(dbname, name);
+    return super.getTable(dbname, name, getColStats);
   }
 
   @Override

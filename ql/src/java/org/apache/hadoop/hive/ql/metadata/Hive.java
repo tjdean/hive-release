@@ -1211,6 +1211,25 @@ public class Hive {
    */
   public Table getTable(final String dbName, final String tableName,
       boolean throwException) throws HiveException {
+    return this.getTable(dbName, tableName, throwException, false);
+  }
+
+  /**
+   * Returns metadata of the table.
+   *
+   * @param dbName
+   *          the name of the database
+   * @param tableName
+   *          the name of the table
+   * @param throwException
+   *          controls whether an exception is thrown or a returns a null
+   * @param getColumnStats
+   *          get column statistics if available
+   * @return the table or if throwException is false a null value.
+   * @throws HiveException
+   */
+  public Table getTable(final String dbName, final String tableName, boolean throwException,
+                        boolean getColumnStats) throws HiveException {
 
     if (tableName == null || tableName.equals("")) {
       throw new HiveException("empty table creation??");
@@ -1219,7 +1238,7 @@ public class Hive {
     // Get the table from metastore
     org.apache.hadoop.hive.metastore.api.Table tTable = null;
     try {
-      tTable = getMSC().getTable(dbName, tableName);
+      tTable = getMSC().getTable(dbName, tableName, getColumnStats);
     } catch (NoSuchObjectException e) {
       if (throwException) {
         LOG.error("Table " + tableName + " not found: " + e.getMessage());
@@ -1889,12 +1908,11 @@ private void constructOneLBLocationMap(FileStatus fSta,
    *          If the source directory is LOCAL
    * @param isSkewedStoreAsSubdir
    *          if list bucketing enabled
-   * @param hasFollowingStatsTask
-   *          if there is any following stats task
    * @param isAcid true if this is an ACID based write
+   * @param resetStatistics should reset statistics as part of move.
    */
   public void loadTable(Path loadPath, String tableName, LoadFileType loadFileType, boolean isSrcLocal,
-                        boolean isSkewedStoreAsSubdir, boolean isAcid, boolean hasFollowingStatsTask)
+                        boolean isSkewedStoreAsSubdir, boolean isAcid, boolean resetStatistics)
       throws HiveException {
 
     List<Path> newFiles = null;
@@ -1921,11 +1939,15 @@ private void constructOneLBLocationMap(FileStatus fSta,
       }
     }
     if (!this.getConf().getBoolVar(HiveConf.ConfVars.HIVESTATSAUTOGATHER)) {
+      LOG.debug("setting table statistics false for " + tbl.getDbName() + "." + tbl.getTableName());
       StatsSetupConst.setBasicStatsState(tbl.getParameters(), StatsSetupConst.FALSE);
     }
 
     //column stats will be inaccurate
-    StatsSetupConst.clearColumnStatsState(tbl.getParameters());
+    if (resetStatistics) {
+      LOG.debug("Clearing table statistics for " + tbl.getDbName() + "." + tbl.getTableName());
+      StatsSetupConst.clearColumnStatsState(tbl.getParameters());
+    }
 
     try {
       if (isSkewedStoreAsSubdir) {
@@ -1942,7 +1964,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
     }
 
     EnvironmentContext environmentContext = null;
-    if (hasFollowingStatsTask) {
+    if (!resetStatistics) {
       environmentContext = new EnvironmentContext();
       environmentContext.putToProperties(StatsSetupConst.DO_NOT_UPDATE_STATS, StatsSetupConst.TRUE);
     }

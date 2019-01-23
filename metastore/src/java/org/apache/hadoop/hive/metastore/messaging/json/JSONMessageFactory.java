@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
 
 import com.google.common.collect.Iterables;
 
+import org.apache.hadoop.hive.metastore.api.ColumnStatistics;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.Function;
 import org.apache.hadoop.hive.metastore.api.Index;
@@ -52,6 +53,7 @@ import org.apache.hadoop.hive.metastore.messaging.InsertMessage;
 import org.apache.hadoop.hive.metastore.messaging.MessageDeserializer;
 import org.apache.hadoop.hive.metastore.messaging.MessageFactory;
 import org.apache.hadoop.hive.metastore.messaging.PartitionFiles;
+import org.apache.hadoop.hive.metastore.messaging.UpdateTableColumnStatMessage;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
 import org.apache.thrift.TException;
@@ -173,6 +175,13 @@ public class JSONMessageFactory extends MessageFactory {
         tableObj, partObj, replace, fileIter, now());
   }
 
+  @Override
+  public UpdateTableColumnStatMessage buildUpdateTableColumnStatMessage(ColumnStatistics colStats,
+                                                                        Table tableObj) {
+    return new JSONUpdateTableColumnStatMessage(MS_SERVER_URL, MS_SERVICE_PRINCIPAL, now(),
+            colStats, tableObj);
+  }
+
   private long now() {
     return System.currentTimeMillis() / 1000;
   }
@@ -218,6 +227,11 @@ public class JSONMessageFactory extends MessageFactory {
   static String createIndexObjJson(Index indexObj) throws TException {
     TSerializer serializer = new TSerializer(new TJSONProtocol.Factory());
     return serializer.toString(indexObj, "UTF-8");
+  }
+
+  static String createTableColumnStatJson(ColumnStatistics colStats) throws TException {
+    TSerializer serializer = new TSerializer(new TJSONProtocol.Factory());
+    return serializer.toString(colStats, "UTF-8");
   }
 
   public static ObjectNode getJsonTree(NotificationEvent event) throws Exception {

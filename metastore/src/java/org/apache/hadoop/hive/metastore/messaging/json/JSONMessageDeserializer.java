@@ -35,6 +35,7 @@ import org.apache.hadoop.hive.metastore.messaging.DropPartitionMessage;
 import org.apache.hadoop.hive.metastore.messaging.DropTableMessage;
 import org.apache.hadoop.hive.metastore.messaging.InsertMessage;
 import org.apache.hadoop.hive.metastore.messaging.MessageDeserializer;
+import org.apache.hadoop.hive.metastore.messaging.UpdateTableColumnStatMessage;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -197,6 +198,15 @@ public class JSONMessageDeserializer extends MessageDeserializer {
       return mapper.readValue(messageBody, JSONInsertMessage.class);
     } catch (Exception e) {
       throw new IllegalArgumentException("Could not construct InsertMessage", e);
+    }
+  }
+
+  @Override
+  public UpdateTableColumnStatMessage getUpdateTableColumnStatMessage(String messageBody) {
+    try {
+      return mapper.readValue(messageBody, JSONUpdateTableColumnStatMessage.class);
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Could not construct UpdateTableColumnStatMessage", e);
     }
   }
 }

@@ -254,7 +254,6 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     boolean inReplicationScope = false;
     if ((replicationSpec != null) && replicationSpec.isInReplicationScope()){
       tblDesc.setReplicationSpec(replicationSpec);
-      StatsSetupConst.setBasicStatsState(tblDesc.getTblProps(), StatsSetupConst.FALSE);
       inReplicationScope = true;
     }
 

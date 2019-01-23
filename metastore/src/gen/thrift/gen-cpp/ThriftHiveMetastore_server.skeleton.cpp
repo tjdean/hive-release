@@ -142,6 +142,11 @@ class ThriftHiveMetastoreHandler : virtual public ThriftHiveMetastoreIf {
     printf("get_table\n");
   }
 
+  void get_table_with_colstats(Table& _return, const std::string& dbname, const std::string& tbl_name, const bool get_col_stats) {
+    // Your implementation goes here
+    printf("get_table_with_colstats\n");
+  }
+
   void get_table_objects_by_name(std::vector<Table> & _return, const std::string& dbname, const std::vector<std::string> & tbl_names) {
     // Your implementation goes here
     printf("get_table_objects_by_name\n");

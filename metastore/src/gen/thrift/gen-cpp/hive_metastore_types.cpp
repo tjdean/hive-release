@@ -3891,6 +3891,11 @@ void Table::__set_temporary(const bool val) {
 __isset.temporary = true;
 }
 
+void Table::__set_colStats(const ColumnStatistics& val) {
+  this->colStats = val;
+__isset.colStats = true;
+}
+
 uint32_t Table::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
@@ -4051,6 +4056,14 @@ uint32_t Table::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 15:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->colStats.read(iprot);
+          this->__isset.colStats = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -4143,6 +4156,11 @@ uint32_t Table::write(::apache::thrift::protocol::TProtocol* oprot) const {
     xfer += oprot->writeBool(this->temporary);
     xfer += oprot->writeFieldEnd();
   }
+  if (this->__isset.colStats) {
+    xfer += oprot->writeFieldBegin("colStats", ::apache::thrift::protocol::T_STRUCT, 15);
+    xfer += this->colStats.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -4164,6 +4182,7 @@ void swap(Table &a, Table &b) {
   swap(a.tableType, b.tableType);
   swap(a.privileges, b.privileges);
   swap(a.temporary, b.temporary);
+  swap(a.colStats, b.colStats);
   swap(a.__isset, b.__isset);
 }
 
@@ -4182,6 +4201,7 @@ Table::Table(const Table& other217) {
   tableType = other217.tableType;
   privileges = other217.privileges;
   temporary = other217.temporary;
+  colStats = other217.colStats;
   __isset = other217.__isset;
 }
 Table& Table::operator=(const Table& other218) {
@@ -4199,6 +4219,7 @@ Table& Table::operator=(const Table& other218) {
   tableType = other218.tableType;
   privileges = other218.privileges;
   temporary = other218.temporary;
+  colStats = other218.colStats;
   __isset = other218.__isset;
   return *this;
 }
@@ -4219,6 +4240,7 @@ void Table::printTo(std::ostream& out) const {
   out << ", " << "tableType=" << to_string(tableType);
   out << ", " << "privileges="; (__isset.privileges ? (out << to_string(privileges)) : (out << "<null>"));
   out << ", " << "temporary="; (__isset.temporary ? (out << to_string(temporary)) : (out << "<null>"));
+  out << ", " << "colStats="; (__isset.colStats ? (out << to_string(colStats)) : (out << "<null>"));
   out << ")";
 }
 

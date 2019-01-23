@@ -276,7 +276,8 @@ struct Table {
   11: string viewExpandedText,         // expanded view text, null for non-view
   12: string tableType,                // table type enum, e.g. EXTERNAL_TABLE
   13: optional PrincipalPrivilegeSet privileges,
-  14: optional bool temporary=false
+  14: optional bool temporary=false,
+  15: optional ColumnStatistics colStats // Column statistics for this table
 }
 
 struct Partition {
@@ -914,6 +915,8 @@ service ThriftHiveMetastore extends fb303.FacebookService
   list<string> get_all_tables(1: string db_name) throws (1: MetaException o1)
 
   Table get_table(1:string dbname, 2:string tbl_name)
+                       throws (1:MetaException o1, 2:NoSuchObjectException o2)
+  Table get_table_with_colstats(1:string dbname, 2:string tbl_name, 3:bool get_col_stats)
                        throws (1:MetaException o1, 2:NoSuchObjectException o2)
   list<Table> get_table_objects_by_name(1:string dbname, 2:list<string> tbl_names)
 				   throws (1:MetaException o1, 2:InvalidOperationException o2, 3:UnknownDBException o3)

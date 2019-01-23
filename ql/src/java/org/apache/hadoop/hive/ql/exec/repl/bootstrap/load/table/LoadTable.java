@@ -258,6 +258,7 @@ public class LoadTable {
         new MoveWork(new HashSet<>(), new HashSet<>(), loadTableWork, null,
             false, context.sessionStateLineageState);
     Task<?> loadTableTask = TaskFactory.get(moveWork, context.hiveConf, true);
+    moveWork.setIsInReplicationScope(replicationSpec.isInReplicationScope());
     copyTask.addDependentTask(loadTableTask);
     return copyTask;
   }

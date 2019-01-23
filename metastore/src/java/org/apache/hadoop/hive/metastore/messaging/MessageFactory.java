@@ -21,6 +21,7 @@ package org.apache.hadoop.hive.metastore.messaging;
 
 import org.apache.hadoop.hive.common.JavaUtils;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.api.ColumnStatistics;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.Function;
 import org.apache.hadoop.hive.metastore.api.Index;
@@ -51,6 +52,7 @@ public abstract class MessageFactory {
   public static final String CREATE_INDEX_EVENT = "CREATE_INDEX";
   public static final String DROP_INDEX_EVENT = "DROP_INDEX";
   public static final String ALTER_INDEX_EVENT = "ALTER_INDEX";
+  public static final String UPDATE_TBL_COL_STAT_EVENT = "UPDATE_TBL_COL_STAT_EVENT";
 
 
   private static MessageFactory instance = null;
@@ -246,4 +248,13 @@ public abstract class MessageFactory {
    */
   public abstract InsertMessage buildInsertMessage(Table tableObj, Partition ptnObj,
                                                    boolean replace, Iterator<String> files);
+
+  /**
+   * Factory method for building update column stats message
+   * @param colStats column statistics which were updated
+   * @param tableObj table of which column statistics were updated
+   * @return instance of UpdateTableColumnStatMessage
+   */
+  public abstract UpdateTableColumnStatMessage buildUpdateTableColumnStatMessage(ColumnStatistics colStats,
+                                                                                  Table tableObj);
 }

@@ -414,6 +414,23 @@ module ThriftHiveMetastore
       raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_table failed: unknown result')
     end
 
+    def get_table_with_colstats(dbname, tbl_name, get_col_stats)
+      send_get_table_with_colstats(dbname, tbl_name, get_col_stats)
+      return recv_get_table_with_colstats()
+    end
+
+    def send_get_table_with_colstats(dbname, tbl_name, get_col_stats)
+      send_message('get_table_with_colstats', Get_table_with_colstats_args, :dbname => dbname, :tbl_name => tbl_name, :get_col_stats => get_col_stats)
+    end
+
+    def recv_get_table_with_colstats()
+      result = receive_message(Get_table_with_colstats_result)
+      return result.success unless result.success.nil?
+      raise result.o1 unless result.o1.nil?
+      raise result.o2 unless result.o2.nil?
+      raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_table_with_colstats failed: unknown result')
+    end
+
     def get_table_objects_by_name(dbname, tbl_names)
       send_get_table_objects_by_name(dbname, tbl_names)
       return recv_get_table_objects_by_name()
@@ -2504,6 +2521,19 @@ module ThriftHiveMetastore
         result.o2 = o2
       end
       write_result(result, oprot, 'get_table', seqid)
+    end
+
+    def process_get_table_with_colstats(seqid, iprot, oprot)
+      args = read_args(iprot, Get_table_with_colstats_args)
+      result = Get_table_with_colstats_result.new()
+      begin
+        result.success = @handler.get_table_with_colstats(args.dbname, args.tbl_name, args.get_col_stats)
+      rescue ::MetaException => o1
+        result.o1 = o1
+      rescue ::NoSuchObjectException => o2
+        result.o2 = o2
+      end
+      write_result(result, oprot, 'get_table_with_colstats', seqid)
     end
 
     def process_get_table_objects_by_name(seqid, iprot, oprot)
@@ -4712,6 +4742,46 @@ module ThriftHiveMetastore
   end
 
   class Get_table_result
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    SUCCESS = 0
+    O1 = 1
+    O2 = 2
+
+    FIELDS = {
+      SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => ::Table},
+      O1 => {:type => ::Thrift::Types::STRUCT, :name => 'o1', :class => ::MetaException},
+      O2 => {:type => ::Thrift::Types::STRUCT, :name => 'o2', :class => ::NoSuchObjectException}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Get_table_with_colstats_args
+    include ::Thrift::Struct, ::Thrift::Struct_Union
+    DBNAME = 1
+    TBL_NAME = 2
+    GET_COL_STATS = 3
+
+    FIELDS = {
+      DBNAME => {:type => ::Thrift::Types::STRING, :name => 'dbname'},
+      TBL_NAME => {:type => ::Thrift::Types::STRING, :name => 'tbl_name'},
+      GET_COL_STATS => {:type => ::Thrift::Types::BOOL, :name => 'get_col_stats'}
+    }
+
+    def struct_fields; FIELDS; end
+
+    def validate
+    end
+
+    ::Thrift::Struct.generate_accessors self
+  end
+
+  class Get_table_with_colstats_result
     include ::Thrift::Struct, ::Thrift::Struct_Union
     SUCCESS = 0
     O1 = 1

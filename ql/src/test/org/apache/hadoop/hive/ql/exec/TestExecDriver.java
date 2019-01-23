@@ -143,7 +143,7 @@ public class TestExecDriver extends TestCase {
         db.createTable(src, cols, null, TextInputFormat.class,
             HiveIgnoreKeyTextOutputFormat.class);
         db.loadTable(hadoopDataFile[i], src, LoadFileType.KEEP_EXISTING,
-                true, false, false, false);
+                true, false, false, true);
         i++;
       }
 

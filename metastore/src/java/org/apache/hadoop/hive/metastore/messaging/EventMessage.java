@@ -44,7 +44,8 @@ public abstract class EventMessage {
     DROP_FUNCTION(MessageFactory.DROP_FUNCTION_EVENT),
     CREATE_INDEX(MessageFactory.CREATE_INDEX_EVENT),
     DROP_INDEX(MessageFactory.DROP_INDEX_EVENT),
-    ALTER_INDEX(MessageFactory.ALTER_INDEX_EVENT);
+    ALTER_INDEX(MessageFactory.ALTER_INDEX_EVENT),
+    UPDATE_TABLE_COLUMN_STAT(MessageFactory.UPDATE_TBL_COL_STAT_EVENT);
 
     private String typeString;
 

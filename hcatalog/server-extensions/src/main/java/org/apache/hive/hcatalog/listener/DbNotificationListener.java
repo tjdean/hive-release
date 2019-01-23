@@ -32,6 +32,7 @@ import org.apache.hadoop.hive.metastore.RawStore;
 import org.apache.hadoop.hive.metastore.RawStoreProxy;
 import org.apache.hadoop.hive.metastore.ReplChangeManager;
 import org.apache.hadoop.hive.metastore.Warehouse;
+import org.apache.hadoop.hive.metastore.api.ColumnStatisticsDesc;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.Function;
 import org.apache.hadoop.hive.metastore.api.Index;
@@ -57,11 +58,13 @@ import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
 import org.apache.hadoop.hive.metastore.events.LoadPartitionDoneEvent;
 import org.apache.hadoop.hive.metastore.events.ListenerEvent;
+import org.apache.hadoop.hive.metastore.events.UpdateTableColumnStatEvent;
 import org.apache.hadoop.hive.metastore.messaging.EventMessage.EventType;
 import org.apache.hadoop.hive.metastore.messaging.MessageFactory;
 import org.apache.hadoop.hive.metastore.messaging.PartitionFiles;
 
 import com.google.common.collect.Lists;
+import org.apache.hadoop.hive.metastore.messaging.UpdateTableColumnStatMessage;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -487,6 +490,17 @@ public class DbNotificationListener extends MetaStoreEventListener {
   public void onLoadPartitionDone(LoadPartitionDoneEvent partSetDoneEvent) throws MetaException {
     // TODO, we don't support this, but we should, since users may create an empty partition and
     // then load data into it.
+  }
+
+  @Override
+  public void onUpdateTableColumnStat(UpdateTableColumnStatEvent updateTableColumnStatEvent) throws MetaException {
+    NotificationEvent event = new NotificationEvent(0, now(), EventType.UPDATE_TABLE_COLUMN_STAT.toString(),
+            msgFactory.buildUpdateTableColumnStatMessage(updateTableColumnStatEvent.getColStats(),
+                    updateTableColumnStatEvent.getTableObj()).toString());
+    ColumnStatisticsDesc statDesc = updateTableColumnStatEvent.getColStats().getStatsDesc();
+    event.setDbName(statDesc.getDbName());
+    event.setTableName(statDesc.getTableName());
+    process(event, updateTableColumnStatEvent);
   }
 
   private int now() {

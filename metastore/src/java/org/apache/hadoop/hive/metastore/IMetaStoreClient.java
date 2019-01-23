@@ -369,6 +369,26 @@ public interface IMetaStoreClient {
       TException, NoSuchObjectException;
 
   /**
+   * Get a table object with column statistics included
+   *
+   * @param dbName
+   *          The database the table is located in.
+   * @param tableName
+   *          Name of the table to fetch.
+   * @param getColumnStats
+   *          get the column stats, if available, when true
+   * @return An object representing the table.
+   * @throws MetaException
+   *           Could not fetch the table
+   * @throws TException
+   *           A thrift communication error occurred
+   * @throws NoSuchObjectException
+   *           In case the table wasn't found.
+   */
+  Table getTable(String dbName, String tableName, boolean getColumnStats) throws MetaException,
+          TException, NoSuchObjectException;
+
+  /**
    *
    * @param dbName
    *          The database the tables are located in.

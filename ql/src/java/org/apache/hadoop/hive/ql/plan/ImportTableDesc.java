@@ -77,7 +77,8 @@ public class ImportTableDesc {
                 (null == table.getSd().getSkewedInfo()) ? null : table.getSd().getSkewedInfo()
                         .getSkewedColNames(),
                 (null == table.getSd().getSkewedInfo()) ? null : table.getSd().getSkewedInfo()
-                        .getSkewedColValues());
+                        .getSkewedColValues(),
+                table.getColStats());
         this.createTblDesc.setStoredAsSubDirectories(table.getSd().isStoredAsSubDirectories());
         break;
       case VIEW:
@@ -127,6 +128,16 @@ public class ImportTableDesc {
         createViewDesc.setReplicationSpec(replSpec);
         break;
     }
+  }
+
+  public ReplicationSpec getReplicationSpec() {
+    switch (getDescType()) {
+      case TABLE:
+        return createTblDesc.getReplicationSpec();
+      case VIEW:
+        return createViewDesc.getReplicationSpec();
+    }
+    return null;
   }
 
   public void setExternal(boolean isExternal) {

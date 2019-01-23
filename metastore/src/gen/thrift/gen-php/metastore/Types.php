@@ -3939,6 +3939,10 @@ class Table {
    * @var bool
    */
   public $temporary = false;
+  /**
+   * @var \metastore\ColumnStatistics
+   */
+  public $colStats = null;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -4014,6 +4018,11 @@ class Table {
           'var' => 'temporary',
           'type' => TType::BOOL,
           ),
+        15 => array(
+          'var' => 'colStats',
+          'type' => TType::STRUCT,
+          'class' => '\metastore\ColumnStatistics',
+          ),
         );
     }
     if (is_array($vals)) {
@@ -4058,6 +4067,9 @@ class Table {
       }
       if (isset($vals['temporary'])) {
         $this->temporary = $vals['temporary'];
+      }
+      if (isset($vals['colStats'])) {
+        $this->colStats = $vals['colStats'];
       }
     }
   }
@@ -4205,6 +4217,14 @@ class Table {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 15:
+          if ($ftype == TType::STRUCT) {
+            $this->colStats = new \metastore\ColumnStatistics();
+            $xfer += $this->colStats->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -4317,6 +4337,14 @@ class Table {
     if ($this->temporary !== null) {
       $xfer += $output->writeFieldBegin('temporary', TType::BOOL, 14);
       $xfer += $output->writeBool($this->temporary);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->colStats !== null) {
+      if (!is_object($this->colStats)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('colStats', TType::STRUCT, 15);
+      $xfer += $this->colStats->write($output);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

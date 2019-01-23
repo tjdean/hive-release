@@ -21,8 +21,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.EnvironmentContext;
 import org.apache.hadoop.hive.ql.DriverContext;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.exec.TaskFactory;
@@ -236,12 +238,18 @@ public class IncrementalLoadTasksBuilder {
                                                     Task<? extends Serializable> preCursor) throws SemanticException {
     HashMap<String, String> mapProp = new HashMap<>();
     mapProp.put(ReplicationSpec.KEY.CURR_STATE_ID.toString(), replState);
+    ReplicationSpec replSpec = new ReplicationSpec(replState, replState);
 
-    AlterTableDesc alterTblDesc = new AlterTableDesc(
-            AlterTableDesc.AlterTableTypes.ADDPROPS, new ReplicationSpec(replState, replState));
+    AlterTableDesc alterTblDesc = new AlterTableDesc(AlterTableDesc.AlterTableTypes.ADDPROPS, replSpec);
     alterTblDesc.setProps(mapProp);
     alterTblDesc.setOldName(dbName + "." + tableName);
     alterTblDesc.setPartSpec((HashMap<String, String>) partSpec);
+
+    if (replSpec.isInReplicationScope()) {
+      EnvironmentContext environmentContext = new EnvironmentContext();
+      environmentContext.putToProperties(StatsSetupConst.DO_NOT_UPDATE_STATS, StatsSetupConst.TRUE);
+      alterTblDesc.setEnvironmentContext(environmentContext);
+    }
 
     Task<? extends Serializable> updateReplIdTask = TaskFactory.get(
             new DDLWork(inputs, outputs, alterTblDesc), conf, true);

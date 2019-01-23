@@ -70,6 +70,8 @@ import org.apache.hadoop.hive.metastore.ProtectMode;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.AlreadyExistsException;
+import org.apache.hadoop.hive.metastore.api.ColumnStatistics;
+import org.apache.hadoop.hive.metastore.api.ColumnStatisticsDesc;
 import org.apache.hadoop.hive.metastore.api.ColumnStatisticsObj;
 import org.apache.hadoop.hive.metastore.api.CompactionResponse;
 import org.apache.hadoop.hive.metastore.api.Database;
@@ -4427,14 +4429,24 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
       }
     }
 
-    if (crtTbl.getLocation() == null && !crtTbl.isCTAS()) {
-      if (!tbl.isPartitioned() && conf.getBoolVar(HiveConf.ConfVars.HIVESTATSAUTOGATHER)) {
+    if (crtTbl.getColStats() != null) {
+      ColumnStatistics colStats = crtTbl.getColStats();
+      ColumnStatisticsDesc colStatsDesc = new ColumnStatisticsDesc(colStats.getStatsDesc());
+      colStatsDesc.setDbName(crtTbl.getTableName());
+      colStatsDesc.setDbName(crtTbl.getDatabaseName());
+      tbl.getTTable().setColStats(new ColumnStatistics(colStatsDesc, colStats.getStatsObj()));
+    }
+
+    if (crtTbl.getReplicationSpec() == null || !crtTbl.getReplicationSpec().isInReplicationScope()) {
+      if (crtTbl.getLocation() == null && !crtTbl.isCTAS()) {
+        if (!tbl.isPartitioned() && conf.getBoolVar(HiveConf.ConfVars.HIVESTATSAUTOGATHER)) {
+          StatsSetupConst.setBasicStatsStateForCreateTable(tbl.getTTable().getParameters(),
+                  StatsSetupConst.TRUE);
+        }
+      } else {
         StatsSetupConst.setBasicStatsStateForCreateTable(tbl.getTTable().getParameters(),
-            StatsSetupConst.TRUE);
+                StatsSetupConst.FALSE);
       }
-    } else {
-      StatsSetupConst.setBasicStatsStateForCreateTable(tbl.getTTable().getParameters(),
-          StatsSetupConst.FALSE);
     }
 
     if (crtTbl.getReplicationSpec().isInReplicationScope() && (!crtTbl.getReplaceMode())){
@@ -4457,9 +4469,11 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
 
     // create the table
     if (crtTbl.getReplaceMode()){
+      EnvironmentContext environmentContext = new EnvironmentContext();
+      environmentContext.putToProperties(StatsSetupConst.DO_NOT_UPDATE_STATS, StatsSetupConst.TRUE);
       // replace-mode creates are really alters using CreateTableDesc.
       try {
-        db.alterTable(tbl.getDbName()+"."+tbl.getTableName(),tbl,null);
+        db.alterTable(tbl.getDbName()+"."+tbl.getTableName(),tbl, environmentContext);
       } catch (InvalidOperationException e) {
         throw new HiveException("Unable to alter table. " + e.getMessage(), e);
       }

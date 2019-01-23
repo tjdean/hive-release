@@ -38,6 +38,7 @@ import org.apache.hadoop.hive.metastore.events.DropPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
 import org.apache.hadoop.hive.metastore.events.LoadPartitionDoneEvent;
+import org.apache.hadoop.hive.metastore.events.UpdateTableColumnStatEvent;
 
 /**
  * This abstract class needs to be extended to  provide implementation of actions that needs
@@ -175,6 +176,15 @@ public abstract class MetaStoreEventListener implements Configurable {
    */
   public void onInsert(InsertEvent insertEvent) throws MetaException {
 
+  }
+
+  /**
+   * This will be called to update table column stats
+   * @param updateTableColumnStatEvent event to be processed
+   * @throws MetaException
+   */
+  public void onUpdateTableColumnStat(UpdateTableColumnStatEvent updateTableColumnStatEvent)
+          throws MetaException {
   }
 
   @Override

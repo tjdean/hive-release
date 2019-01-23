@@ -60,6 +60,8 @@ public abstract class MessageDeserializer {
       return getAlterIndexMessage(messageBody);
     case INSERT:
       return getInsertMessage(messageBody);
+    case UPDATE_TABLE_COLUMN_STAT:
+        return getUpdateTableColumnStatMessage(messageBody);
 
     default:
       throw new IllegalArgumentException("Unsupported event-type: " + eventTypeString);
@@ -146,6 +148,13 @@ public abstract class MessageDeserializer {
    * @return message in object form
    */
   public abstract InsertMessage getInsertMessage(String messageBody);
+
+  /**
+   * Method to de-serialize UpdateTableColumnStatMessage instance.
+   * @param messageBody the message in serialized form
+   * @return message in object form
+   */
+  public abstract UpdateTableColumnStatMessage getUpdateTableColumnStatMessage(String messageBody);
 
   // Protection against construction.
   protected MessageDeserializer() {}

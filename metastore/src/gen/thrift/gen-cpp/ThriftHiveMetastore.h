@@ -46,6 +46,7 @@ class ThriftHiveMetastoreIf : virtual public  ::facebook::fb303::FacebookService
   virtual void get_tables(std::vector<std::string> & _return, const std::string& db_name, const std::string& pattern) = 0;
   virtual void get_all_tables(std::vector<std::string> & _return, const std::string& db_name) = 0;
   virtual void get_table(Table& _return, const std::string& dbname, const std::string& tbl_name) = 0;
+  virtual void get_table_with_colstats(Table& _return, const std::string& dbname, const std::string& tbl_name, const bool get_col_stats) = 0;
   virtual void get_table_objects_by_name(std::vector<Table> & _return, const std::string& dbname, const std::vector<std::string> & tbl_names) = 0;
   virtual void get_table_names_by_filter(std::vector<std::string> & _return, const std::string& dbname, const std::string& filter, const int16_t max_tables) = 0;
   virtual void alter_table(const std::string& dbname, const std::string& tbl_name, const Table& new_tbl) = 0;
@@ -253,6 +254,9 @@ class ThriftHiveMetastoreNull : virtual public ThriftHiveMetastoreIf , virtual p
     return;
   }
   void get_table(Table& /* _return */, const std::string& /* dbname */, const std::string& /* tbl_name */) {
+    return;
+  }
+  void get_table_with_colstats(Table& /* _return */, const std::string& /* dbname */, const std::string& /* tbl_name */, const bool /* get_col_stats */) {
     return;
   }
   void get_table_objects_by_name(std::vector<Table> & /* _return */, const std::string& /* dbname */, const std::vector<std::string> & /* tbl_names */) {
@@ -3551,6 +3555,140 @@ class ThriftHiveMetastore_get_table_presult {
   NoSuchObjectException o2;
 
   _ThriftHiveMetastore_get_table_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ThriftHiveMetastore_get_table_with_colstats_args__isset {
+  _ThriftHiveMetastore_get_table_with_colstats_args__isset() : dbname(false), tbl_name(false), get_col_stats(false) {}
+  bool dbname :1;
+  bool tbl_name :1;
+  bool get_col_stats :1;
+} _ThriftHiveMetastore_get_table_with_colstats_args__isset;
+
+class ThriftHiveMetastore_get_table_with_colstats_args {
+ public:
+
+  ThriftHiveMetastore_get_table_with_colstats_args(const ThriftHiveMetastore_get_table_with_colstats_args&);
+  ThriftHiveMetastore_get_table_with_colstats_args& operator=(const ThriftHiveMetastore_get_table_with_colstats_args&);
+  ThriftHiveMetastore_get_table_with_colstats_args() : dbname(), tbl_name(), get_col_stats(0) {
+  }
+
+  virtual ~ThriftHiveMetastore_get_table_with_colstats_args() throw();
+  std::string dbname;
+  std::string tbl_name;
+  bool get_col_stats;
+
+  _ThriftHiveMetastore_get_table_with_colstats_args__isset __isset;
+
+  void __set_dbname(const std::string& val);
+
+  void __set_tbl_name(const std::string& val);
+
+  void __set_get_col_stats(const bool val);
+
+  bool operator == (const ThriftHiveMetastore_get_table_with_colstats_args & rhs) const
+  {
+    if (!(dbname == rhs.dbname))
+      return false;
+    if (!(tbl_name == rhs.tbl_name))
+      return false;
+    if (!(get_col_stats == rhs.get_col_stats))
+      return false;
+    return true;
+  }
+  bool operator != (const ThriftHiveMetastore_get_table_with_colstats_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ThriftHiveMetastore_get_table_with_colstats_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ThriftHiveMetastore_get_table_with_colstats_pargs {
+ public:
+
+
+  virtual ~ThriftHiveMetastore_get_table_with_colstats_pargs() throw();
+  const std::string* dbname;
+  const std::string* tbl_name;
+  const bool* get_col_stats;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ThriftHiveMetastore_get_table_with_colstats_result__isset {
+  _ThriftHiveMetastore_get_table_with_colstats_result__isset() : success(false), o1(false), o2(false) {}
+  bool success :1;
+  bool o1 :1;
+  bool o2 :1;
+} _ThriftHiveMetastore_get_table_with_colstats_result__isset;
+
+class ThriftHiveMetastore_get_table_with_colstats_result {
+ public:
+
+  ThriftHiveMetastore_get_table_with_colstats_result(const ThriftHiveMetastore_get_table_with_colstats_result&);
+  ThriftHiveMetastore_get_table_with_colstats_result& operator=(const ThriftHiveMetastore_get_table_with_colstats_result&);
+  ThriftHiveMetastore_get_table_with_colstats_result() {
+  }
+
+  virtual ~ThriftHiveMetastore_get_table_with_colstats_result() throw();
+  Table success;
+  MetaException o1;
+  NoSuchObjectException o2;
+
+  _ThriftHiveMetastore_get_table_with_colstats_result__isset __isset;
+
+  void __set_success(const Table& val);
+
+  void __set_o1(const MetaException& val);
+
+  void __set_o2(const NoSuchObjectException& val);
+
+  bool operator == (const ThriftHiveMetastore_get_table_with_colstats_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(o1 == rhs.o1))
+      return false;
+    if (!(o2 == rhs.o2))
+      return false;
+    return true;
+  }
+  bool operator != (const ThriftHiveMetastore_get_table_with_colstats_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ThriftHiveMetastore_get_table_with_colstats_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ThriftHiveMetastore_get_table_with_colstats_presult__isset {
+  _ThriftHiveMetastore_get_table_with_colstats_presult__isset() : success(false), o1(false), o2(false) {}
+  bool success :1;
+  bool o1 :1;
+  bool o2 :1;
+} _ThriftHiveMetastore_get_table_with_colstats_presult__isset;
+
+class ThriftHiveMetastore_get_table_with_colstats_presult {
+ public:
+
+
+  virtual ~ThriftHiveMetastore_get_table_with_colstats_presult() throw();
+  Table* success;
+  MetaException o1;
+  NoSuchObjectException o2;
+
+  _ThriftHiveMetastore_get_table_with_colstats_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -17005,6 +17143,9 @@ class ThriftHiveMetastoreClient : virtual public ThriftHiveMetastoreIf, public  
   void get_table(Table& _return, const std::string& dbname, const std::string& tbl_name);
   void send_get_table(const std::string& dbname, const std::string& tbl_name);
   void recv_get_table(Table& _return);
+  void get_table_with_colstats(Table& _return, const std::string& dbname, const std::string& tbl_name, const bool get_col_stats);
+  void send_get_table_with_colstats(const std::string& dbname, const std::string& tbl_name, const bool get_col_stats);
+  void recv_get_table_with_colstats(Table& _return);
   void get_table_objects_by_name(std::vector<Table> & _return, const std::string& dbname, const std::vector<std::string> & tbl_names);
   void send_get_table_objects_by_name(const std::string& dbname, const std::vector<std::string> & tbl_names);
   void recv_get_table_objects_by_name(std::vector<Table> & _return);
@@ -17357,6 +17498,7 @@ class ThriftHiveMetastoreProcessor : public  ::facebook::fb303::FacebookServiceP
   void process_get_tables(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_all_tables(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_get_table_with_colstats(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_table_objects_by_name(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_table_names_by_filter(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_alter_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
@@ -17491,6 +17633,7 @@ class ThriftHiveMetastoreProcessor : public  ::facebook::fb303::FacebookServiceP
     processMap_["get_tables"] = &ThriftHiveMetastoreProcessor::process_get_tables;
     processMap_["get_all_tables"] = &ThriftHiveMetastoreProcessor::process_get_all_tables;
     processMap_["get_table"] = &ThriftHiveMetastoreProcessor::process_get_table;
+    processMap_["get_table_with_colstats"] = &ThriftHiveMetastoreProcessor::process_get_table_with_colstats;
     processMap_["get_table_objects_by_name"] = &ThriftHiveMetastoreProcessor::process_get_table_objects_by_name;
     processMap_["get_table_names_by_filter"] = &ThriftHiveMetastoreProcessor::process_get_table_names_by_filter;
     processMap_["alter_table"] = &ThriftHiveMetastoreProcessor::process_alter_table;
@@ -17856,6 +17999,16 @@ class ThriftHiveMetastoreMultiface : virtual public ThriftHiveMetastoreIf, publi
       ifaces_[i]->get_table(_return, dbname, tbl_name);
     }
     ifaces_[i]->get_table(_return, dbname, tbl_name);
+    return;
+  }
+
+  void get_table_with_colstats(Table& _return, const std::string& dbname, const std::string& tbl_name, const bool get_col_stats) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->get_table_with_colstats(_return, dbname, tbl_name, get_col_stats);
+    }
+    ifaces_[i]->get_table_with_colstats(_return, dbname, tbl_name, get_col_stats);
     return;
   }
 
@@ -18965,6 +19118,9 @@ class ThriftHiveMetastoreConcurrentClient : virtual public ThriftHiveMetastoreIf
   void get_table(Table& _return, const std::string& dbname, const std::string& tbl_name);
   int32_t send_get_table(const std::string& dbname, const std::string& tbl_name);
   void recv_get_table(Table& _return, const int32_t seqid);
+  void get_table_with_colstats(Table& _return, const std::string& dbname, const std::string& tbl_name, const bool get_col_stats);
+  int32_t send_get_table_with_colstats(const std::string& dbname, const std::string& tbl_name, const bool get_col_stats);
+  void recv_get_table_with_colstats(Table& _return, const int32_t seqid);
   void get_table_objects_by_name(std::vector<Table> & _return, const std::string& dbname, const std::vector<std::string> & tbl_names);
   int32_t send_get_table_objects_by_name(const std::string& dbname, const std::vector<std::string> & tbl_names);
   void recv_get_table_objects_by_name(std::vector<Table> & _return, const int32_t seqid);

@@ -86,6 +86,7 @@ import org.apache.hadoop.hive.metastore.events.PreEventContext;
 import org.apache.hadoop.hive.metastore.events.PreLoadPartitionDoneEvent;
 import org.apache.hadoop.hive.metastore.events.PreReadDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.PreReadTableEvent;
+import org.apache.hadoop.hive.metastore.events.UpdateTableColumnStatEvent;
 import org.apache.hadoop.hive.metastore.model.MDBPrivilege;
 import org.apache.hadoop.hive.metastore.model.MGlobalPrivilege;
 import org.apache.hadoop.hive.metastore.model.MPartitionColumnPrivilege;
@@ -1428,10 +1429,19 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     private void create_table_core(final RawStore ms, final Table tbl,
         final EnvironmentContext envContext)
         throws AlreadyExistsException, MetaException,
-        InvalidObjectException, NoSuchObjectException {
+        InvalidObjectException, NoSuchObjectException, InvalidInputException {
 
       String logName = tbl.getDbName() + "." + tbl.getTableName();
       LOG.info("create_table_core " + logName);
+      ColumnStatistics colStats = null;
+
+      // If the given table has column statistics, save it here. We will update it later.
+      // We don't want it to be part of the Table object being created, lest the create table
+      // event will also have the col stats which we don't want.
+      if (tbl.isSetColStats()) {
+        colStats = tbl.getColStats();
+        tbl.unsetColStats();
+      }
       if (!MetaStoreUtils.validateName(tbl.getTableName())) {
         throw new InvalidObjectException(tbl.getTableName()
             + " is not a valid object name");
@@ -1549,18 +1559,24 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         }
         LOG.info("create_table_core rdbms listeners done " + logName);
       }
+
+      if (colStats != null) {
+        // We do not replicate statistics for a transactional table right now and hence we do not
+        // expect a transactional table to have column statistics here.
+        ms.updateTableColumnStatistics(colStats);
+      }
     }
 
     @Override
     public void create_table(final Table tbl) throws AlreadyExistsException,
-        MetaException, InvalidObjectException {
+        MetaException, InvalidObjectException, InvalidInputException {
       create_table_with_environment_context(tbl, null);
     }
 
     @Override
     public void create_table_with_environment_context(final Table tbl,
         final EnvironmentContext envContext)
-        throws AlreadyExistsException, MetaException, InvalidObjectException {
+        throws AlreadyExistsException, MetaException, InvalidObjectException, InvalidInputException {
       startFunction("create_table", ": " + tbl.toString());
       boolean success = false;
       Exception ex = null;
@@ -1578,6 +1594,8 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           throw (InvalidObjectException) e;
         } else if (e instanceof AlreadyExistsException) {
           throw (AlreadyExistsException) e;
+        } else if (e instanceof InvalidInputException) {
+          throw (InvalidInputException) e;
         } else {
           throw newMetaException(e);
         }
@@ -2035,6 +2053,38 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       try {
         t = get_table_core(dbname, name);
         firePreEvent(new PreReadTableEvent(t, this));
+      } catch (MetaException e) {
+        ex = e;
+        throw e;
+      } catch (NoSuchObjectException e) {
+        ex = e;
+        throw e;
+      } finally {
+        endFunction("get_table", t != null, ex, name);
+      }
+      return t;
+    }
+
+    @Override
+    public Table get_table_with_colstats(final String dbname, final String name,
+                                         boolean getColStats) throws MetaException,
+            NoSuchObjectException {
+      Table t = null;
+      startTableFunction("get_table", dbname, name);
+      Exception ex = null;
+      try {
+        t = get_table_core(dbname, name);
+        firePreEvent(new PreReadTableEvent(t, this));
+
+        if (getColStats) {
+          List<String> colNames = StatsSetupConst.getColumnsHavingStats(t.getParameters());
+          if (colNames != null) {
+            ColumnStatistics colStats = getMS().getTableColumnStatistics(dbname, name, colNames);
+            if (colStats != null) {
+              t.setColStats(colStats);
+            }
+          }
+        }
       } catch (MetaException e) {
         ex = e;
         throw e;
@@ -4514,7 +4564,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     private Index add_index_core(final RawStore ms, final Index index, final Table indexTable)
-        throws InvalidObjectException, AlreadyExistsException, MetaException {
+        throws InvalidObjectException, AlreadyExistsException, MetaException, InvalidInputException {
       boolean success = false, indexTableCreated = false;
       String[] qualified =
           MetaStoreUtils.getQualifiedName(index.getDbName(), index.getIndexTableName());
@@ -4908,13 +4958,37 @@ public class HiveMetaStore extends ThriftHiveMetastore {
      colStats.setStatsObj(statsObjs);
 
      boolean ret = false;
+     Table tableObj = null;
 
+     RawStore ms = getMS();
       try {
-        ret = getMS().updateTableColumnStatistics(colStats);
-        return ret;
+        ms.openTransaction();
+        ret = ms.updateTableColumnStatistics(colStats);
+        if (ret) {
+          tableObj = getMS().getTable(colStats.getStatsDesc().getDbName(),
+                  colStats.getStatsDesc().getTableName());
+          if (transactionalListeners != null && !transactionalListeners.isEmpty()) {
+            MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                    EventType.UPDATE_TABLE_COLUMN_STAT,
+                    new UpdateTableColumnStatEvent(colStats, tableObj, this));
+          }
+        }
+
+        ret = ms.commitTransaction();
       } finally {
+        if (!ret) {
+          ms.rollbackTransaction();
+        }
         endFunction("write_column_statistics", ret != false, null, tableName);
       }
+
+      if (!listeners.isEmpty()) {
+        MetaStoreListenerNotifier.notifyEvent(listeners,
+                EventType.UPDATE_TABLE_COLUMN_STAT,
+                new UpdateTableColumnStatEvent(colStats, tableObj, this));
+      }
+
+      return ret;
     }
 
     private boolean updatePartitonColStats(Table tbl, ColumnStatistics colStats)

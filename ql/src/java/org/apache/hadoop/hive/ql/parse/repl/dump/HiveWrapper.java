@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hive.ql.parse.repl.dump;
 
+import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
@@ -50,8 +51,10 @@ public class HiveWrapper {
     return new Tuple<>(functionForSpec, new DatabaseObjectFunction(db, dbName));
   }
 
-  public Tuple<Table> table(final String tableName) throws HiveException {
-    return new Tuple<>(functionForSpec, new TableObjectFunction(db, dbName, tableName));
+  public Tuple<Table> table(final String tableName, HiveConf conf) throws HiveException {
+    // Column statistics won't be accurate if we are dumping only metadata
+    boolean getColStats = !conf.getBoolVar(HiveConf.ConfVars.REPL_DUMP_METADATA_ONLY);
+    return new Tuple<>(functionForSpec, new TableObjectFunction(db, dbName, tableName, getColStats));
   }
 
   public Tuple<Table> table(final Table tblObj) throws HiveException {
@@ -93,16 +96,18 @@ public class HiveWrapper {
   private static class TableObjectFunction implements Tuple.Function<Table> {
     private final Hive db;
     private final String tableName, dbName;
+    private final boolean getColStats;
 
-    private TableObjectFunction(Hive db, String dbName, String tableName) {
+    private TableObjectFunction(Hive db, String dbName, String tableName, boolean getColStats) {
       this.db = db;
       this.tableName = tableName;
       this.dbName = dbName;
+      this.getColStats = getColStats;
     }
 
     @Override
     public Table fromMetaStore() throws HiveException {
-      return db.getTable(dbName, tableName);
+      return db.getTable(dbName, tableName, true, getColStats);
     }
   }
 

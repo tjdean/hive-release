@@ -22,6 +22,9 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -363,5 +366,54 @@ public class StatsSetupConst {
       }
     }
     setBasicStatsState(params, setting);
+  }
+
+  /**
+   * @param params table/partition parameters
+   * @return the list of column names for which the stats are available.
+   */
+  public static List<String> getColumnsHavingStats(Map<String, String> params) {
+    if (params == null) {
+      // No table/partition params, no statistics available
+      return null;
+    }
+
+    String statsAcc = params.get(COLUMN_STATS_ACCURATE);
+    // No stats available.
+    if (statsAcc == null) {
+      return null;
+    }
+
+    // statsAcc may not be jason format, which will throw exception
+    JSONObject stats;
+    try {
+      stats = new JSONObject(statsAcc);
+    } catch (JSONException e) {
+      // old format of statsAcc, e.g., TRUE or FALSE
+      LOG.debug("In StatsSetupConst, JsonParser can not parse statsAcc.");
+      return null;
+    }
+
+    if (!stats.has(COLUMN_STATS)) {
+      return null;
+    }
+
+    List<String> colNames = new ArrayList<>();
+    try {
+      // getJSONObject(COLUMN_STATS) should be found.
+      JSONObject allColumnStats = stats.getJSONObject(COLUMN_STATS);
+      for (String colName : JSONObject.getNames(allColumnStats))
+      {
+        if (allColumnStats.getBoolean(colName)) {
+          colNames.add(colName);
+        }
+      }
+    } catch (JSONException e) {
+      //impossible to throw any json exceptions.
+      LOG.trace(e.getMessage());
+      return null;
+    }
+
+    return colNames;
   }
 }
