@@ -18,16 +18,19 @@
 package org.apache.hadoop.hive.ql.exec.repl;
 
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.DatabaseEvent;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.filesystem.BootstrapEventsIterator;
+import org.apache.hadoop.hive.ql.exec.repl.incremental.IncrementalLoadEventsIterator;
 import org.apache.hadoop.hive.ql.exec.repl.incremental.IncrementalLoadTasksBuilder;
 import org.apache.hadoop.hive.ql.plan.Explain;
 import org.apache.hadoop.hive.ql.session.LineageState;
-import org.apache.hadoop.hive.ql.exec.repl.incremental.IncrementalLoadEventsIterator;
+import org.apache.hadoop.hive.ql.exec.Task;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Iterator;
+import java.util.List;
+import static org.apache.hadoop.hive.ql.exec.repl.ExternalTableCopyTaskBuilder.DirCopyWork;
 
 @Explain(displayName = "Replication Load Operator", explainLevels = { Explain.Level.USER,
     Explain.Level.DEFAULT,
@@ -36,36 +39,41 @@ public class ReplLoadWork implements Serializable {
   final String dbNameToLoadIn;
   final String tableNameToLoadIn;
   final String dumpDirectory;
-  private final BootstrapEventsIterator bootstrapIterator;
-  private final IncrementalLoadEventsIterator incrementalIterator;
   private int loadTaskRunCount = 0;
   private DatabaseEvent.State state = null;
-  private final IncrementalLoadTasksBuilder incrementalLoadTaskBuilder;
-  private Task<? extends Serializable> rootTask;
+  private final transient BootstrapEventsIterator bootstrapIterator;
+  private final transient IncrementalLoadEventsIterator incrementalIterator;
+  private final transient IncrementalLoadTasksBuilder incrementalLoad;
+  private transient Task<? extends Serializable> rootTask;
+  private final transient Iterator<DirCopyWork> pathsToCopyIterator;
 
-  /**
-   * These are sessionState objects that are copied over to work to allow for parallel execution.
-   * Based on the current use case the methods are selectively synchronized, which might need to be
-   * taken care when using other methods.
-   */
+  /*
+  these are sessionState objects that are copied over to work to allow for parallel execution.
+  based on the current use case the methods are selectively synchronized, which might need to be
+  taken care when using other methods.
+  */
   final LineageState sessionStateLineageState;
 
   public ReplLoadWork(HiveConf hiveConf, String dumpDirectory, String dbNameToLoadIn,
-      String tableNameToLoadIn, LineageState lineageState, boolean isIncrementalDump, Long eventTo) throws IOException {
+      String tableNameToLoadIn, LineageState lineageState, boolean isIncrementalDump, Long eventTo,
+      List<DirCopyWork> pathsToCopyIterator) throws IOException {
     this.tableNameToLoadIn = tableNameToLoadIn;
+    sessionStateLineageState = lineageState;
     this.dumpDirectory = dumpDirectory;
+    this.dbNameToLoadIn = dbNameToLoadIn;
+    rootTask = null;
     if (isIncrementalDump) {
       incrementalIterator = new IncrementalLoadEventsIterator(dumpDirectory, hiveConf);
       this.bootstrapIterator = null;
-      incrementalLoadTaskBuilder = new IncrementalLoadTasksBuilder(dbNameToLoadIn, tableNameToLoadIn, dumpDirectory,
+      incrementalLoad =
+          new IncrementalLoadTasksBuilder(dbNameToLoadIn, tableNameToLoadIn, dumpDirectory,
               incrementalIterator, hiveConf, eventTo);
     } else {
       this.bootstrapIterator = new BootstrapEventsIterator(dumpDirectory, dbNameToLoadIn, hiveConf);
       incrementalIterator = null;
-      incrementalLoadTaskBuilder = null;
-    }this.dbNameToLoadIn = dbNameToLoadIn;
-    sessionStateLineageState = lineageState;
-    rootTask = null;
+      incrementalLoad = null;
+    }
+    this.pathsToCopyIterator = pathsToCopyIterator.iterator();
   }
 
   public BootstrapEventsIterator iterator() {
@@ -97,7 +105,7 @@ public class ReplLoadWork implements Serializable {
   }
 
   public IncrementalLoadTasksBuilder getIncrementalLoadTaskBuilder() {
-    return incrementalLoadTaskBuilder;
+    return incrementalLoad;
   }
 
   public Task<? extends Serializable> getRootTask() {
@@ -106,5 +114,9 @@ public class ReplLoadWork implements Serializable {
 
   public void setRootTask(Task<? extends Serializable> rootTask) {
     this.rootTask = rootTask;
+  }
+
+  public Iterator<DirCopyWork> getPathsToCopyIterator() {
+    return pathsToCopyIterator;
   }
 }

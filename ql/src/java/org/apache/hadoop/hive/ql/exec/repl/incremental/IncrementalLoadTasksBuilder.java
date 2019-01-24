@@ -56,6 +56,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashSet;
 
+/**
+ * IncrementalLoad
+ * Iterate through the dump directory and create tasks to load the events.
+ */
 public class IncrementalLoadTasksBuilder {
   private final String dbName, tableName;
   private final IncrementalLoadEventsIterator iterator;
@@ -64,7 +68,7 @@ public class IncrementalLoadTasksBuilder {
   private Log log;
   private final HiveConf conf;
   private final ReplLogger replLogger;
-  public static long numIteration;
+  private static long numIteration;
   private final Long eventTo;
 
   public IncrementalLoadTasksBuilder(String dbName, String tableName, String loadPath,
@@ -74,29 +78,36 @@ public class IncrementalLoadTasksBuilder {
     this.iterator = iterator;
     inputs = new HashSet<>();
     outputs = new HashSet<>();
-    this.conf = conf;
     log = null;
-    numIteration = 0;
+    this.conf = conf;
     replLogger = new IncrementalLoadLogger(dbName, loadPath, iterator.getNumEvents());
+    numIteration = 0;
     replLogger.startLog();
     this.eventTo = eventTo;
   }
 
-  public Task<? extends Serializable> execute(DriverContext driverContext, Hive hive, Log log,
-                                              ReplLoadWork loadWork) throws Exception {
+  public Task<? extends Serializable> build(DriverContext driverContext, Hive hive, Log log,
+      ReplLoadWork loadWork, TaskTracker tracker) throws Exception {
     Task<? extends Serializable> evTaskRoot = TaskFactory.get(new DependencyCollectionWork(), conf, true);
     Task<? extends Serializable> taskChainTail = evTaskRoot;
     Long lastReplayedEvent = null;
     this.log = log;
     numIteration++;
-
     log.debug("Iteration num " + numIteration);
-    TaskTracker tracker = new TaskTracker(conf.getIntVar(HiveConf.ConfVars.REPL_APPROX_MAX_LOAD_TASKS));
 
     while (iterator.hasNext() && tracker.canAddMoreTasks()) {
       FileStatus dir = iterator.next();
       String location = dir.getPath().toUri().toString();
+      DumpMetaData eventDmd = new DumpMetaData(new Path(location), conf);
 
+      if (!shouldReplayEvent(dir, eventDmd.getDumpType(), dbName, tableName)) {
+        log.debug("Skipping event " + eventDmd.getDumpType() + " from " + location + " to " + dbName + "." + tableName +
+              "maxTasks: " + tracker.numberOfTasks());
+        continue;
+      }
+
+      log.debug("Loading event " + eventDmd.getDumpType() + " from " + location + " to " + dbName + "." + tableName +
+              "maxTasks: " + tracker.numberOfTasks());
 
       // event loads will behave similar to table loads, with one crucial difference
       // precursor order is strict, and each event must be processed after the previous one.
@@ -117,23 +128,11 @@ public class IncrementalLoadTasksBuilder {
       // Once this entire chain is generated, we add evTaskRoot to rootTasks, so as to execute the
       // entire chain
 
-      DumpMetaData eventDmd = new DumpMetaData(new Path(location), conf);
-
-      if (!shouldReplayEvent(dir, eventDmd.getDumpType(), dbName, tableName)) {
-        log.debug("skipping event from " + location + " to " + dbName + "." + tableName +
-                "num task " + tracker.numberOfTasks());
-        continue;
-      }
-
-      log.debug("Loading event from " + location + " to " + dbName + "." + tableName +
-              "num task " + tracker.numberOfTasks());
-
-      MessageHandler.Context context = new MessageHandler.Context(dbName,
-              tableName, location, taskChainTail,
-              eventDmd, conf, hive, driverContext.getCtx(), this.log);
+      MessageHandler.Context context = new MessageHandler.Context(dbName, tableName, location,
+              taskChainTail, eventDmd, conf, hive, driverContext.getCtx(), this.log);
       List<Task<? extends Serializable>> evTasks = analyzeEventLoad(context);
 
-      if ((evTasks != null) && (!evTasks.isEmpty())){
+      if ((evTasks != null) && (!evTasks.isEmpty())) {
         ReplStateLogWork replStateLogWork = new ReplStateLogWork(replLogger,
                 dir.getPath().getName(),
                 eventDmd.getDumpType().toString());
@@ -148,10 +147,7 @@ public class IncrementalLoadTasksBuilder {
       lastReplayedEvent = eventDmd.getEventTo();
     }
 
-    if (iterator.hasNext()) {
-      // add load task to start the next iteration
-      taskChainTail.addDependentTask(TaskFactory.get(loadWork, conf, true));
-    } else {
+    if (!hasMoreWork()) {
       // if no events were replayed, then add a task to update the last repl id of the database/table to last event id.
       if (taskChainTail == evTaskRoot) {
         String lastEventid = eventTo.toString();
@@ -172,10 +168,15 @@ public class IncrementalLoadTasksBuilder {
       log.debug("Added " + taskChainTail.getClass() + ":" + taskChainTail.getId()
               + " as a precursor of barrier task "
               + barrierTask.getClass() + ":" + barrierTask.getId());
+      if (loadWork.getPathsToCopyIterator().hasNext()) {
+        taskChainTail.addDependentTask(TaskFactory.get(loadWork, conf));
+      }
     }
-    log.info("Iteration " + numIteration + " done with num task : " +
-            tracker.numberOfTasks() + ", lastReplayedEvent : " + lastReplayedEvent);
     return evTaskRoot;
+  }
+
+  public boolean hasMoreWork() {
+    return iterator.hasNext();
   }
 
   private boolean isEventNotReplayed(Map<String, String> params, FileStatus dir, DumpType dumpType) {
@@ -217,9 +218,7 @@ public class IncrementalLoadTasksBuilder {
     }
   }
 
-  private List<Task<? extends Serializable>> analyzeEventLoad(
-          MessageHandler.Context context)
-          throws SemanticException {
+  private List<Task<? extends Serializable>> analyzeEventLoad(MessageHandler.Context context) throws SemanticException {
     MessageHandler messageHandler = context.dmd.getDumpType().handler();
     List<Task<? extends Serializable>> tasks = messageHandler.handle(context);
 
@@ -233,24 +232,20 @@ public class IncrementalLoadTasksBuilder {
 
     inputs.addAll(messageHandler.readEntities());
     outputs.addAll(messageHandler.writeEntities());
-    return addUpdateReplStateTasks(StringUtils.isEmpty(context.tableName),
-            messageHandler.getUpdatedMetadata(), tasks);
+    return addUpdateReplStateTasks(StringUtils.isEmpty(context.tableName), messageHandler.getUpdatedMetadata(), tasks);
   }
 
-  private Task<? extends Serializable> tableUpdateReplStateTask(
-          String dbName,
-          String tableName,
-          Map<String, String> partSpec,
-          String replState,
-          Task<? extends Serializable> preCursor) {
+  private Task<? extends Serializable> tableUpdateReplStateTask(String dbName, String tableName,
+                                                    Map<String, String> partSpec, String replState,
+                                                    Task<? extends Serializable> preCursor) throws SemanticException {
     HashMap<String, String> mapProp = new HashMap<>();
     mapProp.put(ReplicationSpec.KEY.CURR_STATE_ID.toString(), replState);
 
-    AlterTableDesc alterTblDesc =  new AlterTableDesc(
+    AlterTableDesc alterTblDesc = new AlterTableDesc(
             AlterTableDesc.AlterTableTypes.ADDPROPS, new ReplicationSpec(replState, replState));
     alterTblDesc.setProps(mapProp);
     alterTblDesc.setOldName(dbName + "." + tableName);
-    alterTblDesc.setPartSpec((HashMap<String, String>)partSpec);
+    alterTblDesc.setPartSpec((HashMap<String, String>) partSpec);
 
     Task<? extends Serializable> updateReplIdTask = TaskFactory.get(
             new DDLWork(inputs, outputs, alterTblDesc), conf, true);
@@ -264,15 +259,12 @@ public class IncrementalLoadTasksBuilder {
     return updateReplIdTask;
   }
 
-  private Task<? extends Serializable> dbUpdateReplStateTask(
-          String dbName,
-          String replState,
-          Task<? extends Serializable> preCursor) {
+  private Task<? extends Serializable> dbUpdateReplStateTask(String dbName, String replState,
+                                                             Task<? extends Serializable> preCursor) {
     HashMap<String, String> mapProp = new HashMap<>();
     mapProp.put(ReplicationSpec.KEY.CURR_STATE_ID.toString(), replState);
 
-    AlterDatabaseDesc alterDbDesc = new AlterDatabaseDesc(
-            dbName, mapProp, new ReplicationSpec(replState, replState));
+    AlterDatabaseDesc alterDbDesc = new AlterDatabaseDesc(dbName, mapProp, new ReplicationSpec(replState, replState));
     Task<? extends Serializable> updateReplIdTask = TaskFactory.get(
             new DDLWork(inputs, outputs, alterDbDesc), conf, true);
 
@@ -288,20 +280,46 @@ public class IncrementalLoadTasksBuilder {
   private List<Task<? extends Serializable>> addUpdateReplStateTasks(
           boolean isDatabaseLoad,
           UpdatedMetaDataTracker updatedMetadata,
-          List<Task<? extends Serializable>> importTasks) {
-    String replState = updatedMetadata.getReplicationState();
-    String dbName = updatedMetadata.getDatabase();
-    String tableName = updatedMetadata.getTable();
-
-    // If no import tasks generated by the event or no table updated for table level load, then no
-    // need to update the repl state to any object.
-    if (importTasks.isEmpty() || (!isDatabaseLoad && (tableName == null))) {
-      log.debug("No objects need update of repl state: Either 0 import tasks or table level load");
+          List<Task<? extends Serializable>> importTasks) throws SemanticException {
+    // If no import tasks generated by the event then no need to update the repl state to any object.
+    if (importTasks.isEmpty()) {
+      log.debug("No objects need update of repl state: 0 import tasks");
       return importTasks;
     }
 
     // Create a barrier task for dependency collection of import tasks
     Task<? extends Serializable> barrierTask = TaskFactory.get(new DependencyCollectionWork(), conf, true);
+
+    List<Task<? extends Serializable>> tasks = new ArrayList<>();
+    Task<? extends Serializable> updateReplIdTask;
+
+    String replState = updatedMetadata.getReplState();
+    String dbName = updatedMetadata.getDbName();
+    String tableName = updatedMetadata.getTableName();
+
+    // If any partition is updated, then update repl state in partition object
+    for (final Map<String, String> partSpec : updatedMetadata.getPartitionsList()) {
+      updateReplIdTask = tableUpdateReplStateTask(dbName, tableName, partSpec, replState, barrierTask);
+      tasks.add(updateReplIdTask);
+    }
+
+    // If any table/partition is updated, then update repl state in table object
+    if (tableName != null) {
+      updateReplIdTask = tableUpdateReplStateTask(dbName, tableName, null, replState, barrierTask);
+      tasks.add(updateReplIdTask);
+    }
+
+    // If any table/partition is updated, then update repl state in db object
+    if (isDatabaseLoad) {
+      // For table level load, need not update replication state for the database
+      updateReplIdTask = dbUpdateReplStateTask(dbName, replState, barrierTask);
+      tasks.add(updateReplIdTask);
+    }
+
+    if (tasks.isEmpty()) {
+      log.debug("No objects need update of repl state: 0 update tracker tasks");
+      return importTasks;
+    }
 
     // Link import tasks to the barrier task which will in-turn linked with repl state update tasks
     for (Task<? extends Serializable> t : importTasks){
@@ -310,29 +328,11 @@ public class IncrementalLoadTasksBuilder {
               + barrierTask.getClass() + ":" + barrierTask.getId());
     }
 
-    List<Task<? extends Serializable>> tasks = new ArrayList<>();
-    Task<? extends Serializable> updateReplIdTask;
-
-    // If any partition is updated, then update repl state in partition object
-    for (final Map<String, String> partSpec : updatedMetadata.getPartitions()) {
-      updateReplIdTask = tableUpdateReplStateTask(dbName, tableName, partSpec, replState, barrierTask);
-      tasks.add(updateReplIdTask);
-    }
-
-    if (tableName != null) {
-      // If any table/partition is updated, then update repl state in table object
-      updateReplIdTask = tableUpdateReplStateTask(dbName, tableName, null, replState, barrierTask);
-      tasks.add(updateReplIdTask);
-    }
-
-    // For table level load, need not update replication state for the database
-    if (isDatabaseLoad) {
-      // If any table/partition is updated, then update repl state in db object
-      updateReplIdTask = dbUpdateReplStateTask(dbName, replState, barrierTask);
-      tasks.add(updateReplIdTask);
-    }
-
     // At least one task would have been added to update the repl state
     return tasks;
+  }
+
+  public static long getNumIteration() {
+    return numIteration;
   }
 }

@@ -19,104 +19,56 @@ package org.apache.hadoop.hive.ql.parse;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hive.conf.HiveConf;
-import org.apache.hadoop.hive.ql.exec.repl.util.ReplUtils;
-import org.apache.hadoop.hive.ql.parse.repl.PathBuilder;
-import org.apache.hadoop.hive.ql.session.DependencyResolver;
-import org.apache.hadoop.hive.shims.Utils;
 import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore;
-import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore.CallerArguments;
 import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore.BehaviourInjection;
+import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore.CallerArguments;
 import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.NotificationEvent;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.metastore.api.NotificationEvent;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
-import org.junit.rules.TestRule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.apache.hadoop.hive.ql.exec.repl.incremental.IncrementalLoadTasksBuilder;
-import org.junit.Assert;
-import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.ErrorMsg;
+import org.apache.hadoop.hive.ql.exec.repl.incremental.IncrementalLoadTasksBuilder;
+import org.apache.hadoop.hive.ql.exec.repl.util.ReplUtils;
+import org.apache.hadoop.hive.ql.parse.repl.PathBuilder;
+import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
+import org.apache.hadoop.hive.ql.session.DependencyResolver;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
+import static org.apache.hadoop.hive.metastore.ReplChangeManager.SOURCE_OF_REPLICATION;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
-import static org.apache.hadoop.hive.metastore.ReplChangeManager.SOURCE_OF_REPLICATION;
 
-public class TestReplicationScenariosAcrossInstances {
-  @Rule
-  public final TestName testName = new TestName();
-
-  @Rule
-  public TestRule replV1BackwardCompat;
-
-  protected static final Logger LOG = LoggerFactory.getLogger(TestReplicationScenarios.class);
-  private static WarehouseInstance primary, replica;
-  private String primaryDbName, replicatedDbName;
-  private static HiveConf conf;
-
+public class TestReplicationScenariosAcrossInstances extends BaseReplicationAcrossInstances {
   @BeforeClass
   public static void classLevelSetup() throws Exception {
-    conf = new HiveConf(TestReplicationScenariosAcrossInstances.class);
-    conf.set("dfs.client.use.datanode.hostname", "true");
-    conf.set("hadoop.proxyuser." + Utils.getUGI().getShortUserName() + ".hosts", "*");
-    MiniDFSCluster miniDFSCluster =
-        new MiniDFSCluster.Builder(conf).numDataNodes(1).format(true).build();
-    HashMap<String, String> overridesForHiveConf = new HashMap<String, String>() {{
-      put("fs.defaultFS", miniDFSCluster.getFileSystem().getUri().toString());
-    }};
-    primary = new WarehouseInstance(LOG, miniDFSCluster, overridesForHiveConf);
-    replica = new WarehouseInstance(LOG, miniDFSCluster, overridesForHiveConf);
-  }
+    HashMap<String, String> overrides = new HashMap<>();
+    overrides.put(HiveConf.ConfVars.HIVE_DISTCP_DOAS_USER.varname,
+        UserGroupInformation.getCurrentUser().getUserName());
 
-  @AfterClass
-  public static void classLevelTearDown() throws IOException {
-    primary.close();
-    replica.close();
-  }
-
-  @Before
-  public void setup() throws Throwable {
-    replV1BackwardCompat = primary.getReplivationV1CompatRule(new ArrayList<>());
-    primaryDbName = testName.getMethodName() + "_" + +System.currentTimeMillis();
-    replicatedDbName = "replicated_" + primaryDbName;
-    primary.run("create database " + primaryDbName + " WITH DBPROPERTIES ( '" +
-            SOURCE_OF_REPLICATION + "' = '1,2,3')");
-  }
-
-  @After
-  public void tearDown() throws Throwable {
-    primary.run("drop database if exists " + primaryDbName + " cascade");
-    replica.run("drop database if exists " + replicatedDbName + " cascade");
+    internalBeforeClassSetup(overrides, TestReplicationScenariosAcrossInstances.class);
   }
 
   @Test
@@ -356,8 +308,10 @@ public class TestReplicationScenariosAcrossInstances {
         .dump(primaryDbName, null);
 
     // each table creation itself takes more than one task, give we are giving a max of 1, we should hit multiple runs.
-    replica.hiveConf.setIntVar(HiveConf.ConfVars.REPL_APPROX_MAX_LOAD_TASKS, 1);
-    replica.load(replicatedDbName, tuple.dumpLocation)
+    List<String> withClause = Collections.singletonList(
+        "'" + HiveConf.ConfVars.REPL_APPROX_MAX_LOAD_TASKS.varname + "'='1'");
+
+    replica.load(replicatedDbName, tuple.dumpLocation, withClause)
         .run("use " + replicatedDbName)
         .run("show tables")
         .verifyResults(new String[] { "t1", "t2", "t3" })
@@ -443,7 +397,7 @@ public class TestReplicationScenariosAcrossInstances {
             .run("create table table4 (i int, j int)")
             .dump(
                 "repl dump " + primaryDbName + " from " + bootstrapTuple.lastReplicationId + " to "
-                    + (Long.parseLong(bootstrapTuple.lastReplicationId) + 100L) + " limit 100 "
+                    + Long.parseLong(bootstrapTuple.lastReplicationId) + 100L + " limit 100 "
                     + "with ('hive.repl.dump.metadata.only'='true')"
             );
 
@@ -877,83 +831,6 @@ public class TestReplicationScenariosAcrossInstances {
     assertFalse(props.containsKey(SOURCE_OF_REPLICATION));
   }
 
-  @Test
-  public void testDumpExternalTableSetFalse() throws Throwable {
-    WarehouseInstance.Tuple tuple = primary
-            .run("use " + primaryDbName)
-            .run("create external table t1 (id int)")
-            .run("insert into table t1 values (1)")
-            .run("insert into table t1 values (2)")
-            .run("create external table t2 (place string) partitioned by (country string)")
-            .run("insert into table t2 partition(country='india') values ('bangalore')")
-            .run("insert into table t2 partition(country='us') values ('austin')")
-            .run("insert into table t2 partition(country='france') values ('paris')")
-            .dump(primaryDbName, null);
-
-    replica.load(replicatedDbName, tuple.dumpLocation)
-            .run("repl status " + replicatedDbName)
-            .verifyResult(tuple.lastReplicationId)
-            .run("use " + replicatedDbName)
-            .run("show tables like 't1'")
-            .verifyFailure(new String[] {"t1"})
-            .run("show tables like 't2'")
-            .verifyFailure(new String[] {"t2"});
-
-    tuple = primary.run("use " + primaryDbName)
-            .run("create external table t3 (id int)")
-            .run("insert into table t3 values (10)")
-            .run("insert into table t3 values (20)")
-            .dump("repl dump " + primaryDbName + " from " + tuple.lastReplicationId
-                    + " with ('hive.repl.dump.metadata.only'='true')");
-
-    replica.load(replicatedDbName, tuple.dumpLocation)
-            .run("use " + replicatedDbName)
-            .run("show tables like 't3'")
-            .verifyResult("t3")
-            .run("select id from t3 where id = 10")
-            .verifyFailure(new String[] {"10"});
-  }
-
-  @Test
-  public void testDumpExternalTableSetTrue() throws Throwable {
-    WarehouseInstance.Tuple tuple = primary
-            .run("use " + primaryDbName)
-            .run("create external table t1 (id int)")
-            .run("insert into table t1 values (1)")
-            .run("insert into table t1 values (2)")
-            .run("create external table t2 (place string) partitioned by (country string)")
-            .run("insert into table t2 partition(country='india') values ('bangalore')")
-            .run("insert into table t2 partition(country='us') values ('austin')")
-            .run("insert into table t2 partition(country='france') values ('paris')")
-            .dump("repl dump " + primaryDbName + " with ('hive.repl.include.external.tables'='true')");
-
-    replica.load(replicatedDbName, tuple.dumpLocation)
-            .run("use " + replicatedDbName)
-            .run("show tables like 't1'")
-            .verifyResult("t1")
-            .run("show tables like 't2'")
-            .verifyResult("t2")
-            .run("repl status " + replicatedDbName)
-            .verifyResult(tuple.lastReplicationId)
-            .run("select country from t2 where country = 'us'")
-            .verifyResult("us")
-            .run("select country from t2 where country = 'france'")
-            .verifyResult("france");
-
-    tuple = primary.run("use " + primaryDbName)
-            .run("create external table t3 (id int)")
-            .run("insert into table t3 values (10)")
-            .dump("repl dump " + primaryDbName + " from " + tuple.lastReplicationId
-                    + " with ('hive.repl.include.external.tables'='true')");
-
-    replica.load(replicatedDbName, tuple.dumpLocation)
-            .run("use " + replicatedDbName)
-            .run("show tables like 't3'")
-            .verifyResult("t3")
-            .run("select id from t3")
-            .verifyResult("10");
-  }
-
   public void testIfCkptAndSourceOfReplPropsIgnoredByReplDump() throws Throwable {
     WarehouseInstance.Tuple tuplePrimary = primary
             .run("use " + primaryDbName)
@@ -1067,7 +944,7 @@ public class TestReplicationScenariosAcrossInstances {
             .run("use " + importDbFromReplica)
             .run("import table t1 from " + exportPath)
             .run("select country from t1")
-            .verifyResults(Arrays.asList("india"));
+            .verifyResults(Collections.singletonList("india"));
 
     // Check if table/partition in C doesn't have ckpt property
     t1 = replica.getTable(importDbFromReplica, "t1");
@@ -1097,7 +974,7 @@ public class TestReplicationScenariosAcrossInstances {
             .run("show tables")
             .verifyResults(new String[] { "t1", "t2" })
             .run("select id from t1")
-            .verifyResults(Arrays.asList("10"))
+        .verifyResults(Collections.singletonList("10"))
             .run("select country from t2 order by country")
             .verifyResults(Arrays.asList("india", "uk", "us"));
     verifyIfCkptSet(replica, replicatedDbName, tuple.dumpLocation);
@@ -1371,7 +1248,7 @@ public class TestReplicationScenariosAcrossInstances {
             .verifyResults(new String[] { "2" })
             .run("select id from table3")
             .verifyResults(new String[] { "3" });
-    assert(IncrementalLoadTasksBuilder.numIteration > 1);
+    assert(IncrementalLoadTasksBuilder.getNumIteration() > 1);
 
     incremental = primary.run("use " + primaryDbName)
             .run("create table  table5 (key int, value int) partitioned by (load_date date) " +
@@ -1391,7 +1268,7 @@ public class TestReplicationScenariosAcrossInstances {
             .verifyResults(new String[] {"table1", "table2", "table3", "table4", "table5" })
             .run("select i from table4")
             .verifyResult("1");
-    Assert.assertEquals(IncrementalLoadTasksBuilder.numIteration, numEvents);
+    Assert.assertEquals(IncrementalLoadTasksBuilder.getNumIteration(), numEvents);
   }
 
   @Test

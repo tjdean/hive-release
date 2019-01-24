@@ -35,6 +35,7 @@ import org.apache.hadoop.hive.ql.exec.repl.ReplLoadWork;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Table;
+import org.apache.hadoop.hive.ql.parse.repl.PathBuilder;
 import org.apache.hadoop.hive.ql.parse.repl.dump.Utils;
 import org.apache.hadoop.hive.ql.parse.repl.load.DumpMetaData;
 import org.apache.hadoop.hive.ql.plan.PlanUtils;
@@ -53,10 +54,13 @@ import static org.apache.hadoop.hive.ql.parse.HiveParser.TOK_REPL_STATUS;
 import static org.apache.hadoop.hive.ql.parse.HiveParser.TOK_TABNAME;
 import static org.apache.hadoop.hive.ql.parse.HiveParser.TOK_TO;
 import static org.apache.hadoop.hive.conf.HiveConf.ConfVars.REPL_MOVE_OPTIMIZED_FILE_SCHEMES;
+import static org.apache.hadoop.hive.ql.exec.repl.ReplExternalTables.Reader;
+import static org.apache.hadoop.hive.ql.exec.repl.ExternalTableCopyTaskBuilder.DirCopyWork;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -360,6 +364,7 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
         throw new FileNotFoundException(ErrorMsg.REPL_LOAD_PATH_NOT_FOUND.getMsg());
       }
 
+      // Ths config is set to make sure that in case of s3 replication, move is skipped.
       try {
         Warehouse wh = new Warehouse(conf);
         Path filePath = wh.getWhRoot();
@@ -389,7 +394,8 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
       DumpMetaData dmd = new DumpMetaData(loadPath, conf);
 
       boolean evDump = false;
-      if (dmd.isIncrementalDump()){
+      // we will decide what hdfs locations needs to be copied over here as well.
+      if (dmd.isIncrementalDump()) {
         LOG.debug(loadPath + " contains an incremental dump");
         evDump = true;
       } else {
@@ -398,7 +404,8 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
 
       ReplLoadWork replLoadWork =
               new ReplLoadWork(conf, loadPath.toString(), dbNameOrPattern, tblNameOrPattern,
-                      SessionState.get().getLineageState(), evDump, dmd.getEventTo());
+                      SessionState.get().getLineageState(), evDump, dmd.getEventTo(),
+                      dirLocationsToCopy(loadPath, evDump));
       rootTasks.add(TaskFactory.get(replLoadWork, conf, true));
     } catch (Exception e) {
       // TODO : simple wrap & rethrow for now, clean up with error codes
@@ -406,6 +413,25 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
     }
   }
 
+  private List<DirCopyWork> dirLocationsToCopy(Path loadPath, boolean isIncrementalPhase)
+      throws HiveException, IOException {
+    List<DirCopyWork> list = new ArrayList<>();
+    String baseDir = conf.get(HiveConf.ConfVars.REPL_EXTERNAL_TABLE_BASE_DIR.varname);
+    // this is done to remove any scheme related information that will be present in the base path
+    // specifically when we are replicating to cloud storage
+    Path basePath = new Path(baseDir);
+
+    for (String location : new Reader(conf, loadPath, isIncrementalPhase).sourceLocationsToCopy()) {
+      Path sourcePath = new Path(location);
+      String targetPathWithoutSchemeAndAuth = basePath.toUri().getPath() + sourcePath.toUri().getPath();
+      Path fullyQualifiedTargetUri = PathBuilder.fullyQualifiedHDFSUri(
+          new Path(targetPathWithoutSchemeAndAuth),
+          basePath.getFileSystem(conf)
+      );
+      list.add(new DirCopyWork(sourcePath, fullyQualifiedTargetUri));
+    }
+    return list;
+  }
   // REPL STATUS
   private void initReplStatus(ASTNode ast) throws SemanticException{
     dbNameOrPattern = PlanUtils.stripQuotes(ast.getChild(0).getText());
@@ -444,7 +470,6 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
         }
       } else {
         // Checking for status of a db
-
         Database database = db.getDatabase(dbNameOrPattern);
         if (database != null) {
           inputs.add(new ReadEntity(database));

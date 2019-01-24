@@ -379,13 +379,11 @@ POSTHOOK: Input: default@ext_t_imported@emp_country=us/emp_state=ca
 5	us	ca
 6	us	ca
 PREHOOK: query: -- should have repl.last.id
--- also - importing an external table replication export would turn the new table into a managed table
 import table ext_t_r_imported from 'ql/test/data/exports/ext_t_r'
 PREHOOK: type: IMPORT
 #### A masked pattern was here ####
 PREHOOK: Output: default@ext_t_r_imported
 POSTHOOK: query: -- should have repl.last.id
--- also - importing an external table replication export would turn the new table into a managed table
 import table ext_t_r_imported from 'ql/test/data/exports/ext_t_r'
 POSTHOOK: type: IMPORT
 #### A masked pattern was here ####
@@ -431,7 +429,7 @@ PREHOOK: Input: default@ext_t_r_imported
 POSTHOOK: query: show create table ext_t_r_imported
 POSTHOOK: type: SHOW_CREATETABLE
 POSTHOOK: Input: default@ext_t_r_imported
-CREATE TABLE `ext_t_r_imported`(
+CREATE EXTERNAL TABLE `ext_t_r_imported`(
   `emp_id` int COMMENT 'employee id')
 PARTITIONED BY ( 
   `emp_country` string, 
@@ -445,7 +443,6 @@ OUTPUTFORMAT
 LOCATION
 #### A masked pattern was here ####
 TBLPROPERTIES (
-  'EXTERNAL'='FALSE', 
   'repl.last.id'='0', 
 #### A masked pattern was here ####
 PREHOOK: query: select * from ext_t_r_imported

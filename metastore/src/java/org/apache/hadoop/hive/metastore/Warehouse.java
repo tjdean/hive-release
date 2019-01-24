@@ -188,6 +188,12 @@ public class Warehouse {
     return getDnsPath(new Path(getDatabasePath(db), MetaStoreUtils.encodeTableName(tableName.toLowerCase())));
   }
 
+  // A few situations where we need the default table path, without a DB object
+  public Path getDefaultTablePath(String dbName, String tableName) throws MetaException {
+    return getDnsPath(
+            new Path(getDefaultDatabasePath(dbName), MetaStoreUtils.encodeTableName(tableName.toLowerCase())));
+  }
+
   public static String getQualifiedName(Table table) {
     return table.getDbName() + "." + table.getTableName();
   }

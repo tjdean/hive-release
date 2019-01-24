@@ -65,14 +65,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-class WarehouseInstance implements Closeable {
-  final String functionsRoot;
+public class WarehouseInstance implements Closeable {
+  final String functionsRoot, repldDir;
   private Logger logger;
   private Driver driver;
   HiveConf hiveConf;
   MiniDFSCluster miniDFSCluster;
   private HiveMetaStoreClient client;
-  public final Path warehouseRoot;
+  final Path warehouseRoot;
 
   private static int uniqueIdentifier = 0;
 
@@ -92,6 +92,12 @@ class WarehouseInstance implements Closeable {
     }
     Path cmRootPath = mkDir(fs, "/cmroot" + uniqueIdentifier);
     this.functionsRoot = mkDir(fs, "/functions" + uniqueIdentifier).toString();
+    String tmpDir = "/tmp/"
+        + TestReplicationScenarios.class.getCanonicalName().replace('.', '_')
+        + "_"
+        + System.nanoTime();
+
+    this.repldDir = mkDir(fs, tmpDir + "/hrepl" + uniqueIdentifier + "/").toString();
     initialize(cmRootPath.toString(), warehouseRoot.toString(), overridesForHiveConf);
   }
 
@@ -107,11 +113,6 @@ class WarehouseInstance implements Closeable {
       hiveConf.set(entry.getKey(), entry.getValue());
     }
     String metaStoreUri = System.getProperty("test." + HiveConf.ConfVars.METASTOREURIS.varname);
-    String hiveWarehouseLocation = System.getProperty("test.warehouse.dir", "/tmp")
-        + Path.SEPARATOR
-        + TestReplicationScenarios.class.getCanonicalName().replace('.', '_')
-        + "_"
-        + System.nanoTime();
     if (metaStoreUri != null) {
       hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, metaStoreUri);
       return;
@@ -129,8 +130,7 @@ class WarehouseInstance implements Closeable {
         "jdbc:derby:memory:${test.tmp.dir}/APP;create=true");
     int metaStorePort  = MetaStoreUtils.findFreePort();
     MetaStoreUtils.startMetaStore(metaStorePort, ShimLoader.getHadoopThriftAuthBridge(), hiveConf);
-    hiveConf.setVar(HiveConf.ConfVars.REPLDIR,
-        hiveWarehouseLocation + "/hrepl" + uniqueIdentifier + "/");
+    hiveConf.setVar(HiveConf.ConfVars.REPLDIR, this.repldDir);
     hiveConf.setVar(HiveConf.ConfVars.METASTOREURIS, "thrift://localhost:" + metaStorePort);
     hiveConf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTCONNECTIONRETRIES, 3);
     hiveConf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
@@ -140,10 +140,6 @@ class WarehouseInstance implements Closeable {
             "org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore");
     System.setProperty(HiveConf.ConfVars.PREEXECHOOKS.varname, " ");
     System.setProperty(HiveConf.ConfVars.POSTEXECHOOKS.varname, " ");
-
-    Path testPath = new Path(hiveWarehouseLocation);
-    FileSystem testPathFileSystem = FileSystem.get(testPath.toUri(), hiveConf);
-    testPathFileSystem.mkdirs(testPath);
 
     driver = new Driver(hiveConf);
     SessionState.start(new CliSessionState(hiveConf));
@@ -155,7 +151,7 @@ class WarehouseInstance implements Closeable {
   private Path mkDir(DistributedFileSystem fs, String pathString)
       throws IOException, SemanticException {
     Path path = new Path(pathString);
-    fs.mkdir(path, new FsPermission("777"));
+    fs.mkdirs(path, new FsPermission("777"));
     return PathBuilder.fullyQualifiedHDFSUri(path, fs);
   }
 

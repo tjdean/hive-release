@@ -20,9 +20,9 @@ package org.apache.hadoop.hive.ql.exec.repl;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.ql.DriverContext;
+import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.exec.TaskFactory;
-import org.apache.hadoop.hive.ql.exec.repl.incremental.IncrementalLoadTasksBuilder;
 import org.apache.hadoop.hive.ql.exec.repl.util.AddDependencyToLeaves;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.BootstrapEvent;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.DatabaseEvent;
@@ -32,6 +32,7 @@ import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.TableEvent;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.filesystem.BootstrapEventsIterator;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.LoadDatabase;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.LoadFunction;
+import org.apache.hadoop.hive.ql.exec.repl.incremental.IncrementalLoadTasksBuilder;
 import org.apache.hadoop.hive.ql.exec.repl.util.TaskTracker;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.table.LoadPartitions;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.table.LoadTable;
@@ -41,7 +42,6 @@ import org.apache.hadoop.hive.ql.exec.util.DAGTraversal;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.parse.repl.ReplLogger;
 import org.apache.hadoop.hive.ql.plan.api.StageType;
-import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.session.SessionState;
 
 import java.io.Serializable;
@@ -114,15 +114,15 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
           loadTaskTracker.update(dbTracker);
           if (work.hasDbState()) {
             loadTaskTracker.update(updateDatabaseLastReplID(maxTasks, context, scope));
+          }  else {
+            // Scope might have set to database in some previous iteration of loop, so reset it to false if database
+            // tracker has no tasks.
+            scope.database = false;
           }
           work.updateDbEventState(dbEvent.toState());
           if (dbTracker.hasTasks()) {
             scope.rootTasks.addAll(dbTracker.tasks());
             scope.database = true;
-          } else {
-            // Scope might have set to database in some previous iteration of loop, so reset it to false if database
-            // tracker has no tasks.
-            scope.database = false;
           }
           dbTracker.debugLog("database");
           break;
@@ -208,7 +208,15 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
           createEndReplLogTask(context, scope, iterator.replLogger());
         }
       }
-      boolean addAnotherLoadTask = iterator.hasNext() || loadTaskTracker.hasReplicationState();
+
+      if (loadTaskTracker.canAddMoreTasks()) {
+        scope.rootTasks.addAll(new ExternalTableCopyTaskBuilder(work, conf).tasks(loadTaskTracker));
+      }
+
+      boolean addAnotherLoadTask = iterator.hasNext()
+          || loadTaskTracker.hasReplicationState()
+          || work.getPathsToCopyIterator().hasNext();
+
       if (addAnotherLoadTask) {
         createBuilderTask(scope.rootTasks);
       }
@@ -217,17 +225,20 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
         work.updateDbEventState(null);
       }
       this.childTasks = scope.rootTasks;
-      /**
-       * Since there can be multiple rounds of this run all of which will be tied to the same
-       * query id -- generated in compile phase , adding a additional UUID to the end to print each run
-       * in separate files.
+      /*
+      Since there can be multiple rounds of this run all of which will be tied to the same
+      query id -- generated in compile phase , adding a additional UUID to the end to print each run
+      in separate files.
        */
       LOG.info("Root Tasks / Total Tasks : " + childTasks.size() + " / " + loadTaskTracker
           .numberOfTasks());
       // Populate the driver context with the scratch dir info from the repl context, so that the temp dirs will be cleaned up later
       driverContext.getCtx().getFsScratchDirs().putAll(context.pathInfo.getFsScratchDirs());
+    }  catch (RuntimeException e) {
+      LOG.error("replication failed with run time exception", e);
+      throw e;
     } catch (Exception e) {
-      LOG.error("failed replication", e);
+      LOG.error("replication failed", e);
       setException(e);
       return ErrorMsg.getErrorMsg(e.getMessage()).getErrorCode();
     }
@@ -243,7 +254,8 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
     if (scope.rootTasks.isEmpty()) {
       scope.rootTasks.add(replLogTask);
     } else {
-      DAGTraversal.traverse(scope.rootTasks, new AddDependencyToLeaves(replLogTask));
+      DAGTraversal.traverse(scope.rootTasks,
+          new AddDependencyToLeaves(Collections.singletonList(replLogTask)));
     }
   }
 
@@ -275,7 +287,7 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
 
   private void partitionsPostProcessing(BootstrapEventsIterator iterator,
       Scope scope, TaskTracker loadTaskTracker, TaskTracker tableTracker,
-      TaskTracker partitionsTracker) throws SemanticException {
+      TaskTracker partitionsTracker) {
     setUpDependencies(tableTracker, partitionsTracker);
     if (!scope.database && !scope.table) {
       scope.rootTasks.addAll(partitionsTracker.tasks());
@@ -318,8 +330,43 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
 
   private int executeIncrementalLoad(DriverContext driverContext) {
     try {
-      IncrementalLoadTasksBuilder load = work.getIncrementalLoadTaskBuilder();
-      this.childTasks = Collections.singletonList(load.execute(driverContext, db, LOG, work));
+      List<Task<? extends Serializable>> childTasks = new ArrayList<>();
+      int parallelism = conf.getIntVar(HiveConf.ConfVars.EXECPARALLETHREADNUMBER);
+      // during incremental we will have no parallelism from replication tasks since they are event based
+      // and hence are linear. To achieve prallelism we have to use copy tasks(which have no DAG) for
+      // all threads except one, in execution phase.
+      int maxTasks = conf.getIntVar(HiveConf.ConfVars.REPL_APPROX_MAX_LOAD_TASKS);
+      IncrementalLoadTasksBuilder builder = work.getIncrementalLoadTaskBuilder();
+
+      // If the total number of tasks that can be created are less than the parallelism we can achieve
+      // do nothing since someone is working on 1950's machine. else try to achieve max parallelism
+      int calculatedMaxNumOfTasks = 0, maxNumOfHDFSTasks = 0;
+      if (maxTasks <= parallelism) {
+        if (builder.hasMoreWork()) {
+          calculatedMaxNumOfTasks = maxTasks;
+        } else {
+          maxNumOfHDFSTasks = maxTasks;
+        }
+      } else {
+        calculatedMaxNumOfTasks = maxTasks - parallelism + 1;
+        maxNumOfHDFSTasks = parallelism - 1;
+      }
+      TaskTracker trackerForReplIncremental = new TaskTracker(calculatedMaxNumOfTasks);
+      Task<? extends Serializable> incrementalLoadTaskRoot =
+          builder.build(driverContext, db, LOG, work, trackerForReplIncremental);
+      // we are adding the incremental task first so that its always processed first,
+      // followed by dir copy tasks if capacity allows.
+      childTasks.add(incrementalLoadTaskRoot);
+
+      TaskTracker trackerForCopy = new TaskTracker(maxNumOfHDFSTasks);
+      childTasks
+          .addAll(new ExternalTableCopyTaskBuilder(work, conf).tasks(trackerForCopy));
+
+      // either the incremental has more work or the external table file copy has more paths to process
+      if (builder.hasMoreWork() || work.getPathsToCopyIterator().hasNext()) {
+        DAGTraversal.traverse(childTasks, new AddDependencyToLeaves(TaskFactory.get(work, conf, true)));
+      }
+      this.childTasks = childTasks;
       return 0;
     } catch (Exception e) {
       LOG.error("failed replication", e);

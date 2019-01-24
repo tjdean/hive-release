@@ -28,7 +28,12 @@ import org.apache.hadoop.hive.ql.parse.repl.load.EventDumpDirComparator;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
+/**
+ * IncrementalLoadEventsIterator
+ * Helper class to iterate through event dump directory.
+ */
 public class IncrementalLoadEventsIterator implements Iterator<FileStatus> {
   private FileStatus[] eventDirs;
   private int currentIndex;
@@ -38,6 +43,11 @@ public class IncrementalLoadEventsIterator implements Iterator<FileStatus> {
     Path eventPath = new Path(loadPath);
     FileSystem fs = eventPath.getFileSystem(conf);
     eventDirs = fs.listStatus(eventPath, EximUtil.getDirectoryFilter(fs));
+    if ((eventDirs == null) || (eventDirs.length == 0)) {
+      currentIndex = 0;
+      numEvents = 0;
+      return;
+    }
     // For event dump, each sub-dir is an individual event dump.
     // We need to guarantee that the directory listing we got is in order of event id.
     Arrays.sort(eventDirs, new EventDumpDirComparator());
@@ -47,12 +57,16 @@ public class IncrementalLoadEventsIterator implements Iterator<FileStatus> {
 
   @Override
   public boolean hasNext() {
-    return (eventDirs != null && currentIndex < eventDirs.length);
+    return (eventDirs != null && currentIndex < numEvents);
   }
 
   @Override
   public FileStatus next() {
-    return eventDirs[currentIndex++];
+    if (hasNext()) {
+      return eventDirs[currentIndex++];
+    } else {
+      throw new NoSuchElementException("no more events");
+    }
   }
 
   public int getNumEvents() {

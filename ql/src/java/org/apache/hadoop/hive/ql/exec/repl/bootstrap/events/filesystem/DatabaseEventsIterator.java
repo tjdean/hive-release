@@ -24,6 +24,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.RemoteIterator;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.ql.exec.repl.ReplExternalTables;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.BootstrapEvent;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.load.ReplicationState;
 import org.apache.hadoop.hive.ql.parse.EximUtil;
@@ -64,16 +65,13 @@ class DatabaseEventsIterator implements Iterator<BootstrapEvent> {
 
       // Sort the directories in tha path and then add the files recursively .
       getSortedFileList(dbLevelPath, fileStatuses, fileSystem);
-
       remoteIterator =  new RemoteIterator<LocatedFileStatus>() {
         private int idx = 0;
         private final int numEntry = fileStatuses.size();
         private final List<LocatedFileStatus> fileStatusesLocal = fileStatuses;
-
         public boolean hasNext() throws IOException {
           return idx < numEntry;
         }
-
         public LocatedFileStatus next() throws IOException {
           LOG.info(" file in next is " + fileStatusesLocal.get(idx));
           return fileStatusesLocal.get(idx++);
@@ -99,7 +97,6 @@ class DatabaseEventsIterator implements Iterator<BootstrapEvent> {
     if (eventDirs.length == 0) {
       return;
     }
-
     Arrays.sort(eventDirs, new EventDumpDirComparator());
 
     // add files recursively for each directory
@@ -123,6 +120,11 @@ class DatabaseEventsIterator implements Iterator<BootstrapEvent> {
       if (replicationState == null && next == null) {
         while (remoteIterator.hasNext()) {
           LocatedFileStatus next = remoteIterator.next();
+          // we want to skip this file, this also means there cant be a table with name represented
+          // by constantReplExternalTables.FILE_NAME
+          if(next.getPath().toString().endsWith(ReplExternalTables.FILE_NAME)) {
+            continue;
+          }
           if (next.getPath().toString().endsWith(EximUtil.METADATA_NAME)) {
             String replacedString = next.getPath().toString().replace(dbLevelPath.toString(), "");
             List<String> filteredNames = new ArrayList<>();

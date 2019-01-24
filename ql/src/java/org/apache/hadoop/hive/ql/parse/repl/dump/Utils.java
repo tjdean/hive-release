@@ -173,13 +173,13 @@ public class Utils {
       return false;
     }
 
-    if (tableHandle.isNonNative()) {
+    // if its metadata only, then dump metadata of non native tables also.
+    if (tableHandle.isNonNative() && !replicationSpec.isMetadataOnly()) {
       return false;
     }
 
     if (replicationSpec.isInReplicationScope()) {
-      if (!hiveConf.getBoolVar(HiveConf.ConfVars.REPL_INCLUDE_EXTERNAL_TABLES) &&
-              MetaStoreUtils.isExternalTable(tableHandle.getTTable()) && !replicationSpec.isMetadataOnly()) {
+      if (tableHandle.isTemporary()) {
         return false;
       }
 
@@ -187,7 +187,10 @@ public class Utils {
       if (isAcidTable) {
         return hiveConf.getBoolVar(HiveConf.ConfVars.REPL_DUMP_INCLUDE_ACID_TABLES);
       }
-      return !tableHandle.isTemporary();
+
+      if (MetaStoreUtils.isExternalTable(tableHandle.getTTable())) {
+        return hiveConf.getBoolVar(HiveConf.ConfVars.REPL_INCLUDE_EXTERNAL_TABLES) || replicationSpec.isMetadataOnly();
+      }
     }
     return true;
   }

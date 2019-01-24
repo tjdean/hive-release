@@ -41,7 +41,7 @@ public class UpdatedMetaDataTracker {
     this.replState = other.replState;
     this.dbName = other.dbName;
     this.tableName = other.tableName;
-    this.partitionsList = other.getPartitions();
+    this.partitionsList = other.getPartitionsList();
   }
 
   public void set(String replState, String dbName, String tableName, Map <String, String> partSpec) {
@@ -57,19 +57,19 @@ public class UpdatedMetaDataTracker {
     partitionsList.add(partSpec);
   }
 
-  public String getReplicationState() {
+  public String getReplState() {
     return replState;
   }
 
-  public String getDatabase() {
+  public String getDbName() {
     return dbName;
   }
 
-  public String getTable() {
+  public String getTableName() {
     return tableName;
   }
 
-  public List<Map <String, String>> getPartitions() {
+  public List<Map <String, String>> getPartitionsList() {
     return partitionsList;
   }
 

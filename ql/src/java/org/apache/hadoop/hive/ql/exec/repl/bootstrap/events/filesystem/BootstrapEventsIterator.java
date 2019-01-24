@@ -35,6 +35,7 @@ import java.util.List;
 /**
  * Replication layout is from the root directory of replication Dump is
  * db
+ *    _external_tables_info
  *    table1
  *        _metadata
  *        data

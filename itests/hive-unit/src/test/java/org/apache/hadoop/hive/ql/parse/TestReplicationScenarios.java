@@ -78,8 +78,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.io.Serializable;
 
 import org.junit.Assert;
@@ -337,7 +337,8 @@ public class TestReplicationScenarios {
     HiveConf confTemp = new HiveConf(hconf);
     confTemp.set("hive.repl.enable.move.optimization", "true");
     ReplLoadWork replLoadWork = new ReplLoadWork(confTemp, tuple.dumpLocation, replicadb,
-            null, null, isIncrementalDump, Long.valueOf(tuple.lastReplId));
+            null, null, isIncrementalDump, Long.valueOf(tuple.lastReplId),
+        Collections.emptyList());
     Task replLoadTask = TaskFactory.get(replLoadWork, confTemp);
     replLoadTask.initialize(confTemp, null, new DriverContext(new Context(confTemp)));
     replLoadTask.executeTask(null);

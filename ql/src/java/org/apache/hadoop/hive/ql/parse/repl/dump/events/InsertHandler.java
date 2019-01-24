@@ -20,6 +20,7 @@ package org.apache.hadoop.hive.ql.parse.repl.dump.events;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.NotificationEvent;
 import org.apache.hadoop.hive.metastore.messaging.InsertMessage;
 import org.apache.hadoop.hive.ql.metadata.Partition;
@@ -48,6 +49,9 @@ class InsertHandler extends AbstractEventHandler {
     }
     InsertMessage insertMsg = deserializer.getInsertMessage(event.getMessage());
     org.apache.hadoop.hive.ql.metadata.Table qlMdTable = tableObject(insertMsg);
+    if (TableType.EXTERNAL_TABLE.equals(qlMdTable.getTableType())) {
+      withinContext.replicationSpec.setNoop(true);
+    }
 
     if (!Utils.shouldReplicate(withinContext.replicationSpec, qlMdTable, withinContext.hiveConf)) {
       return;
@@ -77,7 +81,7 @@ class InsertHandler extends AbstractEventHandler {
          * tables. But, Insert event is generated for each partition to which the data is inserted. So, qlPtns list
          * will have only one entry.
          */
-        assert (1 == qlPtns.size());
+        assert(1 == qlPtns.size());
         dataPath = new Path(withinContext.eventRoot, qlPtns.get(0).getName());
       }
 

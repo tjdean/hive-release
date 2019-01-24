@@ -23,6 +23,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
+import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.Function;
 import org.apache.hadoop.hive.metastore.api.NotificationEvent;
@@ -55,19 +56,23 @@ import org.apache.hadoop.hive.ql.parse.repl.dump.log.BootstrapDumpLogger;
 import org.apache.hadoop.hive.ql.parse.repl.dump.log.IncrementalDumpLogger;
 import org.apache.hadoop.hive.ql.parse.repl.load.DumpMetaData;
 import org.apache.hadoop.hive.ql.plan.api.StageType;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.apache.hadoop.hive.ql.ErrorMsg;
 
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import static org.apache.hadoop.hive.ql.exec.repl.ReplExternalTables.Writer;
 
 public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
   private static final String dumpSchema = "dump_dir,last_repl_id#string,string";
   private static final String FUNCTIONS_ROOT_DIR_NAME = "_functions";
   private static final String FUNCTION_METADATA_FILE_NAME = "_metadata";
+  private static final long SLEEP_TIME = 60000;
 
   private Logger LOG = LoggerFactory.getLogger(ReplDumpTask.class);
   private ReplLogger replLogger;
@@ -90,11 +95,7 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
       } else {
         lastReplId = incrementalDump(dumpRoot, dmd, cmRoot, hiveDb);
       }
-      prepareReturnValues(Arrays.asList(dumpRoot.toUri().toString(), String.valueOf(lastReplId)), dumpSchema);
-    } catch (RuntimeException e) {
-      LOG.error("failed", e);
-      setException(e);
-      return ErrorMsg.getErrorMsg(e.getMessage()).getErrorCode();
+      prepareReturnValues(Arrays.asList(dumpRoot.toUri().toString(), String.valueOf(lastReplId)));
     } catch (Exception e) {
       LOG.error("failed", e);
       setException(e);
@@ -103,8 +104,8 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
     return 0;
   }
 
-  private void prepareReturnValues(List<String> values, String schema) throws SemanticException {
-    LOG.debug("prepareReturnValues : " + schema);
+  private void prepareReturnValues(List<String> values) throws SemanticException {
+    LOG.debug("prepareReturnValues : " + dumpSchema);
     for (String s : values) {
       LOG.debug("    > " + s);
     }
@@ -167,6 +168,18 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
         dmd.getDumpFilePath(), conf);
     dmd.setDump(DumpType.INCREMENTAL, work.eventFrom, lastReplId, cmRoot);
     dmd.write();
+
+    if (conf.getBoolVar(HiveConf.ConfVars.REPL_INCLUDE_EXTERNAL_TABLES) &&
+        !conf.getBoolVar(HiveConf.ConfVars.REPL_DUMP_METADATA_ONLY)) {
+      try (Writer writer = new Writer(dumpRoot, conf)) {
+        for (String tableName : Utils.matchesTbl(hiveDb, dbName, work.tableNameOrPattern)) {
+          Table table = hiveDb.getTable(dbName, tableName);
+          if (TableType.EXTERNAL_TABLE.equals(table.getTableType())) {
+            writer.dataLocationDump(table);
+          }
+        }
+      }
+    }
     return lastReplId;
   }
 
@@ -204,46 +217,61 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
       dumpFunctionMetadata(dbName, dumpRoot, hiveDb);
 
       String uniqueKey = Utils.setDbBootstrapDumpState(hiveDb, dbName);
-      for (String tblName : Utils.matchesTbl(hiveDb, dbName, work.tableNameOrPattern)) {
-        LOG.debug(
-            "analyzeReplDump dumping table: " + tblName + " to db root " + dbRoot.toUri());
-        dumpTable(dbName, tblName, dbRoot, hiveDb);
+      Exception caught = null;
+      try (Writer writer = new Writer(dbRoot, conf)) {
+        for (String tblName : Utils.matchesTbl(hiveDb, dbName, work.tableNameOrPattern)) {
+          LOG.debug(
+              "analyzeReplDump dumping table: " + tblName + " to db root " + dbRoot.toUri());
+          try {
+            HiveWrapper.Tuple<Table> tableTuple = new HiveWrapper(hiveDb, dbName).table(tblName);
+            boolean shouldWriteExternalTableLocationInfo =
+                conf.getBoolVar(HiveConf.ConfVars.REPL_INCLUDE_EXTERNAL_TABLES)
+                && TableType.EXTERNAL_TABLE.equals(tableTuple.object.getTableType())
+                && !conf.getBoolVar(HiveConf.ConfVars.REPL_DUMP_METADATA_ONLY);
+            if (shouldWriteExternalTableLocationInfo) {
+              LOG.debug("adding table {} to external tables list", tblName);
+              writer.dataLocationDump(tableTuple.object);
+            }
+            dumpTable(dbName, tblName, dbRoot, hiveDb, tableTuple);
+          } catch (InvalidTableException te) {
+            // Bootstrap dump shouldn't fail if the table is dropped/renamed while dumping it.
+            // Just log a debug message and skip it.
+            LOG.debug(te.getMessage());
+          }
+        }
+      } catch (Exception e) {
+        caught = e;
+      } finally {
+        try {
+          Utils.resetDbBootstrapDumpState(hiveDb, dbName, uniqueKey);
+        } catch (Exception e) {
+          if (caught == null) {
+            throw e;
+          } else {
+            LOG.error("failed to reset the db state for " + uniqueKey
+                + " on failure of repl dump", e);
+            throw caught;
+          }
+        }
+        if(caught != null) {
+          throw caught;
+        }
       }
-      Utils.resetDbBootstrapDumpState(hiveDb, dbName, uniqueKey);
       replLogger.endLog(bootDumpBeginReplId.toString());
     }
-    Long bootDumpEndReplId = hiveDb.getMSC().getCurrentNotificationEventId().getEventId();
-    LOG.info("Bootstrap object dump phase took from " + bootDumpBeginReplId + " to " +
-        bootDumpEndReplId);
-
-    // Now that bootstrap has dumped all objects related, we have to account for the changes
-    // that occurred while bootstrap was happening - i.e. we have to look through all events
-    // during the bootstrap period and consolidate them with our dump.
-
-    IMetaStoreClient.NotificationFilter evFilter =
-        new DatabaseAndTableFilter(work.dbNameOrPattern, work.tableNameOrPattern);
-    EventUtils.MSClientNotificationFetcher evFetcher =
-        new EventUtils.MSClientNotificationFetcher(hiveDb.getMSC());
-    EventUtils.NotificationEventIterator evIter = new EventUtils.NotificationEventIterator(
-        evFetcher, bootDumpBeginReplId,
-        Ints.checkedCast(bootDumpEndReplId - bootDumpBeginReplId) + 1,
-        evFilter);
-
-    // Now we consolidate all the events that happenned during the objdump into the objdump
-    while (evIter.hasNext()) {
-      NotificationEvent ev = evIter.next();
-      Path eventRoot = new Path(dumpRoot, String.valueOf(ev.getEventId()));
-      // FIXME : implement consolidateEvent(..) similar to dumpEvent(ev,evRoot)
-    }
-    LOG.info(
-        "Consolidation done, preparing to return " + dumpRoot.toUri() + "," + bootDumpBeginReplId
-            + "->" + bootDumpEndReplId);
+    Long bootDumpEndReplId = currentNotificationId(hiveDb);
+    LOG.info("Preparing to return {},{}->{}",
+        dumpRoot.toUri(), bootDumpBeginReplId, bootDumpEndReplId);
     dmd.setDump(DumpType.BOOTSTRAP, bootDumpBeginReplId, bootDumpEndReplId, cmRoot);
     dmd.write();
 
     // Set the correct last repl id to return to the user
     // Currently returned bootDumpBeginReplId as we don't consolidate the events after bootstrap
     return bootDumpBeginReplId;
+  }
+
+  long currentNotificationId(Hive hiveDb) throws TException {
+    return hiveDb.getMSC().getCurrentNotificationEventId().getEventId();
   }
 
   private Path dumpDbMetadata(String dbName, Path dumpRoot, Hive hiveDb) throws Exception {
@@ -256,22 +284,16 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
     return dbRoot;
   }
 
-  private void dumpTable(String dbName, String tblName, Path dbRoot, Hive db) throws Exception {
-    try {
-      HiveWrapper.Tuple<Table> tuple = new HiveWrapper(db, dbName).table(tblName);
-      TableSpec tableSpec = new TableSpec(tuple.object);
-      TableExport.Paths exportPaths =
+  private void dumpTable(String dbName, String tblName, Path dbRoot, 
+      Hive hiveDb, HiveWrapper.Tuple<Table> tuple) throws Exception {
+    TableSpec tableSpec = new TableSpec(tuple.object);
+    TableExport.Paths exportPaths =
           new TableExport.Paths(work.astRepresentationForErrorMsg, dbRoot, tblName, conf);
-      String distCpDoAsUser = conf.getVar(HiveConf.ConfVars.HIVE_DISTCP_DOAS_USER);
-      tuple.replicationSpec.setIsReplace(true);  // by default for all other objects this is false
-      new TableExport(exportPaths, tableSpec, tuple.replicationSpec, db, distCpDoAsUser, conf).write();
+    String distCpDoAsUser = conf.getVar(HiveConf.ConfVars.HIVE_DISTCP_DOAS_USER);
+    tuple.replicationSpec.setIsReplace(true);  // by default for all other objects this is false
+    new TableExport(exportPaths, tableSpec, tuple.replicationSpec, db, distCpDoAsUser, conf).write();
 
-      replLogger.tableLog(tblName, tableSpec.tableHandle.getTableType());
-    } catch (InvalidTableException te) {
-      // Bootstrap dump shouldn't fail if the table is dropped/renamed while dumping it.
-      // Just log a debug message and skip it.
-      LOG.debug(te.getMessage());
-    }
+    replLogger.tableLog(tblName, tableSpec.tableHandle.getTableType());
   }
 
   private ReplicationSpec getNewReplicationSpec(String evState, String objState,
