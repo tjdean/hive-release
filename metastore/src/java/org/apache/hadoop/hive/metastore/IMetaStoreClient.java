@@ -624,6 +624,21 @@ public interface IMetaStoreClient {
       List<String> part_names) throws NoSuchObjectException, MetaException, TException;
 
   /**
+   * Get partitions by a list of partition names.
+   * @param db_name database name
+   * @param tbl_name table name
+   * @param part_names list of partition names
+   * @param getColStats if true, column statistics is added to the Partition objects
+   * @return list of Partition objects
+   * @throws NoSuchObjectException
+   * @throws MetaException
+   * @throws TException
+   */
+  List<Partition> getPartitionsByNames(String db_name, String tbl_name,
+                                       List<String> part_names, boolean getColStats)
+          throws NoSuchObjectException, MetaException, TException;
+
+  /**
    * @param dbName
    * @param tableName
    * @param partialPvals

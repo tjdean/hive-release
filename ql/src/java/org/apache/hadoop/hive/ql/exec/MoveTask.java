@@ -264,6 +264,25 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
     return false;
   }
 
+  // Whether statistics need to be reset as part of MoveTask execution.
+  private boolean resetStatisticsProps() {
+    if (hasFollowingStatsTask()) {
+      // If there's a follow-on stats task then the stats will be correct after load, so don't
+      // need to reset the statistics.
+      return false;
+    }
+
+    if (!work.getIsInReplicationScope()) {
+      // If the load is not happening during replication and there is not follow-on stats
+      // task, stats will be inaccurate after load and so need to be reset.
+      return true;
+    }
+
+    // If we are loading a table during replication, the stats will also be replicated
+    // and hence accurate.
+    return false;
+  }
+
   @Override
   public int execute(DriverContext driverContext) {
 
@@ -376,21 +395,10 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
         DataContainer dc = null;
         if (tbd.getPartitionSpec().size() == 0) {
           dc = new DataContainer(table.getTTable());
-          boolean resetStatistics = false;
-          if (hasFollowingStatsTask()) {
-            // If there's a follow-on stats task then the stats will be correct after load, so don't
-            // need to reset the statistics.
-            resetStatistics = false;
-          } else if (!work.getIsInReplicationScope()) {
-            // If the load is not happening during replication and there is not follow-on stats
-            // task, stats will be inaccurate after load and so need to be reset.
-            resetStatistics = true;
-          }
-
           db.loadTable(tbd.getSourcePath(), tbd.getTable().getTableName(), tbd.getLoadFileType(),
               work.isSrcLocal(), isSkewedStoredAsDirs(tbd),
               work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID,
-              resetStatistics);
+              resetStatisticsProps(), work.getIsInReplicationScope());
           if (work.getOutputs() != null) {
             DDLTask.addIfAbsentByName(new WriteEntity(table,
               getWriteType(tbd, work.getLoadTableWork().getWriteType())), work.getOutputs());
@@ -471,8 +479,8 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
                   dpCtx.getNumDPCols(),
                   isSkewedStoredAsDirs(tbd),
                   work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID,
-                        SessionState.get().getTxnMgr().getCurrentTxnId(), hasFollowingStatsTask(),
-                  work.getLoadTableWork().getWriteType());
+                        SessionState.get().getTxnMgr().getCurrentTxnId(), resetStatisticsProps(),
+                  work.getLoadTableWork().getWriteType(), work.getIsInReplicationScope());
             String loadTime = "\t Time taken to load dynamic partitions: "  +
                     (System.currentTimeMillis() - startTime)/1000.0 + " seconds";
             console.printInfo(loadTime);
@@ -531,7 +539,8 @@ public class MoveTask extends Task<MoveWork> implements Serializable {
             db.loadPartition(tbd.getSourcePath(), tbd.getTable().getTableName(),
                 tbd.getPartitionSpec(), tbd.getLoadFileType(),
                 tbd.getInheritTableSpecs(), isSkewedStoredAsDirs(tbd), work.isSrcLocal(),
-                work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID, hasFollowingStatsTask());
+                work.getLoadTableWork().getWriteType() != AcidUtils.Operation.NOT_ACID,
+                resetStatisticsProps(), work.getIsInReplicationScope());
             Partition partn = db.getPartition(table, tbd.getPartitionSpec(), false);
 
             if (bucketCols != null || sortCols != null) {

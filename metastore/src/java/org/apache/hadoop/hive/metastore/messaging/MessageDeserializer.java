@@ -156,6 +156,13 @@ public abstract class MessageDeserializer {
    */
   public abstract UpdateTableColumnStatMessage getUpdateTableColumnStatMessage(String messageBody);
 
+  /**
+   * Method to de-serialize UpdateTableColumnStatMessage instance.
+   * @param messageBody the message in serialized form
+   * @return message in object form
+   */
+  public abstract UpdatePartitionColumnStatMessage getUpdatePartitionColumnStatMessage(String messageBody);
+
   // Protection against construction.
   protected MessageDeserializer() {}
 }

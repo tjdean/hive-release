@@ -46,6 +46,7 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
   private static final org.apache.thrift.protocol.TField SD_FIELD_DESC = new org.apache.thrift.protocol.TField("sd", org.apache.thrift.protocol.TType.STRUCT, (short)6);
   private static final org.apache.thrift.protocol.TField PARAMETERS_FIELD_DESC = new org.apache.thrift.protocol.TField("parameters", org.apache.thrift.protocol.TType.MAP, (short)7);
   private static final org.apache.thrift.protocol.TField PRIVILEGES_FIELD_DESC = new org.apache.thrift.protocol.TField("privileges", org.apache.thrift.protocol.TType.STRUCT, (short)8);
+  private static final org.apache.thrift.protocol.TField COL_STATS_FIELD_DESC = new org.apache.thrift.protocol.TField("colStats", org.apache.thrift.protocol.TType.STRUCT, (short)9);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -61,6 +62,7 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
   private StorageDescriptor sd; // required
   private Map<String,String> parameters; // required
   private PrincipalPrivilegeSet privileges; // optional
+  private ColumnStatistics colStats; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -71,7 +73,8 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
     LAST_ACCESS_TIME((short)5, "lastAccessTime"),
     SD((short)6, "sd"),
     PARAMETERS((short)7, "parameters"),
-    PRIVILEGES((short)8, "privileges");
+    PRIVILEGES((short)8, "privileges"),
+    COL_STATS((short)9, "colStats");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -102,6 +105,8 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
           return PARAMETERS;
         case 8: // PRIVILEGES
           return PRIVILEGES;
+        case 9: // COL_STATS
+          return COL_STATS;
         default:
           return null;
       }
@@ -145,7 +150,7 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
   private static final int __CREATETIME_ISSET_ID = 0;
   private static final int __LASTACCESSTIME_ISSET_ID = 1;
   private byte __isset_bitfield = 0;
-  private static final _Fields optionals[] = {_Fields.PRIVILEGES};
+  private static final _Fields optionals[] = {_Fields.PRIVILEGES,_Fields.COL_STATS};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -168,6 +173,8 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING))));
     tmpMap.put(_Fields.PRIVILEGES, new org.apache.thrift.meta_data.FieldMetaData("privileges", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, PrincipalPrivilegeSet.class)));
+    tmpMap.put(_Fields.COL_STATS, new org.apache.thrift.meta_data.FieldMetaData("colStats", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT        , "ColumnStatistics")));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Partition.class, metaDataMap);
   }
@@ -223,6 +230,9 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
     if (other.isSetPrivileges()) {
       this.privileges = new PrincipalPrivilegeSet(other.privileges);
     }
+    if (other.isSetColStats()) {
+      this.colStats = other.colStats;
+    }
   }
 
   public Partition deepCopy() {
@@ -241,6 +251,7 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
     this.sd = null;
     this.parameters = null;
     this.privileges = null;
+    this.colStats = null;
   }
 
   public int getValuesSize() {
@@ -451,6 +462,29 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
     }
   }
 
+  public ColumnStatistics getColStats() {
+    return this.colStats;
+  }
+
+  public void setColStats(ColumnStatistics colStats) {
+    this.colStats = colStats;
+  }
+
+  public void unsetColStats() {
+    this.colStats = null;
+  }
+
+  /** Returns true if field colStats is set (has been assigned a value) and false otherwise */
+  public boolean isSetColStats() {
+    return this.colStats != null;
+  }
+
+  public void setColStatsIsSet(boolean value) {
+    if (!value) {
+      this.colStats = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case VALUES:
@@ -517,6 +551,14 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
       }
       break;
 
+    case COL_STATS:
+      if (value == null) {
+        unsetColStats();
+      } else {
+        setColStats((ColumnStatistics)value);
+      }
+      break;
+
     }
   }
 
@@ -546,6 +588,9 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
     case PRIVILEGES:
       return getPrivileges();
 
+    case COL_STATS:
+      return getColStats();
+
     }
     throw new IllegalStateException();
   }
@@ -573,6 +618,8 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
       return isSetParameters();
     case PRIVILEGES:
       return isSetPrivileges();
+    case COL_STATS:
+      return isSetColStats();
     }
     throw new IllegalStateException();
   }
@@ -662,6 +709,15 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
         return false;
     }
 
+    boolean this_present_colStats = true && this.isSetColStats();
+    boolean that_present_colStats = true && that.isSetColStats();
+    if (this_present_colStats || that_present_colStats) {
+      if (!(this_present_colStats && that_present_colStats))
+        return false;
+      if (!this.colStats.equals(that.colStats))
+        return false;
+    }
+
     return true;
   }
 
@@ -708,6 +764,11 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
     list.add(present_privileges);
     if (present_privileges)
       list.add(privileges);
+
+    boolean present_colStats = true && (isSetColStats());
+    list.add(present_colStats);
+    if (present_colStats)
+      list.add(colStats);
 
     return list.hashCode();
   }
@@ -800,6 +861,16 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetColStats()).compareTo(other.isSetColStats());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetColStats()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.colStats, other.colStats);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -874,6 +945,16 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
         sb.append("null");
       } else {
         sb.append(this.privileges);
+      }
+      first = false;
+    }
+    if (isSetColStats()) {
+      if (!first) sb.append(", ");
+      sb.append("colStats:");
+      if (this.colStats == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.colStats);
       }
       first = false;
     }
@@ -1016,6 +1097,15 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 9: // COL_STATS
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+              struct.colStats = new ColumnStatistics();
+              struct.colStats.read(iprot);
+              struct.setColStatsIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -1082,6 +1172,13 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
           oprot.writeFieldEnd();
         }
       }
+      if (struct.colStats != null) {
+        if (struct.isSetColStats()) {
+          oprot.writeFieldBegin(COL_STATS_FIELD_DESC);
+          struct.colStats.write(oprot);
+          oprot.writeFieldEnd();
+        }
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -1124,7 +1221,10 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
       if (struct.isSetPrivileges()) {
         optionals.set(7);
       }
-      oprot.writeBitSet(optionals, 8);
+      if (struct.isSetColStats()) {
+        optionals.set(8);
+      }
+      oprot.writeBitSet(optionals, 9);
       if (struct.isSetValues()) {
         {
           oprot.writeI32(struct.values.size());
@@ -1162,12 +1262,15 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
       if (struct.isSetPrivileges()) {
         struct.privileges.write(oprot);
       }
+      if (struct.isSetColStats()) {
+        struct.colStats.write(oprot);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, Partition struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(8);
+      BitSet incoming = iprot.readBitSet(9);
       if (incoming.get(0)) {
         {
           org.apache.thrift.protocol.TList _list219 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
@@ -1221,6 +1324,11 @@ public class Partition implements org.apache.thrift.TBase<Partition, Partition._
         struct.privileges = new PrincipalPrivilegeSet();
         struct.privileges.read(iprot);
         struct.setPrivilegesIsSet(true);
+      }
+      if (incoming.get(8)) {
+        struct.colStats = new ColumnStatistics();
+        struct.colStats.read(iprot);
+        struct.setColStatsIsSet(true);
       }
     }
   }

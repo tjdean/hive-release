@@ -86,6 +86,7 @@ import org.apache.hadoop.hive.metastore.events.PreEventContext;
 import org.apache.hadoop.hive.metastore.events.PreLoadPartitionDoneEvent;
 import org.apache.hadoop.hive.metastore.events.PreReadDatabaseEvent;
 import org.apache.hadoop.hive.metastore.events.PreReadTableEvent;
+import org.apache.hadoop.hive.metastore.events.UpdatePartitionColumnStatEvent;
 import org.apache.hadoop.hive.metastore.events.UpdateTableColumnStatEvent;
 import org.apache.hadoop.hive.metastore.model.MDBPrivilege;
 import org.apache.hadoop.hive.metastore.model.MGlobalPrivilege;
@@ -167,13 +168,6 @@ import java.util.regex.Pattern;
 import static org.apache.commons.lang.StringUtils.join;
 import static org.apache.hadoop.hive.metastore.MetaStoreUtils.*;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimaps;
-
-import static org.apache.hadoop.hive.metastore.ReplChangeManager.SOURCE_OF_REPLICATION;
 
 /**
  * TODO:pc remove application logic to a separate interface.
@@ -2478,11 +2472,19 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         }
 
         List<Future<Partition>> partFutures = Lists.newArrayList();
+        List<ColumnStatistics> partsColStats = new ArrayList<>();
         final Table table = tbl;
         for (final Partition part : parts) {
           if (!part.getTableName().equals(tblName) || !part.getDbName().equals(dbName)) {
             throw new MetaException("Partition does not belong to target table "
                 + dbName + "." + tblName + ": " + part);
+          }
+
+          // Wipe out column statistics now, so that the create partition event wouldn't add it
+          // to the message. It will be added in a separate event message of its own.
+          if (part.isSetColStats()) {
+            partsColStats.add(part.getColStats());
+            part.unsetColStats();
           }
 
           boolean shouldAdd = startAddPartition(ms, part, ifNotExists);
@@ -2557,6 +2559,12 @@ public class HiveMetaStore extends ThriftHiveMetastore {
                                                     EventType.ADD_PARTITION,
                                                     new AddPartitionEvent(tbl, newParts, true, this));
         }
+
+        // Update partition column statistics if available
+        for (ColumnStatistics colStats: partsColStats) {
+          updatePartitonColStats(tbl, colStats);
+        }
+
         success = ms.commitTransaction();
       } finally {
         if (!success) {
@@ -5024,17 +5032,35 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       colStats.setStatsObj(statsObjs);
 
       boolean ret = false;
-
+      boolean committed = false;
+      getMS().openTransaction();
       try {
         if (tbl == null) {
           tbl = getTable(dbName, tableName);
         }
         List<String> partVals = getPartValsFromName(tbl, partName);
         ret = getMS().updatePartitionColumnStatistics(colStats, partVals);
-        return ret;
+        if (ret) {
+          if (transactionalListeners != null && !transactionalListeners.isEmpty()) {
+            MetaStoreListenerNotifier.notifyEvent(transactionalListeners,
+                    EventType.UPDATE_PARTITION_COLUMN_STAT,
+                    new UpdatePartitionColumnStatEvent(colStats, partVals, tbl, this));
+          }
+          if (!listeners.isEmpty()) {
+            MetaStoreListenerNotifier.notifyEvent(listeners,
+                    EventType.UPDATE_PARTITION_COLUMN_STAT,
+                    new UpdatePartitionColumnStatEvent(colStats, partVals, tbl, this));
+          }
+        }
+        committed = getMS().commitTransaction();
       } finally {
+        if (!committed) {
+          getMS().rollbackTransaction();
+        }
         endFunction("write_partition_column_statistics", ret != false, null, tableName);
       }
+
+      return ret;
     }
 
     @Override
@@ -5181,19 +5207,64 @@ public class HiveMetaStore extends ThriftHiveMetastore {
 
     @Override
     public List<Partition> get_partitions_by_names(final String dbName,
-        final String tblName, final List<String> partNames)
+                                                   final String tblName, final List<String> partNames)
+        throws MetaException, NoSuchObjectException, TException {
+      return get_partitions_by_names(dbName, tblName, partNames, false);
+    }
+
+    @Override
+    public GetPartitionsByNamesResult get_partitions_by_names_req(GetPartitionsByNamesRequest gpbnr)
+            throws TException {
+      List<Partition> partitions = get_partitions_by_names(gpbnr.getDb_name(),
+              gpbnr.getTbl_name(), gpbnr.getNames(),
+              gpbnr.isSetGet_col_stats() && gpbnr.isGet_col_stats());
+      return new GetPartitionsByNamesResult(partitions);
+    }
+
+    public List<Partition> get_partitions_by_names(final String dbName,
+                                                   final String tblName,
+                                                   final List<String> partNames,
+                                                   boolean getColStats)
         throws MetaException, NoSuchObjectException, TException {
 
       startTableFunction("get_partitions_by_names", dbName, tblName);
       fireReadTablePreEvent(dbName, tblName);
       List<Partition> ret = null;
       Exception ex = null;
+      boolean committed = false;
       try {
+        getMS().openTransaction();
         ret = getMS().getPartitionsByNames(dbName, tblName, partNames);
+        // If requested add column statistics in each of the partition objects
+        if (getColStats) {
+          Table table = getTable(dbName, tblName);
+          // Since each partition may have stats collected for different set of columns, we
+          // request them separately.
+          for (Partition part: ret) {
+            String partName = Warehouse.makePartName(table.getPartitionKeys(), part.getValues());
+            List<String> colNames = StatsSetupConst.getColumnsHavingStats(part.getParameters());
+            if (colNames != null) {
+              List<ColumnStatistics> partColStatsList =
+                      getMS().getPartitionColumnStatistics(dbName, tblName,
+                              Collections.singletonList(partName), colNames);
+              if (partColStatsList != null && !partColStatsList.isEmpty()) {
+                ColumnStatistics partColStats = partColStatsList.get(0);
+                if (partColStats != null) {
+                  part.setColStats(partColStats);
+                }
+              }
+            }
+          }
+        }
+
+        committed = getMS().commitTransaction();
       } catch (Exception e) {
         ex = e;
         rethrowException(e);
       } finally {
+        if (!committed) {
+          getMS().rollbackTransaction();
+        }
         endFunction("get_partitions_by_names", ret != null, ex, tblName);
       }
       return ret;

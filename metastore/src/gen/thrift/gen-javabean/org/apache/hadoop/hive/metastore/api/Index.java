@@ -1133,15 +1133,15 @@ public class Index implements org.apache.thrift.TBase<Index, Index._Fields>, jav
           case 9: // PARAMETERS
             if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
               {
-                org.apache.thrift.protocol.TMap _map260 = iprot.readMapBegin();
-                struct.parameters = new HashMap<String,String>(2*_map260.size);
-                String _key261;
-                String _val262;
-                for (int _i263 = 0; _i263 < _map260.size; ++_i263)
+                org.apache.thrift.protocol.TMap _map276 = iprot.readMapBegin();
+                struct.parameters = new HashMap<String,String>(2*_map276.size);
+                String _key277;
+                String _val278;
+                for (int _i279 = 0; _i279 < _map276.size; ++_i279)
                 {
-                  _key261 = iprot.readString();
-                  _val262 = iprot.readString();
-                  struct.parameters.put(_key261, _val262);
+                  _key277 = iprot.readString();
+                  _val278 = iprot.readString();
+                  struct.parameters.put(_key277, _val278);
                 }
                 iprot.readMapEnd();
               }
@@ -1211,10 +1211,10 @@ public class Index implements org.apache.thrift.TBase<Index, Index._Fields>, jav
         oprot.writeFieldBegin(PARAMETERS_FIELD_DESC);
         {
           oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, struct.parameters.size()));
-          for (Map.Entry<String, String> _iter264 : struct.parameters.entrySet())
+          for (Map.Entry<String, String> _iter280 : struct.parameters.entrySet())
           {
-            oprot.writeString(_iter264.getKey());
-            oprot.writeString(_iter264.getValue());
+            oprot.writeString(_iter280.getKey());
+            oprot.writeString(_iter280.getValue());
           }
           oprot.writeMapEnd();
         }
@@ -1299,10 +1299,10 @@ public class Index implements org.apache.thrift.TBase<Index, Index._Fields>, jav
       if (struct.isSetParameters()) {
         {
           oprot.writeI32(struct.parameters.size());
-          for (Map.Entry<String, String> _iter265 : struct.parameters.entrySet())
+          for (Map.Entry<String, String> _iter281 : struct.parameters.entrySet())
           {
-            oprot.writeString(_iter265.getKey());
-            oprot.writeString(_iter265.getValue());
+            oprot.writeString(_iter281.getKey());
+            oprot.writeString(_iter281.getValue());
           }
         }
       }
@@ -1350,15 +1350,15 @@ public class Index implements org.apache.thrift.TBase<Index, Index._Fields>, jav
       }
       if (incoming.get(8)) {
         {
-          org.apache.thrift.protocol.TMap _map266 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-          struct.parameters = new HashMap<String,String>(2*_map266.size);
-          String _key267;
-          String _val268;
-          for (int _i269 = 0; _i269 < _map266.size; ++_i269)
+          org.apache.thrift.protocol.TMap _map282 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+          struct.parameters = new HashMap<String,String>(2*_map282.size);
+          String _key283;
+          String _val284;
+          for (int _i285 = 0; _i285 < _map282.size; ++_i285)
           {
-            _key267 = iprot.readString();
-            _val268 = iprot.readString();
-            struct.parameters.put(_key267, _val268);
+            _key283 = iprot.readString();
+            _val284 = iprot.readString();
+            struct.parameters.put(_key283, _val284);
           }
         }
         struct.setParametersIsSet(true);

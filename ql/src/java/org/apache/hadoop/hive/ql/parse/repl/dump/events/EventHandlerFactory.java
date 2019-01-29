@@ -46,6 +46,7 @@ public class EventHandlerFactory {
     register(MessageFactory.CREATE_DATABASE_EVENT, CreateDatabaseHandler.class);
     register(MessageFactory.DROP_DATABASE_EVENT, DropDatabaseHandler.class);
     register(MessageFactory.UPDATE_TBL_COL_STAT_EVENT, UpdateTableColStatHandler.class);
+    register(MessageFactory.UPDATE_PART_COL_STAT_EVENT, UpdatePartColStatHandler.class);
   }
 
   static void register(String event, Class<? extends EventHandler> handlerClazz) {

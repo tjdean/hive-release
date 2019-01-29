@@ -453,13 +453,13 @@ public class HeartbeatTxnRangeResponse implements org.apache.thrift.TBase<Heartb
           case 1: // ABORTED
             if (schemeField.type == org.apache.thrift.protocol.TType.SET) {
               {
-                org.apache.thrift.protocol.TSet _set476 = iprot.readSetBegin();
-                struct.aborted = new HashSet<Long>(2*_set476.size);
-                long _elem477;
-                for (int _i478 = 0; _i478 < _set476.size; ++_i478)
+                org.apache.thrift.protocol.TSet _set492 = iprot.readSetBegin();
+                struct.aborted = new HashSet<Long>(2*_set492.size);
+                long _elem493;
+                for (int _i494 = 0; _i494 < _set492.size; ++_i494)
                 {
-                  _elem477 = iprot.readI64();
-                  struct.aborted.add(_elem477);
+                  _elem493 = iprot.readI64();
+                  struct.aborted.add(_elem493);
                 }
                 iprot.readSetEnd();
               }
@@ -471,13 +471,13 @@ public class HeartbeatTxnRangeResponse implements org.apache.thrift.TBase<Heartb
           case 2: // NOSUCH
             if (schemeField.type == org.apache.thrift.protocol.TType.SET) {
               {
-                org.apache.thrift.protocol.TSet _set479 = iprot.readSetBegin();
-                struct.nosuch = new HashSet<Long>(2*_set479.size);
-                long _elem480;
-                for (int _i481 = 0; _i481 < _set479.size; ++_i481)
+                org.apache.thrift.protocol.TSet _set495 = iprot.readSetBegin();
+                struct.nosuch = new HashSet<Long>(2*_set495.size);
+                long _elem496;
+                for (int _i497 = 0; _i497 < _set495.size; ++_i497)
                 {
-                  _elem480 = iprot.readI64();
-                  struct.nosuch.add(_elem480);
+                  _elem496 = iprot.readI64();
+                  struct.nosuch.add(_elem496);
                 }
                 iprot.readSetEnd();
               }
@@ -503,9 +503,9 @@ public class HeartbeatTxnRangeResponse implements org.apache.thrift.TBase<Heartb
         oprot.writeFieldBegin(ABORTED_FIELD_DESC);
         {
           oprot.writeSetBegin(new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.I64, struct.aborted.size()));
-          for (long _iter482 : struct.aborted)
+          for (long _iter498 : struct.aborted)
           {
-            oprot.writeI64(_iter482);
+            oprot.writeI64(_iter498);
           }
           oprot.writeSetEnd();
         }
@@ -515,9 +515,9 @@ public class HeartbeatTxnRangeResponse implements org.apache.thrift.TBase<Heartb
         oprot.writeFieldBegin(NOSUCH_FIELD_DESC);
         {
           oprot.writeSetBegin(new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.I64, struct.nosuch.size()));
-          for (long _iter483 : struct.nosuch)
+          for (long _iter499 : struct.nosuch)
           {
-            oprot.writeI64(_iter483);
+            oprot.writeI64(_iter499);
           }
           oprot.writeSetEnd();
         }
@@ -542,16 +542,16 @@ public class HeartbeatTxnRangeResponse implements org.apache.thrift.TBase<Heartb
       TTupleProtocol oprot = (TTupleProtocol) prot;
       {
         oprot.writeI32(struct.aborted.size());
-        for (long _iter484 : struct.aborted)
+        for (long _iter500 : struct.aborted)
         {
-          oprot.writeI64(_iter484);
+          oprot.writeI64(_iter500);
         }
       }
       {
         oprot.writeI32(struct.nosuch.size());
-        for (long _iter485 : struct.nosuch)
+        for (long _iter501 : struct.nosuch)
         {
-          oprot.writeI64(_iter485);
+          oprot.writeI64(_iter501);
         }
       }
     }
@@ -560,24 +560,24 @@ public class HeartbeatTxnRangeResponse implements org.apache.thrift.TBase<Heartb
     public void read(org.apache.thrift.protocol.TProtocol prot, HeartbeatTxnRangeResponse struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       {
-        org.apache.thrift.protocol.TSet _set486 = new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.I64, iprot.readI32());
-        struct.aborted = new HashSet<Long>(2*_set486.size);
-        long _elem487;
-        for (int _i488 = 0; _i488 < _set486.size; ++_i488)
+        org.apache.thrift.protocol.TSet _set502 = new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.I64, iprot.readI32());
+        struct.aborted = new HashSet<Long>(2*_set502.size);
+        long _elem503;
+        for (int _i504 = 0; _i504 < _set502.size; ++_i504)
         {
-          _elem487 = iprot.readI64();
-          struct.aborted.add(_elem487);
+          _elem503 = iprot.readI64();
+          struct.aborted.add(_elem503);
         }
       }
       struct.setAbortedIsSet(true);
       {
-        org.apache.thrift.protocol.TSet _set489 = new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.I64, iprot.readI32());
-        struct.nosuch = new HashSet<Long>(2*_set489.size);
-        long _elem490;
-        for (int _i491 = 0; _i491 < _set489.size; ++_i491)
+        org.apache.thrift.protocol.TSet _set505 = new org.apache.thrift.protocol.TSet(org.apache.thrift.protocol.TType.I64, iprot.readI32());
+        struct.nosuch = new HashSet<Long>(2*_set505.size);
+        long _elem506;
+        for (int _i507 = 0; _i507 < _set505.size; ++_i507)
         {
-          _elem490 = iprot.readI64();
-          struct.nosuch.add(_elem490);
+          _elem506 = iprot.readI64();
+          struct.nosuch.add(_elem506);
         }
       }
       struct.setNosuchIsSet(true);

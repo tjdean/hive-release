@@ -32,6 +32,7 @@ import org.apache.hadoop.hive.ql.parse.repl.load.message.RenameTableHandler;
 import org.apache.hadoop.hive.ql.parse.repl.load.message.TableHandler;
 import org.apache.hadoop.hive.ql.parse.repl.load.message.TruncatePartitionHandler;
 import org.apache.hadoop.hive.ql.parse.repl.load.message.TruncateTableHandler;
+import org.apache.hadoop.hive.ql.parse.repl.load.message.UpdatePartColStatHandler;
 import org.apache.hadoop.hive.ql.parse.repl.load.message.UpdateTableColStatHandler;
 
 public enum DumpType {
@@ -153,6 +154,10 @@ public enum DumpType {
   EVENT_UPDATE_TABLE_COL_STAT("EVENT_UPDATE_TABLE_COL_STAT") {
     @Override
     public MessageHandler handler() {return new UpdateTableColStatHandler(); }
+  },
+  EVENT_UPDATE_PART_COL_STAT("EVENT_UPDATE_PART_COL_STAT") {
+    @Override
+    public MessageHandler handler() {return new UpdatePartColStatHandler(); }
   };
 
   String type = null;

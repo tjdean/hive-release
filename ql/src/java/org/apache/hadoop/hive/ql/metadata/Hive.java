@@ -1451,17 +1451,19 @@ public class Hive {
    * @param isSkewedStoreAsSubdir
    * @param isSrcLocal
    * @param isAcid
-   * @param hasFollowingStatsTask
+   * @param resetStatistics
+   *          if true, reset the statistics. If false, do not reset statistics.
+   * @param inReplicationScope true if load is part of replication, false otherwise.
    * @return
    * @throws HiveException
    */
   public void loadPartition(Path loadPath, String tableName,
-      Map<String, String> partSpec, LoadFileType loadFileType,
-      boolean inheritTableSpecs, boolean isSkewedStoreAsSubdir,
-      boolean isSrcLocal, boolean isAcid, boolean hasFollowingStatsTask) throws HiveException {
+      Map<String, String> partSpec, LoadFileType loadFileType, boolean inheritTableSpecs,
+      boolean isSkewedStoreAsSubdir, boolean isSrcLocal, boolean isAcid, boolean resetStatistics,
+      boolean inReplicationScope) throws HiveException {
     Table tbl = getTable(tableName);
     loadPartition(loadPath, tbl, partSpec, loadFileType, inheritTableSpecs,
-        isSkewedStoreAsSubdir, isSrcLocal, isAcid, hasFollowingStatsTask);
+            isSkewedStoreAsSubdir, isSrcLocal, isAcid, resetStatistics, inReplicationScope);
   }
 
   /**
@@ -1485,14 +1487,16 @@ public class Hive {
    *          If the source directory is LOCAL
    * @param isAcid
    *          true if this is an ACID operation
-   * @param hasFollowingStatsTask
-   *          true if there is a following task which updates the stats, so, this method need not update.
+   * @param resetStatistics
+   *          if true, reset the statistics. Do not reset statistics if false.
+   * @param inReplicationScope true if load is being run as part of replication. false otherwise.
    * @return Partition object being loaded with data
    */
   public Partition loadPartition(Path loadPath, Table tbl,
-      Map<String, String> partSpec, LoadFileType loadFileType,
-      boolean inheritTableSpecs, boolean isSkewedStoreAsSubdir,
-      boolean isSrcLocal, boolean isAcid, boolean hasFollowingStatsTask) throws HiveException {
+                                 Map<String, String> partSpec, LoadFileType loadFileType,
+                                 boolean inheritTableSpecs, boolean isSkewedStoreAsSubdir,
+                                 boolean isSrcLocal, boolean isAcid, boolean resetStatistics,
+                                  boolean inReplicationScope) throws HiveException {
 
     Path tblDataLocationPath =  tbl.getDataLocation();
     try {
@@ -1568,8 +1572,11 @@ public class Hive {
                 + "partition that does not exist yet. Skipping generating INSERT event.");
       }
 
-      // column stats will be inaccurate
-      StatsSetupConst.clearColumnStatsState(newTPart.getParameters());
+      // column stats will be inaccurate if we are not replicating. During replication we
+      // replicate the stats as well, so the stats will be accurate.
+      if (!inReplicationScope) {
+        StatsSetupConst.clearColumnStatsState(newTPart.getParameters());
+      }
 
       // recreate the partition if it existed before
       if (isSkewedStoreAsSubdir) {
@@ -1611,10 +1618,10 @@ public class Hive {
           //  insert into table T partition (ds) values ('Joe', 'today'); -- will fail with AlreadyExistsException
           // In that case, we want to retry with alterPartition.
           LOG.debug("Caught AlreadyExistsException, trying to alter partition instead");
-          setStatsPropAndAlterPartition(hasFollowingStatsTask, tbl, newTPart);
+          setStatsPropAndAlterPartition(resetStatistics, tbl, newTPart);
         }
       } else {
-        setStatsPropAndAlterPartition(hasFollowingStatsTask, tbl, newTPart);
+        setStatsPropAndAlterPartition(resetStatistics, tbl, newTPart);
       }
       return newTPart;
     } catch (IOException e) {
@@ -1632,10 +1639,10 @@ public class Hive {
     }
   }
 
-  private void setStatsPropAndAlterPartition(boolean hasFollowingStatsTask, Table tbl,
+  private void setStatsPropAndAlterPartition(boolean resetStatistics, Table tbl,
       Partition newTPart) throws MetaException, TException {
     EnvironmentContext environmentContext = null;
-    if (hasFollowingStatsTask) {
+    if (!resetStatistics) {
       environmentContext = new EnvironmentContext();
       environmentContext.putToProperties(StatsSetupConst.DO_NOT_UPDATE_STATS, StatsSetupConst.TRUE);
     }
@@ -1776,6 +1783,8 @@ private void constructOneLBLocationMap(FileStatus fSta,
    * @param listBucketingEnabled
    * @param isAcid true if this is an ACID operation
    * @param txnId txnId, can be 0 unless isAcid == true
+   * @param resetStatistics if true, reset statistics. Do not reset statistics otherwise.
+   * @param inReplicationScope true if load is part of replication, false otherwise.
    * @return partition map details (PartitionSpec and Partition)
    * @throws HiveException
    * @throws JSONException
@@ -1783,7 +1792,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
   public Map<Map<String, String>, Partition> loadDynamicPartitions(final Path loadPath,
       final String tableName, final Map<String, String> partSpec, final LoadFileType loadFileType,
       final int numDP, final boolean listBucketingEnabled, final boolean isAcid, final long txnId,
-      final boolean hasFollowingStatsTask, final AcidUtils.Operation operation)
+      final boolean resetStatistics, final AcidUtils.Operation operation, boolean inReplicationScope)
       throws HiveException {
 
     final Map<Map<String, String>, Partition> partitionsMap =
@@ -1830,7 +1839,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
               // load the partition
               Partition newPartition = loadPartition(partPath, tbl, fullPartSpec,
                   loadFileType, true, listBucketingEnabled,
-                  false, isAcid, hasFollowingStatsTask);
+                  false, isAcid, resetStatistics, inReplicationScope);
               partitionsMap.put(fullPartSpec, newPartition);
 
               // Add embedded rawstore, so we can cleanup later to avoid memory leak
@@ -1848,7 +1857,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
                   + " loadFileType=" + loadFileType.toString() + ", "
                   + " listBucketingEnabled=" + listBucketingEnabled + ", "
                   + " isAcid=" + isAcid + ", "
-                  + " hasFollowingStatsTask=" + hasFollowingStatsTask, t);
+                  + " resetStatistics=" + resetStatistics, t);
               throw t;
             }
           }
@@ -1910,9 +1919,11 @@ private void constructOneLBLocationMap(FileStatus fSta,
    *          if list bucketing enabled
    * @param isAcid true if this is an ACID based write
    * @param resetStatistics should reset statistics as part of move.
+   * @param inReplicationScope true if load is happening as part of replication, false otherwise.
    */
   public void loadTable(Path loadPath, String tableName, LoadFileType loadFileType, boolean isSrcLocal,
-                        boolean isSkewedStoreAsSubdir, boolean isAcid, boolean resetStatistics)
+                        boolean isSkewedStoreAsSubdir, boolean isAcid, boolean resetStatistics,
+                        boolean inReplicationScope)
       throws HiveException {
 
     List<Path> newFiles = null;
@@ -1943,8 +1954,9 @@ private void constructOneLBLocationMap(FileStatus fSta,
       StatsSetupConst.setBasicStatsState(tbl.getParameters(), StatsSetupConst.FALSE);
     }
 
-    //column stats will be inaccurate
-    if (resetStatistics) {
+    //column stats will be inaccurate, if we are not replicating. During replication we also
+    // replicate the resultant statistics changes, if any.
+    if (!inReplicationScope) {
       LOG.debug("Clearing table statistics for " + tbl.getDbName() + "." + tbl.getTableName());
       StatsSetupConst.clearColumnStatsState(tbl.getParameters());
     }
@@ -2040,7 +2052,11 @@ private void constructOneLBLocationMap(FileStatus fSta,
             : getMSC().add_partitions(partsToAdd, addPartitionDesc.isIfNotExists(), true)) {
           out.add(new Partition(tbl, outPart));
         }
-        getMSC().alter_partitions(addPartitionDesc.getDbName(), addPartitionDesc.getTableName(), partsToAlter, null);
+        EnvironmentContext ec = new EnvironmentContext();
+        // In case of replication statistics is obtained from the source, so do not update those
+        // on replica.
+        ec.putToProperties(StatsSetupConst.DO_NOT_UPDATE_STATS, StatsSetupConst.TRUE);
+        getMSC().alter_partitions(addPartitionDesc.getDbName(), addPartitionDesc.getTableName(), partsToAlter, ec);
 
         for ( org.apache.hadoop.hive.metastore.api.Partition outPart :
         getMSC().getPartitionsByNames(addPartitionDesc.getDbName(), addPartitionDesc.getTableName(),part_names)){
@@ -2090,6 +2106,9 @@ private void constructOneLBLocationMap(FileStatus fSta,
     }
     if (addSpec.getSortCols() != null) {
       part.getSd().setSortCols(addSpec.getSortCols());
+    }
+    if (addSpec.getColStats() != null) {
+      part.setColStats(addSpec.getColStats());
     }
     return part;
   }
@@ -2555,6 +2574,23 @@ private void constructOneLBLocationMap(FileStatus fSta,
    */
   public List<Partition> getPartitionsByNames(Table tbl, List<String> partNames)
       throws HiveException {
+    return getPartitionsByNames(tbl, partNames, false);
+  }
+
+  /**
+   * Get all partitions of the table that matches the list of given partition names.
+   *
+   * @param tbl
+   *          object for which partition is needed. Must be partitioned.
+   * @param partNames
+   *          list of partition names
+   * @param getColStats
+   *          if true, Partition object includes column statistics for that partition.
+   * @return list of partition objects
+   * @throws HiveException
+   */
+  public List<Partition> getPartitionsByNames(Table tbl, List<String> partNames, boolean getColStats)
+      throws HiveException {
 
     if (!tbl.isPartitioned()) {
       throw new HiveException(ErrorMsg.TABLE_NOT_PARTITIONED, tbl.getTableName());
@@ -2570,7 +2606,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
       for (int i = 0; i < nBatches; ++i) {
         List<org.apache.hadoop.hive.metastore.api.Partition> tParts =
           getMSC().getPartitionsByNames(tbl.getDbName(), tbl.getTableName(),
-          partNames.subList(i*batchSize, (i+1)*batchSize));
+            partNames.subList(i*batchSize, (i+1)*batchSize), getColStats);
         if (tParts != null) {
           for (org.apache.hadoop.hive.metastore.api.Partition tpart: tParts) {
             partitions.add(new Partition(tbl, tpart));
@@ -2581,7 +2617,7 @@ private void constructOneLBLocationMap(FileStatus fSta,
       if (nParts > nBatches * batchSize) {
         List<org.apache.hadoop.hive.metastore.api.Partition> tParts =
           getMSC().getPartitionsByNames(tbl.getDbName(), tbl.getTableName(),
-          partNames.subList(nBatches*batchSize, nParts));
+            partNames.subList(nBatches*batchSize, nParts), getColStats);
         if (tParts != null) {
           for (org.apache.hadoop.hive.metastore.api.Partition tpart: tParts) {
             partitions.add(new Partition(tbl, tpart));

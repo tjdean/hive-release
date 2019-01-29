@@ -288,7 +288,8 @@ struct Partition {
   5: i32          lastAccessTime,
   6: StorageDescriptor   sd,
   7: map<string, string> parameters,
-  8: optional PrincipalPrivilegeSet privileges
+  8: optional PrincipalPrivilegeSet privileges,
+  9: optional ColumnStatistics colStats;
 }
 
 struct PartitionWithoutSD {
@@ -298,6 +299,17 @@ struct PartitionWithoutSD {
   4: string       relativePath,
   5: map<string, string> parameters,
   6: optional PrincipalPrivilegeSet privileges
+}
+
+struct GetPartitionsByNamesRequest {
+  1: required string db_name,
+  2: required string tbl_name,
+  3: optional list<string> names,
+  4: optional bool get_col_stats
+}
+
+struct GetPartitionsByNamesResult {
+  1: required list<Partition> partitions
 }
 
 struct PartitionSpecWithSharedSD {
@@ -1066,6 +1078,8 @@ service ThriftHiveMetastore extends fb303.FacebookService
   // get partitions give a list of partition names
   list<Partition> get_partitions_by_names(1:string db_name 2:string tbl_name 3:list<string> names)
                        throws(1:MetaException o1, 2:NoSuchObjectException o2)
+  GetPartitionsByNamesResult get_partitions_by_names_req(1:GetPartitionsByNamesRequest req)
+                        throws(1:MetaException o1, 2:NoSuchObjectException o2)
 
   // changes the partition to the new partition object. partition is identified from the part values
   // in the new_part

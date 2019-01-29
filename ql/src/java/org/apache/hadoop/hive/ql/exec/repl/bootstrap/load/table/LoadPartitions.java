@@ -272,6 +272,7 @@ public class LoadPartitions {
     MoveWork moveWork =
         new MoveWork(new HashSet<>(), new HashSet<>(), loadTableWork, null,
             false, context.sessionStateLineageState);
+    moveWork.setIsInReplicationScope(event.replicationSpec().isInReplicationScope());
     return TaskFactory.get(moveWork, context.hiveConf, true);
   }
 

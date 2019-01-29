@@ -1291,8 +1291,18 @@ public class HiveMetaStoreClient implements IMetaStoreClient {
   @Override
   public List<Partition> getPartitionsByNames(String db_name, String tbl_name,
       List<String> part_names) throws NoSuchObjectException, MetaException, TException {
+    return getPartitionsByNames(db_name, tbl_name, part_names, false);
+  }
+
+  @Override
+  public List<Partition> getPartitionsByNames(String db_name, String tbl_name,
+                                              List<String> part_names, boolean getColStats) throws TException {
+    GetPartitionsByNamesRequest gpbnr =
+            new GetPartitionsByNamesRequest(db_name, tbl_name);
+    gpbnr.setNames(part_names);
+    gpbnr.setGet_col_stats(getColStats);
     return deepCopyPartitions(filterHook.filterPartitions(
-        client.get_partitions_by_names(db_name, tbl_name, part_names)));
+            client.get_partitions_by_names_req(gpbnr).getPartitions()));
   }
 
   @Override

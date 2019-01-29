@@ -30,6 +30,7 @@ import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.util.ReflectionUtils;
 
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Abstract Factory for the construction of HCatalog message instances.
@@ -53,6 +54,7 @@ public abstract class MessageFactory {
   public static final String DROP_INDEX_EVENT = "DROP_INDEX";
   public static final String ALTER_INDEX_EVENT = "ALTER_INDEX";
   public static final String UPDATE_TBL_COL_STAT_EVENT = "UPDATE_TBL_COL_STAT_EVENT";
+  public static final String UPDATE_PART_COL_STAT_EVENT = "UPDATE_PART_COL_STAT_EVENT";
 
 
   private static MessageFactory instance = null;
@@ -257,4 +259,8 @@ public abstract class MessageFactory {
    */
   public abstract UpdateTableColumnStatMessage buildUpdateTableColumnStatMessage(ColumnStatistics colStats,
                                                                                   Table tableObj);
+
+  public abstract UpdatePartitionColumnStatMessage buildUpdatePartitionColumnStatMessage(ColumnStatistics colStats,
+                                                                                List<String> partVals,
+                                                                                Table tableObj);
 }

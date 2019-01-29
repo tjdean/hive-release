@@ -202,6 +202,10 @@ class Partition;
 
 class PartitionWithoutSD;
 
+class GetPartitionsByNamesRequest;
+
+class GetPartitionsByNamesResult;
+
 class PartitionSpecWithSharedSD;
 
 class PartitionListComposingSpec;
@@ -1926,7 +1930,7 @@ inline std::ostream& operator<<(std::ostream& out, const Table& obj)
 }
 
 typedef struct _Partition__isset {
-  _Partition__isset() : values(false), dbName(false), tableName(false), createTime(false), lastAccessTime(false), sd(false), parameters(false), privileges(false) {}
+  _Partition__isset() : values(false), dbName(false), tableName(false), createTime(false), lastAccessTime(false), sd(false), parameters(false), privileges(false), colStats(false) {}
   bool values :1;
   bool dbName :1;
   bool tableName :1;
@@ -1935,6 +1939,7 @@ typedef struct _Partition__isset {
   bool sd :1;
   bool parameters :1;
   bool privileges :1;
+  bool colStats :1;
 } _Partition__isset;
 
 class Partition {
@@ -1954,6 +1959,7 @@ class Partition {
   StorageDescriptor sd;
   std::map<std::string, std::string>  parameters;
   PrincipalPrivilegeSet privileges;
+  ColumnStatistics colStats;
 
   _Partition__isset __isset;
 
@@ -1972,6 +1978,8 @@ class Partition {
   void __set_parameters(const std::map<std::string, std::string> & val);
 
   void __set_privileges(const PrincipalPrivilegeSet& val);
+
+  void __set_colStats(const ColumnStatistics& val);
 
   bool operator == (const Partition & rhs) const
   {
@@ -1992,6 +2000,10 @@ class Partition {
     if (__isset.privileges != rhs.__isset.privileges)
       return false;
     else if (__isset.privileges && !(privileges == rhs.privileges))
+      return false;
+    if (__isset.colStats != rhs.__isset.colStats)
+      return false;
+    else if (__isset.colStats && !(colStats == rhs.colStats))
       return false;
     return true;
   }
@@ -2088,6 +2100,112 @@ class PartitionWithoutSD {
 void swap(PartitionWithoutSD &a, PartitionWithoutSD &b);
 
 inline std::ostream& operator<<(std::ostream& out, const PartitionWithoutSD& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+typedef struct _GetPartitionsByNamesRequest__isset {
+  _GetPartitionsByNamesRequest__isset() : names(false), get_col_stats(false) {}
+  bool names :1;
+  bool get_col_stats :1;
+} _GetPartitionsByNamesRequest__isset;
+
+class GetPartitionsByNamesRequest {
+ public:
+
+  GetPartitionsByNamesRequest(const GetPartitionsByNamesRequest&);
+  GetPartitionsByNamesRequest& operator=(const GetPartitionsByNamesRequest&);
+  GetPartitionsByNamesRequest() : db_name(), tbl_name(), get_col_stats(0) {
+  }
+
+  virtual ~GetPartitionsByNamesRequest() throw();
+  std::string db_name;
+  std::string tbl_name;
+  std::vector<std::string>  names;
+  bool get_col_stats;
+
+  _GetPartitionsByNamesRequest__isset __isset;
+
+  void __set_db_name(const std::string& val);
+
+  void __set_tbl_name(const std::string& val);
+
+  void __set_names(const std::vector<std::string> & val);
+
+  void __set_get_col_stats(const bool val);
+
+  bool operator == (const GetPartitionsByNamesRequest & rhs) const
+  {
+    if (!(db_name == rhs.db_name))
+      return false;
+    if (!(tbl_name == rhs.tbl_name))
+      return false;
+    if (__isset.names != rhs.__isset.names)
+      return false;
+    else if (__isset.names && !(names == rhs.names))
+      return false;
+    if (__isset.get_col_stats != rhs.__isset.get_col_stats)
+      return false;
+    else if (__isset.get_col_stats && !(get_col_stats == rhs.get_col_stats))
+      return false;
+    return true;
+  }
+  bool operator != (const GetPartitionsByNamesRequest &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const GetPartitionsByNamesRequest & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(GetPartitionsByNamesRequest &a, GetPartitionsByNamesRequest &b);
+
+inline std::ostream& operator<<(std::ostream& out, const GetPartitionsByNamesRequest& obj)
+{
+  obj.printTo(out);
+  return out;
+}
+
+
+class GetPartitionsByNamesResult {
+ public:
+
+  GetPartitionsByNamesResult(const GetPartitionsByNamesResult&);
+  GetPartitionsByNamesResult& operator=(const GetPartitionsByNamesResult&);
+  GetPartitionsByNamesResult() {
+  }
+
+  virtual ~GetPartitionsByNamesResult() throw();
+  std::vector<Partition>  partitions;
+
+  void __set_partitions(const std::vector<Partition> & val);
+
+  bool operator == (const GetPartitionsByNamesResult & rhs) const
+  {
+    if (!(partitions == rhs.partitions))
+      return false;
+    return true;
+  }
+  bool operator != (const GetPartitionsByNamesResult &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const GetPartitionsByNamesResult & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+  virtual void printTo(std::ostream& out) const;
+};
+
+void swap(GetPartitionsByNamesResult &a, GetPartitionsByNamesResult &b);
+
+inline std::ostream& operator<<(std::ostream& out, const GetPartitionsByNamesResult& obj)
 {
   obj.printTo(out);
   return out;

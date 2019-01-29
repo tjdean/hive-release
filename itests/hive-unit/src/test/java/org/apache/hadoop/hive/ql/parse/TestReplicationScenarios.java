@@ -366,7 +366,7 @@ public class TestReplicationScenarios {
     run("insert into table " + dbName + ".t2 partition(country='india') values ('delhi')");
     dump = replDumpDb(dbName, dump.lastReplId, null, null);
 
-    //no partition task should be added as the operation is inserting into an existing partition
+    // no partition task should be added as the operation is inserting into an existing partition.
     task = getReplLoadRootTask(dbNameReplica, true, dump);
     assertEquals(true, hasMoveTask(task));
     assertEquals(false, hasPartitionTask(task));

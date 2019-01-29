@@ -351,13 +351,13 @@ public class AbortTxnsRequest implements org.apache.thrift.TBase<AbortTxnsReques
           case 1: // TXN_IDS
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list452 = iprot.readListBegin();
-                struct.txn_ids = new ArrayList<Long>(_list452.size);
-                long _elem453;
-                for (int _i454 = 0; _i454 < _list452.size; ++_i454)
+                org.apache.thrift.protocol.TList _list468 = iprot.readListBegin();
+                struct.txn_ids = new ArrayList<Long>(_list468.size);
+                long _elem469;
+                for (int _i470 = 0; _i470 < _list468.size; ++_i470)
                 {
-                  _elem453 = iprot.readI64();
-                  struct.txn_ids.add(_elem453);
+                  _elem469 = iprot.readI64();
+                  struct.txn_ids.add(_elem469);
                 }
                 iprot.readListEnd();
               }
@@ -383,9 +383,9 @@ public class AbortTxnsRequest implements org.apache.thrift.TBase<AbortTxnsReques
         oprot.writeFieldBegin(TXN_IDS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, struct.txn_ids.size()));
-          for (long _iter455 : struct.txn_ids)
+          for (long _iter471 : struct.txn_ids)
           {
-            oprot.writeI64(_iter455);
+            oprot.writeI64(_iter471);
           }
           oprot.writeListEnd();
         }
@@ -410,9 +410,9 @@ public class AbortTxnsRequest implements org.apache.thrift.TBase<AbortTxnsReques
       TTupleProtocol oprot = (TTupleProtocol) prot;
       {
         oprot.writeI32(struct.txn_ids.size());
-        for (long _iter456 : struct.txn_ids)
+        for (long _iter472 : struct.txn_ids)
         {
-          oprot.writeI64(_iter456);
+          oprot.writeI64(_iter472);
         }
       }
     }
@@ -421,13 +421,13 @@ public class AbortTxnsRequest implements org.apache.thrift.TBase<AbortTxnsReques
     public void read(org.apache.thrift.protocol.TProtocol prot, AbortTxnsRequest struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
       {
-        org.apache.thrift.protocol.TList _list457 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, iprot.readI32());
-        struct.txn_ids = new ArrayList<Long>(_list457.size);
-        long _elem458;
-        for (int _i459 = 0; _i459 < _list457.size; ++_i459)
+        org.apache.thrift.protocol.TList _list473 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.I64, iprot.readI32());
+        struct.txn_ids = new ArrayList<Long>(_list473.size);
+        long _elem474;
+        for (int _i475 = 0; _i475 < _list473.size; ++_i475)
         {
-          _elem458 = iprot.readI64();
-          struct.txn_ids.add(_elem458);
+          _elem474 = iprot.readI64();
+          struct.txn_ids.add(_elem474);
         }
       }
       struct.setTxn_idsIsSet(true);

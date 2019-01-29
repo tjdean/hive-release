@@ -53,6 +53,7 @@ import org.apache.hadoop.hive.metastore.messaging.InsertMessage;
 import org.apache.hadoop.hive.metastore.messaging.MessageDeserializer;
 import org.apache.hadoop.hive.metastore.messaging.MessageFactory;
 import org.apache.hadoop.hive.metastore.messaging.PartitionFiles;
+import org.apache.hadoop.hive.metastore.messaging.UpdatePartitionColumnStatMessage;
 import org.apache.hadoop.hive.metastore.messaging.UpdateTableColumnStatMessage;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TDeserializer;
@@ -180,6 +181,14 @@ public class JSONMessageFactory extends MessageFactory {
                                                                         Table tableObj) {
     return new JSONUpdateTableColumnStatMessage(MS_SERVER_URL, MS_SERVICE_PRINCIPAL, now(),
             colStats, tableObj);
+  }
+
+  @Override
+  public UpdatePartitionColumnStatMessage buildUpdatePartitionColumnStatMessage(ColumnStatistics colStats,
+                                                                                List<String> partVals,
+                                                                                Table tableObj) {
+    return new JSONUpdatePartitionColumnStatMessage(MS_SERVER_URL, MS_SERVICE_PRINCIPAL, now(), colStats,
+            partVals,tableObj);
   }
 
   private long now() {

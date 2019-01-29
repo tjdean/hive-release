@@ -58,6 +58,7 @@ import org.apache.hadoop.hive.metastore.events.DropTableEvent;
 import org.apache.hadoop.hive.metastore.events.InsertEvent;
 import org.apache.hadoop.hive.metastore.events.LoadPartitionDoneEvent;
 import org.apache.hadoop.hive.metastore.events.ListenerEvent;
+import org.apache.hadoop.hive.metastore.events.UpdatePartitionColumnStatEvent;
 import org.apache.hadoop.hive.metastore.events.UpdateTableColumnStatEvent;
 import org.apache.hadoop.hive.metastore.messaging.EventMessage.EventType;
 import org.apache.hadoop.hive.metastore.messaging.MessageFactory;
@@ -501,6 +502,18 @@ public class DbNotificationListener extends MetaStoreEventListener {
     event.setDbName(statDesc.getDbName());
     event.setTableName(statDesc.getTableName());
     process(event, updateTableColumnStatEvent);
+  }
+
+  @Override
+  public void onUpdatePartitionColumnStat(UpdatePartitionColumnStatEvent updatePartColStatEvent) throws MetaException {
+    NotificationEvent event = new NotificationEvent(0, now(), EventType.UPDATE_PARTITION_COLUMN_STAT.toString(),
+            msgFactory.buildUpdatePartitionColumnStatMessage(updatePartColStatEvent.getPartColStats(),
+                                                              updatePartColStatEvent.getPartVals(),
+                                                              updatePartColStatEvent.getTableObj()).toString());
+    ColumnStatisticsDesc statDesc = updatePartColStatEvent.getPartColStats().getStatsDesc();
+    event.setDbName(statDesc.getDbName());
+    event.setTableName(statDesc.getTableName());
+    process(event, updatePartColStatEvent);
   }
 
   private int now() {

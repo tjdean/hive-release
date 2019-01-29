@@ -350,14 +350,14 @@ public class PartitionListComposingSpec implements org.apache.thrift.TBase<Parti
           case 1: // PARTITIONS
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list252 = iprot.readListBegin();
-                struct.partitions = new ArrayList<Partition>(_list252.size);
-                Partition _elem253;
-                for (int _i254 = 0; _i254 < _list252.size; ++_i254)
+                org.apache.thrift.protocol.TList _list268 = iprot.readListBegin();
+                struct.partitions = new ArrayList<Partition>(_list268.size);
+                Partition _elem269;
+                for (int _i270 = 0; _i270 < _list268.size; ++_i270)
                 {
-                  _elem253 = new Partition();
-                  _elem253.read(iprot);
-                  struct.partitions.add(_elem253);
+                  _elem269 = new Partition();
+                  _elem269.read(iprot);
+                  struct.partitions.add(_elem269);
                 }
                 iprot.readListEnd();
               }
@@ -383,9 +383,9 @@ public class PartitionListComposingSpec implements org.apache.thrift.TBase<Parti
         oprot.writeFieldBegin(PARTITIONS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.partitions.size()));
-          for (Partition _iter255 : struct.partitions)
+          for (Partition _iter271 : struct.partitions)
           {
-            _iter255.write(oprot);
+            _iter271.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -416,9 +416,9 @@ public class PartitionListComposingSpec implements org.apache.thrift.TBase<Parti
       if (struct.isSetPartitions()) {
         {
           oprot.writeI32(struct.partitions.size());
-          for (Partition _iter256 : struct.partitions)
+          for (Partition _iter272 : struct.partitions)
           {
-            _iter256.write(oprot);
+            _iter272.write(oprot);
           }
         }
       }
@@ -430,14 +430,14 @@ public class PartitionListComposingSpec implements org.apache.thrift.TBase<Parti
       BitSet incoming = iprot.readBitSet(1);
       if (incoming.get(0)) {
         {
-          org.apache.thrift.protocol.TList _list257 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-          struct.partitions = new ArrayList<Partition>(_list257.size);
-          Partition _elem258;
-          for (int _i259 = 0; _i259 < _list257.size; ++_i259)
+          org.apache.thrift.protocol.TList _list273 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+          struct.partitions = new ArrayList<Partition>(_list273.size);
+          Partition _elem274;
+          for (int _i275 = 0; _i275 < _list273.size; ++_i275)
           {
-            _elem258 = new Partition();
-            _elem258.read(iprot);
-            struct.partitions.add(_elem258);
+            _elem274 = new Partition();
+            _elem274.read(iprot);
+            struct.partitions.add(_elem274);
           }
         }
         struct.setPartitionsIsSet(true);

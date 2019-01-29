@@ -49,6 +49,7 @@ import org.apache.hadoop.hive.metastore.api.FieldSchema;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Order;
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.txn.TxnUtils;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.exec.ReplCopyTask;
 import org.apache.hadoop.hive.ql.exec.Task;
@@ -281,9 +282,6 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
       AddPartitionDesc partsDesc =
           getBaseAddPartitionDescFromPartition(fromPath, dbname, tblDesc, partition,
               replicationSpec, x.getConf());
-      if (inReplicationScope){
-        StatsSetupConst.setBasicStatsState(partsDesc.getPartition(0).getPartParams(), StatsSetupConst.FALSE);
-      }
       partitionDescs.add(partsDesc);
     }
 
@@ -980,20 +978,24 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
       Task t = createTableTask(tblDesc, x);
       table = new Table(tblDesc.getDatabaseName(), tblDesc.getTableName());
 
-      if (!replicationSpec.isMetadataOnly()) {
-        if (isPartitioned(tblDesc)) {
-          for (AddPartitionDesc addPartitionDesc : partitionDescs) {
-            addPartitionDesc.setReplicationSpec(replicationSpec);
+      if (isPartitioned(tblDesc)) {
+        for (AddPartitionDesc addPartitionDesc : partitionDescs) {
+          addPartitionDesc.setReplicationSpec(replicationSpec);
+          if (!replicationSpec.isMetadataOnly()) {
             t.addDependentTask(
                 addSinglePartition(tblDesc, table, wh, addPartitionDesc, replicationSpec, x));
-            if (updatedMetadata != null) {
-              updatedMetadata.addPartition(addPartitionDesc.getPartition(0).getPartSpec());
-            }
+          } else {
+            t.addDependentTask(alterSinglePartition(tblDesc, table, wh, addPartitionDesc,
+                    replicationSpec, null, x));
           }
-        } else {
-          x.getLOG().debug("adding dependent CopyWork/MoveWork for table");
-          t.addDependentTask(loadTable(fromURI, table, replicationSpec.isReplace(), new Path(tblDesc.getLocation()),replicationSpec, x));
+          if (updatedMetadata != null) {
+            updatedMetadata.addPartition(addPartitionDesc.getPartition(0).getPartSpec());
+          }
         }
+      } else if (!replicationSpec.isMetadataOnly()) {
+        x.getLOG().debug("adding dependent CopyWork/MoveWork for table");
+        t.addDependentTask(loadTable(fromURI, table, replicationSpec.isReplace(),
+                new Path(tblDesc.getLocation()), replicationSpec, x));
       }
 
       if (dropTblTask != null) {

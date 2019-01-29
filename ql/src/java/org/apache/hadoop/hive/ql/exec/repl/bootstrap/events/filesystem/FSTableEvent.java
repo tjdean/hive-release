@@ -23,6 +23,8 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.Warehouse;
+import org.apache.hadoop.hive.metastore.api.ColumnStatistics;
+import org.apache.hadoop.hive.metastore.api.ColumnStatisticsDesc;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.ql.exec.repl.bootstrap.events.TableEvent;
 import org.apache.hadoop.hive.ql.metadata.Table;
@@ -128,6 +130,14 @@ public class FSTableEvent implements TableEvent {
             Warehouse.makePartName(tblDesc.getPartCols(), partition.getValues())).toString());
       }
       partsDesc.setReplicationSpec(replicationSpec());
+
+      if (partition.isSetColStats()) {
+        ColumnStatistics colStats = partition.getColStats();
+        ColumnStatisticsDesc colStatsDesc = new ColumnStatisticsDesc(colStats.getStatsDesc());
+        colStatsDesc.setTableName(tblDesc.getTableName());
+        colStatsDesc.setDbName(tblDesc.getDatabaseName());
+        partDesc.setColStats(new ColumnStatistics(colStatsDesc, colStats.getStatsObj()));
+      }
       return partsDesc;
     } catch (Exception e) {
       throw new SemanticException(e);

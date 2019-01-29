@@ -23,7 +23,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-
 /**
  * PartitionIterable - effectively a lazy Iterable<Partition>
  *
@@ -98,7 +97,7 @@ public class PartitionIterable implements Iterable<Partition> {
           batch_counter++;
         }
         try {
-          batchIter = db.getPartitionsByNames(table,nameBatch).iterator();
+          batchIter = db.getPartitionsByNames(table, nameBatch, getColStats).iterator();
         } catch (HiveException e) {
           throw new RuntimeException(e);
         }
@@ -128,6 +127,7 @@ public class PartitionIterable implements Iterable<Partition> {
   private Map<String, String> partialPartitionSpec = null;
   private List<String> partitionNames = null;
   private int batch_size;
+  private boolean getColStats = false;
 
   /**
    * Dummy constructor, which simply acts as an iterator on an already-present
@@ -144,12 +144,22 @@ public class PartitionIterable implements Iterable<Partition> {
    * a Hive object and a table object, and a partial partition spec.
    */
   public PartitionIterable(Hive db, Table table, Map<String, String> partialPartitionSpec,
-      int batch_size) throws HiveException {
+                           int batch_size) throws HiveException {
+    this(db, table, partialPartitionSpec, batch_size, false);
+  }
+
+  /**
+   * Primary constructor that fetches all partitions in a given table, given
+   * a Hive object and a table object, and a partial partition spec.
+   */
+  public PartitionIterable(Hive db, Table table, Map<String, String> partialPartitionSpec,
+                           int batch_size, boolean getColStats) throws HiveException {
     this.currType = Type.LAZY_FETCH_PARTITIONS;
     this.db = db;
     this.table = table;
     this.partialPartitionSpec = partialPartitionSpec;
     this.batch_size = batch_size;
+    this.getColStats = getColStats;
 
     if (this.partialPartitionSpec == null){
       partitionNames = db.getPartitionNames(
