@@ -996,6 +996,9 @@ public class HiveServer2 extends CompositeService {
 
   public void startPrivilegeSynchonizer(HiveConf hiveConf) throws Exception {
 
+    if (!HiveConf.getBoolVar(hiveConf, ConfVars.HIVE_PRIVILEGE_SYNCHRONIZER)) {
+      return;
+    }
     PolicyProviderContainer policyContainer = new PolicyProviderContainer();
     HiveAuthorizer authorizer = SessionState.get().getAuthorizerV2();
     if (authorizer.getHivePolicyProvider() != null) {
