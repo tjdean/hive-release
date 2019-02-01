@@ -17,15 +17,17 @@
  */
 package org.apache.hadoop.hive.ql.exec.repl.util;
 
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.PathFilter;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.TableType;
 import org.apache.hadoop.hive.metastore.api.InvalidOperationException;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.exec.TaskFactory;
+import org.apache.hadoop.hive.ql.exec.repl.ReplStateLogWork;
 import org.apache.hadoop.hive.ql.metadata.Table;
 import org.apache.hadoop.hive.ql.parse.DDLSemanticAnalyzer;
-import org.apache.hadoop.hive.ql.exec.repl.ReplStateLogWork;
 import org.apache.hadoop.hive.ql.parse.SemanticException;
 import org.apache.hadoop.hive.ql.parse.repl.ReplLogger;
 import org.apache.hadoop.hive.ql.plan.AlterTableDesc;
@@ -38,6 +40,7 @@ import org.apache.hadoop.hive.ql.stats.StatsUtils;
 import org.apache.hadoop.hive.serde2.typeinfo.PrimitiveTypeInfo;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,9 +48,16 @@ import java.util.List;
 import java.util.Map;
 
 
+
 public class ReplUtils {
 
+  public static final String LAST_REPL_ID_KEY = "hive.repl.last.repl.id";
   public static final String REPL_CHECKPOINT_KEY = "hive.repl.ckpt.key";
+
+  public static final String FUNCTIONS_ROOT_DIR_NAME = "_functions";
+
+  // Root directory for dumping bootstrapped tables along with incremental events dump.
+  public static final String INC_BOOTSTRAP_ROOT_DIR_NAME = "_bootstrap";
 
   /**
    * Bootstrap REPL LOAD operation type on the examined object based on ckpt state.
@@ -122,5 +132,16 @@ public class ReplUtils {
               props.get(REPL_CHECKPOINT_KEY)));
     }
     return false;
+  }
+
+  // Path filters to filter only events (directories) excluding "_bootstrap"
+  public static PathFilter getEventsDirectoryFilter(final FileSystem fs) {
+    return p -> {
+      try {
+        return fs.isDirectory(p) && !p.getName().equalsIgnoreCase(ReplUtils.INC_BOOTSTRAP_ROOT_DIR_NAME);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    };
   }
 }

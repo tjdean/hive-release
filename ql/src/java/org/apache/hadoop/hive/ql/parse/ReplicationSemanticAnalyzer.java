@@ -86,8 +86,6 @@ public class ReplicationSemanticAnalyzer extends BaseSemanticAnalyzer {
   private static String testInjectDumpDir = null; // unit tests can overwrite this to affect default dump behaviour
   private static final String dumpSchema = "dump_dir,last_repl_id#string,string";
 
-  public static final String FUNCTIONS_ROOT_DIR_NAME = "_functions";
-
   ReplicationSemanticAnalyzer(HiveConf conf) throws SemanticException {
     super(conf);
     this.db = super.db;

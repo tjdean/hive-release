@@ -298,10 +298,10 @@ public class HiveConf extends Configuration {
     REPL_FUNCTIONS_ROOT_DIR("hive.repl.replica.functions.root.dir","/user/hive/repl/functions/",
         "Root directory on the replica warehouse where the repl sub-system will store jars from the primary warehouse"),
     REPL_APPROX_MAX_LOAD_TASKS("hive.repl.approx.max.load.tasks", 10000,
-            "Provide an approximation of the maximum number of tasks that should be executed before \n"
-                    + "dynamically generating the next set of tasks. The number is approximate as Hive \n"
-                    + "will stop at a slightly higher number, the reason being some events might lead to a \n"
-                    + "task increment that would cross the specified limit."),
+        "Provide an approximation of the maximum number of tasks that should be executed before \n"
+            + "dynamically generating the next set of tasks. The number is approximate as Hive \n"
+            + "will stop at a slightly higher number, the reason being some events might lead to a \n"
+            + "task increment that would cross the specified limit."),
     REPL_PARTITIONS_DUMP_PARALLELISM("hive.repl.partitions.dump.parallelism",100,
         "Number of threads that will be used to dump partition data information during repl dump."),
     REPL_DUMPDIR_CLEAN_FREQ("hive.repl.dumpdir.clean.freq", "0s",
@@ -311,35 +311,44 @@ public class HiveConf extends Configuration {
         new TimeValidator(TimeUnit.DAYS),
         "TTL of dump dirs before cleanup."),
     REPL_DUMP_METADATA_ONLY("hive.repl.dump.metadata.only", false,
-            "Indicates whether replication dump only metadata information or data + metadata. \n"
-                    + "This config makes hive.repl.include.external.tables config ineffective."),
+        "Indicates whether replication dump only metadata information or data + metadata. \n"
+          + "This config makes hive.repl.include.external.tables config ineffective."),
     REPL_DUMP_INCLUDE_ACID_TABLES("hive.repl.dump.include.acid.tables", false,
         "Indicates if repl dump should include information about ACID tables. It should be \n"
             + "used in conjunction with 'hive.repl.dump.metadata.only' to enable copying of \n"
             + "metadata for acid tables which do not require the corresponding transaction \n"
             + "semantics to be applied on target. This can be removed when ACID table \n"
             + "replication is supported."),
-    REPL_INCLUDE_EXTERNAL_TABLES("hive.repl.include.external.tables", false,
-        "Indicates if repl dump should include information about external tables. It should be \n"
-        + "used in conjunction with 'hive.repl.dump.metadata.only' set to false. if 'hive.repl.dump.metadata.only' \n"
-        + " is set to true then this config parameter has no effect as external table meta data is flushed \n"
-        + " always by default."),
     //https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/TransparentEncryption.html#Running_as_the_superuser
     REPL_ADD_RAW_RESERVED_NAMESPACE("hive.repl.add.raw.reserved.namespace", false,
         "For TDE with same encryption keys on source and target, allow Distcp super user to access \n"
             + "the raw bytes from filesystem without decrypting on source and then encrypting on target."),
+    REPL_INCLUDE_EXTERNAL_TABLES("hive.repl.include.external.tables", false,
+        "Indicates if repl dump should include information about external tables. It should be \n"
+          + "used in conjunction with 'hive.repl.dump.metadata.only' set to false. if 'hive.repl.dump.metadata.only' \n"
+          + " is set to true then this config parameter has no effect as external table meta data is flushed \n"
+          + " always by default. If this config parameter is enabled on an on-going replication policy which is in\n"
+          + " incremental phase, then need to set 'hive.repl.bootstrap.external.tables' to true for the first \n"
+          + " repl dump to bootstrap all external tables."),
+    REPL_BOOTSTRAP_EXTERNAL_TABLES("hive.repl.bootstrap.external.tables", false,
+        "Indicates if repl dump should bootstrap the information about external tables along with incremental \n"
+          + "dump for replication. It is recommended to keep this config parameter as false always and should be \n"
+          + "set to true only via WITH clause of REPL DUMP command. It should be used in conjunction with \n"
+          + "'hive.repl.include.external.tables' when sets to true. If 'hive.repl.include.external.tables' is \n"
+          + "set to false, then this config parameter has no effect. It should be set to true only once for \n"
+          + "incremental repl dump on each existing replication policy after enabling external tables replication."),
     REPL_ENABLE_MOVE_OPTIMIZATION("hive.repl.enable.move.optimization", false,
-        "If its set to true, REPL LOAD copies data files directly to the target table/partition location \n"
-        + "instead of copying to staging directory first and then move to target location. This optimizes \n"
-        + " the REPL LOAD on object data stores such as S3 or WASB where creating a directory and move \n"
-        + " files are costly operations. In file system like HDFS where move operation is atomic, this \n"
-        + " optimization should not be enabled as it may lead to inconsistent data read for non acid tables."),
+          "If its set to true, REPL LOAD copies data files directly to the target table/partition location \n"
+          + "instead of copying to staging directory first and then move to target location. This optimizes \n"
+          + " the REPL LOAD on object data stores such as S3 or WASB where creating a directory and move \n"
+          + " files are costly operations. In file system like HDFS where move operation is atomic, this \n"
+          + " optimization should not be enabled as it may lead to inconsistent data read for non acid tables."),
     REPL_MOVE_OPTIMIZED_FILE_SCHEMES("hive.repl.move.optimized.scheme", "s3a, wasb",
         "Comma separated list of schemes for which move optimization will be enabled during repl load. \n"
-          + "This configuration overrides the value set using REPL_ENABLE_MOVE_OPTIMIZATION for the given schemes. \n"
-          + " Schemes of the file system which does not support atomic move (rename) can be specified here to \n "
-          + " speed up the repl load operation. In file system like HDFS where move operation is atomic, this \n"
-          + " optimization should not be enabled as it may lead to inconsistent data read for non acid tables."),
+        + "This configuration overrides the value set using REPL_ENABLE_MOVE_OPTIMIZATION for the given schemes. \n"
+        + " Schemes of the file system which does not support atomic move (rename) can be specified here to \n "
+        + " speed up the repl load operation. In file system like HDFS where move operation is atomic, this \n"
+        + " optimization should not be enabled as it may lead to inconsistent data read for non acid tables."),
     REPL_EXTERNAL_TABLE_BASE_DIR("hive.repl.replica.external.table.base.dir", "/",
         "This is the base directory on the target/replica warehouse under which data for "
             + "external tables is stored. This is relative base path and hence prefixed to the source "

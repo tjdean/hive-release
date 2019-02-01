@@ -26,7 +26,6 @@ import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.ql.DriverContext;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.exec.TaskFactory;
-import org.apache.hadoop.hive.ql.exec.repl.ReplLoadWork;
 import org.apache.hadoop.hive.ql.exec.repl.ReplStateLogWork;
 import org.apache.hadoop.hive.ql.exec.repl.util.AddDependencyToLeaves;
 import org.apache.hadoop.hive.ql.exec.repl.util.TaskTracker;
@@ -87,7 +86,7 @@ public class IncrementalLoadTasksBuilder {
   }
 
   public Task<? extends Serializable> build(DriverContext driverContext, Hive hive, Log log,
-      ReplLoadWork loadWork, TaskTracker tracker) throws Exception {
+                                            TaskTracker tracker) throws Exception {
     Task<? extends Serializable> evTaskRoot = TaskFactory.get(new DependencyCollectionWork(), conf, true);
     Task<? extends Serializable> taskChainTail = evTaskRoot;
     Long lastReplayedEvent = null;
@@ -168,9 +167,6 @@ public class IncrementalLoadTasksBuilder {
       log.debug("Added " + taskChainTail.getClass() + ":" + taskChainTail.getId()
               + " as a precursor of barrier task "
               + barrierTask.getClass() + ":" + barrierTask.getId());
-      if (loadWork.getPathsToCopyIterator().hasNext()) {
-        taskChainTail.addDependentTask(TaskFactory.get(loadWork, conf));
-      }
     }
     return evTaskRoot;
   }
@@ -330,6 +326,10 @@ public class IncrementalLoadTasksBuilder {
 
     // At least one task would have been added to update the repl state
     return tasks;
+  }
+
+  public Long eventTo() {
+    return eventTo;
   }
 
   public static long getNumIteration() {

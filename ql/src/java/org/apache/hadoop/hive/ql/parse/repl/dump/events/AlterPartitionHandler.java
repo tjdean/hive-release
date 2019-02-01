@@ -89,7 +89,7 @@ class AlterPartitionHandler extends AbstractEventHandler {
     LOG.info("Processing#{} ALTER_PARTITION message : {}", fromEventId(), event.getMessage());
 
     Table qlMdTable = new Table(tableObject);
-    if (!Utils.shouldReplicate(withinContext.replicationSpec, qlMdTable, withinContext.hiveConf)) {
+    if (!Utils.shouldReplicate(withinContext.replicationSpec, qlMdTable, true, withinContext.hiveConf)) {
       return;
     }
 

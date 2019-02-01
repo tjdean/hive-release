@@ -168,7 +168,7 @@ public class TableExport {
         && AcidUtils.isAcidTable(tableSpec.tableHandle)) {
       return true;
     }
-    return Utils.shouldReplicate(replicationSpec, tableSpec.tableHandle, conf);
+    return Utils.shouldReplicate(replicationSpec, tableSpec.tableHandle, false, conf);
   }
 
   /**

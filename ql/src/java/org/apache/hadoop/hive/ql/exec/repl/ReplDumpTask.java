@@ -34,7 +34,9 @@ import org.apache.hadoop.hive.metastore.messaging.event.filters.DatabaseAndTable
 import org.apache.hadoop.hive.metastore.messaging.event.filters.EventBoundaryFilter;
 import org.apache.hadoop.hive.metastore.messaging.event.filters.MessageFormatFilter;
 import org.apache.hadoop.hive.ql.DriverContext;
+import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.exec.Task;
+import org.apache.hadoop.hive.ql.exec.repl.util.ReplUtils;
 import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.InvalidTableException;
@@ -60,8 +62,6 @@ import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.apache.hadoop.hive.ql.ErrorMsg;
-
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
@@ -70,8 +70,7 @@ import static org.apache.hadoop.hive.ql.exec.repl.ReplExternalTables.Writer;
 
 public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
   private static final String dumpSchema = "dump_dir,last_repl_id#string,string";
-  private static final String FUNCTIONS_ROOT_DIR_NAME = "_functions";
-  private static final String FUNCTION_METADATA_FILE_NAME = "_metadata";
+  private static final String FUNCTION_METADATA_FILE_NAME = EximUtil.METADATA_NAME;
   private static final long SLEEP_TIME = 60000;
 
   private Logger LOG = LoggerFactory.getLogger(ReplDumpTask.class);
@@ -169,18 +168,35 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
     dmd.setDump(DumpType.INCREMENTAL, work.eventFrom, lastReplId, cmRoot);
     dmd.write();
 
-    if (conf.getBoolVar(HiveConf.ConfVars.REPL_INCLUDE_EXTERNAL_TABLES) &&
-        !conf.getBoolVar(HiveConf.ConfVars.REPL_DUMP_METADATA_ONLY)) {
+    // If external tables are enabled for replication and
+    // - If bootstrap is enabled, then need to combine bootstrap dump of external tables.
+    // - If metadata-only dump is enabled, then shall skip dumping external tables data locations to
+    //   _external_tables_info file. If not metadata-only, then dump the data locations.
+    if (conf.getBoolVar(HiveConf.ConfVars.REPL_INCLUDE_EXTERNAL_TABLES)
+        && (!conf.getBoolVar(HiveConf.ConfVars.REPL_DUMP_METADATA_ONLY)
+        || conf.getBoolVar(HiveConf.ConfVars.REPL_BOOTSTRAP_EXTERNAL_TABLES))) {
+      Path dbRoot = getBootstrapDbRoot(dumpRoot, dbName, true);
       try (Writer writer = new Writer(dumpRoot, conf)) {
         for (String tableName : Utils.matchesTbl(hiveDb, dbName, work.tableNameOrPattern)) {
           Table table = hiveDb.getTable(dbName, tableName);
           if (TableType.EXTERNAL_TABLE.equals(table.getTableType())) {
             writer.dataLocationDump(table);
+            if (conf.getBoolVar(HiveConf.ConfVars.REPL_BOOTSTRAP_EXTERNAL_TABLES)) {
+              HiveWrapper.Tuple<Table> tableTuple = new HiveWrapper(hiveDb, dbName).table(table);
+              dumpTable(tableName, dbRoot, hiveDb, tableTuple);
+            }
           }
         }
       }
     }
     return lastReplId;
+  }
+
+  private Path getBootstrapDbRoot(Path dumpRoot, String dbName, boolean isIncrementalPhase) {
+    if (isIncrementalPhase) {
+      dumpRoot = new Path(dumpRoot, ReplUtils.INC_BOOTSTRAP_ROOT_DIR_NAME);
+    }
+    return new Path(dumpRoot, dbName);
   }
 
   private void dumpEvent(NotificationEvent ev, Path evRoot, Path cmRoot, Hive hiveDb) throws Exception {
@@ -218,21 +234,21 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
 
       String uniqueKey = Utils.setDbBootstrapDumpState(hiveDb, dbName);
       Exception caught = null;
+      boolean shouldWriteExternalTableLocationInfo =
+              conf.getBoolVar(HiveConf.ConfVars.REPL_INCLUDE_EXTERNAL_TABLES)
+                      && !conf.getBoolVar(HiveConf.ConfVars.REPL_DUMP_METADATA_ONLY);
       try (Writer writer = new Writer(dbRoot, conf)) {
         for (String tblName : Utils.matchesTbl(hiveDb, dbName, work.tableNameOrPattern)) {
           LOG.debug(
               "analyzeReplDump dumping table: " + tblName + " to db root " + dbRoot.toUri());
           try {
             HiveWrapper.Tuple<Table> tableTuple = new HiveWrapper(hiveDb, dbName).table(tblName);
-            boolean shouldWriteExternalTableLocationInfo =
-                conf.getBoolVar(HiveConf.ConfVars.REPL_INCLUDE_EXTERNAL_TABLES)
-                && TableType.EXTERNAL_TABLE.equals(tableTuple.object.getTableType())
-                && !conf.getBoolVar(HiveConf.ConfVars.REPL_DUMP_METADATA_ONLY);
-            if (shouldWriteExternalTableLocationInfo) {
-              LOG.debug("adding table {} to external tables list", tblName);
+            if (shouldWriteExternalTableLocationInfo
+                    && TableType.EXTERNAL_TABLE.equals(tableTuple.object.getTableType())) {
+              LOG.debug("Adding table {} to external tables list", tblName);
               writer.dataLocationDump(tableTuple.object);
             }
-            dumpTable(dbName, tblName, dbRoot, hiveDb, tableTuple);
+            dumpTable(tblName, dbRoot, hiveDb, tableTuple);
           } catch (InvalidTableException te) {
             // Bootstrap dump shouldn't fail if the table is dropped/renamed while dumping it.
             // Just log a debug message and skip it.
@@ -275,7 +291,7 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
   }
 
   private Path dumpDbMetadata(String dbName, Path dumpRoot, Hive hiveDb) throws Exception {
-    Path dbRoot = new Path(dumpRoot, dbName);
+    Path dbRoot = getBootstrapDbRoot(dumpRoot, dbName, false);
     // TODO : instantiating FS objects are generally costly. Refactor
     FileSystem fs = dbRoot.getFileSystem(conf);
     Path dumpPath = new Path(dbRoot, EximUtil.METADATA_NAME);
@@ -284,14 +300,14 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
     return dbRoot;
   }
 
-  private void dumpTable(String dbName, String tblName, Path dbRoot, 
-      Hive hiveDb, HiveWrapper.Tuple<Table> tuple) throws Exception {
+  private void dumpTable(String tblName, Path dbRoot,
+                         Hive hiveDb, HiveWrapper.Tuple<Table> tuple) throws Exception {
     TableSpec tableSpec = new TableSpec(tuple.object);
     TableExport.Paths exportPaths =
           new TableExport.Paths(work.astRepresentationForErrorMsg, dbRoot, tblName, conf);
     String distCpDoAsUser = conf.getVar(HiveConf.ConfVars.HIVE_DISTCP_DOAS_USER);
     tuple.replicationSpec.setIsReplace(true);  // by default for all other objects this is false
-    new TableExport(exportPaths, tableSpec, tuple.replicationSpec, db, distCpDoAsUser, conf).write();
+    new TableExport(exportPaths, tableSpec, tuple.replicationSpec, hiveDb, distCpDoAsUser, conf).write();
 
     replLogger.tableLog(tblName, tableSpec.tableHandle.getTableType());
   }
@@ -320,7 +336,7 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
   }
 
   private void dumpFunctionMetadata(String dbName, Path dumpRoot, Hive hiveDb) throws Exception {
-    Path functionsRoot = new Path(new Path(dumpRoot, dbName), FUNCTIONS_ROOT_DIR_NAME);
+    Path functionsRoot = new Path(new Path(dumpRoot, dbName), ReplUtils.FUNCTIONS_ROOT_DIR_NAME);
     List<String> functionNames = hiveDb.getFunctions(dbName, "*");
     for (String functionName : functionNames) {
       HiveWrapper.Tuple<Function> tuple = functionTuple(functionName, dbName, hiveDb);
@@ -340,8 +356,7 @@ public class ReplDumpTask extends Task<ReplDumpWork> implements Serializable {
 
   private HiveWrapper.Tuple<Function> functionTuple(String functionName, String dbName, Hive hiveDb) {
     try {
-      HiveWrapper.Tuple<Function> tuple =
-          new HiveWrapper(hiveDb, dbName).function(functionName);
+      HiveWrapper.Tuple<Function> tuple = new HiveWrapper(hiveDb, dbName).function(functionName);
       if (tuple.object.getResourceUris().isEmpty()) {
         LOG.warn("Not replicating function: " + functionName + " as it seems to have been created "
                 + "without USING clause");

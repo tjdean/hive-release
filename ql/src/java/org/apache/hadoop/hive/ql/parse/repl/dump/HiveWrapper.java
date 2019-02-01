@@ -54,6 +54,10 @@ public class HiveWrapper {
     return new Tuple<>(functionForSpec, new TableObjectFunction(db, dbName, tableName));
   }
 
+  public Tuple<Table> table(final Table tblObj) throws HiveException {
+    return new Tuple<>(functionForSpec, () -> tblObj);
+  }
+
   private static class FunctionObjectFunction implements Tuple.Function<org.apache.hadoop.hive.metastore.api.Function> {
     private final Hive db;
     private final String dbName;
