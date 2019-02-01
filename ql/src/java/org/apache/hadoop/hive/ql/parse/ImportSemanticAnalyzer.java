@@ -445,7 +445,6 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
       addPartitionDesc.setReplicationSpec(replicationSpec);
     }
     AddPartitionDesc.OnePartitionDesc partSpec = addPartitionDesc.getPartition(0);
-	partSpec.getPartParams().put(StatsSetupConst.DO_NOT_UPDATE_STATS,"true");
     if (ptn == null) {
       fixLocationInPartSpec(tblDesc, table, wh, replicationSpec, partSpec, x);
     } else if (!externalTablePartition(tblDesc, replicationSpec)) {
