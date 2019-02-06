@@ -57,6 +57,6 @@ public class UpdateTableColStatHandler extends AbstractMessageHandler {
       // also, there should be a table snapshot. But, it won't be there as update from
       // ReplLoadTask which doesn't have a write id allocated. Need to check this further.
         return Collections.singletonList(TaskFactory.get(new ColumnStatsUpdateWork(colStats),
-                context.hiveConf));
+                context.hiveConf, true));
     }
 }

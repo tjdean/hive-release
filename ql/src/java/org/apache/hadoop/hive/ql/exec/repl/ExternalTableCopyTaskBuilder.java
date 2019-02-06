@@ -56,7 +56,7 @@ public class ExternalTableCopyTaskBuilder {
     Iterator<DirCopyWork> itr = work.getPathsToCopyIterator();
     while (tracker.canAddMoreTasks() && itr.hasNext()) {
       DirCopyWork dirCopyWork = itr.next();
-      Task<DirCopyWork> task = TaskFactory.get(dirCopyWork, conf);
+      Task<DirCopyWork> task = TaskFactory.get(dirCopyWork, conf, true);
       tasks.add(task);
       tracker.addTask(task);
       LOG.debug("added task for {}", dirCopyWork);
