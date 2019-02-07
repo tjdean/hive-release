@@ -306,7 +306,7 @@ public class OrcRawRecordMerger implements AcidInputFormat.RawReader<OrcStruct>{
    * A reader that pretends an original base file is a new versioned base file.
    * It wraps the underlying reader's row with an ACID event object and
    * makes the relevant translations.
-   * 
+   *
    * Running multiple Insert statements on the same partition (of non acid table) creates files
    * like so: 00000_0, 00000_0_copy1, 00000_0_copy2, etc.  So the OriginalReaderPair must treat all
    * of these files as part of a single logical bucket file.
@@ -317,7 +317,7 @@ public class OrcRawRecordMerger implements AcidInputFormat.RawReader<OrcStruct>{
    * {@link AbstractFileMergeOperator#UNION_SUDBIR_PREFIX}_2/, etc for each leg of the Union.  Thus
    * the data file need not be an immediate child of partition dir.  All files for a given writerId
    * are treated as one logical unit to assign {@link RecordIdentifier}s to them consistently.
-   * 
+   *
    * For Compaction, where each split includes the whole bucket, this means reading over all the
    * files in order to assign ROW__ID.rowid in one sequence for the entire logical bucket.
    * For unbucketed tables, a Compaction split is all files written by a given writerId.
@@ -552,7 +552,7 @@ public class OrcRawRecordMerger implements AcidInputFormat.RawReader<OrcStruct>{
   final static class OriginalReaderPairToCompact extends OriginalReaderPair {
     /**
      * See {@link AcidUtils.Directory#getOriginalFiles()}.  This list has a fixed sort order.
-     * It includes all original files (for all buckets).  
+     * It includes all original files (for all buckets).
      */
     private final List<HadoopShims.HdfsFileStatusWithId> originalFiles;
     /**
@@ -654,7 +654,7 @@ public class OrcRawRecordMerger implements AcidInputFormat.RawReader<OrcStruct>{
   }
 
   /**
-   * The process here reads several (base + some deltas) files each of which is sorted on 
+   * The process here reads several (base + some deltas) files each of which is sorted on
    * {@link ReaderKey} ascending.  The output of this Reader should a global order across these
    * files.  The root of this tree is always the next 'file' to read from.
    */
@@ -750,7 +750,7 @@ public class OrcRawRecordMerger implements AcidInputFormat.RawReader<OrcStruct>{
     boolean isTail = true;
     RecordIdentifier minKey = null;
     RecordIdentifier maxKey = null;
-    
+
     List<StripeInformation> stripes = reader.getStripes();
     for(StripeInformation stripe: stripes) {
       if (offset > stripe.getOffset()) {
@@ -1090,6 +1090,8 @@ public class OrcRawRecordMerger implements AcidInputFormat.RawReader<OrcStruct>{
           throw new IllegalStateException(delta + " is not delete delta and is not compacting.");
         }
         ReaderKey key = new ReaderKey();
+        //todo: only need to know isRawFormat if compacting for acid V2 and V2 should normally run
+        //in vectorized mode - i.e. this is not a significant perf overhead vs ParsedDeltaLight
         AcidUtils.ParsedDelta deltaDir = AcidUtils.parsedDelta(delta, delta.getFileSystem(conf));
         if(deltaDir.isRawFormat()) {
           assert !deltaDir.isDeleteDelta() : delta.toString();
@@ -1210,8 +1212,7 @@ public class OrcRawRecordMerger implements AcidInputFormat.RawReader<OrcStruct>{
             return new TransactionMetaData(AcidUtils.parseBase(parent), parent);
           }
           else {
-            AcidUtils.ParsedDelta pd = AcidUtils.parsedDelta(parent, AcidUtils.DELTA_PREFIX,
-              parent.getFileSystem(conf), null);
+            AcidUtils.ParsedDeltaLight pd = AcidUtils.ParsedDeltaLight.parse(parent);
             assert pd.getMinWriteId() == pd.getMaxWriteId() :
               "This a delta with raw non acid schema, must be result of single write, no compaction: "
                 + splitPath;
@@ -1294,7 +1295,7 @@ public class OrcRawRecordMerger implements AcidInputFormat.RawReader<OrcStruct>{
     return new Path[] {deltaFile};
 
   }
-  
+
   @VisibleForTesting
   RecordIdentifier getMinKey() {
     return minKey;

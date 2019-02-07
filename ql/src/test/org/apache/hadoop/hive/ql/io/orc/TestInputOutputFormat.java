@@ -2801,11 +2801,9 @@ public class TestInputOutputFormat {
       }
     }
     // call-1: listLocatedStatus - mock:/mocktable
-    // call-2: check existence of side file for mock:/mocktable/0_0
-    // call-3: open - mock:/mocktable/0_0
-    // call-4: check existence of side file for mock:/mocktable/0_1
-    // call-5: open - mock:/mocktable/0_1
-    assertEquals(5, readOpsDelta);
+    // call-2: open - mock:/mocktable/0_0
+    // call-3: open - mock:/mocktable/0_1
+    assertEquals(3, readOpsDelta);
 
     assertEquals(2, splits.length);
     // revert back to local fs
@@ -2861,11 +2859,9 @@ public class TestInputOutputFormat {
       }
     }
     // call-1: listLocatedStatus - mock:/mocktbl
-    // call-2: check existence of side file for mock:/mocktbl/0_0
-    // call-3: open - mock:/mocktbl/0_0
-    // call-4: check existence of side file for  mock:/mocktbl/0_1
-    // call-5: open - mock:/mocktbl/0_1
-    assertEquals(5, readOpsDelta);
+    // call-2: open - mock:/mocktbl/0_0
+    // call-3: open - mock:/mocktbl/0_1
+    assertEquals(3, readOpsDelta);
 
     // force BI to avoid reading footers
     conf.set(HiveConf.ConfVars.HIVE_ORC_SPLIT_STRATEGY.varname, "BI");
@@ -2883,9 +2879,7 @@ public class TestInputOutputFormat {
       }
     }
     // call-1: listLocatedStatus - mock:/mocktbl
-    // call-2: check existence of side file for mock:/mocktbl/0_0
-    // call-3: check existence of side file for  mock:/mocktbl/0_1
-    assertEquals(3, readOpsDelta);
+    assertEquals(1, readOpsDelta);
 
     // enable cache and use default strategy
     conf.set(ConfVars.HIVE_ORC_CACHE_STRIPE_DETAILS_MEMORY_SIZE.varname, "10Mb");
@@ -2904,11 +2898,9 @@ public class TestInputOutputFormat {
       }
     }
     // call-1: listLocatedStatus - mock:/mocktbl
-    // call-2: check existence of side file for mock:/mocktbl/0_0
-    // call-3: open - mock:/mocktbl/0_0
-    // call-4: check existence of side file for mock:/mocktbl/0_1
-    // call-5: open - mock:/mocktbl/0_1
-    assertEquals(5, readOpsDelta);
+    // call-2: open - mock:/mocktbl/0_0
+    // call-3: open - mock:/mocktbl/0_1
+    assertEquals(3, readOpsDelta);
 
     for (FileSystem.Statistics statistics : FileSystem.getAllStatistics()) {
       if (statistics.getScheme().equalsIgnoreCase("mock")) {
@@ -2978,11 +2970,9 @@ public class TestInputOutputFormat {
       }
     }
     // call-1: listLocatedStatus - mock:/mocktable
-    // call-2: check side file for mock:/mocktbl1/0_0
-    // call-3: open - mock:/mocktbl1/0_0
-    // call-4: check side file for  mock:/mocktbl1/0_1
-    // call-5: open - mock:/mocktbl1/0_1
-    assertEquals(5, readOpsDelta);
+    // call-2: open - mock:/mocktbl1/0_0
+    // call-3: open - mock:/mocktbl1/0_1
+    assertEquals(3, readOpsDelta);
 
     // change file length and look for cache misses
 
@@ -3019,11 +3009,9 @@ public class TestInputOutputFormat {
       }
     }
     // call-1: listLocatedStatus - mock:/mocktable
-    // call-2: check side file for mock:/mocktbl1/0_0
-    // call-3: open - mock:/mocktbl1/0_0
-    // call-4: check side file for  mock:/mocktbl1/0_1
-    // call-5: open - mock:/mocktbl1/0_1
-    assertEquals(5, readOpsDelta);
+    // call-2: open - mock:/mocktbl1/0_0
+    // call-3: open - mock:/mocktbl1/0_1
+    assertEquals(3, readOpsDelta);
 
     for (FileSystem.Statistics statistics : FileSystem.getAllStatistics()) {
       if (statistics.getScheme().equalsIgnoreCase("mock")) {
@@ -3094,11 +3082,9 @@ public class TestInputOutputFormat {
       }
     }
     // call-1: listLocatedStatus - mock:/mocktbl2
-    // call-2: check side file for mock:/mocktbl2/0_0
-    // call-3: open - mock:/mocktbl2/0_0
-    // call-4: check side file for  mock:/mocktbl2/0_1
-    // call-5: open - mock:/mocktbl2/0_1
-    assertEquals(5, readOpsDelta);
+    // call-2: open - mock:/mocktbl2/0_0
+    // call-3: open - mock:/mocktbl2/0_1
+    assertEquals(3, readOpsDelta);
 
     // change file modification time and look for cache misses
     FileSystem fs1 = FileSystem.get(conf);
@@ -3118,9 +3104,8 @@ public class TestInputOutputFormat {
       }
     }
     // call-1: listLocatedStatus - mock:/mocktbl2
-    // call-2: check side file for  mock:/mocktbl2/0_1
-    // call-3: open - mock:/mocktbl2/0_1
-    assertEquals(3, readOpsDelta);
+    // call-2: open - mock:/mocktbl2/0_1
+    assertEquals(2, readOpsDelta);
 
     // touch the next file
     fs1 = FileSystem.get(conf);
@@ -3140,9 +3125,8 @@ public class TestInputOutputFormat {
       }
     }
     // call-1: listLocatedStatus - mock:/mocktbl2
-    // call-2: check side file for  mock:/mocktbl2/0_0
-    // call-3: open - mock:/mocktbl2/0_0
-    assertEquals(3, readOpsDelta);
+    // call-2: open - mock:/mocktbl2/0_0
+    assertEquals(2, readOpsDelta);
 
     for (FileSystem.Statistics statistics : FileSystem.getAllStatistics()) {
       if (statistics.getScheme().equalsIgnoreCase("mock")) {
@@ -3681,13 +3665,6 @@ public class TestInputOutputFormat {
         readOpsDelta = statistics.getReadOps() - readOpsBefore;
       }
     }
-    // call-1: open(mock:/mocktable7/0_0)
-    // call-2: open(mock:/mocktable7/0_0)
-    // call-3: listLocatedFileStatuses(mock:/mocktable7)
-    // call-4: getFileStatus(mock:/mocktable7/delta_0000001_0000001_0000/_metadata_acid)
-    // call-5: open(mock:/mocktable7/delta_0000001_0000001_0000/bucket_00001)
-    // call-6: getFileStatus(mock:/mocktable7/delta_0000001_0000001_0000/_metadata_acid)
-    // call-7: open(mock:/mocktable7/delta_0000001_0000001_0000/bucket_00001)
     assertEquals(7, readOpsDelta);
 
     // revert back to local fs
@@ -3760,11 +3737,6 @@ public class TestInputOutputFormat {
         readOpsDelta = statistics.getReadOps() - readOpsBefore;
       }
     }
-    // call-1: open to read data - split 1 => mock:/mocktable8/0_0
-    // call-2: listLocatedFileStatus(mock:/mocktable8)
-    // call-3: getFileStatus(mock:/mocktable8/delta_0000001_0000001_0000/_metadata_acid)
-    // call-4: getFileStatus(mock:/mocktable8/delta_0000001_0000001_0000/_metadata_acid)
-    // call-5: open(mock:/mocktable8/delta_0000001_0000001_0000/bucket_00001)
     assertEquals(5, readOpsDelta);
 
     // revert back to local fs

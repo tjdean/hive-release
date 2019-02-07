@@ -626,11 +626,7 @@ public class CompactorMR {
   // Remove the directories for aborted transactions only
   private void removeFilesForMmTable(HiveConf conf, Directory dir) throws IOException {
     // For MM table, we only want to delete delta dirs for aborted txns.
-    List<FileStatus> abortedDirs = dir.getAbortedDirectories();
-    List<Path> filesToDelete = new ArrayList<>(abortedDirs.size());
-    for (FileStatus stat : abortedDirs) {
-      filesToDelete.add(stat.getPath());
-    }
+    List<Path> filesToDelete = dir.getAbortedDirectories();
     if (filesToDelete.size() < 1) {
       return;
     }

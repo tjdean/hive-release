@@ -281,8 +281,8 @@ public class Cleaner extends CompactorThread {
        * We only want to clean up to the highestWriteId - otherwise we risk deleting deltas from
        * under an active reader.
        *
-       * Suppose we have deltas D2 D3 for table T, i.e. the last compaction created D3 so now there is a 
-       * clean request for D2.  
+       * Suppose we have deltas D2 D3 for table T, i.e. the last compaction created D3 so now there is a
+       * clean request for D2.
        * Cleaner checks existing locks and finds none.
        * Between that check and removeFiles() a query starts (it will be reading D3) and another compaction
        * completes which creates D4.
@@ -329,14 +329,14 @@ public class Cleaner extends CompactorThread {
     Path locPath = new Path(location);
     AcidUtils.Directory dir = AcidUtils.getAcidState(locPath, conf, writeIdList, Ref.from(
         false), false, null, false);
-    List<FileStatus> obsoleteDirs = dir.getObsolete();
+    List<Path> obsoleteDirs = dir.getObsolete();
     List<Path> filesToDelete = new ArrayList<Path>(obsoleteDirs.size());
     StringBuilder extraDebugInfo = new StringBuilder("[");
-    for (FileStatus stat : obsoleteDirs) {
-      filesToDelete.add(stat.getPath());
-      extraDebugInfo.append(stat.getPath().getName()).append(",");
-      if(!FileUtils.isPathWithinSubtree(stat.getPath(), locPath)) {
-        LOG.info(idWatermark(ci) + " found unexpected file: " + stat.getPath());
+    for (Path stat : obsoleteDirs) {
+      filesToDelete.add(stat);
+      extraDebugInfo.append(stat.getName()).append(",");
+      if(!FileUtils.isPathWithinSubtree(stat, locPath)) {
+        LOG.info(idWatermark(ci) + " found unexpected file: " + stat);
       }
     }
     extraDebugInfo.setCharAt(extraDebugInfo.length() - 1, ']');
