@@ -2567,6 +2567,8 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
           strings.add(info.table);
         }
       }
+      SortedSet<LockInfo> lockSet = new TreeSet<LockInfo>(new LockInfoComparator());
+      List<String> queries = new ArrayList<String>();
       if (!sawNull) {
         query.append(" and (hl_table is null or hl_table in(");
         first = true;
@@ -2592,27 +2594,38 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
           }
         }
         if (!sawNull) {
-          query.append(" and (hl_partition is null or hl_partition in(");
-          first = true;
+          StringBuilder prefix = new StringBuilder();
+          StringBuilder suffix = new StringBuilder();
+          prefix.append(" and ( hl_partition is null or  ");
+
+          suffix.append(" )");
+          List<String> partList = new ArrayList<>();
           for (String s : strings) {
-            if (first) first = false;
-            else query.append(", ");
-            query.append('\'');
-            query.append(s);
-            query.append('\'');
+            partList.add(quoteString(s));
           }
-          query.append("))");
+          TxnUtils.buildQueryWithINClause(conf, queries, prefix, suffix, partList, "hl_partition", true, false);
+          for (int i=0;i<queries.size();i++) {
+            String thisQuery = queries.get(i);
+            StringBuilder sb = new StringBuilder(query);
+            sb.append(thisQuery);
+            sb.append(" and hl_lock_ext_id <= ").append(extLockId);
+            queries.set(i, sb.toString());
+          }
         }
       }
-      query.append(" and hl_lock_ext_id <= ").append(extLockId);
-
-      LOG.debug("Going to execute query <" + query.toString() + ">");
-      stmt = dbConn.createStatement();
-      rs = stmt.executeQuery(query.toString());
-      SortedSet<LockInfo> lockSet = new TreeSet<LockInfo>(new LockInfoComparator());
-      while (rs.next()) {
-        lockSet.add(new LockInfo(rs));
+      if (sawNull) {
+        queries.add(query.toString());
       }
+      stmt = dbConn.createStatement();
+      for (String thisQuery : queries) {
+        LOG.debug("Going to execute query <" + thisQuery.toString() + ">");
+        rs = stmt.executeQuery(thisQuery.toString());
+        while (rs.next()) {
+          lockSet.add(new LockInfo(rs));
+        }
+        close(rs);
+      }
+
       // Turn the tree set into an array so we can move back and forth easily
       // in it.
       LockInfo[] locks = lockSet.toArray(new LockInfo[lockSet.size()]);
