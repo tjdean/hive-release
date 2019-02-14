@@ -306,6 +306,8 @@ public class ImportTableDesc {
   public TableType tableType() {
     if (isView()) {
       return TableType.VIRTUAL_VIEW;
+    } else if (isExternal()) {
+      return TableType.EXTERNAL_TABLE;
     }
     return TableType.MANAGED_TABLE;
   }

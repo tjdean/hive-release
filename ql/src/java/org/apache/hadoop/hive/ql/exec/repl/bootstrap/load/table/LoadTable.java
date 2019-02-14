@@ -182,7 +182,7 @@ public class LoadTable {
     }
     boolean shouldCreateLoadTableTask = (
         !isPartitioned(tblDesc)
-            && !TableType.EXTERNAL_TABLE.equals(table.getTableType())
+            && !TableType.EXTERNAL_TABLE.equals(tblDesc.tableType())
     );
     if (shouldCreateLoadTableTask) {
       LOG.debug("adding dependent CopyWork/MoveWork for table");

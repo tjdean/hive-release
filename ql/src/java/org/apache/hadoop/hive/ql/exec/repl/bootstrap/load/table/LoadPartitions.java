@@ -200,7 +200,7 @@ public class LoadPartitions {
     );
 
     boolean isOnlyDDLOperation = event.replicationSpec().isMetadataOnly()
-        || (TableType.EXTERNAL_TABLE.equals(table.getTableType())
+        || (TableType.EXTERNAL_TABLE.equals(tableDesc.tableType())
     );
 
     if (isOnlyDDLOperation) {
