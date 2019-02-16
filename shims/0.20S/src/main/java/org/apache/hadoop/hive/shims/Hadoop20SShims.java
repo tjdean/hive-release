@@ -681,25 +681,33 @@ public class Hadoop20SShims extends HadoopShimsSecure {
   private static final String DISTCP_OPTIONS_PREFIX = "distcp.options.";
 
   List<String> constructDistCpParams(List<Path> srcPaths, Path dst, Configuration conf) {
+    // -update and -delete are mandatory options for directory copy to work.
+    // -pbx is default preserve options if user doesn't pass any.
     List<String> params = new ArrayList<String>();
-
+    boolean needToAddPreserveOption = true;
     Iterator<java.util.Map.Entry<java.lang.String,java.lang.String>> confIter = conf.iterator();
     while (confIter.hasNext()){
       java.util.Map.Entry<java.lang.String,java.lang.String> entry = confIter.next();
-      if (entry.getKey().startsWith(DISTCP_OPTIONS_PREFIX)){
+      if (entry.getKey().startsWith(DISTCP_OPTIONS_PREFIX)) {
         String distCpOption = entry.getKey();
         String distCpVal = entry.getValue();
-        params.add("-" + distCpOption.replace(DISTCP_OPTIONS_PREFIX,""));
-        if ((distCpVal != null) && (!distCpVal.isEmpty())){
+        if (distCpOption.startsWith("p")) {
+          needToAddPreserveOption = false;
+        }
+        params.add("-" + distCpOption.replace(DISTCP_OPTIONS_PREFIX, ""));
+        if ((distCpVal != null) && (!distCpVal.isEmpty())) {
           params.add(distCpVal);
         }
       }
     }
-
-    if (params.size() == 0){
-      // if no entries were added via conf, we initiate our defaults
-      params.add("-update");
+    if (needToAddPreserveOption) {
       params.add("-pbx");
+    }
+    if (!params.contains("-update")) {
+      params.add("-update");
+    }
+    if (!params.contains("-delete")) {
+      params.add("-delete");
     }
     for (Path src : srcPaths) {
       params.add(src.toString());
@@ -726,17 +734,23 @@ public class Hadoop20SShims extends HadoopShimsSecure {
 
   @Override
   public boolean runDistCp(List<Path> srcPaths, Path dst, Configuration conf) throws IOException {
-
     DistCpOptions options = new DistCpOptions(srcPaths, dst);
     options.setSyncFolder(true);
-    options.setSkipCRC(true);
+    options.setDeleteMissing(true);
     options.preserve(FileAttribute.BLOCKSIZE);
 
     // Creates the command-line parameters for distcp
     List<String> params = constructDistCpParams(srcPaths, dst, conf);
 
+	  // In Hadoop 2.7.3. the distCp with -delete option doesn't work if target doesn't exist
+    FileSystem targetFS = dst.getFileSystem(conf);
+    if (!targetFS.exists(dst)) {
+      params.remove("-delete");
+    }
+
     try {
       DistCp distcp = new DistCp(conf, options);
+
       // HIVE-13704 states that we should use run() instead of execute() due to a hadoop known issue
       // added by HADOOP-10459
       if (distcp.run(params.toArray(new String[0])) == 0) {

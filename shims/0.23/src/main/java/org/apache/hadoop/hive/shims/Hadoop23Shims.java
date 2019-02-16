@@ -1270,19 +1270,29 @@ public class Hadoop23Shims extends HadoopShimsSecure {
   private static final String DISTCP_OPTIONS_PREFIX = "distcp.options.";
 
   List<String> constructDistCpParams(List<Path> srcPaths, Path dst, Configuration conf) {
+    // -update and -delete are mandatory options for directory copy to work.
+    // -pbx is default preserve options if user doesn't pass any.
     List<String> params = new ArrayList<String>();
+    boolean needToAddPreserveOption = true;
     for (Map.Entry<String,String> entry : conf.getPropsWithPrefix(DISTCP_OPTIONS_PREFIX).entrySet()){
       String distCpOption = entry.getKey();
       String distCpVal = entry.getValue();
+      if (distCpOption.startsWith("p")) {
+        needToAddPreserveOption = false;
+      }
       params.add("-" + distCpOption);
       if ((distCpVal != null) && (!distCpVal.isEmpty())){
         params.add(distCpVal);
       }
     }
-    if (params.size() == 0){
-      // if no entries were added via conf, we initiate our defaults
-      params.add("-update");
+    if (needToAddPreserveOption) {
       params.add("-pbx");
+    }
+    if (!params.contains("-update")) {
+      params.add("-update");
+    }
+    if (!params.contains("-delete")) {
+      params.add("-delete");
     }
     for (Path src : srcPaths) {
       params.add(src.toString());
@@ -1320,6 +1330,11 @@ public class Hadoop23Shims extends HadoopShimsSecure {
     boolean targetExists = targetFS.exists(target);
     options.setTargetPathExists(targetExists);
     conf.setBoolean("distcp.target.path.exists", targetExists);
+    if (!targetExists) {
+      // In Hadoop 2.7.3. the distCp with -delete option doesn't work if target doesn't exist
+      options.setDeleteMissing(false);
+      conf.setBoolean("distcp.delete.missing.source", false);
+    }
 
     try {
       conf.setBoolean("mapred.mapper.new-api", true);
