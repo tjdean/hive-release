@@ -20,6 +20,7 @@
 package org.apache.hive.hcatalog.messaging.json;
 
 import org.apache.hadoop.hive.metastore.api.Index;
+import org.apache.hadoop.hive.metastore.messaging.MessageBuilder;
 import org.apache.hive.hcatalog.messaging.DropIndexMessage;
 import org.apache.thrift.TException;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -45,7 +46,7 @@ public class JSONDropIndexMessage extends DropIndexMessage {
     this.servicePrincipal = servicePrincipal;
     this.db = index.getDbName();
     try {
-      this.indexObjJson = JSONMessageFactory.createIndexObjJson(index);
+      this.indexObjJson = MessageBuilder.createIndexObjJson(index);
     } catch (TException ex) {
       throw new IllegalArgumentException("Could not serialize Index object", ex);
     }

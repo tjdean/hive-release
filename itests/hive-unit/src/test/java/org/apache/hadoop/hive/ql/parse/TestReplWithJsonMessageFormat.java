@@ -1,4 +1,5 @@
-/* * Licensed to the Apache Software Foundation (ASF) under one
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership.  The ASF licenses this file
@@ -14,26 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.apache.hadoop.hive.ql.parse;
 
-package org.apache.hadoop.hive.metastore.messaging;
+import org.apache.hive.hcatalog.api.repl.ReplicationV1CompatRule;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
 
-import org.apache.hadoop.hive.metastore.api.ColumnStatistics;
-import org.apache.hadoop.hive.metastore.api.Table;
+import java.util.ArrayList;
+import java.util.Collections;
 
-/**
- * HCat message sent when an table column statistics update is done.
- */
-public abstract class UpdateTableColumnStatMessage extends EventMessage {
+public class TestReplWithJsonMessageFormat extends TestReplicationScenarios {
+  @Rule
+  public TestRule replV1BackwardCompatibleRule =
+      new ReplicationV1CompatRule(metaStoreClient, hconf,
+          new ArrayList<>(Collections.singletonList("testEventFilters")));
 
-  protected UpdateTableColumnStatMessage() {
-    super(EventType.UPDATE_TABLE_COLUMN_STAT);
+  @BeforeClass
+  public static void setUpBeforeClass() throws Exception {
+    internalBeforeClassSetup(Collections.emptyMap(), false);
   }
 
-  public abstract ColumnStatistics getColumnStatistics();
-
-  public abstract String getColStatsJson();
-
-  public abstract String getTableObjJson();
-
-  public abstract Table getTableObject() throws Exception;
 }

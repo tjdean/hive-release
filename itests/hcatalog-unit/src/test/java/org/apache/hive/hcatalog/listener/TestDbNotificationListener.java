@@ -93,6 +93,7 @@ import org.apache.hadoop.hive.metastore.messaging.EventMessage.EventType;
 import org.apache.hadoop.hive.metastore.messaging.InsertMessage;
 import org.apache.hadoop.hive.metastore.messaging.MessageDeserializer;
 import org.apache.hadoop.hive.metastore.messaging.MessageFactory;
+import org.apache.hadoop.hive.metastore.messaging.json.JSONMessageEncoder;
 import org.apache.hadoop.hive.ql.Driver;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hive.hcatalog.api.repl.ReplicationV1CompatRule;
@@ -119,7 +120,16 @@ public class TestDbNotificationListener {
   private static Map<String, String> emptyParameters = new HashMap<String, String>();
   private static IMetaStoreClient msClient;
   private static Driver driver;
-  private static MessageDeserializer md = null;
+  private static MessageDeserializer md;
+
+  static {
+    try {
+      md = MessageFactory.getInstance(JSONMessageEncoder.FORMAT).getDeserializer();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private int startTime;
   private long firstEventId;
 
@@ -247,7 +257,7 @@ public class TestDbNotificationListener {
     SessionState.start(new CliSessionState(conf));
     msClient = new HiveMetaStoreClient(conf);
     driver = new Driver(conf);
-    md = MessageFactory.getInstance().getDeserializer();
+    md = JSONMessageEncoder.getInstance().getDeserializer();
 
     bcompat = new ReplicationV1CompatRule(msClient, conf, testsToSkipForReplV1BackwardCompatTesting );
   }

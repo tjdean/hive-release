@@ -21,8 +21,9 @@ package org.apache.hadoop.hive.metastore.messaging.json;
 
 import org.apache.hadoop.hive.metastore.api.Index;
 import org.apache.hadoop.hive.metastore.messaging.CreateIndexMessage;
+import org.apache.hadoop.hive.metastore.messaging.MessageBuilder;
 import org.apache.thrift.TException;
-import org.codehaus.jackson.annotate.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * JSON Implementation of CreateIndexMessage.
@@ -45,7 +46,7 @@ public class JSONCreateIndexMessage extends CreateIndexMessage {
     this.servicePrincipal = servicePrincipal;
     this.db = index.getDbName();
     try {
-      this.indexObjJson = JSONMessageFactory.createIndexObjJson(index);
+      this.indexObjJson = MessageBuilder.createIndexObjJson(index);
     } catch (TException ex) {
       throw new IllegalArgumentException("Could not serialize Index object", ex);
     }
@@ -72,7 +73,7 @@ public class JSONCreateIndexMessage extends CreateIndexMessage {
 
   @Override
   public Index getIndexObj() throws Exception {
-    return (Index)  JSONMessageFactory.getTObj(indexObjJson, Index.class);
+    return (Index) MessageBuilder.getTObj(indexObjJson, Index.class);
   }
 
   @Override

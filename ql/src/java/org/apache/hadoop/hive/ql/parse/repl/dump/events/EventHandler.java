@@ -35,7 +35,8 @@ public interface EventHandler {
   DumpType dumpType();
 
   class Context {
-    final Path eventRoot, cmRoot;
+    Path eventRoot;
+    final Path  cmRoot;
     final Hive db;
     final HiveConf hiveConf;
     final ReplicationSpec replicationSpec;

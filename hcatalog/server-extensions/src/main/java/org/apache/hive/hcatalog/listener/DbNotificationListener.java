@@ -60,12 +60,30 @@ import org.apache.hadoop.hive.metastore.events.LoadPartitionDoneEvent;
 import org.apache.hadoop.hive.metastore.events.ListenerEvent;
 import org.apache.hadoop.hive.metastore.events.UpdatePartitionColumnStatEvent;
 import org.apache.hadoop.hive.metastore.events.UpdateTableColumnStatEvent;
+import org.apache.hadoop.hive.metastore.messaging.AlterDatabaseMessage;
+import org.apache.hadoop.hive.metastore.messaging.AlterIndexMessage;
+import org.apache.hadoop.hive.metastore.messaging.AlterPartitionMessage;
+import org.apache.hadoop.hive.metastore.messaging.AlterTableMessage;
+import org.apache.hadoop.hive.metastore.messaging.CreateDatabaseMessage;
+import org.apache.hadoop.hive.metastore.messaging.CreateFunctionMessage;
+import org.apache.hadoop.hive.metastore.messaging.CreateIndexMessage;
+import org.apache.hadoop.hive.metastore.messaging.CreateTableMessage;
+import org.apache.hadoop.hive.metastore.messaging.DropIndexMessage;
+import org.apache.hadoop.hive.metastore.messaging.MessageBuilder;
+import org.apache.hadoop.hive.metastore.messaging.DropDatabaseMessage;
+import org.apache.hadoop.hive.metastore.messaging.DropFunctionMessage;
+import org.apache.hadoop.hive.metastore.messaging.DropPartitionMessage;
+import org.apache.hadoop.hive.metastore.messaging.DropTableMessage;
+import org.apache.hadoop.hive.metastore.messaging.EventMessage;
 import org.apache.hadoop.hive.metastore.messaging.EventMessage.EventType;
+import org.apache.hadoop.hive.metastore.messaging.InsertMessage;
+import org.apache.hadoop.hive.metastore.messaging.MessageEncoder;
 import org.apache.hadoop.hive.metastore.messaging.MessageFactory;
+import org.apache.hadoop.hive.metastore.messaging.MessageSerializer;
 import org.apache.hadoop.hive.metastore.messaging.PartitionFiles;
-
-import com.google.common.collect.Lists;
+import org.apache.hadoop.hive.metastore.messaging.UpdatePartitionColumnStatMessage;
 import org.apache.hadoop.hive.metastore.messaging.UpdateTableColumnStatMessage;
+import com.google.common.collect.Lists;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -91,7 +109,7 @@ public class DbNotificationListener extends MetaStoreEventListener {
   // This is the same object as super.conf, but it's convenient to keep a copy of it as a
   // HiveConf rather than a Configuration.
   private HiveConf hiveConf;
-  private MessageFactory msgFactory;
+  private MessageEncoder msgEncoder;
 
   private static synchronized void init(HiveConf conf) throws MetaException {
     if (cleaner == null) {
@@ -109,7 +127,7 @@ public class DbNotificationListener extends MetaStoreEventListener {
     // actually passes a HiveConf, which we need.  So we'll do this ugly down cast.
     hiveConf = (HiveConf)config;
     DbNotificationListener.init(hiveConf);
-    msgFactory = MessageFactory.getInstance();
+    msgEncoder = MessageFactory.getDefaultInstance(config);
   }
 
   /**
@@ -146,9 +164,11 @@ public class DbNotificationListener extends MetaStoreEventListener {
     Table t = tableEvent.getTable();
     FileIterator fileIter = MetaStoreUtils.isExternalTable(t)
                               ? null : new FileIterator(t.getSd().getLocation());
+    CreateTableMessage msg =
+        MessageBuilder.getInstance().buildCreateTableMessage(t, fileIter);
     NotificationEvent event =
         new NotificationEvent(0, now(), EventType.CREATE_TABLE.toString(),
-                msgFactory.buildCreateTableMessage(t, fileIter).toString());
+            msgEncoder.getSerializer().serialize(msg));
     event.setDbName(t.getDbName());
     event.setTableName(t.getTableName());
     process(event, tableEvent);
@@ -161,9 +181,10 @@ public class DbNotificationListener extends MetaStoreEventListener {
   @Override
   public void onDropTable(DropTableEvent tableEvent) throws MetaException {
     Table t = tableEvent.getTable();
+    DropTableMessage msg = MessageBuilder.getInstance().buildDropTableMessage(t);
     NotificationEvent event =
-        new NotificationEvent(0, now(), EventType.DROP_TABLE.toString(), msgFactory
-            .buildDropTableMessage(t).toString());
+        new NotificationEvent(0, now(), EventType.DROP_TABLE.toString(),
+            msgEncoder.getSerializer().serialize(msg));
     event.setDbName(t.getDbName());
     event.setTableName(t.getTableName());
     process(event, tableEvent);
@@ -177,9 +198,12 @@ public class DbNotificationListener extends MetaStoreEventListener {
   public void onAlterTable(AlterTableEvent tableEvent) throws MetaException {
     Table before = tableEvent.getOldTable();
     Table after = tableEvent.getNewTable();
+    AlterTableMessage msg = MessageBuilder.getInstance()
+        .buildAlterTableMessage(before, after, tableEvent.getIsTruncateOp());
     NotificationEvent event =
-        new NotificationEvent(0, now(), EventType.ALTER_TABLE.toString(), msgFactory
-            .buildAlterTableMessage(before, after, tableEvent.getIsTruncateOp()).toString());
+        new NotificationEvent(0, now(), EventType.ALTER_TABLE.toString(),
+            msgEncoder.getSerializer().serialize(msg)
+        );
     event.setDbName(after.getDbName());
     event.setTableName(after.getTableName());
     process(event, tableEvent);
@@ -285,10 +309,12 @@ public class DbNotificationListener extends MetaStoreEventListener {
     Table t = partitionEvent.getTable();
     PartitionFilesIterator fileIter = MetaStoreUtils.isExternalTable(t)
             ? null : new PartitionFilesIterator(partitionEvent.getPartitionIterator(), t);
-    String msg = msgFactory
-        .buildAddPartitionMessage(t, partitionEvent.getPartitionIterator(), fileIter).toString();
-    NotificationEvent event =
-        new NotificationEvent(0, now(), EventType.ADD_PARTITION.toString(), msg);
+    EventMessage msg = MessageBuilder.getInstance()
+        .buildAddPartitionMessage(t, partitionEvent.getPartitionIterator(), fileIter);
+    MessageSerializer serializer = msgEncoder.getSerializer();
+
+    NotificationEvent event = new NotificationEvent(0, now(),
+        EventType.ADD_PARTITION.toString(), serializer.serialize(msg));
     event.setDbName(t.getDbName());
     event.setTableName(t.getTableName());
     process(event, partitionEvent);
@@ -301,9 +327,11 @@ public class DbNotificationListener extends MetaStoreEventListener {
   @Override
   public void onDropPartition(DropPartitionEvent partitionEvent) throws MetaException {
     Table t = partitionEvent.getTable();
-    NotificationEvent event =
-        new NotificationEvent(0, now(), EventType.DROP_PARTITION.toString(), msgFactory
-            .buildDropPartitionMessage(t, partitionEvent.getPartitionIterator()).toString());
+    DropPartitionMessage msg =
+        MessageBuilder.getInstance()
+            .buildDropPartitionMessage(t, partitionEvent.getPartitionIterator());
+    NotificationEvent event = new NotificationEvent(0, now(), EventType.DROP_PARTITION.toString(),
+        msgEncoder.getSerializer().serialize(msg));
     event.setDbName(t.getDbName());
     event.setTableName(t.getTableName());
     process(event, partitionEvent);
@@ -317,9 +345,12 @@ public class DbNotificationListener extends MetaStoreEventListener {
   public void onAlterPartition(AlterPartitionEvent partitionEvent) throws MetaException {
     Partition before = partitionEvent.getOldPartition();
     Partition after = partitionEvent.getNewPartition();
+    AlterPartitionMessage msg = MessageBuilder.getInstance()
+        .buildAlterPartitionMessage(partitionEvent.getTable(), before, after,
+            partitionEvent.getIsTruncateOp());
     NotificationEvent event =
-        new NotificationEvent(0, now(), EventType.ALTER_PARTITION.toString(), msgFactory
-            .buildAlterPartitionMessage(partitionEvent.getTable(), before, after, partitionEvent.getIsTruncateOp()).toString());
+        new NotificationEvent(0, now(), EventType.ALTER_PARTITION.toString(),
+            msgEncoder.getSerializer().serialize(msg));
     event.setDbName(before.getDbName());
     event.setTableName(before.getTableName());
     process(event, partitionEvent);
@@ -332,9 +363,11 @@ public class DbNotificationListener extends MetaStoreEventListener {
   @Override
   public void onCreateDatabase(CreateDatabaseEvent dbEvent) throws MetaException {
     Database db = dbEvent.getDatabase();
+    CreateDatabaseMessage msg = MessageBuilder.getInstance()
+        .buildCreateDatabaseMessage(db);
     NotificationEvent event =
-        new NotificationEvent(0, now(), EventType.CREATE_DATABASE.toString(), msgFactory
-            .buildCreateDatabaseMessage(db).toString());
+        new NotificationEvent(0, now(), EventType.CREATE_DATABASE.toString(),
+            msgEncoder.getSerializer().serialize(msg));
     event.setDbName(db.getName());
     process(event, dbEvent);
   }
@@ -346,9 +379,11 @@ public class DbNotificationListener extends MetaStoreEventListener {
   @Override
   public void onDropDatabase(DropDatabaseEvent dbEvent) throws MetaException {
     Database db = dbEvent.getDatabase();
+    DropDatabaseMessage msg = MessageBuilder.getInstance()
+        .buildDropDatabaseMessage(db);
     NotificationEvent event =
-        new NotificationEvent(0, now(), EventType.DROP_DATABASE.toString(), msgFactory
-            .buildDropDatabaseMessage(db).toString());
+        new NotificationEvent(0, now(), EventType.DROP_DATABASE.toString(),
+            msgEncoder.getSerializer().serialize(msg));
     event.setDbName(db.getName());
     process(event, dbEvent);
   }
@@ -361,9 +396,12 @@ public class DbNotificationListener extends MetaStoreEventListener {
   public void onAlterDatabase(AlterDatabaseEvent dbEvent) throws MetaException {
     Database oldDb = dbEvent.getOldDatabase();
     Database newDb = dbEvent.getNewDatabase();
+    AlterDatabaseMessage msg = MessageBuilder.getInstance()
+        .buildAlterDatabaseMessage(oldDb, newDb);
     NotificationEvent event =
-            new NotificationEvent(0, now(), EventType.ALTER_DATABASE.toString(), msgFactory
-                    .buildAlterDatabaseMessage(oldDb, newDb).toString());
+        new NotificationEvent(0, now(), EventType.ALTER_DATABASE.toString(),
+            msgEncoder.getSerializer().serialize(msg)
+        );
     event.setDbName(oldDb.getName());
     process(event, dbEvent);
   }
@@ -375,9 +413,11 @@ public class DbNotificationListener extends MetaStoreEventListener {
   @Override
   public void onCreateFunction(CreateFunctionEvent fnEvent) throws MetaException {
     Function fn = fnEvent.getFunction();
+    CreateFunctionMessage msg = MessageBuilder.getInstance()
+        .buildCreateFunctionMessage(fn);
     NotificationEvent event =
-        new NotificationEvent(0, now(), EventType.CREATE_FUNCTION.toString(), msgFactory
-            .buildCreateFunctionMessage(fn).toString());
+        new NotificationEvent(0, now(), EventType.CREATE_FUNCTION.toString(),
+            msgEncoder.getSerializer().serialize(msg));
     event.setDbName(fn.getDbName());
     process(event, fnEvent);
   }
@@ -389,9 +429,10 @@ public class DbNotificationListener extends MetaStoreEventListener {
   @Override
   public void onDropFunction(DropFunctionEvent fnEvent) throws MetaException {
     Function fn = fnEvent.getFunction();
+    DropFunctionMessage msg = MessageBuilder.getInstance().buildDropFunctionMessage(fn);
     NotificationEvent event =
-        new NotificationEvent(0, now(), EventType.DROP_FUNCTION.toString(), msgFactory
-            .buildDropFunctionMessage(fn).toString());
+        new NotificationEvent(0, now(), EventType.DROP_FUNCTION.toString(),
+            msgEncoder.getSerializer().serialize(msg));
     event.setDbName(fn.getDbName());
     process(event, fnEvent);
   }
@@ -403,9 +444,10 @@ public class DbNotificationListener extends MetaStoreEventListener {
   @Override
   public void onAddIndex(AddIndexEvent indexEvent) throws MetaException {
     Index index = indexEvent.getIndex();
+    CreateIndexMessage msg = MessageBuilder.getInstance().buildCreateIndexMessage(index);
     NotificationEvent event =
-        new NotificationEvent(0, now(), EventType.CREATE_INDEX.toString(), msgFactory
-            .buildCreateIndexMessage(index).toString());
+        new NotificationEvent(0, now(), EventType.CREATE_INDEX.toString(),
+            msgEncoder.getSerializer().serialize(msg));
     event.setDbName(index.getDbName());
     process(event, indexEvent);
   }
@@ -417,9 +459,10 @@ public class DbNotificationListener extends MetaStoreEventListener {
   @Override
   public void onDropIndex(DropIndexEvent indexEvent) throws MetaException {
     Index index = indexEvent.getIndex();
+    DropIndexMessage msg = MessageBuilder.getInstance().buildDropIndexMessage(index);
     NotificationEvent event =
-        new NotificationEvent(0, now(), EventType.DROP_INDEX.toString(), msgFactory
-            .buildDropIndexMessage(index).toString());
+        new NotificationEvent(0, now(), EventType.DROP_INDEX.toString(),
+            msgEncoder.getSerializer().serialize(msg));
     event.setDbName(index.getDbName());
     process(event, indexEvent);
   }
@@ -432,9 +475,10 @@ public class DbNotificationListener extends MetaStoreEventListener {
   public void onAlterIndex(AlterIndexEvent indexEvent) throws MetaException {
     Index before = indexEvent.getOldIndex();
     Index after = indexEvent.getNewIndex();
+    AlterIndexMessage msg = MessageBuilder.getInstance().buildAlterIndexMessage(before, after);
     NotificationEvent event =
-        new NotificationEvent(0, now(), EventType.ALTER_INDEX.toString(), msgFactory
-            .buildAlterIndexMessage(before, after).toString());
+        new NotificationEvent(0, now(), EventType.ALTER_INDEX.toString(),
+            msgEncoder.getSerializer().serialize(msg));
     event.setDbName(before.getDbName());
     process(event, indexEvent);
   }
@@ -473,11 +517,12 @@ public class DbNotificationListener extends MetaStoreEventListener {
   @Override
   public void onInsert(InsertEvent insertEvent) throws MetaException {
     Table tableObj = insertEvent.getTableObj();
+    InsertMessage msg = MessageBuilder.getInstance().buildInsertMessage(tableObj,
+        insertEvent.getPartitionObj(), insertEvent.isReplace(),
+        new FileChksumIterator(insertEvent.getFiles(), insertEvent.getFileChecksums()));
     NotificationEvent event =
-        new NotificationEvent(0, now(), EventType.INSERT.toString(), msgFactory.buildInsertMessage(tableObj,
-                insertEvent.getPartitionObj(), insertEvent.isReplace(),
-            new FileChksumIterator(insertEvent.getFiles(), insertEvent.getFileChecksums()))
-                .toString());
+        new NotificationEvent(0, now(), EventType.INSERT.toString(),
+            msgEncoder.getSerializer().serialize(msg));
     event.setDbName(tableObj.getDbName());
     event.setTableName(tableObj.getTableName());
     process(event, insertEvent);
@@ -495,9 +540,11 @@ public class DbNotificationListener extends MetaStoreEventListener {
 
   @Override
   public void onUpdateTableColumnStat(UpdateTableColumnStatEvent updateTableColumnStatEvent) throws MetaException {
+    UpdateTableColumnStatMessage msg = MessageBuilder.getInstance()
+            .buildUpdateTableColumnStatMessage(updateTableColumnStatEvent.getColStats(),
+                    updateTableColumnStatEvent.getTableObj());
     NotificationEvent event = new NotificationEvent(0, now(), EventType.UPDATE_TABLE_COLUMN_STAT.toString(),
-            msgFactory.buildUpdateTableColumnStatMessage(updateTableColumnStatEvent.getColStats(),
-                    updateTableColumnStatEvent.getTableObj()).toString());
+                    msgEncoder.getSerializer().serialize(msg));
     ColumnStatisticsDesc statDesc = updateTableColumnStatEvent.getColStats().getStatsDesc();
     event.setDbName(statDesc.getDbName());
     event.setTableName(statDesc.getTableName());
@@ -506,10 +553,12 @@ public class DbNotificationListener extends MetaStoreEventListener {
 
   @Override
   public void onUpdatePartitionColumnStat(UpdatePartitionColumnStatEvent updatePartColStatEvent) throws MetaException {
+    UpdatePartitionColumnStatMessage msg = MessageBuilder.getInstance()
+            .buildUpdatePartitionColumnStatMessage(updatePartColStatEvent.getPartColStats(),
+                    updatePartColStatEvent.getPartVals(),
+                    updatePartColStatEvent.getTableObj());
     NotificationEvent event = new NotificationEvent(0, now(), EventType.UPDATE_PARTITION_COLUMN_STAT.toString(),
-            msgFactory.buildUpdatePartitionColumnStatMessage(updatePartColStatEvent.getPartColStats(),
-                                                              updatePartColStatEvent.getPartVals(),
-                                                              updatePartColStatEvent.getTableObj()).toString());
+                    msgEncoder.getSerializer().serialize(msg));
     ColumnStatisticsDesc statDesc = updatePartColStatEvent.getPartColStats().getStatsDesc();
     event.setDbName(statDesc.getDbName());
     event.setTableName(statDesc.getTableName());
@@ -535,7 +584,7 @@ public class DbNotificationListener extends MetaStoreEventListener {
    *                      DB_NOTIFICATION_EVENT_ID_KEY_NAME for future reference by other listeners.
    */
   private void process(NotificationEvent event, ListenerEvent listenerEvent) throws MetaException {
-    event.setMessageFormat(msgFactory.getMessageFormat());
+    event.setMessageFormat(msgEncoder.getMessageFormat());
     LOG.debug(
         "DbNotificationListener: Processing : " + event.getEventId() + ":" + event.getMessage());
     HMSHandler.getMSForConf(hiveConf).addNotificationEvent(event);

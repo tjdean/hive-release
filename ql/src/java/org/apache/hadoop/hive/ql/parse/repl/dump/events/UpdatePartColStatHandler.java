@@ -25,21 +25,23 @@ import org.apache.hadoop.hive.ql.parse.repl.DumpType;
 import org.apache.hadoop.hive.ql.parse.repl.dump.Utils;
 import org.apache.hadoop.hive.ql.parse.repl.load.DumpMetaData;
 
-class UpdatePartColStatHandler extends AbstractEventHandler {
+class UpdatePartColStatHandler extends AbstractEventHandler<UpdatePartitionColumnStatMessage> {
 
   UpdatePartColStatHandler(NotificationEvent event) {
     super(event);
   }
 
   @Override
+  UpdatePartitionColumnStatMessage eventMessage(String stringRepresentation) {
+    return deserializer.getUpdatePartitionColumnStatMessage(stringRepresentation);
+  }
+
+  @Override
   public void handle(Context withinContext) throws Exception {
     LOG.info("Processing#{} UpdatePartitionTableColumnStat message : {}", fromEventId(),
-            event.getMessage());
+            eventMessageAsJSON);
 
-    UpdatePartitionColumnStatMessage upcsm =
-            deserializer.getUpdatePartitionColumnStatMessage(event.getMessage());
-
-    org.apache.hadoop.hive.metastore.api.Table tableObj = upcsm.getTableObject();
+    org.apache.hadoop.hive.metastore.api.Table tableObj = eventMessage.getTableObject();
     if (tableObj == null) {
       LOG.debug("Event#{} was an event of type {} with no table listed", fromEventId(),
               event.getEventType());
@@ -64,7 +66,7 @@ class UpdatePartColStatHandler extends AbstractEventHandler {
     }
 
     DumpMetaData dmd = withinContext.createDmd(this);
-    dmd.setPayload(event.getMessage());
+    dmd.setPayload(eventMessageAsJSON);
     dmd.write();
   }
 

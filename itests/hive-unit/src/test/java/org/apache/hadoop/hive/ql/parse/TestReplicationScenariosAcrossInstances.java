@@ -30,6 +30,7 @@ import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.NotificationEvent;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.messaging.json.gzip.GzipJSONMessageEncoder;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.exec.repl.incremental.IncrementalLoadTasksBuilder;
 import org.apache.hadoop.hive.ql.exec.repl.util.ReplUtils;
@@ -65,6 +66,8 @@ public class TestReplicationScenariosAcrossInstances extends BaseReplicationAcro
   @BeforeClass
   public static void classLevelSetup() throws Exception {
     HashMap<String, String> overrides = new HashMap<>();
+    overrides.put(HiveConf.ConfVars.METASTORE_EVENT_MESSAGE_FACTORY.varname,
+        GzipJSONMessageEncoder.class.getCanonicalName());
     overrides.put(HiveConf.ConfVars.HIVE_DISTCP_DOAS_USER.varname,
         UserGroupInformation.getCurrentUser().getUserName());
 
@@ -1252,27 +1255,6 @@ public class TestReplicationScenariosAcrossInstances extends BaseReplicationAcro
             .run("select i from table4")
             .verifyResult("1");
     Assert.assertEquals(IncrementalLoadTasksBuilder.getNumIteration(), numEvents);
-  }
-
-  @Test
-  public void testDumpExternalTableWithAddPartitionEvent() throws Throwable {
-    WarehouseInstance.Tuple tuple = primary.dump("repl dump " + primaryDbName);
-
-    replica.load(replicatedDbName, tuple.dumpLocation);
-
-    tuple = primary.run("use " + primaryDbName)
-            .run("create external table t1 (place string) partitioned by (country string)")
-            .run("alter table t1 add partition(country='india')")
-            .run("alter table t1 add partition(country='us')")
-            .dump("repl dump " + primaryDbName + " from " + tuple.lastReplicationId
-                    + " with ('hive.repl.include.external.tables'='true')");
-
-    replica.load(replicatedDbName, tuple.dumpLocation)
-            .run("use " + replicatedDbName)
-            .run("show tables like 't1'")
-            .verifyResult("t1")
-            .run("show partitions t1")
-            .verifyResults(new String[] { "country=india", "country=us" });
   }
 
   public void testMoveOptimizationBootstrapReplLoadRetryAfterFailure() throws Throwable {

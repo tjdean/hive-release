@@ -18,6 +18,7 @@
 package org.apache.hadoop.hive.ql.parse;
 
 import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.messaging.json.gzip.GzipJSONMessageEncoder;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TestName;
@@ -43,6 +44,8 @@ public class TestStatsReplicationScenariosNoAutogather extends TestStatsReplicat
   @BeforeClass
   public static void classLevelSetup() throws Exception {
     Map<String, String> overrides = new HashMap<>();
+    overrides.put(HiveConf.ConfVars.METASTORE_EVENT_MESSAGE_FACTORY.varname,
+        GzipJSONMessageEncoder.class.getCanonicalName());
 
     internalBeforeClassSetup(overrides, TestReplicationScenarios.class, false);
   }

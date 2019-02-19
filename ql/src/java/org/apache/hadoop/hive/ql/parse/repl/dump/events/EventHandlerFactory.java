@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -18,7 +18,7 @@
 package org.apache.hadoop.hive.ql.parse.repl.dump.events;
 
 import org.apache.hadoop.hive.metastore.api.NotificationEvent;
-import org.apache.hadoop.hive.metastore.messaging.MessageFactory;
+import org.apache.hadoop.hive.metastore.messaging.MessageBuilder;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -33,20 +33,20 @@ public class EventHandlerFactory {
   private static Map<String, Class<? extends EventHandler>> registeredHandlers = new HashMap<>();
 
   static {
-    register(MessageFactory.ADD_PARTITION_EVENT, AddPartitionHandler.class);
-    register(MessageFactory.ALTER_DATABASE_EVENT, AlterDatabaseHandler.class);
-    register(MessageFactory.ALTER_PARTITION_EVENT, AlterPartitionHandler.class);
-    register(MessageFactory.ALTER_TABLE_EVENT, AlterTableHandler.class);
-    register(MessageFactory.CREATE_FUNCTION_EVENT, CreateFunctionHandler.class);
-    register(MessageFactory.CREATE_TABLE_EVENT, CreateTableHandler.class);
-    register(MessageFactory.DROP_PARTITION_EVENT, DropPartitionHandler.class);
-    register(MessageFactory.DROP_TABLE_EVENT, DropTableHandler.class);
-    register(MessageFactory.INSERT_EVENT, InsertHandler.class);
-    register(MessageFactory.DROP_FUNCTION_EVENT, DropFunctionHandler.class);
-    register(MessageFactory.CREATE_DATABASE_EVENT, CreateDatabaseHandler.class);
-    register(MessageFactory.DROP_DATABASE_EVENT, DropDatabaseHandler.class);
-    register(MessageFactory.UPDATE_TBL_COL_STAT_EVENT, UpdateTableColStatHandler.class);
-    register(MessageFactory.UPDATE_PART_COL_STAT_EVENT, UpdatePartColStatHandler.class);
+    register(MessageBuilder.ADD_PARTITION_EVENT, AddPartitionHandler.class);
+    register(MessageBuilder.ALTER_DATABASE_EVENT, AlterDatabaseHandler.class);
+    register(MessageBuilder.ALTER_PARTITION_EVENT, AlterPartitionHandler.class);
+    register(MessageBuilder.ALTER_TABLE_EVENT, AlterTableHandler.class);
+    register(MessageBuilder.CREATE_FUNCTION_EVENT, CreateFunctionHandler.class);
+    register(MessageBuilder.CREATE_TABLE_EVENT, CreateTableHandler.class);
+    register(MessageBuilder.DROP_PARTITION_EVENT, DropPartitionHandler.class);
+    register(MessageBuilder.DROP_TABLE_EVENT, DropTableHandler.class);
+    register(MessageBuilder.INSERT_EVENT, InsertHandler.class);
+    register(MessageBuilder.DROP_FUNCTION_EVENT, DropFunctionHandler.class);
+    register(MessageBuilder.CREATE_DATABASE_EVENT, CreateDatabaseHandler.class);
+    register(MessageBuilder.DROP_DATABASE_EVENT, DropDatabaseHandler.class);
+    register(MessageBuilder.UPDATE_TBL_COL_STAT_EVENT, UpdateTableColStatHandler.class);
+    register(MessageBuilder.UPDATE_PART_COL_STAT_EVENT, UpdatePartColStatHandler.class);
   }
 
   static void register(String event, Class<? extends EventHandler> handlerClazz) {

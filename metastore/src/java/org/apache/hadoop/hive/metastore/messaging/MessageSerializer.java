@@ -1,4 +1,5 @@
-/* * Licensed to the Apache Software Foundation (ASF) under one
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
  * regarding copyright ownership.  The ASF licenses this file
@@ -14,26 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.apache.hadoop.hive.metastore.messaging;
 
-import org.apache.hadoop.hive.metastore.api.ColumnStatistics;
-import org.apache.hadoop.hive.metastore.api.Table;
-
-/**
- * HCat message sent when an table column statistics update is done.
- */
-public abstract class UpdateTableColumnStatMessage extends EventMessage {
-
-  protected UpdateTableColumnStatMessage() {
-    super(EventType.UPDATE_TABLE_COLUMN_STAT);
+public interface MessageSerializer {
+  default String serialize(EventMessage message) {
+    return message.toString();
   }
-
-  public abstract ColumnStatistics getColumnStatistics();
-
-  public abstract String getColStatsJson();
-
-  public abstract String getTableObjJson();
-
-  public abstract Table getTableObject() throws Exception;
 }

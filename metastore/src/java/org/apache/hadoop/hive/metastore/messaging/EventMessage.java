@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -28,25 +28,25 @@ public abstract class EventMessage {
   /**
    * Enumeration of all supported types of Metastore operations.
    */
-  public static enum EventType {
+  public enum EventType {
 
-    CREATE_DATABASE(MessageFactory.CREATE_DATABASE_EVENT),
-    DROP_DATABASE(MessageFactory.DROP_DATABASE_EVENT),
-    CREATE_TABLE(MessageFactory.CREATE_TABLE_EVENT),
-    DROP_TABLE(MessageFactory.DROP_TABLE_EVENT),
-    ADD_PARTITION(MessageFactory.ADD_PARTITION_EVENT),
-    DROP_PARTITION(MessageFactory.DROP_PARTITION_EVENT),
-    ALTER_DATABASE(MessageFactory.ALTER_DATABASE_EVENT),
-    ALTER_TABLE(MessageFactory.ALTER_TABLE_EVENT),
-    ALTER_PARTITION(MessageFactory.ALTER_PARTITION_EVENT),
-    INSERT(MessageFactory.INSERT_EVENT),
-    CREATE_FUNCTION(MessageFactory.CREATE_FUNCTION_EVENT),
-    DROP_FUNCTION(MessageFactory.DROP_FUNCTION_EVENT),
-    CREATE_INDEX(MessageFactory.CREATE_INDEX_EVENT),
-    DROP_INDEX(MessageFactory.DROP_INDEX_EVENT),
-    ALTER_INDEX(MessageFactory.ALTER_INDEX_EVENT),
-    UPDATE_TABLE_COLUMN_STAT(MessageFactory.UPDATE_TBL_COL_STAT_EVENT),
-    UPDATE_PARTITION_COLUMN_STAT(MessageFactory.UPDATE_PART_COL_STAT_EVENT);
+    CREATE_DATABASE(MessageBuilder.CREATE_DATABASE_EVENT),
+    DROP_DATABASE(MessageBuilder.DROP_DATABASE_EVENT),
+    CREATE_TABLE(MessageBuilder.CREATE_TABLE_EVENT),
+    DROP_TABLE(MessageBuilder.DROP_TABLE_EVENT),
+    ADD_PARTITION(MessageBuilder.ADD_PARTITION_EVENT),
+    DROP_PARTITION(MessageBuilder.DROP_PARTITION_EVENT),
+    ALTER_DATABASE(MessageBuilder.ALTER_DATABASE_EVENT),
+    ALTER_TABLE(MessageBuilder.ALTER_TABLE_EVENT),
+    ALTER_PARTITION(MessageBuilder.ALTER_PARTITION_EVENT),
+    INSERT(MessageBuilder.INSERT_EVENT),
+    CREATE_FUNCTION(MessageBuilder.CREATE_FUNCTION_EVENT),
+    DROP_FUNCTION(MessageBuilder.DROP_FUNCTION_EVENT),
+    CREATE_INDEX(MessageBuilder.CREATE_INDEX_EVENT),
+    DROP_INDEX(MessageBuilder.DROP_INDEX_EVENT),
+    ALTER_INDEX(MessageBuilder.ALTER_INDEX_EVENT),
+    UPDATE_TABLE_COLUMN_STAT(MessageBuilder.UPDATE_TBL_COL_STAT_EVENT),
+    UPDATE_PARTITION_COLUMN_STAT(MessageBuilder.UPDATE_PART_COL_STAT_EVENT);
 
     private String typeString;
 
@@ -97,12 +97,15 @@ public abstract class EventMessage {
    * Class invariant. Checked after construction or deserialization.
    */
   public EventMessage checkValid() {
-    if (getServer() == null || getServicePrincipal() == null)
+    if (getServer() == null || getServicePrincipal() == null) {
       throw new IllegalStateException("Server-URL/Service-Principal shouldn't be null.");
-    if (getEventType() == null)
+    }
+    if (getEventType() == null) {
       throw new IllegalStateException("Event-type unset.");
-    if (getDB() == null)
+    }
+    if (getDB() == null) {
       throw new IllegalArgumentException("DB-name unset.");
+    }
 
     return this;
   }

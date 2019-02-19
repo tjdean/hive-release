@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -61,8 +61,9 @@ public abstract class MessageDeserializer {
     case INSERT:
       return getInsertMessage(messageBody);
     case UPDATE_TABLE_COLUMN_STAT:
-        return getUpdateTableColumnStatMessage(messageBody);
-
+      return getUpdateTableColumnStatMessage(messageBody);
+    case UPDATE_PARTITION_COLUMN_STAT:
+      return getUpdatePartitionColumnStatMessage(messageBody);
     default:
       throw new IllegalArgumentException("Unsupported event-type: " + eventTypeString);
     }

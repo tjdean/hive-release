@@ -20,6 +20,7 @@
 package org.apache.hive.hcatalog.messaging.json;
 
 import org.apache.hadoop.hive.metastore.api.Index;
+import org.apache.hadoop.hive.metastore.messaging.MessageBuilder;
 import org.apache.hive.hcatalog.messaging.AlterIndexMessage;
 import org.apache.thrift.TException;
 
@@ -48,8 +49,8 @@ public class JSONAlterIndexMessage extends AlterIndexMessage {
     this.db = after.getDbName();
     this.timestamp = timestamp;
     try {
-      this.beforeIndexObjJson = JSONMessageFactory.createIndexObjJson(before);
-      this.afterIndexObjJson = JSONMessageFactory.createIndexObjJson(after);
+      this.beforeIndexObjJson = MessageBuilder.createIndexObjJson(before);
+      this.afterIndexObjJson = MessageBuilder.createIndexObjJson(after);
     } catch (TException ex) {
       throw new IllegalArgumentException("Could not serialize Index object", ex);
     }

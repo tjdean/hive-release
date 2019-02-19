@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -37,9 +37,9 @@ import org.apache.hadoop.hive.metastore.messaging.InsertMessage;
 import org.apache.hadoop.hive.metastore.messaging.MessageDeserializer;
 import org.apache.hadoop.hive.metastore.messaging.UpdatePartitionColumnStatMessage;
 import org.apache.hadoop.hive.metastore.messaging.UpdateTableColumnStatMessage;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * MessageDeserializer implementation, for deserializing from JSON strings.
@@ -49,10 +49,10 @@ public class JSONMessageDeserializer extends MessageDeserializer {
   static ObjectMapper mapper = new ObjectMapper(); // Thread-safe.
 
   static {
-    mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    mapper.configure(SerializationConfig.Feature.AUTO_DETECT_GETTERS, false);
-    mapper.configure(SerializationConfig.Feature.AUTO_DETECT_IS_GETTERS, false);
-    mapper.configure(SerializationConfig.Feature.AUTO_DETECT_FIELDS, false);
+    mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    mapper.configure(MapperFeature.AUTO_DETECT_GETTERS, false);
+    mapper.configure(MapperFeature.AUTO_DETECT_IS_GETTERS, false);
+    mapper.configure(MapperFeature.AUTO_DETECT_FIELDS, false);
   }
 
   @Override
@@ -220,7 +220,7 @@ public class JSONMessageDeserializer extends MessageDeserializer {
     try {
       return mapper.readValue(messageBody, JSONUpdatePartitionColumnStatMessage.class);
     } catch (Exception e) {
-      throw new IllegalArgumentException("Could not construct UpdateTableColumnStatMessage", e);
+      throw new IllegalArgumentException("Could not construct UpdatePartitionColumnStatMessage", e);
     }
   }
 }

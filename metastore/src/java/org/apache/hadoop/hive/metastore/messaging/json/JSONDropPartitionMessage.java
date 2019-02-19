@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -19,13 +19,15 @@
 
 package org.apache.hadoop.hive.metastore.messaging.json;
 
-import org.apache.hadoop.hive.metastore.api.Table;
-import org.apache.hadoop.hive.metastore.messaging.DropPartitionMessage;
-import org.apache.thrift.TException;
-import org.codehaus.jackson.annotate.JsonProperty;
-
 import java.util.List;
 import java.util.Map;
+
+import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.messaging.MessageBuilder;
+import org.apache.hadoop.hive.metastore.messaging.DropPartitionMessage;
+import org.apache.thrift.TException;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * JSON implementation of DropPartitionMessage.
@@ -63,7 +65,7 @@ public class JSONDropPartitionMessage extends DropPartitionMessage {
     this(server, servicePrincipal, tableObj.getDbName(), tableObj.getTableName(),
         partitionKeyValues, timestamp);
     try {
-      this.tableObjJson = JSONMessageFactory.createTableObjJson(tableObj);
+      this.tableObjJson = MessageBuilder.createTableObjJson(tableObj);
     } catch (TException e) {
       throw new IllegalArgumentException("Could not serialize: ", e);
     }
@@ -101,7 +103,7 @@ public class JSONDropPartitionMessage extends DropPartitionMessage {
 
   @Override
   public Table getTableObj() throws Exception {
-    return (Table) JSONMessageFactory.getTObj(tableObjJson, Table.class);
+    return (Table) MessageBuilder.getTObj(tableObjJson, Table.class);
   }
 
   public String getTableObjJson() {

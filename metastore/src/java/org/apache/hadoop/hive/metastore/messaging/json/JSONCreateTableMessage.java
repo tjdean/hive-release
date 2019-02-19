@@ -1,4 +1,4 @@
-/**
+/*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -24,9 +24,10 @@ import java.util.List;
 
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.messaging.CreateTableMessage;
+import org.apache.hadoop.hive.metastore.messaging.MessageBuilder;
 import org.apache.thrift.TException;
-import org.codehaus.jackson.annotate.JsonProperty;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Lists;
 
 /**
@@ -61,7 +62,7 @@ public class JSONCreateTableMessage extends CreateTableMessage {
       Iterator<String> fileIter, Long timestamp) {
     this(server, servicePrincipal, tableObj.getDbName(), tableObj.getTableName(), timestamp);
     try {
-      this.tableObjJson = JSONMessageFactory.createTableObjJson(tableObj);
+      this.tableObjJson = MessageBuilder.createTableObjJson(tableObj);
     } catch (TException e) {
       throw new IllegalArgumentException("Could not serialize: ", e);
     }
@@ -95,7 +96,7 @@ public class JSONCreateTableMessage extends CreateTableMessage {
 
   @Override
   public Table getTableObj() throws Exception {
-    return (Table) JSONMessageFactory.getTObj(tableObjJson,Table.class);
+    return (Table) MessageBuilder.getTObj(tableObjJson,Table.class);
   }
 
   public String getTableObjJson() {
