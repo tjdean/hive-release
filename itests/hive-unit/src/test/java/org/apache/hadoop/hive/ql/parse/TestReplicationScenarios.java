@@ -104,7 +104,7 @@ public class TestReplicationScenarios {
       "org.apache.hive.hcatalog.listener.DbNotificationListener";
       // FIXME : replace with hive copy once that is copied
   private final static String tid =
-      TestReplicationScenarios.class.getCanonicalName().replace('.','_') + "_" + System.currentTimeMillis();
+      TestReplicationScenarios.class.getCanonicalName().toLowerCase().replace('.','_') + "_" + System.currentTimeMillis();
   private final static String TEST_PATH =
       System.getProperty("test.warehouse.dir", "/tmp") + Path.SEPARATOR + tid;
 
@@ -114,10 +114,6 @@ public class TestReplicationScenarios {
   private static int msPort;
   private static Driver driver;
 
-  @Rule
-  public TestRule replV1BackwardCompatibleRule =
-      new ReplicationV1CompatRule(metaStoreClient, hconf,
-          new ArrayList<>(Arrays.asList("testEventFilters")));
   // Make sure we skip backward-compat checking for those tests that don't generate events
 
   protected static final Logger LOG = LoggerFactory.getLogger(TestReplicationScenarios.class);
@@ -135,10 +131,10 @@ public class TestReplicationScenarios {
     HashMap<String, String> overrideProperties = new HashMap<>();
     overrideProperties.put(HiveConf.ConfVars.METASTORE_EVENT_MESSAGE_FACTORY.varname,
         GzipJSONMessageEncoder.class.getCanonicalName());
-    internalBeforeClassSetup(overrideProperties, false);
+    internalBeforeClassSetup(overrideProperties);
   }
 
-  static void internalBeforeClassSetup(Map<String, String> additionalProperties, boolean forMigration)
+  static void internalBeforeClassSetup(Map<String, String> additionalProperties)
       throws Exception {
     hconf = new HiveConf(TestReplicationScenarios.class);
     String metastoreUri = System.getProperty("test."+HiveConf.ConfVars.METASTOREURIS.varname);
@@ -172,6 +168,10 @@ public class TestReplicationScenarios {
     System.setProperty(HiveConf.ConfVars.PREEXECHOOKS.varname, " ");
     System.setProperty(HiveConf.ConfVars.POSTEXECHOOKS.varname, " ");
 
+    additionalProperties.forEach((key, value) -> {
+      hconf.set(key, value);
+    });
+
     Path testPath = new Path(TEST_PATH);
     FileSystem fs = FileSystem.get(testPath.toUri(),hconf);
     fs.mkdirs(testPath);
@@ -189,6 +189,7 @@ public class TestReplicationScenarios {
   @Before
   public void setUp(){
     // before each test
+    SessionState.get().setCurrentDatabase("default");
   }
 
   @After

@@ -67,8 +67,9 @@ public class TestHCatClientNotification {
 
   @BeforeClass
   public static void setupClient() throws Exception {
-    HiveConf conf = new HiveConf(); conf.setVar(HiveConf.ConfVars.METASTORE_EVENT_LISTENERS,
-        DbNotificationListener.class.getName());
+    HiveConf conf = new HiveConf();
+    conf.setVar(HiveConf.ConfVars.METASTORE_EVENT_LISTENERS, DbNotificationListener.class.getName());
+    conf.setVar(HiveConf.ConfVars.METASTORE_EVENT_MESSAGE_FACTORY, JSONMessageEncoder.class.getName());
     hCatClient = HCatClient.create(conf);
     md = MessageFactory.getInstance(JSONMessageEncoder.FORMAT).getDeserializer();
   }

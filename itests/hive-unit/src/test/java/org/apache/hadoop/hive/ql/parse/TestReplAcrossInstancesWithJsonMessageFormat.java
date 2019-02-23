@@ -18,13 +18,16 @@
 
 package org.apache.hadoop.hive.ql.parse;
 
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.messaging.json.JSONMessageEncoder;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TestRule;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TestReplAcrossInstancesWithJsonMessageFormat
     extends TestReplicationScenariosAcrossInstances {
@@ -34,7 +37,10 @@ public class TestReplAcrossInstancesWithJsonMessageFormat
 
   @BeforeClass
   public static void classLevelSetup() throws Exception {
-    internalBeforeClassSetup(Collections.emptyMap(), TestReplicationScenarios.class);
+    Map<String, String> overrides = new HashMap<>();
+    overrides.put(HiveConf.ConfVars.METASTORE_EVENT_MESSAGE_FACTORY.varname,
+            JSONMessageEncoder.class.getCanonicalName());
+    internalBeforeClassSetup(overrides, TestReplicationScenarios.class);
   }
 
   @Before

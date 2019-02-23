@@ -41,6 +41,7 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NotificationEvent;
 import org.apache.hadoop.hive.metastore.api.PartitionEventType;
 import org.apache.hadoop.hive.ql.WindowsPathUtil;
+import org.apache.hadoop.hive.metastore.messaging.json.JSONMessageEncoder;
 import org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat;
 import org.apache.hadoop.hive.ql.io.RCFileInputFormat;
 import org.apache.hadoop.hive.ql.io.RCFileOutputFormat;
@@ -142,6 +143,8 @@ public class TestHCatClient {
 
     System.setProperty(HiveConf.ConfVars.METASTORE_TRANSACTIONAL_EVENT_LISTENERS.varname,
         DbNotificationListener.class.getName()); // turn on db notification listener on metastore
+    System.setProperty(HiveConf.ConfVars.METASTORE_EVENT_MESSAGE_FACTORY.varname,
+            JSONMessageEncoder.class.getName());
     Thread t = new Thread(new RunMS(msPort));
     t.start();
     Thread.sleep(10000);

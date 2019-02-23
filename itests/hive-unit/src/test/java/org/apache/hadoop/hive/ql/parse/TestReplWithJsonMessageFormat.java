@@ -17,6 +17,8 @@
  */
 package org.apache.hadoop.hive.ql.parse;
 
+import org.apache.hadoop.hive.conf.HiveConf;
+import org.apache.hadoop.hive.metastore.messaging.json.JSONMessageEncoder;
 import org.apache.hive.hcatalog.api.repl.ReplicationV1CompatRule;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -24,6 +26,8 @@ import org.junit.rules.TestRule;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TestReplWithJsonMessageFormat extends TestReplicationScenarios {
   @Rule
@@ -33,7 +37,10 @@ public class TestReplWithJsonMessageFormat extends TestReplicationScenarios {
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
-    internalBeforeClassSetup(Collections.emptyMap(), false);
+    Map<String, String> overrides = new HashMap<>();
+    overrides.put(HiveConf.ConfVars.METASTORE_EVENT_MESSAGE_FACTORY.varname,
+            JSONMessageEncoder.class.getCanonicalName());
+    internalBeforeClassSetup(overrides);
   }
 
 }
