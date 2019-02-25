@@ -158,7 +158,7 @@ Retention:          	0
 #### A masked pattern was here ####
 Table Type:         	MANAGED_TABLE       	 
 Table Parameters:	 	 
-	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"insert_num\":\"true\",\"c1\":\"true\",\"c3\":\"true\",\"c4\":\"true\",\"c6\":\"true\",\"c7\":\"true\",\"c9\":\"true\",\"c10\":\"true\",\"c12\":\"true\",\"c13\":\"true\",\"c15\":\"true\",\"b\":\"true\"}}
+	COLUMN_STATS_ACCURATE	{\"BASIC_STATS\":\"true\",\"COLUMN_STATS\":{\"b\":\"true\",\"c1\":\"true\",\"c10\":\"true\",\"c12\":\"true\",\"c13\":\"true\",\"c15\":\"true\",\"c3\":\"true\",\"c4\":\"true\",\"c6\":\"true\",\"c7\":\"true\",\"c9\":\"true\",\"insert_num\":\"true\"}}
 	numFiles            	1                   
 	numRows             	5                   
 	rawDataSize         	1110                
