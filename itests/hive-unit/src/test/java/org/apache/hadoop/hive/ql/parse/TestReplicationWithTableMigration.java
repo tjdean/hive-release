@@ -19,12 +19,15 @@ package org.apache.hadoop.hive.ql.parse;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hdfs.MiniDFSCluster;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore;
 import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore.BehaviourInjection;
 import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore.CallerArguments;
 import org.apache.hadoop.hive.metastore.api.Partition;
+import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
+import org.apache.hadoop.hive.metastore.messaging.json.gzip.GzipJSONMessageEncoder;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.txn.TxnDbUtil;
 import org.apache.hadoop.hive.metastore.txn.TxnStore;
@@ -35,13 +38,15 @@ import org.apache.hadoop.hive.shims.Utils;
 
 import org.junit.*;
 import org.junit.rules.TestName;
-import org.junit.rules.TestRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.apache.hadoop.hive.metastore.ReplChangeManager.SOURCE_OF_REPLICATION;
 import static org.apache.hadoop.hive.ql.io.AcidUtils.isFullAcidTable;
@@ -57,10 +62,7 @@ public class TestReplicationWithTableMigration {
   @Rule
   public final TestName testName = new TestName();
 
-  @Rule
-  public TestRule replV1BackwardCompat;
-
-  protected static final Logger LOG = LoggerFactory.getLogger(TestReplicationScenarios.class);
+  protected static final Logger LOG = LoggerFactory.getLogger(TestReplicationWithTableMigration.class);
   private static WarehouseInstance primary, replica;
   private String primaryDbName, replicatedDbName;
   private static HiveConf conf;
@@ -72,28 +74,36 @@ public class TestReplicationWithTableMigration {
 
   @BeforeClass
   public static void classLevelSetup() throws Exception {
-    conf = new HiveConf(TestReplicationWithTableMigration.class);
+    HashMap<String, String> overrideProperties = new HashMap<>();
+    overrideProperties.put(MetastoreConf.ConfVars.EVENT_MESSAGE_FACTORY.getHiveName(),
+        GzipJSONMessageEncoder.class.getCanonicalName());
+    internalBeforeClassSetup(overrideProperties);
+  }
+
+  static void internalBeforeClassSetup(Map<String, String> overrideConfigs) throws Exception {
+    HiveConf conf = new HiveConf(TestReplicationWithTableMigration.class);
     conf.set("dfs.client.use.datanode.hostname", "true");
     conf.set("hadoop.proxyuser." + Utils.getUGI().getShortUserName() + ".hosts", "*");
     MiniDFSCluster miniDFSCluster =
-           new MiniDFSCluster.Builder(conf).numDataNodes(1).format(true).build();
-    HashMap<String, String> overridesForHiveConf = new HashMap<String, String>() {{
-        put("fs.defaultFS", miniDFSCluster.getFileSystem().getUri().toString());
-        put("hive.support.concurrency", "true");
-        put("hive.txn.manager", "org.apache.hadoop.hive.ql.lockmgr.DbTxnManager");
-        put("hive.metastore.client.capability.check", "false");
-        put("hive.repl.bootstrap.dump.open.txn.timeout", "1s");
-        put("hive.exec.dynamic.partition.mode", "nonstrict");
-        put("hive.strict.checks.bucketing", "false");
-        put("hive.mapred.mode", "nonstrict");
-        put("mapred.input.dir.recursive", "true");
-        put("hive.metastore.disallow.incompatible.col.type.changes", "false");
-        put("hive.strict.managed.tables", "true");
+        new MiniDFSCluster.Builder(conf).numDataNodes(1).format(true).build();
+    final DistributedFileSystem fs = miniDFSCluster.getFileSystem();
+    HashMap<String, String> hiveConfigs = new HashMap<String, String>() {{
+      put("fs.defaultFS", fs.getUri().toString());
+      put("hive.support.concurrency", "true");
+      put("hive.txn.manager", "org.apache.hadoop.hive.ql.lockmgr.DbTxnManager");
+      put("hive.metastore.client.capability.check", "false");
+      put("hive.repl.bootstrap.dump.open.txn.timeout", "1s");
+      put("hive.exec.dynamic.partition.mode", "nonstrict");
+      put("hive.strict.checks.bucketing", "false");
+      put("hive.mapred.mode", "nonstrict");
+      put("mapred.input.dir.recursive", "true");
+      put("hive.metastore.disallow.incompatible.col.type.changes", "false");
+      put("hive.strict.managed.tables", "true");
     }};
-    replica = new WarehouseInstance(LOG, miniDFSCluster, overridesForHiveConf);
+    replica = new WarehouseInstance(LOG, miniDFSCluster, hiveConfigs);
 
-    HashMap<String, String> overridesForHiveConf1 = new HashMap<String, String>() {{
-      put("fs.defaultFS", miniDFSCluster.getFileSystem().getUri().toString());
+    HashMap<String, String> configsForPrimary = new HashMap<String, String>() {{
+      put("fs.defaultFS", fs.getUri().toString());
       put("hive.metastore.client.capability.check", "false");
       put("hive.repl.bootstrap.dump.open.txn.timeout", "1s");
       put("hive.exec.dynamic.partition.mode", "nonstrict");
@@ -106,7 +116,8 @@ public class TestReplicationWithTableMigration {
       put("hive.strict.managed.tables", "false");
       put("hive.repl.approx.max.load.tasks", "1");
     }};
-    primary = new WarehouseInstance(LOG, miniDFSCluster, overridesForHiveConf1);
+    configsForPrimary.putAll(overrideConfigs);
+    primary = new WarehouseInstance(LOG, miniDFSCluster, configsForPrimary);
   }
 
   @AfterClass
@@ -117,7 +128,6 @@ public class TestReplicationWithTableMigration {
 
   @Before
   public void setup() throws Throwable {
-    replV1BackwardCompat = primary.getReplivationV1CompatRule(new ArrayList<>());
     primaryDbName = testName.getMethodName() + "_" + +System.currentTimeMillis();
     replicatedDbName = "replicated_" + primaryDbName;
     primary.run("create database " + primaryDbName + " WITH DBPROPERTIES ( '" +

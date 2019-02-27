@@ -18,11 +18,11 @@
 package org.apache.hadoop.hive.ql.parse;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.hive.cli.CliSessionState;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClient;
@@ -33,7 +33,6 @@ import org.apache.hadoop.hive.metastore.MetaStoreTestUtils;
 import org.apache.hadoop.hive.metastore.ObjectStore;
 import org.apache.hadoop.hive.metastore.api.Database;
 import org.apache.hadoop.hive.metastore.api.ForeignKeysRequest;
-import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.NotNullConstraintsRequest;
 import org.apache.hadoop.hive.metastore.api.NotificationEvent;
@@ -47,61 +46,63 @@ import org.apache.hadoop.hive.metastore.api.SQLUniqueConstraint;
 import org.apache.hadoop.hive.metastore.api.Table;
 import org.apache.hadoop.hive.metastore.api.UniqueConstraintsRequest;
 import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
+import org.apache.hadoop.hive.metastore.messaging.MessageBuilder;
+import org.apache.hadoop.hive.metastore.messaging.MessageEncoder;
 import org.apache.hadoop.hive.metastore.messaging.MessageFactory;
 import org.apache.hadoop.hive.metastore.messaging.event.filters.AndFilter;
 import org.apache.hadoop.hive.metastore.messaging.event.filters.DatabaseAndTableFilter;
 import org.apache.hadoop.hive.metastore.messaging.event.filters.EventBoundaryFilter;
 import org.apache.hadoop.hive.metastore.messaging.event.filters.MessageFormatFilter;
-import org.apache.hadoop.hive.ql.DriverFactory;
 import org.apache.hadoop.hive.ql.DriverContext;
+import org.apache.hadoop.hive.metastore.messaging.json.JSONMessageEncoder;
+import org.apache.hadoop.hive.metastore.messaging.json.gzip.GzipJSONMessageEncoder;
+import org.apache.hadoop.hive.ql.DriverFactory;
+import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.IDriver;
 import org.apache.hadoop.hive.ql.Context;
-import org.apache.hadoop.hive.ql.exec.repl.ReplDumpWork;
 import org.apache.hadoop.hive.ql.exec.DDLTask;
 import org.apache.hadoop.hive.ql.exec.MoveTask;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.exec.TaskFactory;
-import org.apache.hadoop.hive.ql.parse.repl.load.EventDumpDirComparator;
+import org.apache.hadoop.hive.ql.exec.repl.ReplDumpWork;
 import org.apache.hadoop.hive.ql.exec.repl.ReplLoadWork;
 import org.apache.hadoop.hive.ql.metadata.Hive;
-import org.apache.hadoop.hive.ql.metadata.HiveException;
+import org.apache.hadoop.hive.ql.parse.repl.load.EventDumpDirComparator;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.apache.hadoop.hive.ql.session.SessionState;
 import org.apache.hadoop.hive.ql.stats.StatsUtils;
 import org.apache.hadoop.hive.shims.Utils;
 import org.apache.hadoop.security.authorize.ProxyUsers;
-import org.apache.hive.hcatalog.api.repl.ReplicationV1CompatRule;
 import org.apache.thrift.TException;
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestName;
-import org.junit.rules.TestRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.hadoop.hive.ql.ErrorMsg;
 
 import javax.annotation.Nullable;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import static org.apache.hadoop.hive.metastore.ReplChangeManager.SOURCE_OF_REPLICATION;
 import static org.apache.hadoop.hive.metastore.Warehouse.DEFAULT_CATALOG_NAME;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.apache.hadoop.hive.metastore.ReplChangeManager.SOURCE_OF_REPLICATION;
-import org.junit.Assert;
+import static org.junit.Assert.assertTrue;
 
 public class TestReplicationScenarios {
 
@@ -116,19 +117,15 @@ public class TestReplicationScenarios {
   private final static String TEST_PATH =
       System.getProperty("test.warehouse.dir", "/tmp") + Path.SEPARATOR + tid;
 
-  private static HiveConf hconf;
+  static HiveConf hconf;
+  static HiveMetaStoreClient metaStoreClient;
   private static IDriver driver;
-  private static HiveMetaStoreClient metaStoreClient;
   private static String proxySettingName;
   static HiveConf hconfMirror;
   static IDriver driverMirror;
   static HiveMetaStoreClient metaStoreClientMirror;
   static private boolean isMigrationTest;
 
-  @Rule
-  public TestRule replV1BackwardCompatibleRule =
-      new ReplicationV1CompatRule(metaStoreClient, hconf,
-          new ArrayList<>(Arrays.asList("testEventFilters")));
   // Make sure we skip backward-compat checking for those tests that don't generate events
 
   protected static final Logger LOG = LoggerFactory.getLogger(TestReplicationScenarios.class);
@@ -143,10 +140,14 @@ public class TestReplicationScenarios {
 
   @BeforeClass
   public static void setUpBeforeClass() throws Exception {
-    internalBeforeClassSetup(false);
+    HashMap<String, String> overrideProperties = new HashMap<>();
+    overrideProperties.put(MetastoreConf.ConfVars.EVENT_MESSAGE_FACTORY.getHiveName(),
+        GzipJSONMessageEncoder.class.getCanonicalName());
+    internalBeforeClassSetup(overrideProperties, false);
   }
 
-  static void internalBeforeClassSetup(boolean forMigration) throws Exception {
+  static void internalBeforeClassSetup(Map<String, String> additionalProperties, boolean forMigration)
+      throws Exception {
     hconf = new HiveConf(TestReplicationScenarios.class);
     String metastoreUri = System.getProperty("test."+HiveConf.ConfVars.METASTOREURIS.varname);
     if (metastoreUri != null) {
@@ -163,7 +164,6 @@ public class TestReplicationScenarios {
     hconf.setVar(HiveConf.ConfVars.REPLCMDIR, TEST_PATH + "/cmroot/");
     proxySettingName = "hadoop.proxyuser." + Utils.getUGI().getShortUserName() + ".hosts";
     hconf.set(proxySettingName, "*");
-    MetaStoreTestUtils.startMetaStoreWithRetry(hconf);
     hconf.setVar(HiveConf.ConfVars.REPLDIR,TEST_PATH + "/hrepl/");
     hconf.setIntVar(HiveConf.ConfVars.METASTORETHRIFTCONNECTIONRETRIES, 3);
     hconf.set(HiveConf.ConfVars.PREEXECHOOKS.varname, "");
@@ -178,6 +178,12 @@ public class TestReplicationScenarios {
     hconf.setBoolVar(HiveConf.ConfVars.HIVEOPTIMIZEMETADATAQUERIES, true);
     System.setProperty(HiveConf.ConfVars.PREEXECHOOKS.varname, " ");
     System.setProperty(HiveConf.ConfVars.POSTEXECHOOKS.varname, " ");
+
+    additionalProperties.forEach((key, value) -> {
+      hconf.set(key, value);
+    });
+
+    MetaStoreTestUtils.startMetaStoreWithRetry(hconf);
 
     Path testPath = new Path(TEST_PATH);
     FileSystem fs = FileSystem.get(testPath.toUri(),hconf);
@@ -3109,12 +3115,12 @@ public class TestReplicationScenarios {
     // that match a provided message format
 
     IMetaStoreClient.NotificationFilter restrictByDefaultMessageFormat =
-        new MessageFormatFilter(MessageFactory.getInstance().getMessageFormat());
+        new MessageFormatFilter(JSONMessageEncoder.FORMAT);
     IMetaStoreClient.NotificationFilter restrictByArbitraryMessageFormat =
-        new MessageFormatFilter(MessageFactory.getInstance().getMessageFormat() + "_bogus");
+        new MessageFormatFilter(JSONMessageEncoder.FORMAT + "_bogus");
     NotificationEvent dummyEvent = createDummyEvent(dbname,tblname,0);
 
-    assertEquals(MessageFactory.getInstance().getMessageFormat(),dummyEvent.getMessageFormat());
+    assertEquals(JSONMessageEncoder.FORMAT,dummyEvent.getMessageFormat());
 
     assertFalse(restrictByDefaultMessageFormat.accept(null));
     assertTrue(restrictByDefaultMessageFormat.accept(dummyEvent));
@@ -3463,19 +3469,25 @@ public class TestReplicationScenarios {
   }
 
   private NotificationEvent createDummyEvent(String dbname, String tblname, long evid) {
-    MessageFactory msgFactory = MessageFactory.getInstance();
+    MessageEncoder msgEncoder = null;
+    try {
+      msgEncoder = MessageFactory.getInstance(JSONMessageEncoder.FORMAT);
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
     Table t = new Table();
     t.setDbName(dbname);
     t.setTableName(tblname);
     NotificationEvent event = new NotificationEvent(
         evid,
         (int)System.currentTimeMillis(),
-        MessageFactory.CREATE_TABLE_EVENT,
-        msgFactory.buildCreateTableMessage(t, Arrays.asList("/tmp/").iterator()).toString()
+        MessageBuilder.CREATE_TABLE_EVENT,
+        MessageBuilder.getInstance().buildCreateTableMessage(t, Arrays.asList("/tmp/").iterator())
+            .toString()
     );
     event.setDbName(t.getDbName());
     event.setTableName(t.getTableName());
-    event.setMessageFormat(msgFactory.getMessageFormat());
+    event.setMessageFormat(msgEncoder.getMessageFormat());
     return event;
   }
 

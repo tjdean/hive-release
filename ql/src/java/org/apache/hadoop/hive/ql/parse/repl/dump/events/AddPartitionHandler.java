@@ -21,6 +21,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.metastore.api.NotificationEvent;
 import org.apache.hadoop.hive.metastore.messaging.AddPartitionMessage;
+import org.apache.hadoop.hive.metastore.messaging.EventMessage;
 import org.apache.hadoop.hive.metastore.messaging.PartitionFiles;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
@@ -42,13 +43,18 @@ class AddPartitionHandler extends AbstractEventHandler {
   }
 
   @Override
-  public void handle(Context withinContext) throws Exception {
-    LOG.info("Processing#{} ADD_PARTITION message : {}", fromEventId(), event.getMessage());
+  EventMessage eventMessage(String stringRepresentation) {
+    return deserializer.getAddPartitionMessage(stringRepresentation);
+  }
 
-    AddPartitionMessage apm = deserializer.getAddPartitionMessage(event.getMessage());
+  @Override
+  public void handle(Context withinContext) throws Exception {
+    LOG.info("Processing#{} ADD_PARTITION message : {}", fromEventId(), eventMessageAsJSON);
+
+    AddPartitionMessage apm = (AddPartitionMessage) eventMessage;
     org.apache.hadoop.hive.metastore.api.Table tobj = apm.getTableObj();
     if (tobj == null) {
-      LOG.debug("Event#{} was a ADD_PTN_EVENT with no table listed");
+      LOG.debug("Event#{} was a ADD_PTN_EVENT with no table listed", fromEventId());
       return;
     }
 
@@ -59,7 +65,7 @@ class AddPartitionHandler extends AbstractEventHandler {
 
     Iterable<org.apache.hadoop.hive.metastore.api.Partition> ptns = apm.getPartitionObjs();
     if ((ptns == null) || (!ptns.iterator().hasNext())) {
-      LOG.debug("Event#{} was an ADD_PTN_EVENT with no partitions");
+      LOG.debug("Event#{} was an ADD_PTN_EVENT with no partitions", fromEventId());
       return;
     }
 

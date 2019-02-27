@@ -24,6 +24,8 @@ import org.apache.hadoop.hive.metastore.api.AllocateTableWriteIdsRequest;
 import org.apache.hadoop.hive.metastore.api.AllocateTableWriteIdsResponse;
 import org.apache.hadoop.hive.metastore.api.OpenTxnRequest;
 import org.apache.hadoop.hive.metastore.api.OpenTxnsResponse;
+import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
+import org.apache.hadoop.hive.metastore.messaging.json.gzip.GzipJSONMessageEncoder;
 import org.apache.hadoop.hive.metastore.txn.TxnDbUtil;
 import org.apache.hadoop.hive.metastore.txn.TxnStore;
 import org.apache.hadoop.hive.metastore.txn.TxnUtils;
@@ -38,7 +40,6 @@ import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.processors.CommandProcessorResponse;
 import org.junit.rules.TestName;
 
-import org.junit.rules.TestRule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.junit.After;
@@ -53,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nullable;
 import java.util.Collections;
 import com.google.common.collect.Lists;
@@ -65,11 +67,9 @@ public class TestReplicationScenariosIncrementalLoadAcidTables {
   @Rule
   public final TestName testName = new TestName();
 
-  @Rule
-  public TestRule replV1BackwardCompat;
-
   protected static final Logger LOG = LoggerFactory.getLogger(TestReplicationScenariosIncrementalLoadAcidTables.class);
-  private static WarehouseInstance primary, replica, replicaNonAcid;
+  static WarehouseInstance primary;
+  private static WarehouseInstance replica, replicaNonAcid;
   private static HiveConf conf;
   private String primaryDbName, replicatedDbName, primaryDbNameExtra;
   private enum OperationType {
@@ -80,12 +80,21 @@ public class TestReplicationScenariosIncrementalLoadAcidTables {
 
   @BeforeClass
   public static void classLevelSetup() throws Exception {
-    conf = new HiveConf(TestReplicationScenariosAcidTables.class);
+    HashMap<String, String> overrides = new HashMap<>();
+    overrides.put(MetastoreConf.ConfVars.EVENT_MESSAGE_FACTORY.getHiveName(),
+        GzipJSONMessageEncoder.class.getCanonicalName());
+
+    internalBeforeClassSetup(overrides, TestReplicationScenariosIncrementalLoadAcidTables.class);
+  }
+
+  static void internalBeforeClassSetup(Map<String, String> overrides, Class clazz)
+      throws Exception {
+    conf = new HiveConf(clazz);
     conf.set("dfs.client.use.datanode.hostname", "true");
     conf.set("hadoop.proxyuser." + Utils.getUGI().getShortUserName() + ".hosts", "*");
     MiniDFSCluster miniDFSCluster =
            new MiniDFSCluster.Builder(conf).numDataNodes(1).format(true).build();
-    HashMap<String, String> overridesForHiveConf = new HashMap<String, String>() {{
+    HashMap<String, String> acidConfs = new HashMap<String, String>() {{
         put("fs.defaultFS", miniDFSCluster.getFileSystem().getUri().toString());
         put("hive.support.concurrency", "true");
         put("hive.txn.manager", "org.apache.hadoop.hive.ql.lockmgr.DbTxnManager");
@@ -96,14 +105,18 @@ public class TestReplicationScenariosIncrementalLoadAcidTables {
         put("hive.mapred.mode", "nonstrict");
         put("mapred.input.dir.recursive", "true");
         put("hive.metastore.disallow.incompatible.col.type.changes", "false");
+        put("hive.stats.autogather", "false");
     }};
-    primary = new WarehouseInstance(LOG, miniDFSCluster, overridesForHiveConf);
-    replica = new WarehouseInstance(LOG, miniDFSCluster, overridesForHiveConf);
-    HashMap<String, String> overridesForHiveConf1 = new HashMap<String, String>() {{
+
+    acidConfs.putAll(overrides);
+    primary = new WarehouseInstance(LOG, miniDFSCluster, acidConfs);
+    replica = new WarehouseInstance(LOG, miniDFSCluster, acidConfs);
+    Map<String, String> overridesForHiveConf1 = new HashMap<String, String>() {{
         put("fs.defaultFS", miniDFSCluster.getFileSystem().getUri().toString());
         put("hive.support.concurrency", "false");
         put("hive.txn.manager", "org.apache.hadoop.hive.ql.lockmgr.DummyTxnManager");
         put("hive.metastore.client.capability.check", "false");
+        put("hive.stats.autogather", "false");
     }};
     replicaNonAcid = new WarehouseInstance(LOG, miniDFSCluster, overridesForHiveConf1);
   }
@@ -116,7 +129,6 @@ public class TestReplicationScenariosIncrementalLoadAcidTables {
 
   @Before
   public void setup() throws Throwable {
-    replV1BackwardCompat = primary.getReplivationV1CompatRule(new ArrayList<>());
     primaryDbName = testName.getMethodName() + "_" + +System.currentTimeMillis();
     replicatedDbName = "replicated_" + primaryDbName;
     primary.run("create database " + primaryDbName + " WITH DBPROPERTIES ( '" +

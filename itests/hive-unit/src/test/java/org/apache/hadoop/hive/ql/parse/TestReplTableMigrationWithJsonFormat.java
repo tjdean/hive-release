@@ -15,23 +15,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.hadoop.hive.ql.parse.repl.dump.events;
+package org.apache.hadoop.hive.ql.parse;
 
-import org.apache.hadoop.hive.metastore.api.NotificationEvent;
-import org.apache.hadoop.hive.metastore.messaging.EventMessage;
-import org.apache.hadoop.hive.ql.parse.repl.dump.Utils;
+import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
+import org.apache.hadoop.hive.metastore.messaging.json.JSONMessageEncoder;
+import org.junit.BeforeClass;
 
-abstract class AbstractConstraintEventHandler<T extends EventMessage> extends AbstractEventHandler<T> {
-  AbstractConstraintEventHandler(NotificationEvent event) {
-    super(event);
-  }
+import java.util.Collections;
+import java.util.HashMap;
 
-  boolean shouldReplicate(Context withinContext) {
-    return Utils.shouldReplicate(
-        event,
-        withinContext.replicationSpec,
-        withinContext.db,
-        withinContext.hiveConf
-    );
+public class TestReplTableMigrationWithJsonFormat extends TestReplicationWithTableMigration {
+  @BeforeClass
+  public static void classLevelSetup() throws Exception {
+    HashMap<String, String> overrides = new HashMap<>();
+    overrides.put(MetastoreConf.ConfVars.EVENT_MESSAGE_FACTORY.getHiveName(),
+            JSONMessageEncoder.class.getCanonicalName());
+    internalBeforeClassSetup(overrides);
   }
 }
