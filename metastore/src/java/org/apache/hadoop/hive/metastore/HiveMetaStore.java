@@ -320,7 +320,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           address, cmd).toString());
     }
 
-    String getIPAddress() {
+    public String getIPAddress() {
       if (useSasl) {
         if (saslServer != null && saslServer.getRemoteAddress() != null) {
           return saslServer.getRemoteAddress().getHostAddress();
@@ -1426,6 +1426,27 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       throw new MetaException("Not yet implemented");
     }
 
+    boolean createDirectory(Path path) throws MetaException {
+      boolean madeDir = false;
+      // Check to see if the directory already exists before calling
+      // mkdirs() because if the file system is read-only, mkdirs will
+      // throw an exception even if the directory already exists.
+      if (!wh.isDir(path)) {
+        try {
+          madeDir = wh.mkdirs(path, true);
+        } catch (Exception e) {
+          LOG.info("mkdirs failed :" + path, e);
+        }
+
+        // If mkdirs fails, then check if it exist again as it might have
+        // created by a concurrent thread (distcp of external table)
+        if (!madeDir && !wh.isDir(path)) {
+          throw new MetaException(path + " is not a directory or unable to create one");
+        }
+      }
+      return madeDir;
+    }
+
     private void create_table_core(final RawStore ms, final Table tbl,
         final EnvironmentContext envContext)
         throws AlreadyExistsException, MetaException,
@@ -1507,13 +1528,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         }
 
         if (tblPath != null) {
-          if (!wh.isDir(tblPath)) {
-            if (!wh.mkdirs(tblPath, true)) {
-              throw new MetaException(tblPath
-                  + " is not a directory or unable to create one");
-            }
-            madeDir = true;
-          }
+          madeDir = createDirectory(tblPath);
         }
         LOG.info("create_table_core stats " + logName);
         if (HiveConf.getBoolVar(hiveConf, HiveConf.ConfVars.HIVESTATSAUTOGATHER) &&
@@ -2296,11 +2311,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
           throw new AlreadyExistsException("Partition already exists:" + part);
         }
 
-        if (!wh.isDir(partLocation)) {
-          if (!wh.mkdirs(partLocation, true)) {
-            throw new MetaException(partLocation
-                + " is not a directory or unable to create one");
-          }
+        if (createDirectory(partLocation)) {
           db = get_database_core(dbName);
           madeDir = true;
         }
@@ -2854,17 +2865,7 @@ public class HiveMetaStore extends ThriftHiveMetastore {
       boolean result = false;
       if (partLocation != null) {
         part.getSd().setLocation(partLocation.toString());
-
-        // Check to see if the directory already exists before calling
-        // mkdirs() because if the file system is read-only, mkdirs will
-        // throw an exception even if the directory already exists.
-        if (!wh.isDir(partLocation)) {
-          if (!wh.mkdirs(partLocation, true)) {
-            throw new MetaException(partLocation
-                + " is not a directory or unable to create one");
-          }
-          result = true;
-        }
+        result = createDirectory(partLocation);
       }
       return result;
     }

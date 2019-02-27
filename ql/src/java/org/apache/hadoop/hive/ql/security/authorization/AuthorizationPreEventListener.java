@@ -126,12 +126,18 @@ public class AuthorizationPreEventListener extends MetaStorePreEventListener {
       tAuthenticator.get().setConf(tConfig.get());
       for(HiveMetastoreAuthorizationProvider authorizer : tAuthorizers.get()){
         authorizer.setConf(tConfig.get());
+        if (authorizer instanceof StorageBasedAuthorizationProvider) {
+          ((StorageBasedAuthorizationProvider)authorizer).setIpAddress(context.getHandler().getIPAddress());
+        }
       }
       tConfigSetOnAuths.set(true); // set so we don't repeat this initialization
     }
 
     tAuthenticator.get().setMetaStoreHandler(context.getHandler());
     for(HiveMetastoreAuthorizationProvider authorizer : tAuthorizers.get()){
+      if (authorizer instanceof StorageBasedAuthorizationProvider) {
+        ((StorageBasedAuthorizationProvider)authorizer).setIpAddress(context.getHandler().getIPAddress());
+      }
       authorizer.setMetaStoreHandler(context.getHandler());
     }
 

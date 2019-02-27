@@ -392,4 +392,7 @@ public abstract class HadoopShimsSecure implements HadoopShims {
 
   @Override
   abstract public void addDelegationTokens(FileSystem fs, Credentials cred, String uname) throws IOException;
+
+  @Override
+  abstract public boolean checkUserHasHostProxyPrivileges(String user, Configuration conf, String ipAddress);
 }

@@ -787,4 +787,9 @@ public interface HadoopShims {
    * Set up context specific caller context with session prefix.
    */
   void setHadoopSessionContext(String sessionId);
+
+  /*
+   * Check if the given user has impersonation permission for given ip address.
+   */
+  boolean checkUserHasHostProxyPrivileges(String user, Configuration conf, String ipAddress);
 }

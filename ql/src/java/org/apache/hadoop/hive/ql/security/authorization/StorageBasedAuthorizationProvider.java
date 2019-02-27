@@ -24,6 +24,7 @@ import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 
 import javax.security.auth.login.LoginException;
 
@@ -46,6 +47,7 @@ import org.apache.hadoop.hive.ql.metadata.Hive;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.Partition;
 import org.apache.hadoop.hive.ql.metadata.Table;
+import org.apache.hadoop.hive.shims.ShimLoader;
 
 /**
  * StorageBasedAuthorizationProvider is an implementation of
@@ -69,6 +71,7 @@ public class StorageBasedAuthorizationProvider extends HiveAuthorizationProvider
 
   private Warehouse wh;
   private boolean isRunFromMetaStore = false;
+  private String ipAddress = null;
 
   private static Log LOG = LogFactory.getLog(StorageBasedAuthorizationProvider.class);
 
@@ -153,6 +156,15 @@ public class StorageBasedAuthorizationProvider extends HiveAuthorizationProvider
     authorize(path, readRequiredPriv, writeRequiredPriv);
   }
 
+  public void setIpAddress(String ipAddress) {
+    this.ipAddress = ipAddress;
+  }
+
+  private boolean canSkipFilePermissionCheck() {
+    return ShimLoader.getHadoopShims().checkUserHasHostProxyPrivileges(
+            authenticator.getUserName(), authenticator.getConf(), ipAddress);
+  }
+
   @Override
   public void authorize(Table table, Privilege[] readRequiredPriv, Privilege[] writeRequiredPriv)
       throws HiveException, AuthorizationException {
@@ -185,6 +197,11 @@ public class StorageBasedAuthorizationProvider extends HiveAuthorizationProvider
         getConf().getBoolean(HiveConf.ConfVars.METASTORE_AUTHORIZATION_EXTERNALTABLE_DROP_CHECK.varname,
         HiveConf.ConfVars.METASTORE_AUTHORIZATION_EXTERNALTABLE_DROP_CHECK.defaultBoolVal))) {
       checkDeletePermission(path, getConf(), authenticator.getUserName());
+    }
+
+    if (canSkipFilePermissionCheck()) {
+      LOG.info("Skipping permission check for table " + table.getTableName());
+      return;
     }
 
     // If the user has specified a location - external or not, check if the user
@@ -247,6 +264,10 @@ public class StorageBasedAuthorizationProvider extends HiveAuthorizationProvider
         authorize(table, readRequiredPriv, writeRequiredPriv);
       }
     } else {
+      if (canSkipFilePermissionCheck()) {
+        LOG.info("Skipping permission check for table " + table.getTableName() + " part " + part.getName());
+        return;
+      }
       authorize(part.getDataLocation(), readRequiredPriv, writeRequiredPriv);
     }
   }

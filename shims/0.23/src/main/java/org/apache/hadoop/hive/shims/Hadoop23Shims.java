@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.Collection;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
@@ -92,10 +93,13 @@ import org.apache.hadoop.net.NetUtils;
 import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.hadoop.security.Credentials;
 import org.apache.hadoop.security.UserGroupInformation;
+import org.apache.hadoop.security.authorize.DefaultImpersonationProvider;
+import org.apache.hadoop.security.authorize.ProxyUsers;
 import org.apache.hadoop.tools.DistCp;
 import org.apache.hadoop.tools.DistCpOptions;
 import org.apache.hadoop.tools.DistCpOptions.FileAttribute;
 import org.apache.hadoop.tools.OptionsParser;
+import org.apache.hadoop.util.MachineList;
 import org.apache.hadoop.util.Progressable;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.tez.test.MiniTezCluster;
@@ -1608,5 +1612,22 @@ public class Hadoop23Shims extends HadoopShimsSecure {
       return "";
     }
     return CallerContext.getCurrent().getContext();
+  }
+
+  @Override
+  public boolean checkUserHasHostProxyPrivileges(String user, Configuration conf, String ipAddress){
+    LOG.debug("Checking proxy Privilege for user " + user + " ip address " + ipAddress);
+    DefaultImpersonationProvider sip = ProxyUsers.getDefaultImpersonationProvider();
+    // Just need to initialize the ProxyUsers for the first time, given that the conf will not change on the fly
+    if (sip == null) {
+      ProxyUsers.refreshSuperUserGroupsConfiguration(conf);
+      sip = ProxyUsers.getDefaultImpersonationProvider();
+    }
+    Map<String, Collection<String>> proxyHosts = sip.getProxyHosts();
+    Collection<String> hostEntries = proxyHosts.get(sip.getProxySuperuserIpConfKey(user));
+    MachineList machineList = new MachineList(hostEntries);
+    LOG.debug("hostEntries : " + hostEntries + " machineList : " + machineList.getCollection());
+    ipAddress = (ipAddress == null) ? StringUtils.EMPTY : ipAddress;
+    return machineList.includes(ipAddress);
   }
 }

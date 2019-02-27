@@ -27,14 +27,15 @@ import java.nio.ByteBuffer;
 import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.Collection;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.filecache.DistributedCache;
 import org.apache.hadoop.fs.BlockLocation;
@@ -827,5 +828,17 @@ public class Hadoop20SShims extends HadoopShimsSecure {
     /*
      * do nothing. This is not supported in hadoop-1
      */
+  }
+
+  @Override
+  public boolean checkUserHasHostProxyPrivileges(String user, Configuration conf, String ipAddress) {
+    LOG.debug("Checking proxy Privilege for user " + user + " ip address " + ipAddress);
+    DefaultImpersonationProvider sip = DefaultImpersonationProvider.getImpersonationProvider(conf);
+    Map<String, Collection<String>> proxyHosts = sip.getProxyHosts();
+    Collection<String> hostEntries = proxyHosts.get(sip.getProxySuperuserIpConfKey(user));
+    MachineList machineList = new MachineList(hostEntries);
+    LOG.debug("hostEntries : " + hostEntries + " machineList : " + machineList.getCollection());
+    ipAddress = (ipAddress == null) ? StringUtils.EMPTY : ipAddress;
+    return machineList.includes(ipAddress);
   }
 }
