@@ -604,6 +604,10 @@ public class TestReplicationScenariosAcrossInstances extends BaseReplicationAcro
         .run("show tables")
         .verifyResults(new String[] { "t1" });
 
+    assertTrue(ReplUtils.isFirstIncPending(replica.getDatabase("default").getParameters()));
+    assertTrue(ReplUtils.isFirstIncPending(replica.getDatabase(primaryDbName).getParameters()));
+    assertTrue(ReplUtils.isFirstIncPending(replica.getDatabase(dbOne).getParameters()));
+
     replica.load("", incrementalTuple.dumpLocation)
         .run("show databases")
         .verifyResults(new String[] { "default", primaryDbName, dbOne, dbTwo })
@@ -613,6 +617,11 @@ public class TestReplicationScenariosAcrossInstances extends BaseReplicationAcro
         .run("use " + dbOne)
         .run("show tables")
         .verifyResults(new String[] { "t1", "t2" });
+
+    assertFalse(ReplUtils.isFirstIncPending(replica.getDatabase("default").getParameters()));
+    assertFalse(ReplUtils.isFirstIncPending(replica.getDatabase(primaryDbName).getParameters()));
+    assertFalse(ReplUtils.isFirstIncPending(replica.getDatabase(dbOne).getParameters()));
+    assertFalse(ReplUtils.isFirstIncPending(replica.getDatabase(dbTwo).getParameters()));
 
     /*
        Start of cleanup
@@ -1016,7 +1025,7 @@ public class TestReplicationScenariosAcrossInstances extends BaseReplicationAcro
             .dump(primaryDbName, null);
 
     // Bootstrap Repl A -> B
-    WarehouseInstance.Tuple tupleReplica = replica.load(replicatedDbName, tuplePrimary.dumpLocation)
+    replica.load(replicatedDbName, tuplePrimary.dumpLocation)
             .run("repl status " + replicatedDbName)
             .verifyResult(tuplePrimary.lastReplicationId)
             .run("show tblproperties t1('custom.property')")
@@ -1024,9 +1033,14 @@ public class TestReplicationScenariosAcrossInstances extends BaseReplicationAcro
             .dumpFailure(replicatedDbName, null)
             .run("alter database " + replicatedDbName
                     + " set dbproperties ('" + SOURCE_OF_REPLICATION + "' = '1, 2, 3')")
-            .dump(replicatedDbName, null);
+            .dumpFailure(replicatedDbName, null);//can not dump the db before first successful incremental load is done.
+
+    // do a empty incremental load to allow dump of replicatedDbName
+    WarehouseInstance.Tuple temp = primary.dump(primaryDbName, tuplePrimary.lastReplicationId);
+    replica.load(replicatedDbName, temp.dumpLocation); // first successful incremental load.
 
     // Bootstrap Repl B -> C
+    WarehouseInstance.Tuple tupleReplica = replica.dump(replicatedDbName, null);
     String replDbFromReplica = replicatedDbName + "_dupe";
     replica.load(replDbFromReplica, tupleReplica.dumpLocation)
             .run("use " + replDbFromReplica)

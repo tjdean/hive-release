@@ -118,9 +118,7 @@ public class WarehouseInstance implements Closeable {
   private void initialize(String cmRoot, String warehouseRoot, String externalTableWarehouseRoot,
       Map<String, String> overridesForHiveConf) throws Exception {
     hiveConf = new HiveConf(miniDFSCluster.getConfiguration(0), TestReplicationScenarios.class);
-    for (Map.Entry<String, String> entry : overridesForHiveConf.entrySet()) {
-      hiveConf.set(entry.getKey(), entry.getValue());
-    }
+
     String metaStoreUri = System.getProperty("test." + HiveConf.ConfVars.METASTOREURIS.varname);
     String hiveWarehouseLocation = System.getProperty("test.warehouse.dir", "/tmp")
         + Path.SEPARATOR
@@ -155,6 +153,10 @@ public class WarehouseInstance implements Closeable {
             "org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore");
     System.setProperty(HiveConf.ConfVars.PREEXECHOOKS.varname, " ");
     System.setProperty(HiveConf.ConfVars.POSTEXECHOOKS.varname, " ");
+
+    for (Map.Entry<String, String> entry : overridesForHiveConf.entrySet()) {
+      hiveConf.set(entry.getKey(), entry.getValue());
+    }
 
     HiveConf hiveConfCopy = new HiveConf(hiveConf);
     MetaStoreTestUtils.startMetaStoreWithRetry(hiveConfCopy);
