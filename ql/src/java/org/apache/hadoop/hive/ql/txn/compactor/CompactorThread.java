@@ -30,6 +30,8 @@ import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.Partition;
 import org.apache.hadoop.hive.metastore.api.StorageDescriptor;
 import org.apache.hadoop.hive.metastore.api.Table;
+import org.apache.hadoop.hive.metastore.api.Database;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.conf.MetastoreConf;
 import org.apache.hadoop.hive.metastore.txn.CompactionInfo;
 import org.apache.hadoop.hive.metastore.txn.TxnStore;
@@ -38,6 +40,7 @@ import org.apache.hadoop.security.AccessControlException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.hadoop.hive.ql.exec.repl.util.ReplUtils;
 
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
@@ -219,4 +222,21 @@ abstract class CompactorThread extends Thread implements MetaStoreThread {
   protected String tableName(Table t) {
     return Warehouse.getQualifiedName(t);
   }
+
+  protected boolean replIsCompactionDisabledForTable(Table tbl) {
+    // Compaction is disabled until after first successful incremental load. Check HIVE-21197 for more detail.
+    return ReplUtils.isFirstIncPending(tbl.getParameters());
+  }
+
+  protected boolean replIsCompactionDisabledForDatabase(String dbName) {
+    try {
+      Database database = rs.getDatabase(getDefaultCatalog(conf), dbName);
+      // Compaction is disabled until after first successful incremental load. Check HIVE-21197 for more detail.
+      return ReplUtils.isFirstIncPending(database.getParameters());
+    } catch (NoSuchObjectException e) {
+      LOG.info("Unable to find database " + dbName);
+      return true;
+    }
+  }
+
 }
