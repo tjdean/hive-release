@@ -74,27 +74,25 @@ public class ExternalTableCopyTaskBuilder {
     private static final int MAX_COPY_RETRY = 5;
 
     private boolean createAndSetPathOwner(Path destPath, Path sourcePath, HiveConf conf) throws IOException {
+      FileSystem targetFs = destPath.getFileSystem(conf);
+      boolean createdDir = false;
+      if (!targetFs.exists(destPath)) {
+        // target path is created even if the source path is missing, so that ddl task does not try to create it.
+        if (!targetFs.mkdirs(destPath)) {
+          throw new IOException(destPath + " is not a directory or unable to create one");
+        }
+        createdDir = true;
+      }
+
       FileStatus status;
       try {
         status = sourcePath.getFileSystem(conf).getFileStatus(sourcePath);
       } catch (FileNotFoundException e) {
+        // no need to delete target path created or else ddl task will try to create it using user hive and may fail.
         LOG.warn("source path missing " + sourcePath);
         return false;
       }
-      FileSystem targetFs = destPath.getFileSystem(conf);
-      boolean createdDir = false;
-      if (!targetFs.exists(destPath)) {
-        try {
-          createdDir = targetFs.mkdirs(destPath);
-        } catch (IOException e) {
-          LOG.info("mkdirs fails ", e);
-        }
-        // If mkdirs fails, then check if it exist again as it might have
-        // created by a concurrent thread (ddl task)
-        if (!createdDir && !targetFs.exists(destPath)) {
-          throw new IOException("Failed to create directory");
-        }
-      }
+
       LOG.info("Setting permission for path dest {} from source {} owner {} : {} : {}",
               destPath, sourcePath, status.getOwner(), status.getGroup(), status.getPermission());
       destPath.getFileSystem(conf).setOwner(destPath, status.getOwner(), status.getGroup());
@@ -204,12 +202,17 @@ public class ExternalTableCopyTaskBuilder {
 
     @Override
     public StageType getType() {
-      return StageType.REPL_INCREMENTAL_LOAD;
+      return StageType.COPY;
     }
 
     @Override
     public String getName() {
       return "DIR_COPY_TASK";
+    }
+
+    @Override
+    public boolean canExecuteInParallel(){
+      return true;
     }
   }
 

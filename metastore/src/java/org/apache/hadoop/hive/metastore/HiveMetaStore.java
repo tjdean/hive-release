@@ -1427,24 +1427,16 @@ public class HiveMetaStore extends ThriftHiveMetastore {
     }
 
     boolean createDirectory(Path path) throws MetaException {
-      boolean madeDir = false;
       // Check to see if the directory already exists before calling
       // mkdirs() because if the file system is read-only, mkdirs will
       // throw an exception even if the directory already exists.
       if (!wh.isDir(path)) {
-        try {
-          madeDir = wh.mkdirs(path, true);
-        } catch (Exception e) {
-          LOG.info("mkdirs failed :" + path, e);
-        }
-
-        // If mkdirs fails, then check if it exist again as it might have
-        // created by a concurrent thread (distcp of external table)
-        if (!madeDir && !wh.isDir(path)) {
+        if (!wh.mkdirs(path, true)) {
           throw new MetaException(path + " is not a directory or unable to create one");
         }
+        return true;
       }
-      return madeDir;
+      return false;
     }
 
     private void create_table_core(final RawStore ms, final Table tbl,
