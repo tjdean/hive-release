@@ -114,6 +114,7 @@ public class CreateTableDesc extends DDLDesc implements Serializable {
   // This is not needed beyond compilation, so it is transient.
   private transient FileSinkDesc writer;
   private Long replWriteId; // to be used by repl task to get the txn and valid write id list
+  private String ownerName = null;
 
   public CreateTableDesc() {
   }
@@ -903,6 +904,9 @@ public class CreateTableDesc extends DDLDesc implements Serializable {
                 StatsSetupConst.FALSE);
       }
     }
+    if (ownerName != null) {
+      tbl.setOwner(ownerName);
+    }
     return tbl;
   }
 
@@ -932,5 +936,13 @@ public class CreateTableDesc extends DDLDesc implements Serializable {
 
   public void setReplWriteId(Long replWriteId) {
     this.replWriteId = replWriteId;
+  }
+
+  public String getOwnerName() {
+    return ownerName;
+  }
+
+  public void setOwnerName(String ownerName) {
+    this.ownerName = ownerName;
   }
 }
