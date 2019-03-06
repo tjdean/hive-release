@@ -304,6 +304,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
       StatsSetupConst.setBasicStatsState(tblDesc.getTblProps(), StatsSetupConst.FALSE);
       inReplicationScope = true;
       tblDesc.setReplWriteId(writeId);
+      tblDesc.setOwnerName(tblObj.getOwner());
     }
 
     if (isExternalSet) {

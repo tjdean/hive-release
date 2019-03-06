@@ -102,6 +102,9 @@ public class FSTableEvent implements TableEvent {
       ImportTableDesc tableDesc
               = new ImportTableDesc(StringUtils.isBlank(dbName) ? table.getDbName() : dbName, table);
       tableDesc.setReplicationSpec(replicationSpec());
+      if (table.getOwner() != null) {
+        tableDesc.setOwnerName(table.getOwner());
+      }
       if (table.getTableType() == TableType.EXTERNAL_TABLE) {
         tableDesc.setExternal(true);
       }
