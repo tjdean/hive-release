@@ -257,6 +257,7 @@ public class ImportSemanticAnalyzer extends BaseSemanticAnalyzer {
     if ((replicationSpec != null) && replicationSpec.isInReplicationScope()) {
       tblDesc.setReplicationSpec(replicationSpec);
       inReplicationScope = true;
+      tblDesc.setOwnerName(rv.getTable().getOwner());
     }
 
     if (isExternalSet) {

@@ -84,6 +84,7 @@ public class CreateTableDesc extends DDLDesc implements Serializable {
   private ReplicationSpec replicationSpec = null;
   private boolean isCTAS = false;
   private ColumnStatistics colStats = null;
+  private String ownerName = null;
 
   public CreateTableDesc() {
   }
@@ -618,5 +619,13 @@ public class CreateTableDesc extends DDLDesc implements Serializable {
 
   public ColumnStatistics getColStats() {
     return colStats;
+  }
+
+  public String getOwnerName() {
+    return ownerName;
+  }
+
+  public void setOwnerName(String ownerName) {
+    this.ownerName = ownerName;
   }
 }

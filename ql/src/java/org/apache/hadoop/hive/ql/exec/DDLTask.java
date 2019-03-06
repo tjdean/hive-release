@@ -4467,6 +4467,10 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
       }
     }
 
+    if (crtTbl.getOwnerName() != null) {
+      tbl.setOwner(crtTbl.getOwnerName());
+    }
+
     // create the table
     if (crtTbl.getReplaceMode()){
       EnvironmentContext environmentContext = new EnvironmentContext();
@@ -4663,6 +4667,9 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
       }
       oldview.setPartCols(crtView.getPartCols());
       oldview.checkValidity();
+      if (crtView.getOwnerName() != null) {
+        oldview.setOwner(crtView.getOwnerName());
+      }
       try {
         db.alterTable(crtView.getViewName(), oldview, null);
       } catch (InvalidOperationException e) {

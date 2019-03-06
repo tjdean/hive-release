@@ -48,6 +48,7 @@ public class CreateViewDesc extends DDLDesc implements Serializable {
   private boolean orReplace;
   private boolean isAlterViewAs;
   private ReplicationSpec replicationSpec = null;
+  private String ownerName = null;
 
   /**
    * For serialization only.
@@ -191,5 +192,13 @@ public class CreateViewDesc extends DDLDesc implements Serializable {
       this.replicationSpec = new ReplicationSpec();
     }
     return this.replicationSpec;
+  }
+
+  public String getOwnerName() {
+    return ownerName;
+  }
+
+  public void setOwnerName(String ownerName) {
+    this.ownerName = ownerName;
   }
 }
