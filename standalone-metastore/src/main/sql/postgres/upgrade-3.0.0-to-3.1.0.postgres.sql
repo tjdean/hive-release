@@ -71,6 +71,12 @@ CREATE TABLE "TXN_WRITE_NOTIFICATION_LOG" (
 );
 INSERT INTO "SEQUENCE_TABLE" ("SEQUENCE_NAME", "NEXT_VAL") VALUES ('org.apache.hadoop.hive.metastore.model.MTxnWriteNotificationLog', 1);
 
+-- HIVE-21063
+CREATE UNIQUE INDEX "NOTIFICATION_LOG_EVENT_ID" ON "NOTIFICATION_LOG" USING btree ("EVENT_ID");
+-- HIVE-20221
+alter table "PARTITION_PARAMS" alter column "PARAM_VALUE" type text using cast("PARAM_VALUE" as text);
+
+
 -- These lines need to be last.  Insert any changes above.
 UPDATE "VERSION" SET "SCHEMA_VERSION"='3.1.0', "VERSION_COMMENT"='Hive release version 3.1.0' where "VER_ID"=1;
 SELECT 'Finished upgrading MetaStore schema from 3.0.0 to 3.1.0';
