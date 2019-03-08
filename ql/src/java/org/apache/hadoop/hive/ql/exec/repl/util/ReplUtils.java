@@ -57,6 +57,10 @@ public class ReplUtils {
   public static final String LAST_REPL_ID_KEY = "hive.repl.last.repl.id";
   public static final String REPL_CHECKPOINT_KEY = "hive.repl.ckpt.key";
 
+  // Configuration to be received via WITH clause of REPL LOAD to clean tables from any previously failed
+  // bootstrap load.
+  public static final String REPL_CLEAN_TABLES_FROM_BOOTSTRAP_CONFIG = "hive.repl.clean.tables.from.bootstrap";
+
   public static final String FUNCTIONS_ROOT_DIR_NAME = "_functions";
 
   // Root directory for dumping bootstrapped tables along with incremental events dump.
