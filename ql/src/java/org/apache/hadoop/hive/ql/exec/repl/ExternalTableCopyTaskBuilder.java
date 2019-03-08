@@ -119,7 +119,7 @@ public class ExternalTableCopyTaskBuilder {
 
     private int handleException(Exception e, Path sourcePath, Path targetPath, int currentRetry) {
       try {
-        if (e instanceof FileNotFoundException && !sourcePath.getFileSystem(conf).exists(sourcePath)) {
+        if (!sourcePath.getFileSystem(conf).exists(sourcePath)) {
           LOG.warn("Source path missing " + sourcePath, e);
           return 0;
         }
