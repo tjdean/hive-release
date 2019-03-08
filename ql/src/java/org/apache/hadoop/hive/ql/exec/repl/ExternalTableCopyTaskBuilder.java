@@ -73,8 +73,9 @@ public class ExternalTableCopyTaskBuilder {
     private static final Logger LOG = LoggerFactory.getLogger(DirCopyTask.class);
     private static final int MAX_COPY_RETRY = 5;
 
-    private boolean createAndSetPathOwner(Path destPath, Path sourcePath, HiveConf conf) throws IOException {
+    private boolean createAndSetPathOwner(Path destPath, Path sourcePath) throws IOException {
       FileSystem targetFs = destPath.getFileSystem(conf);
+      FileSystem srcFs = sourcePath.getFileSystem(conf);
       boolean createdDir = false;
       if (!targetFs.exists(destPath)) {
         // target path is created even if the source path is missing, so that ddl task does not try to create it.
@@ -86,7 +87,7 @@ public class ExternalTableCopyTaskBuilder {
 
       FileStatus status;
       try {
-        status = sourcePath.getFileSystem(conf).getFileStatus(sourcePath);
+        status =srcFs.getFileStatus(sourcePath);
       } catch (FileNotFoundException e) {
         // no need to delete target path created or else ddl task will try to create it using user hive and may fail.
         LOG.warn("source path missing " + sourcePath);
@@ -95,15 +96,15 @@ public class ExternalTableCopyTaskBuilder {
 
       LOG.info("Setting permission for path dest {} from source {} owner {} : {} : {}",
               destPath, sourcePath, status.getOwner(), status.getGroup(), status.getPermission());
-      destPath.getFileSystem(conf).setOwner(destPath, status.getOwner(), status.getGroup());
-      destPath.getFileSystem(conf).setPermission(destPath, status.getPermission());
+      targetFs.setOwner(destPath, status.getOwner(), status.getGroup());
+      targetFs.setPermission(destPath, status.getPermission());
       return createdDir;
     }
 
-    private boolean setTargetPathOwner(Path targetPath, Path sourcePath, HiveConf conf, String distCpDoAsUser)
+    private boolean setTargetPathOwner(Path targetPath, Path sourcePath, String distCpDoAsUser)
             throws IOException {
       if (distCpDoAsUser == null) {
-        return createAndSetPathOwner(targetPath, sourcePath, conf);
+        return createAndSetPathOwner(targetPath, sourcePath);
       }
       UserGroupInformation proxyUser = UserGroupInformation.createProxyUser(
               distCpDoAsUser, UserGroupInformation.getLoginUser());
@@ -111,9 +112,11 @@ public class ExternalTableCopyTaskBuilder {
         Path finalTargetPath = targetPath;
         Path finalSourcePath = sourcePath;
         return proxyUser.doAs((PrivilegedExceptionAction<Boolean>) () ->
-                createAndSetPathOwner(finalTargetPath, finalSourcePath, conf));
+                createAndSetPathOwner(finalTargetPath, finalSourcePath));
       } catch (InterruptedException e) {
         throw new IOException(e);
+      } finally {
+        FileSystem.closeAllForUGI(proxyUser);
       }
     }
 
@@ -170,7 +173,7 @@ public class ExternalTableCopyTaskBuilder {
           boolean usePrivilegedUser =
               distCpDoAsUser != null && !currentUser.equals(distCpDoAsUser);
 
-          setTargetPathOwner(targetPath, sourcePath, conf, usePrivilegedUser ? distCpDoAsUser : null);
+          setTargetPathOwner(targetPath, sourcePath, usePrivilegedUser ? distCpDoAsUser : null);
 
           // do we create a new conf and only here provide this additional option so that we get away from
           // differences of data in two location for the same directories ?
