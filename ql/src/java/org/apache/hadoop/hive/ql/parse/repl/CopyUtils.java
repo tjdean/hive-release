@@ -52,7 +52,7 @@ public class CopyUtils {
   private static final Logger LOG = LoggerFactory.getLogger(CopyUtils.class);
   // https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/TransparentEncryption.html#Running_as_the_superuser
   public static final String RAW_RESERVED_VIRTUAL_PATH = "/.reserved/raw/";
-  private static final int MAX_COPY_RETRY = 5;
+  private static final int MAX_IO_RETRY = 5;
 
   private final HiveConf hiveConf;
   private final long maxCopyFileSize;
@@ -75,23 +75,30 @@ public class CopyUtils {
   public void copyAndVerify(FileSystem destinationFs, Path destination,
                     List<ReplChangeManager.FileInfo> srcFiles) throws IOException, LoginException, HiveFatalException {
     Map<FileSystem, List<ReplChangeManager.FileInfo>> map = fsToFileMap(srcFiles);
-    for (Map.Entry<FileSystem, List<ReplChangeManager.FileInfo>> entry : map.entrySet()) {
-      FileSystem sourceFs = entry.getKey();
-      List<ReplChangeManager.FileInfo> fileInfoList = entry.getValue();
-      boolean useRegularCopy = regularCopy(destinationFs, sourceFs, fileInfoList);
+    UserGroupInformation proxyUser = getProxyUser();
+    try {
+      for (Map.Entry<FileSystem, List<ReplChangeManager.FileInfo>> entry : map.entrySet()) {
+        FileSystem sourceFs = entry.getKey();
+        List<ReplChangeManager.FileInfo> fileInfoList = entry.getValue();
+        boolean useRegularCopy = regularCopy(destinationFs, sourceFs, fileInfoList);
 
-      // Copy files with retry logic on failure
-      doCopyRetry(sourceFs, fileInfoList, destinationFs, destination, useRegularCopy);
+        // Copy files with retry logic on failure
+        doCopyRetry(sourceFs, fileInfoList, destinationFs, destination, proxyUser, useRegularCopy);
+      }
+    } finally {
+      if (proxyUser != null) {
+        FileSystem.closeAllForUGI(proxyUser);
+      }
     }
   }
 
   private void doCopyRetry(FileSystem sourceFs, List<ReplChangeManager.FileInfo> srcFileList,
-                           FileSystem destinationFs, Path destination,
+                           FileSystem destinationFs, Path destination, UserGroupInformation proxyUser,
                            boolean useRegularCopy) throws IOException, LoginException, HiveFatalException {
     int repeat = 0;
     boolean isCopyError = false;
     List<Path> pathList = Lists.transform(srcFileList, ReplChangeManager.FileInfo::getEffectivePath);
-    while (!pathList.isEmpty() && (repeat < MAX_COPY_RETRY)) {
+    while (!pathList.isEmpty() && (repeat < MAX_IO_RETRY)) {
       try {
         // if its retrying, first regenerate the path list.
         if (repeat > 0) {
@@ -106,7 +113,7 @@ public class CopyUtils {
 
         // if exception happens during doCopyOnce, then need to call getFilesToRetry with copy error as true in retry.
         isCopyError = true;
-        doCopyOnce(sourceFs, pathList, destinationFs, destination, useRegularCopy);
+        doCopyOnce(sourceFs, pathList, destinationFs, destination, useRegularCopy, proxyUser);
 
         // if exception happens after doCopyOnce, then need to call getFilesToRetry with copy error as false in retry.
         isCopyError = false;
@@ -114,7 +121,7 @@ public class CopyUtils {
         // If copy fails, fall through the retry logic
         LOG.info("file operation failed", e);
 
-        if (repeat >= (MAX_COPY_RETRY - 1)) {
+        if (repeat >= (MAX_IO_RETRY - 1)) {
           //no need to wait in the last iteration
           break;
         }
@@ -129,7 +136,11 @@ public class CopyUtils {
           }
 
           // looks like some network outrage, reset the file system object and retry.
-          FileSystem.closeAllForUGI(Utils.getUGI());
+          if (proxyUser == null) {
+            FileSystem.closeAllForUGI(Utils.getUGI());
+          } else {
+            FileSystem.closeAllForUGI(proxyUser);
+          }
           sourceFs = pathList.get(0).getFileSystem(hiveConf);
           destinationFs = destination.getFileSystem(hiveConf);
         }
@@ -230,23 +241,54 @@ public class CopyUtils {
     return false;
   }
 
+  private UserGroupInformation getProxyUser() throws LoginException, IOException {
+    if (copyAsUser == null) {
+      return null;
+    }
+    UserGroupInformation proxyUser = null;
+    int currentRetry = 0;
+    while (currentRetry <= MAX_IO_RETRY) {
+      try {
+        UserGroupInformation ugi = Utils.getUGI();
+        String currentUser = ugi.getShortUserName();
+        if (!currentUser.equals(copyAsUser)) {
+          proxyUser = UserGroupInformation.createProxyUser(
+                  copyAsUser, UserGroupInformation.getLoginUser());
+        }
+        return proxyUser;
+      } catch (IOException e) {
+        currentRetry++;
+        if (currentRetry <= MAX_IO_RETRY) {
+          LOG.warn("Unable to get UGI info", e);
+        } else {
+          LOG.error("Unable to get UGI info", e);
+          throw new IOException(ErrorMsg.REPL_FILE_SYSTEM_OPERATION_RETRY.getMsg());
+        }
+        int sleepTime = FileUtils.getSleepTime(currentRetry);
+        LOG.info("Sleep for " + sleepTime + " milliseconds before retry " + (currentRetry));
+        try {
+          Thread.sleep(sleepTime);
+        } catch (InterruptedException timerEx) {
+          LOG.info("Sleep interrupted", timerEx.getMessage());
+        }
+      }
+    }
+    return null;
+  }
+
   // Copy without retry
   private void doCopyOnce(FileSystem sourceFs, List<Path> srcList,
                           FileSystem destinationFs, Path destination,
-                          boolean useRegularCopy) throws IOException, LoginException {
-    UserGroupInformation ugi = Utils.getUGI();
-    String currentUser = ugi.getShortUserName();
-    boolean usePrivilegedUser = copyAsUser != null && !currentUser.equals(copyAsUser);
-
+                          boolean useRegularCopy, UserGroupInformation proxyUser) throws IOException {
     if (useRegularCopy) {
-      doRegularCopyOnce(sourceFs, srcList, destinationFs, destination, usePrivilegedUser);
+      doRegularCopyOnce(sourceFs, srcList, destinationFs, destination, proxyUser);
     } else {
-      doDistCpCopyOnce(sourceFs, srcList, destination, usePrivilegedUser);
+      doDistCpCopyOnce(sourceFs, srcList, destination, proxyUser);
     }
   }
 
   private void doDistCpCopyOnce(FileSystem sourceFs, List<Path> srcList, Path destination,
-      boolean usePrivilegedUser) throws IOException {
+                                UserGroupInformation proxyUser) throws IOException {
     if (hiveConf.getBoolVar(HiveConf.ConfVars.REPL_ADD_RAW_RESERVED_NAMESPACE)) {
       srcList = srcList.stream().map(path -> {
         URI uri = path.toUri();
@@ -263,7 +305,7 @@ public class CopyUtils {
         srcList,  // list of source paths
         destination,
         false,
-        usePrivilegedUser ? copyAsUser : null,
+        proxyUser,
         hiveConf,
         ShimLoader.getHadoopShims())) {
       LOG.error("Distcp failed to copy files: " + srcList + " to destination: " + destination);
@@ -272,16 +314,14 @@ public class CopyUtils {
   }
 
   private void doRegularCopyOnce(FileSystem sourceFs, List<Path> srcList, FileSystem destinationFs,
-      Path destination, boolean usePrivilegedUser) throws IOException {
+      Path destination, UserGroupInformation proxyUser) throws IOException {
   /*
     even for regular copy we have to use the same user permissions that distCp will use since
     hive-server user might be different that the super user required to copy relevant files.
    */
     final Path[] paths = srcList.toArray(new Path[] {});
-    if (usePrivilegedUser) {
+    if (proxyUser != null) {
       final Path finalDestination = destination;
-      UserGroupInformation proxyUser = UserGroupInformation.createProxyUser(
-          copyAsUser, UserGroupInformation.getLoginUser());
       try {
         proxyUser.doAs((PrivilegedExceptionAction<Boolean>) () -> {
           FileUtil
@@ -311,13 +351,20 @@ public class CopyUtils {
     Map<FileSystem, List<Path>> map = fsToPathMap(srcPaths);
     FileSystem destinationFs = destination.getFileSystem(hiveConf);
 
-    for (Map.Entry<FileSystem, List<Path>> entry : map.entrySet()) {
-      final FileSystem sourceFs = entry.getKey();
-      List<ReplChangeManager.FileInfo> fileList = entry.getValue().stream()
-          .map(path -> new ReplChangeManager.FileInfo(sourceFs, path)).collect(Collectors.toList());
-      doCopyOnce(sourceFs, entry.getValue(),
-                 destinationFs, destination,
-                 regularCopy(destinationFs, sourceFs, fileList));
+    UserGroupInformation proxyUser = getProxyUser();
+    try {
+      for (Map.Entry<FileSystem, List<Path>> entry : map.entrySet()) {
+        final FileSystem sourceFs = entry.getKey();
+        List<ReplChangeManager.FileInfo> fileList = entry.getValue().stream()
+                .map(path -> new ReplChangeManager.FileInfo(sourceFs, path)).collect(Collectors.toList());
+        doCopyOnce(sourceFs, entry.getValue(),
+                destinationFs, destination,
+                regularCopy(destinationFs, sourceFs, fileList), proxyUser);
+      }
+    } finally {
+      if (proxyUser != null) {
+        FileSystem.closeAllForUGI(proxyUser);
+      }
     }
   }
 

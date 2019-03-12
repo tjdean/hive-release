@@ -667,15 +667,15 @@ public final class FileUtils {
   }
 
   public static boolean distCp(FileSystem srcFS, List<Path> srcPaths, Path dst,
-      boolean deleteSource, String doAsUser,
+      boolean deleteSource, UserGroupInformation proxyUser,
       HiveConf conf, HadoopShims shims) throws IOException {
     LOG.debug("Copying srcPaths : " + StringUtils.join(",", srcPaths)
-                    + ", to DestPath : " + dst + ", with doAs: " + doAsUser);
+                  + ", to DestPath : " + dst + ", with doAs: " + proxyUser);
     boolean copied = false;
-    if (doAsUser == null){
+    if (proxyUser == null){
       copied = shims.runDistCp(srcPaths, dst, conf);
     } else {
-      copied = shims.runDistCpAs(srcPaths, dst, conf, doAsUser);
+      copied = shims.runDistCpAs(srcPaths, dst, conf, proxyUser);
     }
     if (copied && deleteSource) {
       for (Path path : srcPaths) {

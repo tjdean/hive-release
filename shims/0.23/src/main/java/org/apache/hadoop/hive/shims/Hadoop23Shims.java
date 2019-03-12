@@ -1306,9 +1306,8 @@ public class Hadoop23Shims extends HadoopShimsSecure {
   }
 
   @Override
-  public boolean runDistCpAs(final List<Path> srcPaths, final Path dst, final Configuration conf, String doAsUser) throws IOException {
-    UserGroupInformation proxyUser = UserGroupInformation.createProxyUser(
-        doAsUser, UserGroupInformation.getLoginUser());
+  public boolean runDistCpAs(final List<Path> srcPaths, final Path dst, final Configuration conf,
+                             UserGroupInformation proxyUser) throws IOException {
     try {
       return proxyUser.doAs(new PrivilegedExceptionAction<Boolean>() {
         @Override

@@ -124,7 +124,7 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
       TaskTracker dbTracker = new TaskTracker(ZERO_TASKS);
       TaskTracker tableTracker = new TaskTracker(ZERO_TASKS);
       Scope scope = new Scope();
-      while (iterator.hasNext() && loadTaskTracker.canAddMoreTasks()) {
+      while ((iterator.hasNext() || work.getPathsToCopyIterator().hasNext()) && loadTaskTracker.canAddMoreTasks()) {
         // First start the distcp tasks to copy the files related to external table. The distcp tasks should be
         // started first to avoid ddl task trying to create table/partition directory. Distcp task creates these
         // directory with proper permission and owner.
@@ -248,7 +248,7 @@ public class ReplLoadTask extends Task<ReplLoadWork> implements Serializable {
       // Update last repl ID of the database only if the current dump is not incremental. If bootstrap
       // is combined with incremental dump, it contains only tables to bootstrap. So, needn't change
       // last repl ID of the database.
-      if (!iterator.hasNext() && !work.isIncrementalLoad()) {
+      if (!iterator.hasNext() && !work.getPathsToCopyIterator().hasNext() && !work.isIncrementalLoad()) {
         loadTaskTracker.update(updateDatabaseLastReplID(maxTasks, context, scope));
         work.updateDbEventState(null);
       }

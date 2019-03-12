@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
 
+import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 
@@ -36,6 +37,7 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.shims.HadoopShims;
 
+import org.apache.hadoop.security.UserGroupInformation;
 import org.junit.Test;
 
 import org.slf4j.Logger;
@@ -55,9 +57,10 @@ public class TestFileUtils {
     FileSystem mockFs = mock(FileSystem.class);
     when(mockFs.getUri()).thenReturn(URI.create("hdfs:///"));
 
-    FileStatus mockFileStatus = mock(FileStatus.class);
-    when(mockFileStatus.getLen()).thenReturn(Long.MAX_VALUE);
-    when(mockFs.getFileStatus(any(Path.class))).thenReturn(mockFileStatus);
+    ContentSummary srcContentSummary = mock(ContentSummary.class);
+    when(srcContentSummary.getFileCount()).thenReturn(Long.MAX_VALUE);
+    when(srcContentSummary.getLength()).thenReturn(Long.MAX_VALUE);
+    when(mockFs.getContentSummary(any(Path.class))).thenReturn(srcContentSummary);
 
     HadoopShims shims = mock(HadoopShims.class);
     when(shims.runDistCp(Collections.singletonList(copySrc), copyDst, conf)).thenReturn(true);
@@ -80,14 +83,16 @@ public class TestFileUtils {
     when(mockFs.getFileStatus(any(Path.class))).thenReturn(mockFileStatus);
 
     String doAsUser = conf.getVar(HiveConf.ConfVars.HIVE_DISTCP_DOAS_USER);
+    UserGroupInformation proxyUser = UserGroupInformation.createProxyUser(
+            doAsUser, UserGroupInformation.getLoginUser());
 
     HadoopShims shims = mock(HadoopShims.class);
-    when(shims.runDistCpAs(Collections.singletonList(copySrc), copyDst, conf, doAsUser)).thenReturn(true);
+    when(shims.runDistCpAs(Collections.singletonList(copySrc), copyDst, conf, proxyUser)).thenReturn(true);
     when(shims.runDistCp(Collections.singletonList(copySrc), copyDst, conf)).thenReturn(false);
 
     // doAs when asked
-    assertTrue(FileUtils.distCp(mockFs, Collections.singletonList(copySrc), copyDst, true, doAsUser, conf, shims));
-    verify(shims).runDistCpAs(Collections.singletonList(copySrc), copyDst, conf, doAsUser);
+    assertTrue(FileUtils.distCp(mockFs, Collections.singletonList(copySrc), copyDst, true, proxyUser, conf, shims));
+    verify(shims).runDistCpAs(Collections.singletonList(copySrc), copyDst, conf, proxyUser);
     // don't doAs when not asked
     assertFalse(FileUtils.distCp(mockFs, Collections.singletonList(copySrc), copyDst, true, null, conf, shims));
     verify(shims).runDistCp(Collections.singletonList(copySrc), copyDst, conf);
