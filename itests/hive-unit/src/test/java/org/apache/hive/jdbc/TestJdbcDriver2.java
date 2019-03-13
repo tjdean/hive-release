@@ -2997,8 +2997,13 @@ public void testParseUrlHttpMode() throws SQLException, JdbcUriParseException,
   public void testGetQueryId() throws Exception {
     HiveStatement stmt = (HiveStatement) con.createStatement();
     HiveStatement stmt1 = (HiveStatement) con.createStatement();
-    stmt.executeAsync("create database query_id_test with dbproperties ('repl.source.for' = '1, 2, 3')");
+
+    // Returns null if no query is running.
     String queryId = stmt.getQueryId();
+    assertTrue(queryId == null);
+
+    stmt.executeAsync("create database query_id_test with dbproperties ('repl.source.for' = '1, 2, 3')");
+    queryId = stmt.getQueryId();
     assertFalse(queryId.isEmpty());
     stmt.getUpdateCount();
 
