@@ -106,12 +106,12 @@ PREHOOK: query: analyze table alltypesorc_int_n0 compute statistics for columns
 PREHOOK: type: ANALYZE_TABLE
 PREHOOK: Input: default@alltypesorc_int_n0
 PREHOOK: Output: default@alltypesorc_int_n0
-#### A masked pattern was here ####
+PREHOOK: Output: hdfs://### HDFS PATH ###
 POSTHOOK: query: analyze table alltypesorc_int_n0 compute statistics for columns
 POSTHOOK: type: ANALYZE_TABLE
 POSTHOOK: Input: default@alltypesorc_int_n0
 POSTHOOK: Output: default@alltypesorc_int_n0
-#### A masked pattern was here ####
+POSTHOOK: Output: hdfs://### HDFS PATH ###
 PREHOOK: query: analyze table srcpart_date_n6 compute statistics for columns
 PREHOOK: type: ANALYZE_TABLE
 PREHOOK: Input: default@srcpart_date_n6
@@ -120,7 +120,7 @@ PREHOOK: Input: default@srcpart_date_n6@ds=2008-04-09
 PREHOOK: Output: default@srcpart_date_n6
 PREHOOK: Output: default@srcpart_date_n6@ds=2008-04-08
 PREHOOK: Output: default@srcpart_date_n6@ds=2008-04-09
-#### A masked pattern was here ####
+PREHOOK: Output: hdfs://### HDFS PATH ###
 POSTHOOK: query: analyze table srcpart_date_n6 compute statistics for columns
 POSTHOOK: type: ANALYZE_TABLE
 POSTHOOK: Input: default@srcpart_date_n6
@@ -129,7 +129,7 @@ POSTHOOK: Input: default@srcpart_date_n6@ds=2008-04-09
 POSTHOOK: Output: default@srcpart_date_n6
 POSTHOOK: Output: default@srcpart_date_n6@ds=2008-04-08
 POSTHOOK: Output: default@srcpart_date_n6@ds=2008-04-09
-#### A masked pattern was here ####
+POSTHOOK: Output: hdfs://### HDFS PATH ###
 PREHOOK: query: analyze table srcpart_small_n2 compute statistics for columns
 PREHOOK: type: ANALYZE_TABLE
 PREHOOK: Input: default@srcpart_small_n2
@@ -138,7 +138,7 @@ PREHOOK: Input: default@srcpart_small_n2@ds1=2008-04-09
 PREHOOK: Output: default@srcpart_small_n2
 PREHOOK: Output: default@srcpart_small_n2@ds1=2008-04-08
 PREHOOK: Output: default@srcpart_small_n2@ds1=2008-04-09
-#### A masked pattern was here ####
+PREHOOK: Output: hdfs://### HDFS PATH ###
 POSTHOOK: query: analyze table srcpart_small_n2 compute statistics for columns
 POSTHOOK: type: ANALYZE_TABLE
 POSTHOOK: Input: default@srcpart_small_n2
@@ -147,7 +147,7 @@ POSTHOOK: Input: default@srcpart_small_n2@ds1=2008-04-09
 POSTHOOK: Output: default@srcpart_small_n2
 POSTHOOK: Output: default@srcpart_small_n2@ds1=2008-04-08
 POSTHOOK: Output: default@srcpart_small_n2@ds1=2008-04-09
-#### A masked pattern was here ####
+POSTHOOK: Output: hdfs://### HDFS PATH ###
 Warning: Shuffle Join MERGEJOIN[92][tables = [$hdt$_1, $hdt$_2, $hdt$_0, $hdt$_3]] in Stage 'Reducer 3' is a cross product
 PREHOOK: query: EXPLAIN
 SELECT count(*)
@@ -173,7 +173,7 @@ PREHOOK: Input: default@srcpart_date_n6@ds=2008-04-08
 PREHOOK: Input: default@srcpart_date_n6@ds=2008-04-09
 PREHOOK: Input: default@srcpart_small_n2
 PREHOOK: Input: default@srcpart_small_n2@ds1=2008-04-08
-#### A masked pattern was here ####
+PREHOOK: Output: hdfs://### HDFS PATH ###
 POSTHOOK: query: EXPLAIN
 SELECT count(*)
 FROM (
@@ -198,7 +198,7 @@ POSTHOOK: Input: default@srcpart_date_n6@ds=2008-04-08
 POSTHOOK: Input: default@srcpart_date_n6@ds=2008-04-09
 POSTHOOK: Input: default@srcpart_small_n2
 POSTHOOK: Input: default@srcpart_small_n2@ds1=2008-04-08
-#### A masked pattern was here ####
+POSTHOOK: Output: hdfs://### HDFS PATH ###
 STAGE DEPENDENCIES:
   Stage-1 is a root stage
   Stage-0 depends on stages: Stage-1
