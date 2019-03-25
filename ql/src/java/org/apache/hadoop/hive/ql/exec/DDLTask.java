@@ -4932,18 +4932,25 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
     List<SQLDefaultConstraint> defaultConstraints = crtTbl.getDefaultConstraints();
     List<SQLCheckConstraint> checkConstraints = crtTbl.getCheckConstraints();
     LOG.debug("creating table {} on {}",tbl.getFullyQualifiedName(),tbl.getDataLocation());
-
-    if (crtTbl.getReplicationSpec().isInReplicationScope() && (!crtTbl.getReplaceMode())){
-      // if this is a replication spec, then replace-mode semantics might apply.
-      // if we're already asking for a table replacement, then we can skip this check.
-      // however, otherwise, if in replication scope, and we've not been explicitly asked
-      // to replace, we should check if the object we're looking at exists, and if so,
+    
+	boolean replDataLocationChanged = false;
+    if (crtTbl.getReplicationSpec().isInReplicationScope()){
+      // If in replication scope, we should check if the object we're looking at exists, and if so,
       // trigger replace-mode semantics.
       Table existingTable = db.getTable(tbl.getDbName(), tbl.getTableName(), false);
-      if (existingTable != null){
+      if (existingTable != null) {
         if (crtTbl.getReplicationSpec().allowEventReplacementInto(existingTable.getParameters())){
           crtTbl.setReplaceMode(true); // we replace existing table.
           ReplicationSpec.copyLastReplId(existingTable.getParameters(), tbl.getParameters());
+
+          // If location of an existing managed table is changed, then need to delete the old location if exists.
+          // This scenario occurs when a managed table is converted into external table at source. In this case,
+          // at target, the table data would be moved to different location under base directory for external tables.
+          if (existingTable.getTableType().equals(TableType.MANAGED_TABLE)
+                  && tbl.getTableType().equals(TableType.EXTERNAL_TABLE)
+                  && (!existingTable.getDataLocation().equals(tbl.getDataLocation()))) {
+            replDataLocationChanged = true;
+          }
         } else {
           LOG.debug("DDLTask: Create Table is skipped as table {} is newer than update",
                   crtTbl.getTableName());
@@ -4976,6 +4983,12 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
           environmentContext = new EnvironmentContext();
           environmentContext.putToProperties(StatsSetupConst.DO_NOT_UPDATE_STATS, StatsSetupConst.TRUE);
         }
+      }
+
+      // In replication flow, if table's data location is changed, then set the corresponding flag in
+      // environment context to notify Metastore to update location of all partitions and delete old directory.
+      if (replDataLocationChanged) {
+        environmentContext = ReplUtils.setReplDataLocationChangedFlag(environmentContext);
       }
 
       // replace-mode creates are really alters using CreateTableDesc.
