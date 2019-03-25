@@ -99,6 +99,7 @@ import org.apache.hadoop.hive.ql.DriverContext;
 import org.apache.hadoop.hive.ql.ErrorMsg;
 import org.apache.hadoop.hive.ql.QueryPlan;
 import org.apache.hadoop.hive.ql.exec.ArchiveUtils.PartSpecInfo;
+import org.apache.hadoop.hive.ql.exec.repl.util.ReplUtils;
 import org.apache.hadoop.hive.ql.exec.tez.TezTask;
 import org.apache.hadoop.hive.ql.hooks.LineageInfo.DataContainer;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
@@ -3783,6 +3784,15 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
       if (part != null) {
         part.getTPartition().getParameters().putAll(alterTbl.getProps());
       } else {
+        // Converting to/from external table
+        String externalProp = alterTbl.getProps().get("EXTERNAL");
+        if (externalProp != null) {
+          if (Boolean.parseBoolean(externalProp) && tbl.getTableType() == TableType.MANAGED_TABLE) {
+            tbl.setTableType(TableType.EXTERNAL_TABLE);
+          } else if (!Boolean.parseBoolean(externalProp) && tbl.getTableType() == TableType.EXTERNAL_TABLE) {
+            tbl.setTableType(TableType.MANAGED_TABLE);
+          }
+        }
         tbl.getTTable().getParameters().putAll(alterTbl.getProps());
       }
     } else if (alterTbl.getOp() == AlterTableDesc.AlterTableTypes.DROPPROPS) {
@@ -4448,17 +4458,24 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
                 StatsSetupConst.FALSE);
       }
     }
-
-    if (crtTbl.getReplicationSpec().isInReplicationScope() && (!crtTbl.getReplaceMode())){
-      // if this is a replication spec, then replace-mode semantics might apply.
-      // if we're already asking for a table replacement, then we can skip this check.
-      // however, otherwise, if in replication scope, and we've not been explicitly asked
-      // to replace, we should check if the object we're looking at exists, and if so,
+	
+    boolean replDataLocationChanged = false;
+    if (crtTbl.getReplicationSpec().isInReplicationScope()){
+      // If in replication scope, we should check if the object we're looking at exists, and if so,
       // trigger replace-mode semantics.
       Table existingTable = db.getTable(tbl.getDbName(), tbl.getTableName(), false);
-      if (existingTable != null){
+      if (existingTable != null) {
         if (crtTbl.getReplicationSpec().allowEventReplacementInto(existingTable.getParameters())){
           crtTbl.setReplaceMode(true); // we replace existing table.
+
+          // If location of an existing managed table is changed, then need to delete the old location if exists.
+          // This scenario occurs when a managed table is converted into external table at source. In this case,
+          // at target, the table data would be moved to different location under base directory for external tables.
+          if (existingTable.getTableType().equals(TableType.MANAGED_TABLE)
+                  && tbl.getTableType().equals(TableType.EXTERNAL_TABLE)
+                  && (!existingTable.getDataLocation().equals(tbl.getDataLocation()))) {
+            replDataLocationChanged = true;
+          }
         } else {
           LOG.debug("DDLTask: Create Table is skipped as table "
                   + crtTbl.getTableName() + " is newer than update");
@@ -4475,6 +4492,13 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
     if (crtTbl.getReplaceMode()){
       EnvironmentContext environmentContext = new EnvironmentContext();
       environmentContext.putToProperties(StatsSetupConst.DO_NOT_UPDATE_STATS, StatsSetupConst.TRUE);
+
+      // In replication flow, if table's data location is changed, then set the corresponding flag in
+      // environment context to notify Metastore to update location of all partitions and delete old directory.
+      if (replDataLocationChanged) {
+        environmentContext = ReplUtils.setReplDataLocationChangedFlag(environmentContext);
+      }
+
       // replace-mode creates are really alters using CreateTableDesc.
       try {
         db.alterTable(tbl.getDbName()+"."+tbl.getTableName(),tbl, environmentContext);

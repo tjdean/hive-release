@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.hadoop.hive.common.ReplConst;
 import org.apache.hadoop.hive.metastore.events.AddPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterPartitionEvent;
 import org.apache.hadoop.hive.metastore.events.AlterTableEvent;
@@ -90,10 +91,16 @@ public class HiveAlterHandler implements AlterHandler {
   public void alterTable(RawStore msdb, Warehouse wh, String dbname,
       String name, Table newt, EnvironmentContext environmentContext,
       HMSHandler handler) throws InvalidOperationException, MetaException {
-    final boolean cascade = environmentContext != null
-        && environmentContext.isSetProperties()
-        && StatsSetupConst.TRUE.equals(environmentContext.getProperties().get(
-            StatsSetupConst.CASCADE));
+    final boolean cascade;
+    final boolean replDataLocationChanged;
+    if ((environmentContext != null) && environmentContext.isSetProperties()) {
+      cascade = StatsSetupConst.TRUE.equals(environmentContext.getProperties().get(StatsSetupConst.CASCADE));
+      replDataLocationChanged = ReplConst.TRUE.equals(environmentContext.getProperties().get(ReplConst.REPL_DATA_LOCATION_CHANGED));
+    } else {
+      cascade = false;
+      replDataLocationChanged = false;
+    }
+
     if (newt == null) {
       throw new InvalidOperationException("New table is invalid: " + newt);
     }
@@ -116,6 +123,8 @@ public class HiveAlterHandler implements AlterHandler {
     boolean dataWasMoved = false;
     boolean rename = false;
     boolean isPartitionedTable = false;
+
+    Database olddb = null;
     Table oldt = null;
     List<ObjectPair<Partition, String>> altps = new ArrayList<ObjectPair<Partition, String>>();
     List<MetaStoreEventListener> transactionalListeners = null;
@@ -139,6 +148,7 @@ public class HiveAlterHandler implements AlterHandler {
       }
 
       // get old table
+      olddb = msdb.getDatabase(dbname);
       oldt = msdb.getTable(dbname, name);
       if (oldt == null) {
         throw new InvalidOperationException("table " + newt.getDbName() + "."
@@ -187,64 +197,82 @@ public class HiveAlterHandler implements AlterHandler {
         }
       }
 
-      // if this alter is a rename, the table is not a virtual view, the user
-      // didn't change the default location (or new location is empty), and
-      // table is not an external table, that means user is asking metastore to
-      // move data to the new location corresponding to the new name
-      if (rename
-          && !oldt.getTableType().equals(TableType.VIRTUAL_VIEW.toString())
-          && (oldt.getSd().getLocation().compareTo(newt.getSd().getLocation()) == 0
-            || StringUtils.isEmpty(newt.getSd().getLocation()))
-          && !MetaStoreUtils.isExternalTable(oldt)) {
-
+      // Two mutually exclusive flows possible.
+      // i) Partition locations needs update if replDataLocationChanged is true which means table's
+      // data location is changed with all partition sub-directories.
+      // ii) Rename needs change the data location and move the data to the new location corresponding
+      // to the new name if:
+      // 1) the table is not a virtual view, and
+      // 2) the table is not an external table, and
+      // 3) the user didn't change the default location (or new location is empty), and
+      // 4) the table was not initially created with a specified location
+      if (replDataLocationChanged
+              || (rename
+              && !oldt.getTableType().equals(TableType.VIRTUAL_VIEW.toString())
+              && (oldt.getSd().getLocation().compareTo(newt.getSd().getLocation()) == 0
+              || StringUtils.isEmpty(newt.getSd().getLocation()))
+              && !MetaStoreUtils.isExternalTable(oldt))) {
         srcPath = new Path(oldt.getSd().getLocation());
-        srcFs = wh.getFs(srcPath);
 
-        // that means user is asking metastore to move data to new location
-        // corresponding to the new name
-        // get new location
-        Database db = msdb.getDatabase(newt.getDbName());
-        Path databasePath = constructRenamedPath(wh.getDatabasePath(db), srcPath);
-        destPath = new Path(databasePath, newt.getTableName().toLowerCase());
-        destFs = wh.getFs(destPath);
+        if (replDataLocationChanged) {
+          // If data location is changed in replication flow, then new path was already set in
+          // the newt. Also, it is as good as the data is moved and set dataWasMoved=true so that
+          // location in partitions are also updated accordingly.
+          // No need to validate if the destPath exists as in replication flow, data gets replicated
+          // separately.
+          destPath = new Path(newt.getSd().getLocation());
+          dataWasMoved = true;
+        } else {
+          // Rename flow.
+          srcFs = wh.getFs(srcPath);
 
-        newt.getSd().setLocation(destPath.toString());
+          // that means user is asking metastore to move data to new location
+          // corresponding to the new name
+          // get new location
+          Database db = msdb.getDatabase(newt.getDbName());
+          Path databasePath = constructRenamedPath(wh.getDatabasePath(db), srcPath);
+          destPath = new Path(databasePath, newt.getTableName().toLowerCase());
+          destFs = wh.getFs(destPath);
 
-        // check that destination does not exist otherwise we will be
-        // overwriting data
-        // check that src and dest are on the same file system
-        if (!FileUtils.equalsFileSystem(srcFs, destFs)) {
-          throw new InvalidOperationException("table new location " + destPath
-              + " is on a different file system than the old location "
-              + srcPath + ". This operation is not supported");
-        }
-        try {
-          srcFs.exists(srcPath); // check that src exists and also checks
-                                 // permissions necessary
-          if (destFs.exists(destPath)) {
-            throw new InvalidOperationException("New location for this table "
-                + newt.getDbName() + "." + newt.getTableName()
-                + " already exists : " + destPath);
+          newt.getSd().setLocation(destPath.toString());
+
+          // check that destination does not exist otherwise we will be
+          // overwriting data
+          // check that src and dest are on the same file system
+          if (!FileUtils.equalsFileSystem(srcFs, destFs)) {
+            throw new InvalidOperationException("table new location " + destPath
+                    + " is on a different file system than the old location "
+                    + srcPath + ". This operation is not supported");
           }
-          // check that src exists and also checks permissions necessary, rename src to dest
-          if (srcFs.exists(srcPath) && wh.renameDir(srcPath, destPath,
-                  ReplChangeManager.isSourceOfReplication(msdb.getDatabase(dbname)))) {
-            dataWasMoved = true;
+          try {
+            srcFs.exists(srcPath); // check that src exists and also checks
+            // permissions necessary
+            if (destFs.exists(destPath)) {
+              throw new InvalidOperationException("New location for this table "
+                      + newt.getDbName() + "." + newt.getTableName()
+                      + " already exists : " + destPath);
+            }
+            // check that src exists and also checks permissions necessary, rename src to dest
+            if (srcFs.exists(srcPath) && wh.renameDir(srcPath, destPath,
+                    ReplChangeManager.isSourceOfReplication(msdb.getDatabase(dbname)))) {
+              dataWasMoved = true;
+            }
+          } catch (IOException | MetaException e) {
+            LOG.error("Alter Table operation for " + dbname + "." + name + " failed.", e);
+            throw new InvalidOperationException("Alter Table operation for " + dbname + "." + name +
+                    " failed to move data due to: '" + getSimpleMessage(e)
+                    + "' See hive log file for details.");
           }
-        } catch (IOException | MetaException e) {
-          LOG.error("Alter Table operation for " + dbname + "." + name + " failed.", e);
-          throw new InvalidOperationException("Alter Table operation for " + dbname + "." + name +
-              " failed to move data due to: '" + getSimpleMessage(e)
-              + "' See hive log file for details.");
         }
+
         String oldTblLocPath = srcPath.toUri().getPath();
-        String newTblLocPath = destPath.toUri().getPath();
+        String newTblLocPath = dataWasMoved ? destPath.toUri().getPath() : null;
 
         // also the location field in partition
         List<Partition> parts = msdb.getPartitions(dbname, name, -1);
         for (Partition part : parts) {
           String oldPartLoc = part.getSd().getLocation();
-          if (oldPartLoc.contains(oldTblLocPath)) {
+          if (dataWasMoved && oldPartLoc.contains(oldTblLocPath)) {
             URI oldUri = new Path(oldPartLoc).toUri();
             String newPath = oldUri.getPath().replace(oldTblLocPath, newTblLocPath);
             Path newPartLocPath = new Path(oldUri.getScheme(), oldUri.getAuthority(), newPath);
@@ -260,6 +288,7 @@ public class HiveAlterHandler implements AlterHandler {
             msdb.alterPartition(dbname, name, part.getValues(), part);
           }
         }
+
       } else if (MetaStoreUtils.requireCalStats(hiveConf, null, null, newt, environmentContext) &&
         (newt.getPartitionKeysSize() == 0)) {
           Database db = msdb.getDatabase(newt.getDbName());
@@ -307,9 +336,28 @@ public class HiveAlterHandler implements AlterHandler {
           "Unable to change partition or table. Database " + dbname + " does not exist"
               + " Check metastore logs for detailed stack." + e.getMessage());
     } finally {
-      if (!success) {
+      if (success) {
+        // Txn was committed successfully.
+        // If data location is changed in replication flow, then need to delete the old path.
+        if (replDataLocationChanged) {
+          assert(olddb != null);
+          assert(oldt != null);
+          Path deleteOldDataLoc = new Path(oldt.getSd().getLocation());
+          boolean isAutoPurge = "true".equalsIgnoreCase(oldt.getParameters().get("auto.purge"));
+          try {
+            wh.deleteDir(deleteOldDataLoc, true, isAutoPurge, olddb);
+            LOG.info("Deleted the old data location: " + deleteOldDataLoc + " for the table: "
+                    + dbname + "." + name);
+          } catch (MetaException ex) {
+            // Eat the exception as it doesn't affect the state of existing tables.
+            // Expect, user to manually drop this path when exception and so logging a warning.
+            LOG.warn("Unable to delete the old data location: " + deleteOldDataLoc + " for the table: "
+                    + dbname + "." + name);
+          }
+        }
+      } else {
         msdb.rollbackTransaction();
-        if (dataWasMoved) {
+        if (!replDataLocationChanged && dataWasMoved) {
           try {
             if (destFs.exists(destPath)) {
               if (!destFs.rename(destPath, srcPath)) {

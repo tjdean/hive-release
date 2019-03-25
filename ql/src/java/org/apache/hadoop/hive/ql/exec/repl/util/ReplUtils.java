@@ -19,6 +19,7 @@ package org.apache.hadoop.hive.ql.exec.repl.util;
 
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hive.common.ReplConst;
 import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.TableType;
@@ -156,5 +157,13 @@ public class ReplUtils {
         throw new RuntimeException(e);
       }
     };
+  }
+
+  public static EnvironmentContext setReplDataLocationChangedFlag(EnvironmentContext envContext) {
+    if (envContext == null) {
+      envContext = new EnvironmentContext();
+    }
+    envContext.putToProperties(ReplConst.REPL_DATA_LOCATION_CHANGED, ReplConst.TRUE);
+    return envContext;
   }
 }
