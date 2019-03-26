@@ -874,7 +874,7 @@ public class CachedStore implements RawStore, Configurable {
       rawStore.openTransaction();
       try {
         Table table = rawStore.getTable(catName, dbName, tblName);
-        if (table.getPartitionKeys().isEmpty()) {
+        if (table != null && !table.getPartitionKeys().isEmpty()) {
           List<String> colNames = MetaStoreUtils.getColumnNamesForTable(table);
           Deadline.startTimer("getTableColumnStatistics");
           ColumnStatistics tableColStats =
@@ -917,14 +917,16 @@ public class CachedStore implements RawStore, Configurable {
       rawStore.openTransaction();
       try {
         Table table = rawStore.getTable(catName, dbName, tblName);
-        List<String> colNames = MetaStoreUtils.getColumnNamesForTable(table);
-        List<String> partNames = rawStore.listPartitionNames(catName, dbName, tblName, (short) -1);
-        // Get partition column stats for this table
-        Deadline.startTimer("getPartitionColumnStatistics");
-        List<ColumnStatistics> partitionColStats =
-            rawStore.getPartitionColumnStatistics(catName, dbName, tblName, partNames, colNames);
-        Deadline.stopTimer();
-        sharedCache.refreshPartitionColStatsInCache(catName, dbName, tblName, partitionColStats);
+        if (table != null) {
+          List<String> colNames = MetaStoreUtils.getColumnNamesForTable(table);
+          List<String> partNames = rawStore.listPartitionNames(catName, dbName, tblName, (short) -1);
+          // Get partition column stats for this table
+          Deadline.startTimer("getPartitionColumnStatistics");
+          List<ColumnStatistics> partitionColStats =
+                  rawStore.getPartitionColumnStatistics(catName, dbName, tblName, partNames, colNames);
+          Deadline.stopTimer();
+          sharedCache.refreshPartitionColStatsInCache(catName, dbName, tblName, partitionColStats);
+        }
         committed = rawStore.commitTransaction();
       } catch (MetaException | NoSuchObjectException e) {
         LOG.info("Updating CachedStore: unable to read partitions of table: " + tblName, e);
@@ -942,6 +944,9 @@ public class CachedStore implements RawStore, Configurable {
                                                        String tblName) {
       try {
         Table table = rawStore.getTable(catName, dbName, tblName);
+        if (table == null) {
+          return;
+        }
         List<String> partNames = rawStore.listPartitionNames(catName, dbName, tblName, (short) -1);
         List<String> colNames = MetaStoreUtils.getColumnNamesForTable(table);
         if ((partNames != null) && (partNames.size() > 0)) {
