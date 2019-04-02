@@ -936,7 +936,9 @@
                   <include>org.apache.parquet:parquet-hadoop-bundle</include>
                   <include>org.apache.thrift:libthrift</include>
                   <include>javax.jdo:jdo-api</include>
+                  <include>commons-dbcp:commons-dbcp</include>
                   <include>commons-lang:commons-lang</include>
+                  <include>commons-pool:commons-pool</include>
                   <include>org.apache.commons:commons-lang3</include>
                   <include>org.jodd:jodd-core</include>
                   <include>com.tdunning:json</include>
