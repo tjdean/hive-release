@@ -50,6 +50,8 @@ import org.apache.hadoop.hive.ql.exec.DDLTask;
 import org.apache.hadoop.hive.ql.exec.StatsTask;
 import org.apache.hadoop.hive.ql.exec.Task;
 import org.apache.hadoop.hive.ql.exec.TaskFactory;
+import org.apache.hadoop.hive.ql.exec.repl.util.AddDependencyToLeaves;
+import org.apache.hadoop.hive.ql.exec.util.DAGTraversal;
 import org.apache.hadoop.hive.ql.hooks.Entity;
 import org.apache.hadoop.hive.ql.hooks.ReadEntity;
 import org.apache.hadoop.hive.ql.hooks.WriteEntity;
@@ -254,8 +256,10 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
       alterTblDesc.setProps(mapProps);
       alterTblDesc.setOldName(newTableName);
     }
-    addExportTask(rootTasks, exportTask, TaskFactory.get(
-        new DDLWork(getInputs(), getOutputs(), alterTblDesc)));
+    Task<DDLWork> alterTableTask = TaskFactory.get(
+            new DDLWork(getInputs(), getOutputs(), alterTblDesc));
+    alterTableTask.addDependentTask(exportTask);
+    DAGTraversal.traverse(rootTasks, new AddDependencyToLeaves(alterTableTask));
 
     {
       /**
@@ -316,32 +320,21 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
     }
     return rewrittenQueryStr;
   }
-  /**
-   * Makes the exportTask run after all other tasks of the "insert into T ..." are done.
-   */
-  private void addExportTask(List<Task<? extends Serializable>> rootTasks,
-      Task<ExportWork> exportTask, Task<DDLWork> alterTable) {
-    for(Task<? extends  Serializable> t : rootTasks) {
-      if(t.getNumChild() <= 0) {
-        //todo: ConditionalTask#addDependentTask(Task) doesn't do the right thing: HIVE-18978
-        t.addDependentTask(alterTable);
-        //this is a leaf so add exportTask to follow it
-        alterTable.addDependentTask(exportTask);
-      } else {
-        addExportTask(t.getDependentTasks(), exportTask, alterTable);
-      }
-    }
-  }
+
   private List<Task<? extends Serializable>> findStatsTasks(
       List<Task<? extends Serializable>> rootTasks, List<Task<? extends Serializable>> statsTasks) {
-    for(Task<? extends  Serializable> t : rootTasks) {
+    for (Task<? extends  Serializable> t : rootTasks) {
       if (t instanceof StatsTask) {
-        if(statsTasks == null) {
+        if (statsTasks == null) {
           statsTasks = new ArrayList<>();
+        }
+        if (statsTasks.contains(t)) {
+          // If current stats task is already visited once, then skip traversing it's children.
+          continue;
         }
         statsTasks.add(t);
       }
-      if(t.getDependentTasks() != null) {
+      if (t.getDependentTasks() != null) {
         statsTasks = findStatsTasks(t.getDependentTasks(), statsTasks);
       }
     }
@@ -349,15 +342,24 @@ public class UpdateDeleteSemanticAnalyzer extends SemanticAnalyzer {
   }
   private void removeStatsTasks(List<Task<? extends Serializable>> rootTasks) {
     List<Task<? extends Serializable>> statsTasks = findStatsTasks(rootTasks, null);
-    if(statsTasks == null) {
+    if (statsTasks == null) {
       return;
     }
-    for(Task<? extends Serializable> statsTask : statsTasks) {
-      if(statsTask.getParentTasks() == null) {
+    for (Task<? extends Serializable> statsTask : new ArrayList<>(statsTasks)) {
+      if (statsTask.getParentTasks() == null) {
         continue; //should never happen
       }
-      for(Task<? extends Serializable> t : new ArrayList<>(statsTask.getParentTasks())) {
-        t.removeDependentTask(statsTask);
+      for (Task<? extends Serializable> parent : new ArrayList<>(statsTask.getParentTasks())) {
+        parent.removeDependentTask(statsTask);
+        LOG.error("Parent " + parent + " Child " + statsTask);
+
+        if (statsTask.getChildTasks() == null) {
+          continue;
+        }
+        for (Task<? extends Serializable> child : new ArrayList<>(statsTask.getChildTasks())) {
+          statsTask.removeDependentTask(child);
+          parent.addDependentTask(child);
+        }
       }
     }
   }
