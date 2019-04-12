@@ -41,6 +41,7 @@ import java.nio.ByteBuffer;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -721,6 +722,14 @@ public class Hive {
     alterTable(null, names[0], names[1], newTbl, cascade, environmentContext, transactional);
   }
 
+  public void alterTable(String fullyQlfdTblName, Table newTbl, boolean cascade,
+                         EnvironmentContext environmentContext, boolean transactional, long writeId)
+          throws HiveException {
+    String[] names = Utilities.getDbTableName(fullyQlfdTblName);
+    alterTable(null, names[0], names[1], newTbl, cascade, environmentContext, transactional,
+                writeId);
+  }
+
   public void alterTable(String catName, String dbName, String tblName, Table newTbl, boolean cascade,
                          EnvironmentContext environmentContext, boolean transactional) throws HiveException {
     alterTable(catName, dbName, tblName, newTbl, cascade, environmentContext, transactional, 0);
@@ -750,7 +759,14 @@ public class Hive {
       AcidUtils.TableSnapshot tableSnapshot = null;
       if (transactional) {
         if (replWriteId > 0) {
-          ValidWriteIdList writeIds = AcidUtils.getTableValidWriteIdListWithTxnList(conf, dbName, tblName);
+          // We need a valid writeId list for a transactional table modification. During
+          // replication we do not have a valid writeId list which was used to modify the table
+          // on the source. But we know for sure that the writeId associated with it was valid
+          // then (otherwise modification would have failed on the source). So use a valid
+          // transaction list with only that writeId.
+          ValidWriteIdList writeIds = new ValidReaderWriteIdList(dbName + "." + tblName,
+                                                                  new long[0], new BitSet(),
+                                                                  replWriteId);
           tableSnapshot = new TableSnapshot(replWriteId, writeIds.writeToString());
         } else {
           // Make sure we pass in the names, so we can get the correct snapshot for rename table.
@@ -922,7 +938,8 @@ public class Hive {
    *           if the changes in metadata is not acceptable
    * @throws TException
    */
-  public void renamePartition(Table tbl, Map<String, String> oldPartSpec, Partition newPart)
+  public void renamePartition(Table tbl, Map<String, String> oldPartSpec, Partition newPart,
+                              long replWriteId)
       throws HiveException {
     try {
       Map<String, String> newPartSpec = newPart.getSpec();
@@ -946,8 +963,21 @@ public class Hive {
       }
       String validWriteIds = null;
       if (AcidUtils.isTransactionalTable(tbl)) {
-        // Set table snapshot to api.Table to make it persistent.
-        TableSnapshot tableSnapshot = AcidUtils.getTableSnapshot(conf, tbl, true);
+        TableSnapshot tableSnapshot;
+        if (replWriteId > 0) {
+          // We need a valid writeId list for a transactional table modification. During
+          // replication we do not have a valid writeId list which was used to modify the table
+          // on the source. But we know for sure that the writeId associated with it was valid
+          // then (otherwise modification would have failed on the source). So use a valid
+          // transaction list with only that writeId.
+          ValidWriteIdList writeIds = new ValidReaderWriteIdList(tbl.getDbName() + "." +
+                  tbl.getTableName(), new long[0], new BitSet(), replWriteId);
+          tableSnapshot = new TableSnapshot(replWriteId, writeIds.writeToString());
+        } else {
+          // Set table snapshot to api.Table to make it persistent.
+          tableSnapshot = AcidUtils.getTableSnapshot(conf, tbl, true);
+        }
+
         if (tableSnapshot != null) {
           newPart.getTPartition().setWriteId(tableSnapshot.getWriteId());
           validWriteIds = tableSnapshot.getValidWriteIdList();
@@ -1046,10 +1076,14 @@ public class Hive {
           tTbl.setPrivileges(principalPrivs);
         }
       }
-      // Set table snapshot to api.Table to make it persistent.
-      TableSnapshot tableSnapshot = AcidUtils.getTableSnapshot(conf, tbl, true);
-      if (tableSnapshot != null) {
-        tbl.getTTable().setWriteId(tableSnapshot.getWriteId());
+      // Set table snapshot to api.Table to make it persistent. A transactional table being
+      // replicated may have a valid write Id copied from the source. Use that instead of
+      // crafting one on the replica.
+      if (tTbl.getWriteId() <= 0) {
+        TableSnapshot tableSnapshot = AcidUtils.getTableSnapshot(conf, tbl, true);
+        if (tableSnapshot != null) {
+          tbl.getTTable().setWriteId(tableSnapshot.getWriteId());
+        }
       }
 
       if (primaryKeys == null && foreignKeys == null
@@ -2765,19 +2799,36 @@ private void constructOneLBLocationMap(FileStatus fSta,
     int size = addPartitionDesc.getPartitionCount();
     List<org.apache.hadoop.hive.metastore.api.Partition> in =
         new ArrayList<org.apache.hadoop.hive.metastore.api.Partition>(size);
-    AcidUtils.TableSnapshot tableSnapshot = AcidUtils.getTableSnapshot(conf, tbl, true);
-    long writeId = -1;
-    String validWriteIdList = null;
-    if (tableSnapshot != null && tableSnapshot.getWriteId() > 0) {
-      writeId = tableSnapshot.getWriteId();
-      validWriteIdList = tableSnapshot.getValidWriteIdList();
+    long writeId;
+    String validWriteIdList;
+
+    // In case of replication, get the writeId from the source and use valid write Id list
+    // for replication.
+    if (addPartitionDesc.getReplicationSpec().isInReplicationScope() &&
+        addPartitionDesc.getPartition(0).getWriteId() > 0) {
+      writeId = addPartitionDesc.getPartition(0).getWriteId();
+      // We need a valid writeId list for a transactional change. During replication we do not
+      // have a valid writeId list which was used for this on the source. But we know for sure
+      // that the writeId associated with it was valid then (otherwise the change would have
+      // failed on the source). So use a valid transaction list with only that writeId.
+      validWriteIdList = new ValidReaderWriteIdList(tbl.getDbName() + "." + tbl.getTableName(),
+                                                    new long[0], new BitSet(), writeId).writeToString();
+    } else {
+      AcidUtils.TableSnapshot tableSnapshot = AcidUtils.getTableSnapshot(conf, tbl, true);
+      if (tableSnapshot != null && tableSnapshot.getWriteId() > 0) {
+        writeId = tableSnapshot.getWriteId();
+        validWriteIdList = tableSnapshot.getValidWriteIdList();
+      } else {
+        writeId = -1;
+        validWriteIdList = null;
+      }
     }
 
     for (int i = 0; i < size; ++i) {
       org.apache.hadoop.hive.metastore.api.Partition tmpPart =
           convertAddSpecToMetaPartition(tbl, addPartitionDesc.getPartition(i), conf);
-      if (tmpPart != null && tableSnapshot != null && tableSnapshot.getWriteId() > 0) {
-        tmpPart.setWriteId(tableSnapshot.getWriteId());
+      if (tmpPart != null && writeId > 0) {
+        tmpPart.setWriteId(writeId);
       }
       in.add(tmpPart);
     }
@@ -2817,12 +2868,9 @@ private void constructOneLBLocationMap(FileStatus fSta,
           out.add(new Partition(tbl, outPart));
         }
         EnvironmentContext ec = new EnvironmentContext();
-        // In case of replication statistics is obtained from the source, so do not update those
-        // on replica. Since we are not replicating statistics for transactional tables, do not do
-        // so for a partition of a transactional table right now.
-        if (!AcidUtils.isTransactionalTable(tbl)) {
-          ec.putToProperties(StatsSetupConst.DO_NOT_UPDATE_STATS, StatsSetupConst.TRUE);
-        }
+        // In case of replication, statistics is obtained from the source, so do not update those
+        // on replica.
+        ec.putToProperties(StatsSetupConst.DO_NOT_UPDATE_STATS, StatsSetupConst.TRUE);
         getMSC().alter_partitions(addPartitionDesc.getDbName(), addPartitionDesc.getTableName(),
             partsToAlter, ec, validWriteIdList, writeId);
 
@@ -2877,6 +2925,9 @@ private void constructOneLBLocationMap(FileStatus fSta,
     }
     if (addSpec.getColStats() != null) {
       part.setColStats(addSpec.getColStats());
+      // Statistics will have an associated write Id for a transactional table. We need it to
+      // update column statistics.
+      part.setWriteId(addSpec.getWriteId());
     }
     return part;
   }
@@ -4833,11 +4884,16 @@ private void constructOneLBLocationMap(FileStatus fSta,
     try {
       ColumnStatistics colStat = request.getColStats().get(0);
       ColumnStatisticsDesc statsDesc = colStat.getStatsDesc();
-      Table tbl = getTable(statsDesc.getDbName(), statsDesc.getTableName());
 
-      AcidUtils.TableSnapshot tableSnapshot  = AcidUtils.getTableSnapshot(conf, tbl, true);
-      request.setValidWriteIdList(tableSnapshot != null ? tableSnapshot.getValidWriteIdList() : null);
-      request.setWriteId(tableSnapshot != null ? tableSnapshot.getWriteId() : 0);
+      // In case of replication, the request already has valid writeId and valid transaction id
+      // list obtained from the source. Just use it.
+      if (request.getWriteId() <= 0 || request.getValidWriteIdList() == null) {
+        Table tbl = getTable(statsDesc.getDbName(), statsDesc.getTableName());
+        AcidUtils.TableSnapshot tableSnapshot = AcidUtils.getTableSnapshot(conf, tbl, true);
+        request.setValidWriteIdList(tableSnapshot != null ? tableSnapshot.getValidWriteIdList() : null);
+        request.setWriteId(tableSnapshot != null ? tableSnapshot.getWriteId() : 0);
+      }
+
       return getMSC().setPartitionColumnStatistics(request);
     } catch (Exception e) {
       LOG.debug(StringUtils.stringifyException(e));
