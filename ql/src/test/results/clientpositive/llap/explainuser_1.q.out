@@ -6144,13 +6144,13 @@ Stage-0
                       Select Operator [SEL_2] (rows=1 width=368)
                         Output:["_col0","_col1"]
                         Filter Operator [FIL_19] (rows=1 width=368)
-                          predicate:key is not null
+                          predicate:UDFToDouble(key) is not null
                           TableScan [TS_0] (rows=1 width=368)
                             default@t1_n119,a,Tbl:COMPLETE,Col:NONE,Output:["key","val"]
                   <-Select Operator [SEL_5] (rows=500 width=87)
                       Output:["_col0"]
                       Filter Operator [FIL_20] (rows=500 width=87)
-                        predicate:key is not null
+                        predicate:UDFToDouble(key) is not null
                         TableScan [TS_3] (rows=500 width=87)
                           default@src,c,Tbl:COMPLETE,Col:COMPLETE,Output:["key"]
 
