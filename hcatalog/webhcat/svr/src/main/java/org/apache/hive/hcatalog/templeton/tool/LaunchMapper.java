@@ -178,7 +178,6 @@ public class LaunchMapper extends Mapper<NullWritable, NullWritable, Text, Text>
     handleTokenFile(jarArgsList, JobSubmissionConstants.TOKEN_FILE_ARG_PLACEHOLDER, "mapreduce.job.credentials.binary");
     handleTokenFile(jarArgsList, JobSubmissionConstants.TOKEN_FILE_ARG_PLACEHOLDER_TEZ, "tez.credentials.path");
     if (jobType == LauncherDelegator.JobType.HIVE) {
-<<<<<<< HEAD
       Credentials cred = new Credentials();
       Token<? extends TokenIdentifier> token = context.getCredentials().getToken(new
               Text(SecureProxySupport.HIVE_SERVICE));
@@ -189,8 +188,6 @@ public class LaunchMapper extends Mapper<NullWritable, NullWritable, Text, Text>
       cred.writeTokenStorageFile(tokenPath, conf);
       env.put(UserGroupInformation.HADOOP_TOKEN_FILE_LOCATION,
               tokenPath.toUri().getPath());
-=======
->>>>>>> 7b0b9ae328... HIVE-20550: Switch WebHCat to use beeline to submit Hive queries (Daniel Dai, reviewed by Thejas Nair)
       replaceJobTag(jarArgsList, JobSubmissionConstants.HIVE_QUERY_TAG_ARG_PLACEHOLDER,
               JobSubmissionConstants.HIVE_QUERY_TAG, jobId);
     } else {
