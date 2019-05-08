@@ -1754,7 +1754,7 @@ public class Driver implements CommandProcessor {
       console.printInfo("Launching Job " + cxt.getCurJobNo() + " out of " + jobs);
     }
     tsk.initialize(conf, plan, cxt);
-    TaskRunner tskRun = new TaskRunner(tsk);
+    TaskRunner tskRun = new TaskRunner(tsk, cxt);
 
     cxt.launching(tskRun);
     // Launch Task

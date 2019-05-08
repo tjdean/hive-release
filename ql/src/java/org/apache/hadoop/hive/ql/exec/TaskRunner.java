@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.hadoop.hive.ql.session.OperationLog;
+import org.apache.hadoop.hive.ql.DriverContext;
 import org.apache.hadoop.hive.ql.session.SessionState;
 
 /**
@@ -43,11 +44,13 @@ public class TaskRunner extends Thread {
   };
 
   protected Thread runner;
+  private final DriverContext driverCtx;
 
-  public TaskRunner(Task<? extends Serializable> tsk) {
+  public TaskRunner(Task<? extends Serializable> tsk, DriverContext ctx) {
     this.tsk = tsk;
     this.result = new TaskResult();
     ss = SessionState.get();
+    driverCtx = ctx;
   }
 
   public Task<? extends Serializable> getTask() {
@@ -98,6 +101,7 @@ public class TaskRunner extends Thread {
       t.printStackTrace();
     }
     result.setExitVal(exitVal, tsk.getException());
+    driverCtx.releaseRunnable();
   }
 
   public static long getTaskRunnerID () {

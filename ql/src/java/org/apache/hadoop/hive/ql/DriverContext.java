@@ -101,6 +101,11 @@ public class DriverContext {
     return null;
   }
 
+  public synchronized void releaseRunnable() {
+    //release the waiting poller.
+    notify();
+  }
+
   /**
    * Polls running tasks to see if a task has ended.
    *
