@@ -1751,6 +1751,7 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
                   dbConn, sqlGenerator);
         }
 
+        LOG.info("Allocated write ids for the table: " + dbName + "." + tblName);
         LOG.debug("Going to commit");
         dbConn.commit();
         return new AllocateTableWriteIdsResponse(txnToWriteIds);
