@@ -33,6 +33,9 @@ import org.apache.hadoop.hive.metastore.api.Table;
  * distinguish external tables from managed tables.
  */
 public interface HiveMetaHook {
+  String ALTER_TABLE_OPERATION_TYPE = "alterTableOpType";
+  String ALTERLOCATION = "ALTERLOCATION";
+
   /**
    * Called before a new table definition is added to the metastore
    * during CREATE TABLE.

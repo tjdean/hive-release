@@ -64,6 +64,7 @@ import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConf.ConfVars;
+import org.apache.hadoop.hive.metastore.HiveMetaHook;
 import org.apache.hadoop.hive.metastore.MetaStoreUtils;
 import org.apache.hadoop.hive.metastore.PartitionDropOptions;
 import org.apache.hadoop.hive.metastore.ProtectMode;
@@ -3573,11 +3574,17 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
       }
     }
 
+    EnvironmentContext environmentContext = alterTbl.getEnvironmentContext();
+    if (environmentContext == null) {
+      environmentContext = new EnvironmentContext();
+    }
+    environmentContext.putToProperties(HiveMetaHook.ALTER_TABLE_OPERATION_TYPE,
+            alterTbl.getOp().name());
     try {
       if (allPartitions == null) {
-        db.alterTable(alterTbl.getOldName(), tbl, alterTbl.getIsCascade(), alterTbl.getEnvironmentContext());
+        db.alterTable(alterTbl.getOldName(), tbl, alterTbl.getIsCascade(), environmentContext);
       } else {
-        db.alterPartitions(alterTbl.getOldName(), allPartitions, alterTbl.getEnvironmentContext());
+        db.alterPartitions(alterTbl.getOldName(), allPartitions, environmentContext);
       }
     } catch (InvalidOperationException e) {
       LOG.error("alter table: " + stringifyException(e));

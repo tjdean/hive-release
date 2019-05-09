@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore;
 import org.apache.hadoop.hive.metastore.InjectableBehaviourObjectStore.BehaviourInjection;
@@ -1426,5 +1427,45 @@ public class TestReplicationScenariosAcrossInstances extends BaseReplicationAcro
             .run("insert into table t2 partition(country='india') values ('bangalore')")
             .runFailure("alter table t1 set tblproperties('EXTERNAL'='false')")
             .runFailure("alter table t2 set tblproperties('EXTERNAL'='false')");
+  }
+
+  @Test
+  public void dynamicallyConvertNonAcidToAcidTable() throws Throwable {
+    // Non-acid table converted to an ACID table should be prohibited on source cluster with
+    // strict managed false.
+    primary.run("use " + primaryDbName)
+            .run("create table t1 (id int) stored as orc")
+            .run("insert into table t1 values (1)")
+            .run("create table t2 (place string) partitioned by (country string) stored as orc")
+            .run("insert into table t2 partition(country='india') values ('bangalore')")
+            .runFailure("alter table t1 set tblproperties('transactional'='true')")
+            .runFailure("alter table t2 set tblproperties('transactional'='true')")
+            .runFailure("alter table t1 set tblproperties('transactional'='true', " +
+                    "'transactional_properties'='insert_only')")
+            .runFailure("alter table t2 set tblproperties('transactional'='true', " +
+                    "'transactional_properties'='insert_only')");
+
+  }
+
+  @Test
+  public void prohibitManagedTableLocationChangeOnReplSource() throws Throwable {
+    String tmpLocation = "/tmp/" + System.nanoTime();
+    primary.miniDFSCluster.getFileSystem().mkdirs(new Path(tmpLocation), new FsPermission("777"));
+
+    // For managed tables at source, the table location shouldn't be changed for the given
+    // non-partitioned table and partition location shouldn't be changed for partitioned table as
+    // alter event doesn't capture the new files list. So, it may cause data inconsistsency. So,
+    // if database is enabled for replication at source, then alter location on managed tables
+    // should be blocked.
+    primary.run("use " + primaryDbName)
+            .run("create table t1 (id int) clustered by(id) into 3 buckets stored as orc ")
+            .run("insert into t1 values(1)")
+            .run("create table t2 (place string) partitioned by (country string) stored as orc")
+            .run("insert into table t2 partition(country='india') values ('bangalore')")
+            .runFailure("alter table t1 set location '" + tmpLocation + "'")
+            .runFailure("alter table t2 partition(country='india') set location '" + tmpLocation + "'")
+            .runFailure("alter table t2 set location '" + tmpLocation + "'");
+
+    primary.miniDFSCluster.getFileSystem().delete(new Path(tmpLocation), true);
   }
 }
