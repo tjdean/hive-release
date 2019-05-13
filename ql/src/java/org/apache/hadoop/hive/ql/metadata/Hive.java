@@ -3112,6 +3112,19 @@ private void constructOneLBLocationMap(FileStatus fSta,
     }
   }
 
+  private static void deleteAndRename(FileSystem destFs, Path destFile, FileStatus srcStatus, Path destPath)
+          throws IOException {
+    if (destFs.exists(destFile)) {
+      // rename cannot overwrite non empty destination directory, so deleting the destination before renaming.
+      destFs.delete(destFile);
+      LOG.info("Deleting destination file" + destFile.toUri());
+    }
+    if(!destFs.rename(srcStatus.getPath(), destFile)) {
+      throw new IOException("rename for src path: " + srcStatus.getPath() + " to dest:"
+              + destPath + " returned false");
+    }
+  }
+
   //it is assumed that parent directory of the destf should already exist when this
   //method is called. when the replace value is true, this method works a little different
   //from mv command if the destf is a directory, it replaces the destf instead of moving under
@@ -3199,36 +3212,17 @@ private void constructOneLBLocationMap(FileStatus fSta,
 
               final Path destFile = new Path(destf, srcStatus.getPath().getName());
               if (null == pool) {
-                boolean success = false;
-                if (destFs instanceof DistributedFileSystem) {
-                  ((DistributedFileSystem)destFs).rename(srcStatus.getPath(), destFile, Options.Rename.OVERWRITE);
-                  success = true;
-                } else {
-                  destFs.delete(destFile, false);
-                  success = destFs.rename(srcStatus.getPath(), destFile);
-                }
-                if(!success) {
-                  throw new IOException("rename for src path: " + srcStatus.getPath() + " to dest:"
-                      + destf + " returned false");
-                }
+                deleteAndRename(destFs, destFile, srcStatus, destf);
               } else {
                 futures.add(pool.submit(new Callable<Void>() {
                   @Override
                   public Void call() throws Exception {
                     LOG.debug("moving file " + srcStatus.getPath());
                     SessionState.setCurrentSessionState(parentSession);
-                    final String group = srcStatus.getGroup();
-                    boolean success = false;
-                    if (destFs instanceof DistributedFileSystem) {
-                      ((DistributedFileSystem)destFs).rename(srcStatus.getPath(), destFile, Options.Rename.OVERWRITE);
-                      success = true;
-                    } else {
-                      destFs.delete(destFile, false);
-                      success = destFs.rename(srcStatus.getPath(), destFile);
-                    }
-                    if(!success) {
-                      throw new IOException("rename for src path: " + srcStatus.getPath() + " to dest:"
-                          + destf + " returned false");
+                    try {
+                      deleteAndRename(destFs, destFile, srcStatus, destf);
+                    } catch (Exception e) {
+                      throw e;
                     }
                     return null;
                   }
