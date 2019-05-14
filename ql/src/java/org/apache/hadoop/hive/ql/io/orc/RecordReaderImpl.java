@@ -178,13 +178,16 @@ class RecordReaderImpl implements RecordReader {
     }
     this.schema = evolution.getReaderSchema();
     this.path = fileReader.path;
-    this.file = fileReader.fileSystem.open(path);
+
+    FSDataInputStream file = fileReader.takeFile();
+    this.file = file != null ? file : fileReader.fileSystem.open(path);
+
     this.codec = fileReader.codec;
     this.types = fileReader.getTypes();
     this.bufferSize = fileReader.bufferSize;
     this.conf = fileReader.conf;
     this.rowIndexStride = fileReader.getRowIndexStride();
-    this.metadata = new MetadataReader(file, codec, bufferSize, types.size());
+    this.metadata = new MetadataReader(this.file, codec, bufferSize, types.size());
     SearchArgument sarg = options.getSearchArgument();
     // We want to use the sarg for predicate evaluation but we have data type conversion
     // (i.e Schema Evolution), so we currently ignore it.
