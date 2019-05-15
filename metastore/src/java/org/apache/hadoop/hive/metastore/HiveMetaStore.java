@@ -6780,6 +6780,9 @@ public class HiveMetaStore extends ThriftHiveMetastore {
         conf.set((String) item.getKey(), (String) item.getValue());
       }
 
+      //for metastore process, all metastore call should be embedded metastore call.
+      conf.set(ConfVars.METASTOREURIS.varname, "");
+
       // Add shutdown hook.
       ShutdownHookManager.addShutdownHook(new Runnable() {
         @Override

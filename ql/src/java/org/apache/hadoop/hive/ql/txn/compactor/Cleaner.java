@@ -23,6 +23,7 @@ import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.common.ValidReadTxnList;
 import org.apache.hadoop.hive.common.ValidTxnList;
 import org.apache.hadoop.hive.metastore.ReplChangeManager;
+import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.txn.TxnStore;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -268,10 +269,10 @@ public class Cleaner extends CompactorThread {
        * Each Compaction only compacts as far as the highest txn id such that all txns below it
        * are resolved (i.e. not opened).  This is what "highestTxnId" tracks.  This is only tracked
        * since Hive 1.3.0/2.0 - thus may be 0.  See ValidCompactorTxnList and uses for more info.
-       * 
+       *
        * We only want to clean up to the highestTxnId - otherwise we risk deleteing deltas from
        * under an active reader.
-       * 
+       *
        * Suppose we have deltas D2 D3 for table T, i.e. the last compaction created D3 so now there is a 
        * clean request for D2.  
        * Cleaner checks existing locks and finds none.
@@ -314,7 +315,7 @@ public class Cleaner extends CompactorThread {
   private static String idWatermark(CompactionInfo ci) {
     return " id=" + ci.id;
   }
-  private void removeFiles(String location, ValidTxnList txnList, CompactionInfo ci) throws IOException, HiveException, MetaException {
+  private void removeFiles(String location, ValidTxnList txnList, CompactionInfo ci) throws IOException, NoSuchObjectException, MetaException {
     Path locPath = new Path(location);
     AcidUtils.Directory dir = AcidUtils.getAcidState(new Path(location), conf, txnList);
     List<FileStatus> obsoleteDirs = dir.getObsolete();
@@ -340,11 +341,12 @@ public class Cleaner extends CompactorThread {
     }
 
     FileSystem fs = filesToDelete.get(0).getFileSystem(conf);
+    Database db = rs.getDatabase(ci.dbname);
+    Boolean isSourceOfRepl = ReplChangeManager.isSourceOfReplication(db);
 
-    Database db = Hive.get().getDatabase(ci.dbname);
     for (Path dead : filesToDelete) {
       LOG.debug("Going to delete path " + dead.toString());
-      if (ReplChangeManager.isSourceOfReplication(db)) {
+      if (isSourceOfRepl) {
         ReplChangeManager.getInstance((HiveConf)conf).recycle(dead, ReplChangeManager.RecycleType.MOVE, true);
       }
       fs.delete(dead, true);
