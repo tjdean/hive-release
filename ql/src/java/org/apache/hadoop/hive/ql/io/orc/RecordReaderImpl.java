@@ -220,7 +220,7 @@ class RecordReaderImpl implements RecordReader {
 
     final boolean zeroCopy = (conf != null)
         && (HiveConf.getBoolVar(conf, HIVE_ORC_ZEROCOPY));
-    zcr = zeroCopy ? RecordReaderUtils.createZeroCopyShim(file, codec, pool) : null;
+    zcr = zeroCopy ? RecordReaderUtils.createZeroCopyShim(this.file, codec, pool) : null;
 
     firstRow = skippedRows;
     totalRowCount = rows;

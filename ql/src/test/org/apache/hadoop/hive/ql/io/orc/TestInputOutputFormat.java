@@ -2821,11 +2821,9 @@ public class TestInputOutputFormat {
         readOpsDelta = statistics.getReadOps() - readOpsBefore;
       }
     }
-    // call-1: open to read footer - split 1 => mock:/mocktable1/0_0
-    // call-2: open to read data - split 1 => mock:/mocktable1/0_0
-    // call-3: open to read footer - split 2 => mock:/mocktable1/0_1
-    // call-4: open to read data - split 2 => mock:/mocktable1/0_1
-    assertEquals(4, readOpsDelta);
+    // call-1: open to read footer/data- split 1 => mock:/mocktable1/0_0
+    // call-2: open to read footer/data - split 2 => mock:/mocktable1/0_1
+    assertEquals(2, readOpsDelta);
 
     // revert back to local fs
     conf.set("fs.defaultFS", "file:///");
@@ -2966,11 +2964,9 @@ public class TestInputOutputFormat {
         readOpsDelta = statistics.getReadOps() - readOpsBefore;
       }
     }
-    // call-1: open to read footer - split 1 => mock:/mocktable3/0_0
-    // call-2: open to read data - split 1 => mock:/mocktable3/0_0
-    // call-3: open to read footer - split 2 => mock:/mocktable3/0_1
-    // call-4: open to read data - split 2 => mock:/mocktable3/0_1
-    assertEquals(4, readOpsDelta);
+    // call-1: open to read footer/data - split 1 => mock:/mocktable3/0_0
+    // call-2: open to read footer/data - split 2 => mock:/mocktable3/0_1
+    assertEquals(2, readOpsDelta);
 
     // revert back to local fs
     conf.set("fs.defaultFS", "file:///");
@@ -3114,11 +3110,9 @@ public class TestInputOutputFormat {
         readOpsDelta = statistics.getReadOps() - readOpsBefore;
       }
     }
-    // call-1: open to read footer - split 1 => mock:/mocktable5/0_0
-    // call-2: open to read data - split 1 => mock:/mocktable5/0_0
-    // call-3: open to read footer - split 2 => mock:/mocktable5/0_1
-    // call-4: open to read data - split 2 => mock:/mocktable5/0_1
-    assertEquals(4, readOpsDelta);
+    // call-1: open to read footer/data - split 1 => mock:/mocktable5/0_0
+    // call-2: open to read footer/data - split 2 => mock:/mocktable5/0_1
+    assertEquals(2, readOpsDelta);
 
     // revert back to local fs
     conf.set("fs.defaultFS", "file:///");
@@ -3265,11 +3259,10 @@ public class TestInputOutputFormat {
         readOpsDelta = statistics.getReadOps() - readOpsBefore;
       }
     }
-    // call-1: open to read footer - split 1 => mock:/mocktable7/0_0
-    // call-2: open to read data - split 1 => mock:/mocktable7/0_0
-    // call-3: open side file (flush length) of delta directory
-    // call-4: fs.exists() check for delta_xxx_xxx/bucket_00000 file
-    assertEquals(4, readOpsDelta);
+    // call-1: open to read footer/data - split 1 => mock:/mocktable7/0_0
+    // call-2: open side file (flush length) of delta directory
+    // call-3: fs.exists() check for delta_xxx_xxx/bucket_00000 file
+    assertEquals(3, readOpsDelta);
 
     // revert back to local fs
     conf.set("fs.defaultFS", "file:///");
