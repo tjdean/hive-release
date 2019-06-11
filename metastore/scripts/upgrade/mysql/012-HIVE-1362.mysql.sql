@@ -1,4 +1,4 @@
-SELECT '< HIVE-1362 Column Statistics Support in Hive >' AS ' ';
+SELECT '< HIVE-1362 Column Statistics Support in Hive >' AS MESSAGE;
 
 CREATE TABLE IF NOT EXISTS `TAB_COL_STATS` (
  `CS_ID` bigint(20) NOT NULL,

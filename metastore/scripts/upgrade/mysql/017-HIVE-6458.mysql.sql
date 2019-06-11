@@ -1,4 +1,4 @@
-SELECT '<HIVE-6458 Add schema upgrade scripts for metastore changes related to permanent functions>' AS ' ';
+SELECT '<HIVE-6458 Add schema upgrade scripts for metastore changes related to permanent functions>' AS MESSAGE;
 
 CREATE TABLE IF NOT EXISTS `FUNCS` (
   `FUNC_ID` BIGINT(20) NOT NULL,

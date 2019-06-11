@@ -1,5 +1,5 @@
 -- Table `PARTITION_EVENTS` for classes [org.apache.hadoop.hive.metastore.model.MPartitionEvent]
-SELECT '< HIVE-2215 Add api for marking  querying set of partitions for events >' AS ' ';
+SELECT '< HIVE-2215 Add api for marking  querying set of partitions for events >' AS MESSAGE;
 
 CREATE TABLE IF NOT EXISTS `PARTITION_EVENTS`
 (

@@ -1,4 +1,4 @@
-SELECT '<HIVE-6757 Remove deprecated parquet classes from outside of org.apache package>' AS ' ';
+SELECT '<HIVE-6757 Remove deprecated parquet classes from outside of org.apache package>' AS MESSAGE;
 
 UPDATE SDS
   SET INPUT_FORMAT = 'org.apache.hadoop.hive.ql.io.parquet.MapredParquetInputFormat'

@@ -1,4 +1,4 @@
-SELECT '< HIVE-3255 Master Key and Delegation Token DDL >' AS ' ';
+SELECT '< HIVE-3255 Master Key and Delegation Token DDL >' AS MESSAGE;
 
 -- Table `MASTER_KEYS` for classes [org.apache.hadoop.hive.metastore.model.MMasterKey]
 CREATE TABLE IF NOT EXISTS `MASTER_KEYS` 

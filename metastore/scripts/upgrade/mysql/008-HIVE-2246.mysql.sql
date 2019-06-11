@@ -1,4 +1,4 @@
-SELECT '< HIVE-2246 Dedupe tables column schemas from partitions in the metastore db >' AS ' ';
+SELECT '< HIVE-2246 Dedupe tables column schemas from partitions in the metastore db >' AS MESSAGE;
 
 DELIMITER $$
 DROP PROCEDURE IF EXISTS REVERT $$

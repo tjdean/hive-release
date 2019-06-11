@@ -1,4 +1,4 @@
-SELECT '< HIVE-1364: Increase the maximum length of various metastore fields >' AS ' ';
+SELECT '< HIVE-1364: Increase the maximum length of various metastore fields >' AS MESSAGE;
 ALTER TABLE `TBLS` MODIFY `OWNER` VARCHAR(767);
 ALTER TABLE `COLUMNS` DROP PRIMARY KEY;
 ALTER TABLE `COLUMNS` ADD PRIMARY KEY (`SD_ID`, `COLUMN_NAME`);

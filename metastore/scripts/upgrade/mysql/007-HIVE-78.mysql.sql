@@ -1,4 +1,4 @@
-SELECT '< HIVE-78 Authorization model for Hive >' AS ' ';
+SELECT '< HIVE-78 Authorization model for Hive >' AS MESSAGE;
 
 CREATE TABLE IF NOT EXISTS `ROLES` (
   `ROLE_ID` bigint(20) NOT NULL,

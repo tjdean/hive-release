@@ -1,4 +1,4 @@
-SELECT '< HIVE-3764 Support metastore version consistency check >' AS ' ';
+SELECT '< HIVE-3764 Support metastore version consistency check >' AS MESSAGE;
 
 -- Table structure for VERSION
 CREATE TABLE IF NOT EXISTS `VERSION` (

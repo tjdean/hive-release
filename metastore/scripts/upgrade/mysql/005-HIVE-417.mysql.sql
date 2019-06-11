@@ -1,4 +1,4 @@
-SELECT '< HIVE-417 Implement Indexing in Hive >' AS ' ';
+SELECT '< HIVE-417 Implement Indexing in Hive >' AS MESSAGE;
 CREATE TABLE IF NOT EXISTS `IDXS` (
   `INDEX_ID` bigint(20) NOT NULL,
   `CREATE_TIME` int(11) NOT NULL,

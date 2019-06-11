@@ -1,4 +1,4 @@
-SELECT '< HIVE-1823 Upgrade the database thrift interface to allow parameters key-value pairs >' AS ' ';
+SELECT '< HIVE-1823 Upgrade the database thrift interface to allow parameters key-value pairs >' AS MESSAGE;
 CREATE TABLE IF NOT EXISTS `DATABASE_PARAMS` (
   `DB_ID` bigint(20) NOT NULL,
   `PARAM_KEY` varchar(180) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
