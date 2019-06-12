@@ -2104,7 +2104,7 @@ public class Hive {
 
       // column stats will be inaccurate
       if (resetStatistics) {
-        StatsSetupConst.clearColumnStatsState(newTPart.getParameters());
+        StatsSetupConst.setBasicStatsState(newTPart.getParameters(), StatsSetupConst.FALSE);
       }
 
       // recreate the partition if it existed before
