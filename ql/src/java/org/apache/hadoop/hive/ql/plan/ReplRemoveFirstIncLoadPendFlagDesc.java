@@ -38,10 +38,9 @@ public class ReplRemoveFirstIncLoadPendFlagDesc extends DDLDesc implements Seria
   public ReplRemoveFirstIncLoadPendFlagDesc() {
   }
 
-  public ReplRemoveFirstIncLoadPendFlagDesc(String databaseName, String tableName) {
+  public ReplRemoveFirstIncLoadPendFlagDesc(String databaseName) {
     super();
     this.databaseName = databaseName;
-    this.tableName = tableName;
   }
 
   @Explain(displayName="db_name", explainLevels = { Level.USER, Level.DEFAULT, Level.EXTENDED })
@@ -51,14 +50,5 @@ public class ReplRemoveFirstIncLoadPendFlagDesc extends DDLDesc implements Seria
 
   public void setDatabaseName(String databaseName) {
     this.databaseName = databaseName;
-  }
-
-  @Explain(displayName="table_name", explainLevels = { Level.USER, Level.DEFAULT, Level.EXTENDED })
-  public String getTableName() {
-    return tableName;
-  }
-
-  public void setTableName(String tableName) {
-    this.tableName = tableName;
   }
 }
