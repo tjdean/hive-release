@@ -1136,13 +1136,13 @@ public class Hadoop23Shims extends HadoopShimsSecure {
 
   @Override
   public boolean runDistCp(List<Path> srcPaths, Path dst, Configuration conf) throws IOException {
-    DistCpOptions options = new DistCpOptions(srcPaths, dst);
-    options.setSyncFolder(true);
-    options.setSkipCRC(true);
-    options.preserve(FileAttribute.BLOCKSIZE);
-    options.setDeleteMissing(true);
-    options.preserve(FileAttribute.XATTR);
- 
+       DistCpOptions options = new DistCpOptions.Builder(srcPaths, dst)
+               .withSyncFolder(true)
+               .withDeleteMissing(true)
+               .preserve(FileAttribute.BLOCKSIZE)
+               .preserve(FileAttribute.XATTR)
+               .build();
+
     // Creates the command-line parameters for distcp
     List<String> params = constructDistCpParams(srcPaths, dst, conf);
 
@@ -1162,11 +1162,6 @@ public class Hadoop23Shims extends HadoopShimsSecure {
     } finally {
       conf.setBoolean("mapred.mapper.new-api", false);
     }
-  }
-
-  @Override
-  public List<String> getGroups(org.apache.hadoop.security.UserGroupInformation user) {
-    return new ArrayList<>();
   }
 
   private static Boolean hdfsEncryptionSupport;
