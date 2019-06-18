@@ -136,8 +136,6 @@ POSTHOOK: type: QUERY
 POSTHOOK: Input: _dummy_database@_dummy_table
 POSTHOOK: Input: default@table_27
 #### A masked pattern was here ####
-H	NULL
-H	NULL
 B	NULL
 B	NULL
 A	NULL
@@ -146,16 +144,18 @@ D	NULL
 D	NULL
 C	NULL
 C	NULL
-J	NULL
-J	NULL
-I	NULL
-I	NULL
-G	NULL
-G	NULL
 F	NULL
 F	NULL
 E	NULL
 E	NULL
+G	NULL
+G	NULL
+J	NULL
+J	NULL
+I	NULL
+I	NULL
+H	NULL
+H	NULL
 PREHOOK: query: EXPLAIN VECTORIZATION DETAIL
 SELECT t1.decimal0801_col
 FROM table_19 t1
