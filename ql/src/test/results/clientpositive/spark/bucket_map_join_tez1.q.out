@@ -2006,12 +2006,7 @@ STAGE PLANS:
         Map 1 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: d
-=======
                   alias: b
-                  filterExpr: key is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: key is not null (type: boolean)
@@ -2029,14 +2024,8 @@ STAGE PLANS:
         Map 5 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: b
-                  Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
-=======
                   alias: a
-                  filterExpr: key is not null (type: boolean)
                   Statistics: Num rows: 242 Data size: 2566 Basic stats: COMPLETE Column stats: NONE
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Filter Operator
                     predicate: key is not null (type: boolean)
                     Statistics: Num rows: 242 Data size: 2566 Basic stats: COMPLETE Column stats: NONE
@@ -2053,14 +2042,8 @@ STAGE PLANS:
         Map 6 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: a
-                  Statistics: Num rows: 242 Data size: 2566 Basic stats: COMPLETE Column stats: NONE
-=======
                   alias: d
-                  filterExpr: key is not null (type: boolean)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Filter Operator
                     predicate: key is not null (type: boolean)
                     Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
@@ -2196,12 +2179,7 @@ STAGE PLANS:
         Map 1 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: d
-=======
                   alias: b
-                  filterExpr: key is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: key is not null (type: boolean)
@@ -2219,14 +2197,8 @@ STAGE PLANS:
         Map 5 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: b
-                  Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
-=======
                   alias: a
-                  filterExpr: key is not null (type: boolean)
                   Statistics: Num rows: 242 Data size: 2566 Basic stats: COMPLETE Column stats: NONE
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Filter Operator
                     predicate: key is not null (type: boolean)
                     Statistics: Num rows: 242 Data size: 2566 Basic stats: COMPLETE Column stats: NONE
@@ -2243,14 +2215,8 @@ STAGE PLANS:
         Map 6 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: a
-                  Statistics: Num rows: 242 Data size: 2566 Basic stats: COMPLETE Column stats: NONE
-=======
                   alias: d
-                  filterExpr: key is not null (type: boolean)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Filter Operator
                     predicate: key is not null (type: boolean)
                     Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
@@ -4585,12 +4551,7 @@ STAGE PLANS:
         Map 2 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: b
-=======
                   alias: a
-                  filterExpr: (key is not null and value is not null) (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: (key is not null and value is not null) (type: boolean)
@@ -4609,12 +4570,7 @@ STAGE PLANS:
         Map 3 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: c
-=======
                   alias: b
-                  filterExpr: value is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: value is not null (type: boolean)
@@ -4638,12 +4594,7 @@ STAGE PLANS:
         Map 1 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: a
-=======
                   alias: c
-                  filterExpr: key is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: key is not null (type: boolean)
@@ -4716,12 +4667,7 @@ STAGE PLANS:
         Map 2 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: b
-=======
                   alias: a
-                  filterExpr: (key is not null and value is not null) (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: (key is not null and value is not null) (type: boolean)
@@ -4740,12 +4686,7 @@ STAGE PLANS:
         Map 3 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: c
-=======
                   alias: b
-                  filterExpr: value is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: value is not null (type: boolean)
@@ -4769,12 +4710,7 @@ STAGE PLANS:
         Map 1 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: a
-=======
                   alias: c
-                  filterExpr: key is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: key is not null (type: boolean)

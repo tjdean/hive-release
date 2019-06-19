@@ -537,14 +537,8 @@ STAGE PLANS:
         Map 20 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: web_sales
-                  Statistics: Num rows: 144002668 Data size: 19580198212 Basic stats: COMPLETE Column stats: NONE
-=======
                   alias: web_returns
-                  filterExpr: (wr_returned_date_sk is not null and wr_web_page_sk is not null) (type: boolean)
                   Statistics: Num rows: 14398467 Data size: 1325194184 Basic stats: COMPLETE Column stats: NONE
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Filter Operator
                     predicate: (wr_returned_date_sk is not null and wr_web_page_sk is not null) (type: boolean)
                     Statistics: Num rows: 14398467 Data size: 1325194184 Basic stats: COMPLETE Column stats: NONE
@@ -562,14 +556,8 @@ STAGE PLANS:
         Map 26 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: web_returns
-                  Statistics: Num rows: 14398467 Data size: 1325194184 Basic stats: COMPLETE Column stats: NONE
-=======
                   alias: web_sales
-                  filterExpr: (ws_sold_date_sk is not null and ws_web_page_sk is not null) (type: boolean)
                   Statistics: Num rows: 144002668 Data size: 19580198212 Basic stats: COMPLETE Column stats: NONE
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Filter Operator
                     predicate: (ws_sold_date_sk is not null and ws_web_page_sk is not null) (type: boolean)
                     Statistics: Num rows: 144002668 Data size: 19580198212 Basic stats: COMPLETE Column stats: NONE

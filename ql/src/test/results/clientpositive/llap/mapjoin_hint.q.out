@@ -443,7 +443,7 @@ POSTHOOK: Lineage: part_null_n1.p_partkey SCRIPT []
 POSTHOOK: Lineage: part_null_n1.p_retailprice SCRIPT []
 POSTHOOK: Lineage: part_null_n1.p_size SCRIPT []
 POSTHOOK: Lineage: part_null_n1.p_type SCRIPT []
-Warning: Shuffle Join MERGEJOIN[23][tables = [$hdt$_0, $hdt$_1, $hdt$_2]] in Stage 'Reducer 2' is a cross product
+Warning: Shuffle Join MERGEJOIN[24][tables = [$hdt$_0, $hdt$_1, $hdt$_2]] in Stage 'Reducer 2' is a cross product
 PREHOOK: query: explain select /*+ mapjoin(None)*/ * from part where p_name = (select p_name from part_null_n1 where p_name is null)
 PREHOOK: type: QUERY
 PREHOOK: Input: default@part
@@ -496,7 +496,7 @@ STAGE PLANS:
                       predicate: false (type: boolean)
                       Statistics: Num rows: 1 Data size: 4 Basic stats: COMPLETE Column stats: COMPLETE
                       Group By Operator
-                        aggregations: count(0)
+                        aggregations: count()
                         mode: hash
                         outputColumnNames: _col0
                         Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: COMPLETE
@@ -537,11 +537,14 @@ STAGE PLANS:
                 mode: mergepartial
                 outputColumnNames: _col0
                 Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: COMPLETE
-                Select Operator
+                Filter Operator
+                  predicate: (sq_count_check(_col0) <= 1) (type: boolean)
                   Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: COMPLETE
-                  Reduce Output Operator
-                    sort order: 
+                  Select Operator
                     Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: COMPLETE
+                    Reduce Output Operator
+                      sort order: 
+                      Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: COMPLETE
 
   Stage: Stage-0
     Fetch Operator
@@ -549,7 +552,7 @@ STAGE PLANS:
       Processor Tree:
         ListSink
 
-Warning: Map Join MAPJOIN[23][bigTable=?] in task 'Map 1' is a cross product
+Warning: Map Join MAPJOIN[24][bigTable=?] in task 'Map 1' is a cross product
 PREHOOK: query: explain select * from part where p_name = (select p_name from part_null_n1 where p_name is null)
 PREHOOK: type: QUERY
 PREHOOK: Input: default@part
@@ -618,7 +621,7 @@ STAGE PLANS:
                       predicate: false (type: boolean)
                       Statistics: Num rows: 1 Data size: 4 Basic stats: COMPLETE Column stats: COMPLETE
                       Group By Operator
-                        aggregations: count(0)
+                        aggregations: count()
                         mode: hash
                         outputColumnNames: _col0
                         Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: COMPLETE
@@ -639,11 +642,14 @@ STAGE PLANS:
                 mode: mergepartial
                 outputColumnNames: _col0
                 Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: COMPLETE
-                Select Operator
+                Filter Operator
+                  predicate: (sq_count_check(_col0) <= 1) (type: boolean)
                   Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: COMPLETE
-                  Reduce Output Operator
-                    sort order: 
+                  Select Operator
                     Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: COMPLETE
+                    Reduce Output Operator
+                      sort order: 
+                      Statistics: Num rows: 1 Data size: 8 Basic stats: COMPLETE Column stats: COMPLETE
 
   Stage: Stage-0
     Fetch Operator

@@ -207,19 +207,12 @@ STAGE PLANS:
                   1 
                 outputColumnNames: _col1
                 Statistics: Num rows: 676 Data size: 85202 Basic stats: COMPLETE Column stats: NONE
-<<<<<<< HEAD
-                Group By Operator
-                  keys: _col0 (type: string)
-                  mode: hash
-=======
                 Select Operator
                   expressions: _col1 (type: string)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   outputColumnNames: _col0
                   Statistics: Num rows: 676 Data size: 85202 Basic stats: COMPLETE Column stats: NONE
                   Group By Operator
                     keys: _col0 (type: string)
-                    minReductionHashAggr: 0.99
                     mode: hash
                     outputColumnNames: _col0
                     Statistics: Num rows: 676 Data size: 85202 Basic stats: COMPLETE Column stats: NONE

@@ -480,7 +480,6 @@ STAGE PLANS:
             Map Operator Tree:
                 TableScan
                   alias: date_dim
-                  filterExpr: (CAST( d_date AS TIMESTAMP) BETWEEN TIMESTAMP'1998-08-04 00:00:00' AND TIMESTAMP'1998-08-18 00:00:00' and d_date_sk is not null) (type: boolean)
                   Statistics: Num rows: 73049 Data size: 81741831 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: (CAST( d_date AS TIMESTAMP) BETWEEN TIMESTAMP'1998-08-04 00:00:00' AND TIMESTAMP'1998-08-18 00:00:00' and d_date_sk is not null) (type: boolean)
@@ -514,27 +513,6 @@ STAGE PLANS:
                         Statistics: Num rows: 633586785 Data size: 55276696920 Basic stats: COMPLETE Column stats: NONE
                         value expressions: _col0 (type: int), _col2 (type: decimal(7,2)), _col3 (type: decimal(7,2)), _col4 (type: decimal(7,2)), _col5 (type: decimal(7,2))
             Execution mode: vectorized
-<<<<<<< HEAD
-        Map 7 
-            Map Operator Tree:
-                TableScan
-                  alias: date_dim
-                  Statistics: Num rows: 73049 Data size: 81741831 Basic stats: COMPLETE Column stats: NONE
-                  Filter Operator
-                    predicate: (CAST( d_date AS TIMESTAMP) BETWEEN TIMESTAMP'1998-08-04 00:00:00' AND TIMESTAMP'1998-08-18 00:00:00' and d_date_sk is not null) (type: boolean)
-                    Statistics: Num rows: 8116 Data size: 9081804 Basic stats: COMPLETE Column stats: NONE
-                    Select Operator
-                      expressions: d_date_sk (type: int)
-                      outputColumnNames: _col0
-                      Statistics: Num rows: 8116 Data size: 9081804 Basic stats: COMPLETE Column stats: NONE
-                      Reduce Output Operator
-                        key expressions: _col0 (type: int)
-                        sort order: +
-                        Map-reduce partition columns: _col0 (type: int)
-                        Statistics: Num rows: 8116 Data size: 9081804 Basic stats: COMPLETE Column stats: NONE
-            Execution mode: vectorized
-=======
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
         Map 9 
             Map Operator Tree:
                 TableScan
