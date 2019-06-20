@@ -62,7 +62,6 @@ import org.apache.hadoop.hive.serde2.objectinspector.StructField;
 import org.apache.hadoop.hive.serde2.objectinspector.StructObjectInspector;
 import org.apache.hadoop.hive.serde2.objectinspector.primitive.PrimitiveObjectInspectorFactory;
 import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoFactory;
-import org.apache.hadoop.hive.serde2.typeinfo.TypeInfoUtils;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
 import org.apache.hadoop.mapred.InputFormat;
@@ -300,7 +299,7 @@ public class FetchOperator implements Serializable {
   }
 
   private RecordReader<WritableComparable, Writable> getRecordReader() throws Exception {
-    if (iterSplits != null && iterSplits.hasNext()) {
+    if (!iterSplits.hasNext()) {
       FetchInputFormatSplit[] splits = getNextSplits();
       if (splits == null) {
         return null;
