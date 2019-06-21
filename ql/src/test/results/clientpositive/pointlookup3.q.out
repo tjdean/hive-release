@@ -1289,7 +1289,7 @@ STAGE PLANS:
           Statistics: Num rows: 66 Data size: 528 Basic stats: COMPLETE Column stats: NONE
           Filter Operator
             isSamplingPred: false
-            predicate: (struct(_col7,_col2)) IN (const struct(1,'2000-04-08'), const struct(2,'2000-04-09')) (type: boolean)
+            predicate: (struct(_col2,_col7)) IN (const struct('2000-04-08',1), const struct('2000-04-09',2)) (type: boolean)
             Statistics: Num rows: 17 Data size: 136 Basic stats: COMPLETE Column stats: NONE
             Select Operator
               expressions: _col0 (type: int), _col1 (type: string), _col2 (type: string), _col3 (type: string), _col7 (type: int), _col8 (type: string), _col9 (type: string), _col10 (type: string)
