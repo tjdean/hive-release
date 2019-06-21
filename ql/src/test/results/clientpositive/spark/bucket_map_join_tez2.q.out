@@ -189,12 +189,7 @@ STAGE PLANS:
         Map 1 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: a
-=======
                   alias: c
-                  filterExpr: key is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: key is not null (type: boolean)
@@ -212,12 +207,7 @@ STAGE PLANS:
         Map 4 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: b
-=======
                   alias: a
-                  filterExpr: (key is not null and value is not null) (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: (key is not null and value is not null) (type: boolean)
@@ -236,12 +226,7 @@ STAGE PLANS:
         Map 5 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: c
-=======
                   alias: b
-                  filterExpr: value is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: value is not null (type: boolean)
@@ -326,12 +311,7 @@ STAGE PLANS:
         Map 1 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: a
-=======
                   alias: c
-                  filterExpr: key is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: key is not null (type: boolean)
@@ -349,12 +329,7 @@ STAGE PLANS:
         Map 4 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: b
-=======
                   alias: a
-                  filterExpr: (key is not null and value is not null) (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: (key is not null and value is not null) (type: boolean)
@@ -373,12 +348,7 @@ STAGE PLANS:
         Map 5 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: c
-=======
                   alias: b
-                  filterExpr: value is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: value is not null (type: boolean)
@@ -2066,12 +2036,7 @@ STAGE PLANS:
         Map 1 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: a
-=======
                   alias: c
-                  filterExpr: key is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: key is not null (type: boolean)
@@ -2089,12 +2054,7 @@ STAGE PLANS:
         Map 4 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: b
-=======
                   alias: a
-                  filterExpr: (key is not null and value is not null) (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: (key is not null and value is not null) (type: boolean)
@@ -2113,12 +2073,7 @@ STAGE PLANS:
         Map 5 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: c
-=======
                   alias: b
-                  filterExpr: value is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: value is not null (type: boolean)
@@ -2204,12 +2159,7 @@ STAGE PLANS:
         Map 1 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: a
-=======
                   alias: c
-                  filterExpr: key is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: key is not null (type: boolean)
@@ -2227,12 +2177,7 @@ STAGE PLANS:
         Map 4 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: b
-=======
                   alias: a
-                  filterExpr: (key is not null and value is not null) (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: (key is not null and value is not null) (type: boolean)
@@ -2251,12 +2196,7 @@ STAGE PLANS:
         Map 5 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: c
-=======
                   alias: b
-                  filterExpr: value is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: value is not null (type: boolean)
@@ -2382,7 +2322,7 @@ POSTHOOK: Input: default@my_dim
 POSTHOOK: Input: default@my_fact
 #### A masked pattern was here ####
 OPTIMIZED SQL: SELECT `t0`.`bucket_col`, `t2`.`join_col` AS `account1`, `t0`.`accounting_period`
-FROM (SELECT `bucket_col`, `join_col`, CAST('2015' AS STRING) AS `fiscal_year`, `accounting_period`
+FROM (SELECT `bucket_col`, `join_col`, CAST('2015' AS VARCHAR(65536)) AS `fiscal_year`, `accounting_period`
 FROM `default`.`my_fact`
 WHERE `fiscal_year` = '2015' AND `accounting_period` = 10 AND `join_col` IS NOT NULL) AS `t0`
 INNER JOIN (SELECT `join_col`, `filter_col`

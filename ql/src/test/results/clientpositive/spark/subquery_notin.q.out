@@ -3206,7 +3206,7 @@ STAGE PLANS:
                   alias: part
                   Statistics: Num rows: 26 Data size: 3147 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
-                    predicate: (UDFToDouble(p_type) is not null and p_brand is not null) (type: boolean)
+                    predicate: (p_brand is not null and p_type is not null) (type: boolean)
                     Statistics: Num rows: 26 Data size: 3147 Basic stats: COMPLETE Column stats: NONE
                     Select Operator
                       expressions: (UDFToDouble(p_type) + 2.0D) (type: double), p_brand (type: string)
@@ -5372,7 +5372,7 @@ STAGE PLANS:
                   alias: e
                   Statistics: Num rows: 26 Data size: 3147 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
-                    predicate: UDFToDouble((p_size + 100)) is not null (type: boolean)
+                    predicate: p_size is not null (type: boolean)
                     Statistics: Num rows: 26 Data size: 3147 Basic stats: COMPLETE Column stats: NONE
                     Group By Operator
                       keys: p_size (type: int)
@@ -5412,7 +5412,7 @@ STAGE PLANS:
                   alias: part
                   Statistics: Num rows: 26 Data size: 3147 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
-                    predicate: (UDFToDouble(p_type) is not null and p_brand is not null) (type: boolean)
+                    predicate: (p_brand is not null and p_type is not null) (type: boolean)
                     Statistics: Num rows: 26 Data size: 3147 Basic stats: COMPLETE Column stats: NONE
                     Group By Operator
                       keys: p_brand (type: string), p_type (type: string)
@@ -5810,7 +5810,7 @@ STAGE PLANS:
                   alias: t1_n0
                   Statistics: Num rows: 4 Data size: 313 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
-                    predicate: UDFToDouble(c2) is not null (type: boolean)
+                    predicate: c2 is not null (type: boolean)
                     Statistics: Num rows: 4 Data size: 313 Basic stats: COMPLETE Column stats: NONE
                     Group By Operator
                       keys: c2 (type: char(100))
@@ -5829,7 +5829,7 @@ STAGE PLANS:
                   alias: t2_n0
                   Statistics: Num rows: 3 Data size: 6 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
-                    predicate: UDFToDouble(c1) is not null (type: boolean)
+                    predicate: c1 is not null (type: boolean)
                     Statistics: Num rows: 3 Data size: 6 Basic stats: COMPLETE Column stats: NONE
                     Select Operator
                       expressions: c1 (type: int)
@@ -5848,7 +5848,7 @@ STAGE PLANS:
                   alias: t2_n0
                   Statistics: Num rows: 3 Data size: 6 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
-                    predicate: (UDFToDouble(c1) is not null and c1 is not null) (type: boolean)
+                    predicate: c1 is not null (type: boolean)
                     Statistics: Num rows: 3 Data size: 6 Basic stats: COMPLETE Column stats: NONE
                     Select Operator
                       expressions: c1 (type: int)
