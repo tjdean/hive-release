@@ -114,7 +114,7 @@ public class TestVectorDeserializeOrcWriter {
   }
 
   private static EncodedDataConsumer createBlankEncodedDataConsumer() {
-    return new EncodedDataConsumer(null, 1, null, null) {
+    return new EncodedDataConsumer(null, 1, null) {
       @Override
       protected void decodeBatch(EncodedColumnBatch batch, Consumer downstreamConsumer)
               throws InterruptedException {

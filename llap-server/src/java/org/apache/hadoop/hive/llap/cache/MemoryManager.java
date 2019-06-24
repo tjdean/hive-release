@@ -66,5 +66,8 @@ public interface MemoryManager extends LlapOomDebugDump {
    * @return actual amount of evicted bytes.
    */
   long evictMemory(long memoryToEvict);
+  String debugDumpForOom();
+
+  void debugDumpShort(StringBuilder sb);
 
 }
