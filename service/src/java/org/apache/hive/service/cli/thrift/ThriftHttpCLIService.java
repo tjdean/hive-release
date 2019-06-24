@@ -169,32 +169,6 @@ public class ThriftHttpCLIService extends ThriftCLIService {
         LOG.warn("XSRF filter disabled");
       }
 
-      context.addEventListener(new ServletContextListener() {
-        @Override
-        public void contextInitialized(ServletContextEvent servletContextEvent) {
-          Metrics metrics = MetricsFactory.getInstance();
-          if (metrics != null) {
-            try {
-              metrics.incrementCounter(MetricsConstant.OPEN_CONNECTIONS);
-              metrics.incrementCounter(MetricsConstant.CUMULATIVE_CONNECTION_COUNT);
-            } catch (Exception e) {
-              LOG.warn("Error reporting HS2 open connection operation to Metrics system", e);
-            }
-          }
-        }
-
-        @Override
-        public void contextDestroyed(ServletContextEvent servletContextEvent) {
-          Metrics metrics = MetricsFactory.getInstance();
-          if (metrics != null) {
-            try {
-              metrics.decrementCounter(MetricsConstant.OPEN_CONNECTIONS);
-            } catch (Exception e) {
-              LOG.warn("Error reporting HS2 close connection operation to Metrics system", e);
-            }
-          }
-        }
-      });
 
       final String httpPath = getHttpPath(hiveConf
           .getVar(HiveConf.ConfVars.HIVE_SERVER2_THRIFT_HTTP_PATH));
