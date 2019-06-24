@@ -41,7 +41,7 @@ select cint, cbigint, cfloat, cdouble,
  cstring1, cfloat as c9, cast("1.123" as decimal(10,3))as c10,
  cast("1.123456789" as decimal(38,18)) as c11
 from alltypesorc
-order by cint, cbigint, cfloat, cdouble, cstring1
+order by cint nulls last, cbigint nulls last, cfloat nulls last, cdouble nulls last, cstring1 nulls last
 limit 30;
 
 alter table orc_llap_n2 set TBLPROPERTIES ('transactional'='true','orc.write.format'='0.12');
@@ -53,7 +53,7 @@ select cint, cbigint, cfloat, cdouble,
  cstring1, cfloat as c9, cast("3.321" as decimal(10,3))as c10,
  cast("9.987654321" as decimal(38,18)) as c11
 from alltypesorc
-order by cint, cbigint, cfloat, cdouble, cstring1
+order by cint nulls last, cbigint nulls last, cfloat nulls last, cdouble nulls last, cstring1 nulls last
 limit 30;
 
 
@@ -83,7 +83,7 @@ select cint, cbigint, cfloat, cdouble,
  cstring1, cfloat as c9, cast("1.123" as decimal(10,3))as c10,
  cast("1.123456789" as decimal(38,18)) as c11
 from alltypesorc
-order by cint, cbigint, cfloat, cdouble, cstring1
+order by cint nulls last, cbigint nulls last, cfloat nulls last, cdouble nulls last, cstring1 nulls last
 limit 30;
 
 alter table orc_llap2 set TBLPROPERTIES ('transactional'='true','orc.write.format'='0.12');
