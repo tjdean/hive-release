@@ -2097,11 +2097,11 @@ public final class GenMapRedUtils {
       String partNames = partCols.stream().map(FieldSchema::getName).collect(Collectors.joining("/"));
       String partTypes = partCols.stream().map(FieldSchema::getType).collect(Collectors.joining(":"));
       properties.setProperty(
-              org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_PARTITION_COLUMNS,
-              partNames);
+        org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_PARTITION_COLUMNS,
+        partNames);
       properties.setProperty(
-              org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_PARTITION_COLUMN_TYPES,
-              partTypes);
+        org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_PARTITION_COLUMN_TYPES,
+        partTypes);
     }
   }
 
