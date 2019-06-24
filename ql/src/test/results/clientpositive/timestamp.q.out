@@ -117,7 +117,6 @@ STAGE PLANS:
                   Statistics: Num rows: 1000 Data size: 40000 Basic stats: COMPLETE Column stats: COMPLETE
                   Group By Operator
                     keys: true (type: boolean)
-                    minReductionHashAggr: 0.99
                     mode: hash
                     outputColumnNames: _col0
                     Statistics: Num rows: 1 Data size: 4 Basic stats: COMPLETE Column stats: COMPLETE
@@ -143,7 +142,6 @@ STAGE PLANS:
                   Statistics: Num rows: 1000 Data size: 40000 Basic stats: COMPLETE Column stats: COMPLETE
                   Group By Operator
                     keys: true (type: boolean)
-                    minReductionHashAggr: 0.99
                     mode: hash
                     outputColumnNames: _col0
                     Statistics: Num rows: 1 Data size: 4 Basic stats: COMPLETE Column stats: COMPLETE
