@@ -4856,8 +4856,11 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
       if (crtTbl.isExternal()) {
         tbl.setProperty("EXTERNAL", "TRUE");
         tbl.setTableType(TableType.EXTERNAL_TABLE);
-        // partition discovery is on by default
-        tbl.setProperty(PartitionManagementTask.DISCOVER_PARTITIONS_TBLPROPERTY, "true");
+        // if the partition discovery tablproperty is already defined don't change it
+        if (tbl.isPartitioned() && tbl.getProperty(PartitionManagementTask.DISCOVER_PARTITIONS_TBLPROPERTY) == null) {
+          // partition discovery is on by default if it already doesn't exist
+          tbl.setProperty(PartitionManagementTask.DISCOVER_PARTITIONS_TBLPROPERTY, "true");
+        }
       }
 
       tbl.setFields(oldtbl.getCols());
@@ -4956,7 +4959,9 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
         tbl.setProperty("EXTERNAL", "TRUE");
         tbl.setTableType(TableType.EXTERNAL_TABLE);
         // partition discovery is on by default
-        tbl.setProperty(PartitionManagementTask.DISCOVER_PARTITIONS_TBLPROPERTY, "true");
+        if (tbl.isPartitioned() && tbl.getProperty(PartitionManagementTask.DISCOVER_PARTITIONS_TBLPROPERTY) == null) {
+          tbl.setProperty(PartitionManagementTask.DISCOVER_PARTITIONS_TBLPROPERTY, "true");
+        }
       } else {
         tbl.getParameters().remove("EXTERNAL");
       }
