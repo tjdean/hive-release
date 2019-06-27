@@ -46,9 +46,10 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
 LOCATION
-#### A masked pattern was here ####
+  'hdfs://### HDFS PATH ###'
 TBLPROPERTIES (
   'bucketing_version'='2', 
+  'discover.partitions'='true', 
 #### A masked pattern was here ####
 PREHOOK: query: create table smt2_tab2 (c1 string, c2 string)
 PREHOOK: type: CREATETABLE
@@ -74,7 +75,7 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat'
 LOCATION
-#### A masked pattern was here ####
+  'hdfs://### HDFS PATH ###'
 TBLPROPERTIES (
   'bucketing_version'='2', 
   'transactional'='true', 
@@ -104,7 +105,7 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat'
 LOCATION
-#### A masked pattern was here ####
+  'hdfs://### HDFS PATH ###'
 TBLPROPERTIES (
   'bucketing_version'='2', 
   'transactional'='true', 
@@ -134,9 +135,10 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat'
 LOCATION
-#### A masked pattern was here ####
+  'hdfs://### HDFS PATH ###'
 TBLPROPERTIES (
   'bucketing_version'='2', 
+  'discover.partitions'='true', 
 #### A masked pattern was here ####
 PREHOOK: query: create table smt2_tab5 (c1 string, c2 string)
 PREHOOK: type: CREATETABLE
@@ -162,7 +164,7 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat'
 LOCATION
-#### A masked pattern was here ####
+  'hdfs://### HDFS PATH ###'
 TBLPROPERTIES (
   'bucketing_version'='2', 
   'transactional'='true', 
@@ -192,7 +194,7 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
 LOCATION
-#### A masked pattern was here ####
+  'hdfs://### HDFS PATH ###'
 TBLPROPERTIES (
   'bucketing_version'='2', 
   'transactional'='true', 
