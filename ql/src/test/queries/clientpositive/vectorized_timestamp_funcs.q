@@ -63,7 +63,7 @@ EXPLAIN VECTORIZATION EXPRESSION  SELECT
   if (cboolean1, ctimestamp1, null),
   if (cboolean1, null, ctimestamp2)
 FROM alltypesorc_string
-ORDER BY c1;
+ORDER BY c1 nulls last;
 
 SELECT
   to_unix_timestamp(ctimestamp1) AS c1,
@@ -84,7 +84,7 @@ SELECT
   if (cboolean1, ctimestamp1, null),
   if (cboolean1, null, ctimestamp2)
 FROM alltypesorc_string
-ORDER BY c1;
+ORDER BY c1 nulls last;
 
 EXPLAIN VECTORIZATION EXPRESSION  SELECT
   to_unix_timestamp(stimestamp1) AS c1,
@@ -97,7 +97,7 @@ EXPLAIN VECTORIZATION EXPRESSION  SELECT
   minute(stimestamp1),
   second(stimestamp1)
 FROM alltypesorc_string
-ORDER BY c1;
+ORDER BY c1 nulls last;
 
 SELECT
   to_unix_timestamp(stimestamp1) AS c1,
@@ -110,7 +110,7 @@ SELECT
   minute(stimestamp1),
   second(stimestamp1)
 FROM alltypesorc_string
-ORDER BY c1;
+ORDER BY c1 nulls last;
 
 EXPLAIN VECTORIZATION EXPRESSION  SELECT
   to_unix_timestamp(ctimestamp1) = to_unix_timestamp(stimestamp1) AS c1,
@@ -123,7 +123,7 @@ EXPLAIN VECTORIZATION EXPRESSION  SELECT
   minute(ctimestamp1) = minute(stimestamp1),
   second(ctimestamp1) = second(stimestamp1)
 FROM alltypesorc_string
-ORDER BY c1;
+ORDER BY c1 nulls last;
 
 -- Should all be true or NULL
 SELECT
@@ -137,7 +137,7 @@ SELECT
   minute(ctimestamp1) = minute(stimestamp1),
   second(ctimestamp1) = second(stimestamp1)
 FROM alltypesorc_string
-ORDER BY c1;
+ORDER BY c1 nulls last;
 
 -- Wrong format. Should all be NULL.
 EXPLAIN VECTORIZATION EXPRESSION  SELECT
@@ -151,7 +151,7 @@ EXPLAIN VECTORIZATION EXPRESSION  SELECT
   minute(stimestamp1),
   second(stimestamp1)
 FROM alltypesorc_wrong
-ORDER BY c1;
+ORDER BY c1 nulls last;
 
 SELECT
   to_unix_timestamp(stimestamp1) AS c1,
@@ -164,7 +164,7 @@ SELECT
   minute(stimestamp1),
   second(stimestamp1)
 FROM alltypesorc_wrong
-ORDER BY c1;
+ORDER BY c1 nulls last;
 
 EXPLAIN VECTORIZATION EXPRESSION  SELECT
   min(ctimestamp1),
