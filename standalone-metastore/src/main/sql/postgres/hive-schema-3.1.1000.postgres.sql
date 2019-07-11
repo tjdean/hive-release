@@ -219,7 +219,7 @@ CREATE TABLE "PARTITION_KEY_VALS" (
 CREATE TABLE "PARTITION_PARAMS" (
     "PART_ID" bigint NOT NULL,
     "PARAM_KEY" character varying(256) NOT NULL,
-    "PARAM_VALUE" character varying(4000) DEFAULT NULL::character varying
+    "PARAM_VALUE" text DEFAULT NULL
 );
 
 
@@ -628,6 +628,8 @@ CREATE TABLE "NOTIFICATION_LOG"
     "MESSAGE_FORMAT" VARCHAR(16),
     PRIMARY KEY ("NL_ID")
 );
+
+CREATE UNIQUE INDEX "NOTIFICATION_LOG_EVENT_ID" ON "NOTIFICATION_LOG" USING btree ("EVENT_ID");
 
 CREATE TABLE "NOTIFICATION_SEQUENCE"
 (
@@ -1864,4 +1866,4 @@ INSERT INTO "SEQUENCE_TABLE" ("SEQUENCE_NAME", "NEXT_VAL") VALUES ('org.apache.h
 -- -----------------------------------------------------------------
 -- Record schema version. Should be the last step in the init script
 -- -----------------------------------------------------------------
-INSERT INTO "VERSION" ("VER_ID", "SCHEMA_VERSION", "VERSION_COMMENT") VALUES (1, '3.1.0', 'Hive release version 3.1.0');
+INSERT INTO "VERSION" ("VER_ID", "SCHEMA_VERSION", "VERSION_COMMENT") VALUES (1, '3.1.1000', 'Hive release version 3.1.1000');

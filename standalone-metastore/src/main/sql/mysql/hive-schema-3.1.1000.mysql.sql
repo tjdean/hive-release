@@ -296,7 +296,7 @@ CREATE TABLE IF NOT EXISTS `PARTITION_KEY_VALS` (
 CREATE TABLE IF NOT EXISTS `PARTITION_PARAMS` (
   `PART_ID` bigint(20) NOT NULL,
   `PARAM_KEY` varchar(256) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL,
-  `PARAM_VALUE` varchar(4000) CHARACTER SET latin1 COLLATE latin1_bin DEFAULT NULL,
+  `PARAM_VALUE` MEDIUMTEXT CHARACTER SET latin1 COLLATE latin1_bin DEFAULT NULL,
   PRIMARY KEY (`PART_ID`,`PARAM_KEY`),
   KEY `PARTITION_PARAMS_N49` (`PART_ID`),
   CONSTRAINT `PARTITION_PARAMS_FK1` FOREIGN KEY (`PART_ID`) REFERENCES `PARTITIONS` (`PART_ID`)
@@ -1200,10 +1200,12 @@ CREATE TABLE TXN_WRITE_NOTIFICATION_LOG (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 INSERT INTO `SEQUENCE_TABLE` (`SEQUENCE_NAME`, `NEXT_VAL`) VALUES ('org.apache.hadoop.hive.metastore.model.MTxnWriteNotificationLog', 1);
 
+CREATE UNIQUE INDEX `NOTIFICATION_LOG_EVENT_ID` ON NOTIFICATION_LOG (`EVENT_ID`) USING BTREE;
+
 -- -----------------------------------------------------------------
 -- Record schema version. Should be the last step in the init script
 -- -----------------------------------------------------------------
-INSERT INTO VERSION (VER_ID, SCHEMA_VERSION, VERSION_COMMENT) VALUES (1, '3.1.0', 'Hive release version 3.1.0');
+INSERT INTO VERSION (VER_ID, SCHEMA_VERSION, VERSION_COMMENT) VALUES (1, '3.1.1000', 'Hive release version 3.1.1000');
 
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
