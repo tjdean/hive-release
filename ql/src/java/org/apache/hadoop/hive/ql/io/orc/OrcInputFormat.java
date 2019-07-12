@@ -18,10 +18,6 @@
 
 package org.apache.hadoop.hive.ql.io.orc;
 
-import org.apache.hadoop.hive.ql.plan.DynamicValue.NoDynamicValuesException;
-import org.apache.hadoop.fs.PathFilter;
-import org.apache.hadoop.hdfs.DistributedFileSystem;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.security.PrivilegedExceptionAction;
@@ -48,6 +44,8 @@ import org.apache.hadoop.fs.BlockLocation;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.PathFilter;
+import org.apache.hadoop.hdfs.DistributedFileSystem;
 import org.apache.hadoop.hive.common.ValidReaderWriteIdList;
 import org.apache.hadoop.hive.common.ValidWriteIdList;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -88,6 +86,7 @@ import org.apache.hadoop.hive.ql.io.sarg.SearchArgument;
 import org.apache.hadoop.hive.ql.io.sarg.SearchArgument.TruthValue;
 import org.apache.hadoop.hive.ql.metadata.HiveException;
 import org.apache.hadoop.hive.ql.metadata.VirtualColumn;
+import org.apache.hadoop.hive.ql.plan.DynamicValue.NoDynamicValuesException;
 import org.apache.hadoop.hive.serde.serdeConstants;
 import org.apache.hadoop.hive.serde2.ColumnProjectionUtils;
 import org.apache.hadoop.hive.serde2.SerDeStats;
@@ -119,7 +118,6 @@ import org.apache.orc.ColumnStatistics;
 import org.apache.orc.FileFormatException;
 import org.apache.orc.OrcProto;
 import org.apache.orc.OrcProto.Footer;
-import org.apache.orc.OrcProto.Type;
 import org.apache.orc.OrcUtils;
 import org.apache.orc.StripeInformation;
 import org.apache.orc.StripeStatistics;
@@ -1653,9 +1651,12 @@ public class OrcInputFormat implements InputFormat<NullWritable, OrcStruct>,
         if (context.cacheStripeDetails) {
           context.footerCache.put(new FooterCacheKey(fsFileId, file.getPath()), orcTail);
         }
+        stripes = orcReader.getStripes();
+        stripeStats = orcReader.getStripeStatistics();
+      } else {
+        stripes = orcTail.getStripes();
+        stripeStats = orcTail.getStripeStatistics();
       }
-      stripes = orcTail.getStripes();
-      stripeStats = orcTail.getStripeStatistics();
       fileTypes = orcTail.getTypes();
       TypeDescription fileSchema = OrcUtils.convertTypeFromProtobuf(fileTypes, 0);
       Reader.Options readerOptions = new Reader.Options(context.conf);
