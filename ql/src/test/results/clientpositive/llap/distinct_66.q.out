@@ -293,9 +293,9 @@ POSTHOOK: Lineage: res0.c9 SIMPLE [(widetable)widetable.FieldSchema(name:c9, typ
 PREHOOK: query: select 'expected 2',count(*) from res0
 PREHOOK: type: QUERY
 PREHOOK: Input: default@res0
-#### A masked pattern was here ####
+PREHOOK: Output: hdfs://### HDFS PATH ###
 POSTHOOK: query: select 'expected 2',count(*) from res0
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@res0
-#### A masked pattern was here ####
+POSTHOOK: Output: hdfs://### HDFS PATH ###
 expected 2	2
