@@ -52,6 +52,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -69,6 +70,7 @@ public abstract class DruidQueryRecordReader<T extends BaseQuery<R>, R extends C
         implements org.apache.hadoop.mapred.RecordReader<NullWritable, DruidWritable> {
 
   private static final Logger LOG = LoggerFactory.getLogger(DruidQueryRecordReader.class);
+  private final Object initLock = new Object();
 
   private HttpClient httpClient;
   private ObjectMapper mapper;
@@ -85,22 +87,36 @@ public abstract class DruidQueryRecordReader<T extends BaseQuery<R>, R extends C
   /**
    * Query results as a streaming iterator.
    */
-  private JsonParserIterator<R> queryResultsIterator =  null;
+  private volatile JsonParserIterator<R> queryResultsIterator =  null;
 
   public JsonParserIterator<R> getQueryResultsIterator() {
-    if (this.queryResultsIterator != null) {
-      return queryResultsIterator;
-    } else {
+    if(this.queryResultsIterator==null)
+    {
+      synchronized(initLock)
+      {
+        if(this.queryResultsIterator==null)
+          this.queryResultsIterator = createQueryResultsIterator();
+      }
+    }
+    return this.queryResultsIterator;
+  }
+
+  private JsonParserIterator<R> createQueryResultsIterator(){
+    {
+      JsonParserIterator<R> iterator = null;
       String filterExprSerialized = conf.get(TableScanDesc.FILTER_EXPR_CONF_STR);
       if (filterExprSerialized != null) {
-        ExprNodeGenericFuncDesc filterExpr =
-            SerializationUtilities.deserializeExpression(filterExprSerialized);
+        ExprNodeGenericFuncDesc filterExpr = SerializationUtilities
+            .deserializeExpression(filterExprSerialized);
         query = DruidStorageHandlerUtils.addDynamicFilters(query, filterExpr, conf, true);
       }
-      boolean initlialized = false;
+
+      // Result type definition used to read the rows, this is query dependent.
+      JavaType resultsType = getResultTypeDef();
+      boolean initialized = false;
       int currentLocationIndex = 0;
       Exception ex = null;
-      while (!initlialized && currentLocationIndex < locations.length) {
+      while (!initialized && currentLocationIndex < locations.length) {
         String address = locations[currentLocationIndex++];
         if (Strings.isNullOrEmpty(address)) {
           throw new RE("can not fetch results from empty or null host value");
@@ -109,23 +125,25 @@ public abstract class DruidQueryRecordReader<T extends BaseQuery<R>, R extends C
         LOG.debug("Retrieving data from druid location[{}] using query:[{}] ", address, query);
         try {
           Request request = DruidStorageHandlerUtils.createSmileRequest(address, query);
-          Future<InputStream> inputStreamFuture =
-              this.httpClient.go(request, new InputStreamResponseHandler());
-          queryResultsIterator =
-              new JsonParserIterator(this.smileMapper, resultsType, inputStreamFuture,
-                  request.getUrl().toString(), query
-              );
-          queryResultsIterator.init();
-          initlialized = true;
-        } catch (IOException | ExecutionException | InterruptedException e) {
-          if (queryResultsIterator != null) {
+          Future<InputStream> inputStreamFuture = httpClient.go(request, new InputStreamResponseHandler());
+          //noinspection unchecked
+          iterator =
+              new JsonParserIterator(smileMapper,
+                                     resultsType,
+                                     inputStreamFuture,
+                                     request.getUrl().toString(),
+                                     query);
+          iterator.init();
+          initialized = true;
+        } catch (Exception e) {
+          if (iterator != null) {
             // We got exception while querying results from this host.
-            queryResultsIterator.close();
+            CloseQuietly.close(iterator);
           }
-          queryResultsIterator = null;
-          LOG.error("Failure getting results for query[{}] from host[{}] because of [{}]", query,
-              address, e.getMessage()
-          );
+          LOG.error("Failure getting results for query[{}] from host[{}] because of [{}]",
+                    query,
+                    address,
+                    e.getMessage());
           if (ex == null) {
             ex = e;
           } else {
@@ -134,16 +152,16 @@ public abstract class DruidQueryRecordReader<T extends BaseQuery<R>, R extends C
         }
       }
 
-      if (!initlialized) {
-        throw new RE(ex, "Failure getting results for query[%s] from locations[%s] because of [%s]",
-            query, locations, ex.getMessage()
-        );
+      if (!initialized) {
+        throw new RE(ex,
+                     "Failure getting results for query[%s] from locations[%s] because of [%s]",
+                     query,
+                     locations,
+                     Objects.requireNonNull(ex).getMessage());
       }
-      return queryResultsIterator;
+      return iterator;
     }
   }
-
-
 
   /**
    * Result type definition used to read the rows, this is query dependent.
