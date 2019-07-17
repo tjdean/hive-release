@@ -7587,11 +7587,10 @@ inline std::ostream& operator<<(std::ostream& out, const WriteEventInfo& obj)
 }
 
 typedef struct _ReplLastIdInfo__isset {
-  _ReplLastIdInfo__isset() : table(false), catalog(false), partitionList(false), needUpdateDBReplId(false) {}
+  _ReplLastIdInfo__isset() : table(false), catalog(false), partitionList(false) {}
   bool table :1;
   bool catalog :1;
   bool partitionList :1;
-  bool needUpdateDBReplId :1;
 } _ReplLastIdInfo__isset;
 
 class ReplLastIdInfo {
@@ -7599,7 +7598,7 @@ class ReplLastIdInfo {
 
   ReplLastIdInfo(const ReplLastIdInfo&);
   ReplLastIdInfo& operator=(const ReplLastIdInfo&);
-  ReplLastIdInfo() : database(), lastReplId(0), table(), catalog(), needUpdateDBReplId(0) {
+  ReplLastIdInfo() : database(), lastReplId(0), table(), catalog() {
   }
 
   virtual ~ReplLastIdInfo() throw();
@@ -7608,7 +7607,6 @@ class ReplLastIdInfo {
   std::string table;
   std::string catalog;
   std::vector<std::string>  partitionList;
-  bool needUpdateDBReplId;
 
   _ReplLastIdInfo__isset __isset;
 
@@ -7621,8 +7619,6 @@ class ReplLastIdInfo {
   void __set_catalog(const std::string& val);
 
   void __set_partitionList(const std::vector<std::string> & val);
-
-  void __set_needUpdateDBReplId(const bool val);
 
   bool operator == (const ReplLastIdInfo & rhs) const
   {
@@ -7641,10 +7637,6 @@ class ReplLastIdInfo {
     if (__isset.partitionList != rhs.__isset.partitionList)
       return false;
     else if (__isset.partitionList && !(partitionList == rhs.partitionList))
-      return false;
-    if (__isset.needUpdateDBReplId != rhs.__isset.needUpdateDBReplId)
-      return false;
-    else if (__isset.needUpdateDBReplId && !(needUpdateDBReplId == rhs.needUpdateDBReplId))
       return false;
     return true;
   }
