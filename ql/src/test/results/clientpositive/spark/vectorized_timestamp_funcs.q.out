@@ -216,7 +216,7 @@ PREHOOK: query: EXPLAIN VECTORIZATION EXPRESSION  SELECT
   if (cboolean1, ctimestamp1, null),
   if (cboolean1, null, ctimestamp2)
 FROM alltypesorc_string
-ORDER BY c1
+ORDER BY c1 nulls last
 PREHOOK: type: QUERY
 PREHOOK: Input: default@alltypesorc_string
 #### A masked pattern was here ####
@@ -239,7 +239,7 @@ POSTHOOK: query: EXPLAIN VECTORIZATION EXPRESSION  SELECT
   if (cboolean1, ctimestamp1, null),
   if (cboolean1, null, ctimestamp2)
 FROM alltypesorc_string
-ORDER BY c1
+ORDER BY c1 nulls last
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@alltypesorc_string
 #### A masked pattern was here ####
@@ -346,7 +346,7 @@ PREHOOK: query: SELECT
   if (cboolean1, ctimestamp1, null),
   if (cboolean1, null, ctimestamp2)
 FROM alltypesorc_string
-ORDER BY c1
+ORDER BY c1 nulls last
 PREHOOK: type: QUERY
 PREHOOK: Input: default@alltypesorc_string
 #### A masked pattern was here ####
@@ -369,7 +369,7 @@ POSTHOOK: query: SELECT
   if (cboolean1, ctimestamp1, null),
   if (cboolean1, null, ctimestamp2)
 FROM alltypesorc_string
-ORDER BY c1
+ORDER BY c1 nulls last
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@alltypesorc_string
 #### A masked pattern was here ####
@@ -436,7 +436,7 @@ PREHOOK: query: EXPLAIN VECTORIZATION EXPRESSION  SELECT
   minute(stimestamp1),
   second(stimestamp1)
 FROM alltypesorc_string
-ORDER BY c1
+ORDER BY c1 nulls last
 PREHOOK: type: QUERY
 PREHOOK: Input: default@alltypesorc_string
 #### A masked pattern was here ####
@@ -451,7 +451,7 @@ POSTHOOK: query: EXPLAIN VECTORIZATION EXPRESSION  SELECT
   minute(stimestamp1),
   second(stimestamp1)
 FROM alltypesorc_string
-ORDER BY c1
+ORDER BY c1 nulls last
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@alltypesorc_string
 #### A masked pattern was here ####
@@ -550,7 +550,7 @@ PREHOOK: query: SELECT
   minute(stimestamp1),
   second(stimestamp1)
 FROM alltypesorc_string
-ORDER BY c1
+ORDER BY c1 nulls last
 PREHOOK: type: QUERY
 PREHOOK: Input: default@alltypesorc_string
 #### A masked pattern was here ####
@@ -565,7 +565,7 @@ POSTHOOK: query: SELECT
   minute(stimestamp1),
   second(stimestamp1)
 FROM alltypesorc_string
-ORDER BY c1
+ORDER BY c1 nulls last
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@alltypesorc_string
 #### A masked pattern was here ####
@@ -632,7 +632,7 @@ PREHOOK: query: EXPLAIN VECTORIZATION EXPRESSION  SELECT
   minute(ctimestamp1) = minute(stimestamp1),
   second(ctimestamp1) = second(stimestamp1)
 FROM alltypesorc_string
-ORDER BY c1
+ORDER BY c1 nulls last
 PREHOOK: type: QUERY
 PREHOOK: Input: default@alltypesorc_string
 #### A masked pattern was here ####
@@ -647,7 +647,7 @@ POSTHOOK: query: EXPLAIN VECTORIZATION EXPRESSION  SELECT
   minute(ctimestamp1) = minute(stimestamp1),
   second(ctimestamp1) = second(stimestamp1)
 FROM alltypesorc_string
-ORDER BY c1
+ORDER BY c1 nulls last
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@alltypesorc_string
 #### A masked pattern was here ####
@@ -746,7 +746,7 @@ PREHOOK: query: SELECT
   minute(ctimestamp1) = minute(stimestamp1),
   second(ctimestamp1) = second(stimestamp1)
 FROM alltypesorc_string
-ORDER BY c1
+ORDER BY c1 nulls last
 PREHOOK: type: QUERY
 PREHOOK: Input: default@alltypesorc_string
 #### A masked pattern was here ####
@@ -761,7 +761,7 @@ POSTHOOK: query: SELECT
   minute(ctimestamp1) = minute(stimestamp1),
   second(ctimestamp1) = second(stimestamp1)
 FROM alltypesorc_string
-ORDER BY c1
+ORDER BY c1 nulls last
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@alltypesorc_string
 #### A masked pattern was here ####
@@ -828,7 +828,7 @@ PREHOOK: query: EXPLAIN VECTORIZATION EXPRESSION  SELECT
   minute(stimestamp1),
   second(stimestamp1)
 FROM alltypesorc_wrong
-ORDER BY c1
+ORDER BY c1 nulls last
 PREHOOK: type: QUERY
 PREHOOK: Input: default@alltypesorc_wrong
 #### A masked pattern was here ####
@@ -843,7 +843,7 @@ POSTHOOK: query: EXPLAIN VECTORIZATION EXPRESSION  SELECT
   minute(stimestamp1),
   second(stimestamp1)
 FROM alltypesorc_wrong
-ORDER BY c1
+ORDER BY c1 nulls last
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@alltypesorc_wrong
 #### A masked pattern was here ####
@@ -942,7 +942,7 @@ PREHOOK: query: SELECT
   minute(stimestamp1),
   second(stimestamp1)
 FROM alltypesorc_wrong
-ORDER BY c1
+ORDER BY c1 nulls last
 PREHOOK: type: QUERY
 PREHOOK: Input: default@alltypesorc_wrong
 #### A masked pattern was here ####
@@ -957,7 +957,7 @@ POSTHOOK: query: SELECT
   minute(stimestamp1),
   second(stimestamp1)
 FROM alltypesorc_wrong
-ORDER BY c1
+ORDER BY c1 nulls last
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@alltypesorc_wrong
 #### A masked pattern was here ####

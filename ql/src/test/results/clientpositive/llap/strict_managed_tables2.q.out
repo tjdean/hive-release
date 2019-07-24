@@ -46,7 +46,7 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
 LOCATION
-  'hdfs://### HDFS PATH ###'
+#### A masked pattern was here ####
 TBLPROPERTIES (
   'bucketing_version'='2', 
   'discover.partitions'='true', 
@@ -75,7 +75,7 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat'
 LOCATION
-  'hdfs://### HDFS PATH ###'
+#### A masked pattern was here ####
 TBLPROPERTIES (
   'bucketing_version'='2', 
   'transactional'='true', 
@@ -105,7 +105,7 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat'
 LOCATION
-  'hdfs://### HDFS PATH ###'
+#### A masked pattern was here ####
 TBLPROPERTIES (
   'bucketing_version'='2', 
   'transactional'='true', 
@@ -135,7 +135,7 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat'
 LOCATION
-  'hdfs://### HDFS PATH ###'
+#### A masked pattern was here ####
 TBLPROPERTIES (
   'bucketing_version'='2', 
   'discover.partitions'='true', 
@@ -164,7 +164,7 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.orc.OrcOutputFormat'
 LOCATION
-  'hdfs://### HDFS PATH ###'
+#### A masked pattern was here ####
 TBLPROPERTIES (
   'bucketing_version'='2', 
   'transactional'='true', 
@@ -194,7 +194,7 @@ STORED AS INPUTFORMAT
 OUTPUTFORMAT 
   'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'
 LOCATION
-  'hdfs://### HDFS PATH ###'
+#### A masked pattern was here ####
 TBLPROPERTIES (
   'bucketing_version'='2', 
   'transactional'='true', 

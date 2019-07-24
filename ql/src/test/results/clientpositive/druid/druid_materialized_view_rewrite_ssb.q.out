@@ -693,7 +693,7 @@ POSTHOOK: Input: default@ssb_mv_druid_100
 POSTHOOK: Output: hdfs://### HDFS PATH ###
 CBO PLAN:
 HiveProject(mn___time_ok=[$0], qr___time_ok=[$1], sum_number_of_records_ok=[$3], yr___time_ok=[$2])
-  DruidQuery(table=[[default, ssb_mv_druid_100]], intervals=[[1900-01-01T00:00:00.000Z/3000-01-01T00:00:00.000Z]], projects=[[MONTH(FLAG(MONTH), $0), CAST(+(/(CAST(-(MONTH(FLAG(MONTH), $0), 1)):DOUBLE, 3), 1)):BIGINT, YEAR(FLAG(YEAR), $0), 1]], groups=[{0, 1, 2}], aggs=[[sum($3)]])
+  DruidQuery(table=[[default, ssb_mv_druid_100]], intervals=[[1900-01-01T00:00:00.000Z/3000-01-01T00:00:00.000Z]], projects=[[MONTH(FLAG(MONTH), $0), CAST(+(/(CAST(-(MONTH(FLAG(MONTH), $0), 1)):DOUBLE, CAST(3):DOUBLE), CAST(1):DOUBLE)):BIGINT, YEAR(FLAG(YEAR), $0), 1]], groups=[{0, 1, 2}], aggs=[[sum($3)]])
 
 PREHOOK: query: SELECT MONTH(`__time`) AS `mn___time_ok`,
 CAST((MONTH(`__time`) - 1) / 3 + 1 AS BIGINT) AS `qr___time_ok`,
@@ -761,7 +761,7 @@ POSTHOOK: Input: default@supplier_n0
 POSTHOOK: Output: hdfs://### HDFS PATH ###
 CBO PLAN:
 HiveProject(mn___time_ok=[$0], qr___time_ok=[$1], sum_number_of_records_ok=[$3], yr___time_ok=[$2])
-  DruidQuery(table=[[default, ssb_mv_druid_100]], intervals=[[1900-01-01T00:00:00.000Z/3000-01-01T00:00:00.000Z]], projects=[[MONTH(FLAG(MONTH), $0), CAST(+(/(CAST(-(MONTH(FLAG(MONTH), $0), 1)):DOUBLE, 3), 1)):BIGINT, YEAR(FLAG(YEAR), $0), 1]], groups=[{0, 1, 2}], aggs=[[sum($3)]])
+  DruidQuery(table=[[default, ssb_mv_druid_100]], intervals=[[1900-01-01T00:00:00.000Z/3000-01-01T00:00:00.000Z]], projects=[[MONTH(FLAG(MONTH), CAST($0):TIMESTAMP(9)), CAST(+(/(CAST(-(MONTH(FLAG(MONTH), CAST($0):TIMESTAMP(9)), 1)):DOUBLE, CAST(3):DOUBLE), CAST(1):DOUBLE)):BIGINT, YEAR(FLAG(YEAR), CAST($0):TIMESTAMP(9)), 1]], groups=[{0, 1, 2}], aggs=[[sum($3)]])
 
 PREHOOK: query: SELECT MONTH(`dates_n0`.`__time`) AS `mn___time_ok`,
 CAST((MONTH(`dates_n0`.`__time`) - 1) / 3 + 1 AS BIGINT) AS `qr___time_ok`,

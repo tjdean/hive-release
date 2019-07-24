@@ -127,43 +127,43 @@ POSTHOOK: Lineage: intermmediate PARTITION(p=457).key SIMPLE [(intermediate_n4)i
 PREHOOK: query: export table intermediate_nonpart to 'ql/test/data/exports/intermediate_nonpart'
 PREHOOK: type: EXPORT
 PREHOOK: Input: default@intermediate_nonpart
-PREHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: query: export table intermediate_nonpart to 'ql/test/data/exports/intermediate_nonpart'
 POSTHOOK: type: EXPORT
 POSTHOOK: Input: default@intermediate_nonpart
-POSTHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 PREHOOK: query: export table intermmediate_nonpart to 'ql/test/data/exports/intermmediate_nonpart'
 PREHOOK: type: EXPORT
 PREHOOK: Input: default@intermmediate_nonpart
-PREHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: query: export table intermmediate_nonpart to 'ql/test/data/exports/intermmediate_nonpart'
 POSTHOOK: type: EXPORT
 POSTHOOK: Input: default@intermmediate_nonpart
-POSTHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 PREHOOK: query: export table intermediate_n4 to 'ql/test/data/exports/intermediate_part'
 PREHOOK: type: EXPORT
 PREHOOK: Input: default@intermediate_n4@p=455
 PREHOOK: Input: default@intermediate_n4@p=456
 PREHOOK: Input: default@intermediate_n4@p=457
-PREHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: query: export table intermediate_n4 to 'ql/test/data/exports/intermediate_part'
 POSTHOOK: type: EXPORT
 POSTHOOK: Input: default@intermediate_n4@p=455
 POSTHOOK: Input: default@intermediate_n4@p=456
 POSTHOOK: Input: default@intermediate_n4@p=457
-POSTHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 PREHOOK: query: export table intermmediate to 'ql/test/data/exports/intermmediate_part'
 PREHOOK: type: EXPORT
 PREHOOK: Input: default@intermmediate@p=455
 PREHOOK: Input: default@intermmediate@p=456
 PREHOOK: Input: default@intermmediate@p=457
-PREHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: query: export table intermmediate to 'ql/test/data/exports/intermmediate_part'
 POSTHOOK: type: EXPORT
 POSTHOOK: Input: default@intermmediate@p=455
 POSTHOOK: Input: default@intermmediate@p=456
 POSTHOOK: Input: default@intermmediate@p=457
-POSTHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 PREHOOK: query: drop table intermediate_nonpart
 PREHOOK: type: DROPTABLE
 PREHOOK: Input: default@intermediate_nonpart
@@ -198,20 +198,20 @@ POSTHOOK: Output: database:default
 POSTHOOK: Output: default@import0_mm
 PREHOOK: query: import table import0_mm from 'ql/test/data/exports/intermediate_nonpart'
 PREHOOK: type: IMPORT
-PREHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 PREHOOK: Output: default@import0_mm
 POSTHOOK: query: import table import0_mm from 'ql/test/data/exports/intermediate_nonpart'
 POSTHOOK: type: IMPORT
-POSTHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: Output: default@import0_mm
 PREHOOK: query: select * from import0_mm order by key, p
 PREHOOK: type: QUERY
 PREHOOK: Input: default@import0_mm
-PREHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: query: select * from import0_mm order by key, p
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@import0_mm
-POSTHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 0	456
 10	456
 97	455
@@ -242,11 +242,11 @@ POSTHOOK: Output: database:default
 POSTHOOK: Output: default@import1_mm
 PREHOOK: query: import table import1_mm from 'ql/test/data/exports/intermediate_part'
 PREHOOK: type: IMPORT
-PREHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 PREHOOK: Output: default@import1_mm
 POSTHOOK: query: import table import1_mm from 'ql/test/data/exports/intermediate_part'
 POSTHOOK: type: IMPORT
-POSTHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: Output: default@import1_mm
 POSTHOOK: Output: default@import1_mm@p=455
 POSTHOOK: Output: default@import1_mm@p=456
@@ -257,14 +257,14 @@ PREHOOK: Input: default@import1_mm
 PREHOOK: Input: default@import1_mm@p=455
 PREHOOK: Input: default@import1_mm@p=456
 PREHOOK: Input: default@import1_mm@p=457
-PREHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: query: select * from import1_mm order by key, p
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@import1_mm
 POSTHOOK: Input: default@import1_mm@p=455
 POSTHOOK: Input: default@import1_mm@p=456
 POSTHOOK: Input: default@import1_mm@p=457
-POSTHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 0	456
 10	456
 97	455
@@ -285,11 +285,11 @@ POSTHOOK: query: drop table import2_mm
 POSTHOOK: type: DROPTABLE
 PREHOOK: query: import table import2_mm from 'ql/test/data/exports/intermmediate_nonpart'
 PREHOOK: type: IMPORT
-PREHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 PREHOOK: Output: database:default
 POSTHOOK: query: import table import2_mm from 'ql/test/data/exports/intermmediate_nonpart'
 POSTHOOK: type: IMPORT
-POSTHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@import2_mm
 PREHOOK: query: desc formatted import2_mm
@@ -331,11 +331,11 @@ Storage Desc Params:
 PREHOOK: query: select * from import2_mm order by key, p
 PREHOOK: type: QUERY
 PREHOOK: Input: default@import2_mm
-PREHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: query: select * from import2_mm order by key, p
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@import2_mm
-POSTHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 0	456
 10	456
 97	455
@@ -356,11 +356,11 @@ POSTHOOK: query: drop table import3_mm
 POSTHOOK: type: DROPTABLE
 PREHOOK: query: import table import3_mm from 'ql/test/data/exports/intermmediate_part'
 PREHOOK: type: IMPORT
-PREHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 PREHOOK: Output: database:default
 POSTHOOK: query: import table import3_mm from 'ql/test/data/exports/intermmediate_part'
 POSTHOOK: type: IMPORT
-POSTHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@import3_mm
 POSTHOOK: Output: default@import3_mm@p=455
@@ -412,14 +412,14 @@ PREHOOK: Input: default@import3_mm
 PREHOOK: Input: default@import3_mm@p=455
 PREHOOK: Input: default@import3_mm@p=456
 PREHOOK: Input: default@import3_mm@p=457
-PREHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: query: select * from import3_mm order by key, p
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@import3_mm
 POSTHOOK: Input: default@import3_mm@p=455
 POSTHOOK: Input: default@import3_mm@p=456
 POSTHOOK: Input: default@import3_mm@p=457
-POSTHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 0	456
 10	456
 97	455
@@ -448,20 +448,20 @@ POSTHOOK: Output: database:default
 POSTHOOK: Output: default@import4_mm
 PREHOOK: query: import table import4_mm from 'ql/test/data/exports/intermmediate_nonpart'
 PREHOOK: type: IMPORT
-PREHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 PREHOOK: Output: default@import4_mm
 POSTHOOK: query: import table import4_mm from 'ql/test/data/exports/intermmediate_nonpart'
 POSTHOOK: type: IMPORT
-POSTHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: Output: default@import4_mm
 PREHOOK: query: select * from import4_mm order by key, p
 PREHOOK: type: QUERY
 PREHOOK: Input: default@import4_mm
-PREHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: query: select * from import4_mm order by key, p
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@import4_mm
-POSTHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 0	456
 10	456
 97	455
@@ -490,23 +490,23 @@ POSTHOOK: Output: database:default
 POSTHOOK: Output: default@import5_mm
 PREHOOK: query: import table import5_mm partition(p=455) from 'ql/test/data/exports/intermmediate_part'
 PREHOOK: type: IMPORT
-PREHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 PREHOOK: Output: default@import5_mm
 POSTHOOK: query: import table import5_mm partition(p=455) from 'ql/test/data/exports/intermmediate_part'
 POSTHOOK: type: IMPORT
-POSTHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: Output: default@import5_mm
 POSTHOOK: Output: default@import5_mm@p=455
 PREHOOK: query: select * from import5_mm order by key, p
 PREHOOK: type: QUERY
 PREHOOK: Input: default@import5_mm
 PREHOOK: Input: default@import5_mm@p=455
-PREHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: query: select * from import5_mm order by key, p
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@import5_mm
 POSTHOOK: Input: default@import5_mm@p=455
-POSTHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 97	455
 98	455
 PREHOOK: query: drop table import5_mm
@@ -531,20 +531,20 @@ POSTHOOK: Output: database:default
 POSTHOOK: Output: default@import6_mm
 PREHOOK: query: import table import6_mm from 'ql/test/data/exports/intermmediate_nonpart'
 PREHOOK: type: IMPORT
-PREHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 PREHOOK: Output: default@import6_mm
 POSTHOOK: query: import table import6_mm from 'ql/test/data/exports/intermmediate_nonpart'
 POSTHOOK: type: IMPORT
-POSTHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: Output: default@import6_mm
 PREHOOK: query: select * from import6_mm order by key, p
 PREHOOK: type: QUERY
 PREHOOK: Input: default@import6_mm
-PREHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: query: select * from import6_mm order by key, p
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@import6_mm
-POSTHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 0	456
 10	456
 97	455
@@ -573,11 +573,11 @@ POSTHOOK: Output: database:default
 POSTHOOK: Output: default@import7_mm
 PREHOOK: query: import table import7_mm from 'ql/test/data/exports/intermmediate_part'
 PREHOOK: type: IMPORT
-PREHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 PREHOOK: Output: default@import7_mm
 POSTHOOK: query: import table import7_mm from 'ql/test/data/exports/intermmediate_part'
 POSTHOOK: type: IMPORT
-POSTHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: Output: default@import7_mm
 POSTHOOK: Output: default@import7_mm@p=455
 POSTHOOK: Output: default@import7_mm@p=456
@@ -588,14 +588,14 @@ PREHOOK: Input: default@import7_mm
 PREHOOK: Input: default@import7_mm@p=455
 PREHOOK: Input: default@import7_mm@p=456
 PREHOOK: Input: default@import7_mm@p=457
-PREHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: query: select * from import7_mm order by key, p
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@import7_mm
 POSTHOOK: Input: default@import7_mm@p=455
 POSTHOOK: Input: default@import7_mm@p=456
 POSTHOOK: Input: default@import7_mm@p=457
-POSTHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 0	456
 10	456
 97	455
@@ -616,11 +616,11 @@ POSTHOOK: query: drop table import8_mm
 POSTHOOK: type: DROPTABLE
 PREHOOK: query: import external table import8_mm from 'ql/test/data/exports/intermmediate_nonpart'
 PREHOOK: type: IMPORT
-PREHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 PREHOOK: Output: database:default
 POSTHOOK: query: import external table import8_mm from 'ql/test/data/exports/intermmediate_nonpart'
 POSTHOOK: type: IMPORT
-POSTHOOK: Input: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: Output: database:default
 POSTHOOK: Output: default@import8_mm
 PREHOOK: query: desc formatted import8_mm
@@ -662,11 +662,11 @@ Storage Desc Params:
 PREHOOK: query: select * from import8_mm order by key, p
 PREHOOK: type: QUERY
 PREHOOK: Input: default@import8_mm
-PREHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 POSTHOOK: query: select * from import8_mm order by key, p
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@import8_mm
-POSTHOOK: Output: hdfs://### HDFS PATH ###
+#### A masked pattern was here ####
 0	456
 10	456
 97	455
