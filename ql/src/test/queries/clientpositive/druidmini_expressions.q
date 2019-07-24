@@ -167,7 +167,7 @@ CREATE TABLE druid_table_n1
 STORED BY 'org.apache.hadoop.hive.druid.DruidStorageHandler'
 TBLPROPERTIES ("druid.segment.granularity" = "HOUR", "druid.query.granularity" = "MINUTE")
 AS
-  SELECT cast (current_timestamp() as timestamp with local time zone) as `__time`,
+  SELECT cast (from_unixtime(unix_timestamp('196912311559000', 'yyyyMMddHHmmssSSS')) as timestamp with local time zone) as `__time`,
 cast(datetime1 as string) as datetime1,
 cast(date1 as string) as date1,
 cast(time1 as string) as time1
@@ -183,8 +183,8 @@ EXPLAIN SELECT TO_DATE(date1), TO_DATE(datetime1) FROM druid_table_n1;
 
 SELECT TO_DATE(date1), TO_DATE(datetime1) FROM druid_table_n1;
 
-EXPLAIN select count(*) from (select `__time` from druid_table_n1 limit 1025) as src;
-select count(*) from (select `__time` from druid_table_n1 limit 1025) as src;
+EXPLAIN select count(*) from (select `__time` from druid_table_n1 limit 4) as src;
+select count(*) from (select `__time` from druid_table_n1 limit 4) as src;
 -- No Vectorization since __time is timestamp with local time zone
 explain select `timets` from (select `__time` as timets from druid_table_n1 order by timets limit 10)  as src order by `timets`;
 -- Vectorization is on now since we cast to Timestamp

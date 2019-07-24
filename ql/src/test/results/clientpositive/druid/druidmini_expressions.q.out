@@ -1659,7 +1659,7 @@ PREHOOK: query: CREATE TABLE druid_table_n1
 STORED BY 'org.apache.hadoop.hive.druid.DruidStorageHandler'
 TBLPROPERTIES ("druid.segment.granularity" = "HOUR", "druid.query.granularity" = "MINUTE")
 AS
-  SELECT cast (current_timestamp() as timestamp with local time zone) as `__time`,
+  SELECT cast (from_unixtime(unix_timestamp('196912311559000', 'yyyyMMddHHmmssSSS')) as timestamp with local time zone) as `__time`,
 cast(datetime1 as string) as datetime1,
 cast(date1 as string) as date1,
 cast(time1 as string) as time1
@@ -1678,7 +1678,7 @@ POSTHOOK: query: CREATE TABLE druid_table_n1
 STORED BY 'org.apache.hadoop.hive.druid.DruidStorageHandler'
 TBLPROPERTIES ("druid.segment.granularity" = "HOUR", "druid.query.granularity" = "MINUTE")
 AS
-  SELECT cast (current_timestamp() as timestamp with local time zone) as `__time`,
+  SELECT cast (from_unixtime(unix_timestamp('196912311559000', 'yyyyMMddHHmmssSSS')) as timestamp with local time zone) as `__time`,
 cast(datetime1 as string) as datetime1,
 cast(date1 as string) as date1,
 cast(time1 as string) as time1
@@ -1738,11 +1738,11 @@ NULL	NULL
 2004-04-09	2004-04-09
 2004-04-11	2004-04-11
 2004-04-12	2004-04-12
-PREHOOK: query: EXPLAIN select count(*) from (select `__time` from druid_table_n1 limit 1025) as src
+PREHOOK: query: EXPLAIN select count(*) from (select `__time` from druid_table_n1 limit 4) as src
 PREHOOK: type: QUERY
 PREHOOK: Input: default@druid_table_n1
 PREHOOK: Output: hdfs://### HDFS PATH ###
-POSTHOOK: query: EXPLAIN select count(*) from (select `__time` from druid_table_n1 limit 1025) as src
+POSTHOOK: query: EXPLAIN select count(*) from (select `__time` from druid_table_n1 limit 4) as src
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@druid_table_n1
 POSTHOOK: Output: hdfs://### HDFS PATH ###
@@ -1765,7 +1765,7 @@ STAGE PLANS:
                   properties:
                     druid.fieldNames vc
                     druid.fieldTypes int
-                    druid.query.json {"queryType":"scan","dataSource":"default.druid_table_n1","intervals":["1900-01-01T00:00:00.000Z/3000-01-01T00:00:00.000Z"],"virtualColumns":[{"type":"expression","name":"vc","expression":"0","outputType":"LONG"}],"columns":["vc"],"resultFormat":"compactedList","limit":1025}
+                    druid.query.json {"queryType":"scan","dataSource":"default.druid_table_n1","intervals":["1900-01-01T00:00:00.000Z/3000-01-01T00:00:00.000Z"],"virtualColumns":[{"type":"expression","name":"vc","expression":"0","outputType":"LONG"}],"columns":["vc"],"resultFormat":"compactedList","limit":4}
                     druid.query.type scan
                   Statistics: Num rows: 5 Data size: 0 Basic stats: PARTIAL Column stats: COMPLETE
                   Select Operator
@@ -1800,15 +1800,15 @@ STAGE PLANS:
       Processor Tree:
         ListSink
 
-PREHOOK: query: select count(*) from (select `__time` from druid_table_n1 limit 1025) as src
+PREHOOK: query: select count(*) from (select `__time` from druid_table_n1 limit 4) as src
 PREHOOK: type: QUERY
 PREHOOK: Input: default@druid_table_n1
 PREHOOK: Output: hdfs://### HDFS PATH ###
-POSTHOOK: query: select count(*) from (select `__time` from druid_table_n1 limit 1025) as src
+POSTHOOK: query: select count(*) from (select `__time` from druid_table_n1 limit 4) as src
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@druid_table_n1
 POSTHOOK: Output: hdfs://### HDFS PATH ###
-5
+4
 PREHOOK: query: explain select `timets` from (select `__time` as timets from druid_table_n1 order by timets limit 10)  as src order by `timets`
 PREHOOK: type: QUERY
 PREHOOK: Input: default@druid_table_n1
@@ -1963,11 +1963,11 @@ POSTHOOK: query: select `timets_with_tz` from (select `__time` as timets_with_tz
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@druid_table_n1
 POSTHOOK: Output: hdfs://### HDFS PATH ###
-2018-11-28 01:07:00.0 US/Pacific
-2018-11-28 01:07:00.0 US/Pacific
-2018-11-28 01:07:00.0 US/Pacific
-2018-11-28 01:07:00.0 US/Pacific
-2018-11-28 01:07:00.0 US/Pacific
+1969-12-31 15:59:00.0 US/Pacific
+1969-12-31 15:59:00.0 US/Pacific
+1969-12-31 15:59:00.0 US/Pacific
+1969-12-31 15:59:00.0 US/Pacific
+1969-12-31 15:59:00.0 US/Pacific
 PREHOOK: query: select `timets` from (select cast(`__time` as timestamp ) as timets from druid_table_n1 order by timets limit 10)  as src order by `timets`
 PREHOOK: type: QUERY
 PREHOOK: Input: default@druid_table_n1
@@ -1976,8 +1976,8 @@ POSTHOOK: query: select `timets` from (select cast(`__time` as timestamp ) as ti
 POSTHOOK: type: QUERY
 POSTHOOK: Input: default@druid_table_n1
 POSTHOOK: Output: hdfs://### HDFS PATH ###
-2018-11-28 01:07:00
-2018-11-28 01:07:00
-2018-11-28 01:07:00
-2018-11-28 01:07:00
-2018-11-28 01:07:00
+1969-12-31 15:59:00
+1969-12-31 15:59:00
+1969-12-31 15:59:00
+1969-12-31 15:59:00
+1969-12-31 15:59:00
