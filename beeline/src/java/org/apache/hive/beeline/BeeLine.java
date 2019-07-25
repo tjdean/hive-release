@@ -110,6 +110,7 @@ public class BeeLine implements Closeable {
   private static final ResourceBundle resourceBundle =
       ResourceBundle.getBundle(BeeLine.class.getSimpleName());
   private final BeeLineSignalHandler signalHandler = null;
+  private final Runnable shutdownHook;
   private static final String separator = System.getProperty("line.separator");
   private boolean exit = false;
   private final DatabaseConnections connections = new DatabaseConnections();
@@ -503,6 +504,23 @@ public class BeeLine implements Closeable {
         (this));
     reflector = new Reflector(this);
 
+    this.shutdownHook = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          if (consoleReader != null) {
+            History h = consoleReader.getHistory();
+            if (h instanceof FileHistory) {
+              ((FileHistory) h).flush();
+            }
+          }
+        } catch (IOException e) {
+          error(e);
+        } finally {
+          close();
+        }
+      }
+    };
     // attempt to dynamically load signal handler
     /* TODO disable signal handler
     try {
@@ -775,6 +793,9 @@ public class BeeLine implements Closeable {
       // nothing
     }
 
+    //add shutdown hook to cleanup the beeline for smooth exit
+    addBeelineShutdownHook();
+
     try {
       int code = initArgs(args);
       if (code != 0) {
@@ -789,6 +810,7 @@ public class BeeLine implements Closeable {
       } catch (Exception e) {
         // ignore
       }
+
       ConsoleReader reader = getConsoleReader(inputStream);
       return execute(reader, false);
     } finally {
@@ -911,25 +933,18 @@ public class BeeLine implements Closeable {
         handleException(e);
     }
 
-    // add shutdown hook to flush the history to history file
-    ShutdownHookManager.addShutdownHook(new Runnable() {
-        @Override
-        public void run() {
-            History h = consoleReader.getHistory();
-            if (h instanceof FileHistory) {
-                try {
-                    ((FileHistory) h).flush();
-                } catch (IOException e) {
-                    error(e);
-                }
-            }
-        }
-    });
-
     consoleReader.addCompleter(new BeeLineCompleter(this));
     return consoleReader;
   }
 
+  private void addBeelineShutdownHook() throws IOException {
+    // add shutdown hook to flush the history to history file and it also close all open connections
+    ShutdownHookManager.addShutdownHook(getShutdownHook());
+  }
+
+  Runnable getShutdownHook() {
+    return shutdownHook;
+  }
 
   void usage() {
     output(loc("cmd-usage"));

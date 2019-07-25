@@ -212,6 +212,9 @@ class DatabaseConnection {
     return connection;
   }
 
+  public Connection getCurrentConnection() {
+    return connection;
+  }
 
   public void reconnect() throws Exception {
     close();
