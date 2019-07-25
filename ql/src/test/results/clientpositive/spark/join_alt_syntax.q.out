@@ -447,12 +447,7 @@ STAGE PLANS:
         Map 5 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: p4
-=======
                   alias: p2
-                  filterExpr: (p_name is not null and p_partkey is not null) (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 26 Data size: 3147 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: (p_name is not null and p_partkey is not null) (type: boolean)
@@ -470,12 +465,7 @@ STAGE PLANS:
         Map 6 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: p2
-=======
                   alias: p3
-                  filterExpr: p_name is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 26 Data size: 3147 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: p_name is not null (type: boolean)
@@ -493,12 +483,7 @@ STAGE PLANS:
         Map 7 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: p3
-=======
                   alias: p4
-                  filterExpr: p_partkey is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 26 Data size: 3147 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: p_partkey is not null (type: boolean)
@@ -622,12 +607,7 @@ STAGE PLANS:
         Map 5 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: p4
-=======
                   alias: p2
-                  filterExpr: (p_name is not null and p_partkey is not null) (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 26 Data size: 3147 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: (p_name is not null and p_partkey is not null) (type: boolean)
@@ -645,12 +625,7 @@ STAGE PLANS:
         Map 6 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: p2
-=======
                   alias: p3
-                  filterExpr: p_name is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 26 Data size: 3147 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: p_name is not null (type: boolean)
@@ -668,12 +643,7 @@ STAGE PLANS:
         Map 7 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: p3
-=======
                   alias: p4
-                  filterExpr: p_partkey is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 26 Data size: 3147 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: p_partkey is not null (type: boolean)

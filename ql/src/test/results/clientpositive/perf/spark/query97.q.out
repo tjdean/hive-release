@@ -73,14 +73,8 @@ STAGE PLANS:
         Map 1 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: store_sales
-                  Statistics: Num rows: 575995635 Data size: 50814502088 Basic stats: COMPLETE Column stats: NONE
-=======
                   alias: catalog_sales
-                  filterExpr: cs_sold_date_sk is not null (type: boolean)
                   Statistics: Num rows: 287989836 Data size: 38999608952 Basic stats: COMPLETE Column stats: NONE
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Filter Operator
                     predicate: cs_sold_date_sk is not null (type: boolean)
                     Statistics: Num rows: 287989836 Data size: 38999608952 Basic stats: COMPLETE Column stats: NONE
@@ -134,14 +128,8 @@ STAGE PLANS:
         Map 7 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: catalog_sales
-                  Statistics: Num rows: 287989836 Data size: 38999608952 Basic stats: COMPLETE Column stats: NONE
-=======
                   alias: store_sales
-                  filterExpr: ss_sold_date_sk is not null (type: boolean)
                   Statistics: Num rows: 575995635 Data size: 50814502088 Basic stats: COMPLETE Column stats: NONE
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Filter Operator
                     predicate: ss_sold_date_sk is not null (type: boolean)
                     Statistics: Num rows: 575995635 Data size: 50814502088 Basic stats: COMPLETE Column stats: NONE
@@ -167,12 +155,7 @@ STAGE PLANS:
                 outputColumnNames: _col1, _col2
                 Statistics: Num rows: 316788826 Data size: 42899570777 Basic stats: COMPLETE Column stats: NONE
                 Group By Operator
-<<<<<<< HEAD
-                  keys: _col2 (type: int), _col1 (type: int)
-=======
                   keys: _col1 (type: int), _col2 (type: int)
-                  minReductionHashAggr: 0.99
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   mode: hash
                   outputColumnNames: _col0, _col1
                   Statistics: Num rows: 316788826 Data size: 42899570777 Basic stats: COMPLETE Column stats: NONE
@@ -247,12 +230,7 @@ STAGE PLANS:
                 outputColumnNames: _col1, _col2
                 Statistics: Num rows: 633595212 Data size: 55895953508 Basic stats: COMPLETE Column stats: NONE
                 Group By Operator
-<<<<<<< HEAD
-                  keys: _col1 (type: int), _col2 (type: int)
-=======
                   keys: _col2 (type: int), _col1 (type: int)
-                  minReductionHashAggr: 0.99
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   mode: hash
                   outputColumnNames: _col0, _col1
                   Statistics: Num rows: 633595212 Data size: 55895953508 Basic stats: COMPLETE Column stats: NONE

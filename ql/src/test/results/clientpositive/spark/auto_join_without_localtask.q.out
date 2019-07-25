@@ -168,12 +168,7 @@ STAGE PLANS:
         Map 1 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: a
-=======
                   alias: b
-                  filterExpr: key is not null (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: key is not null (type: boolean)
@@ -190,12 +185,7 @@ STAGE PLANS:
         Map 5 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: b
-=======
                   alias: a
-                  filterExpr: (key is not null and value is not null) (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: (key is not null and value is not null) (type: boolean)
@@ -360,12 +350,7 @@ STAGE PLANS:
         Map 1 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: a
-=======
                   alias: b
-                  filterExpr: (UDFToDouble(key) > 100.0D) (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: (UDFToDouble(key) > 100.0D) (type: boolean)
@@ -382,12 +367,7 @@ STAGE PLANS:
         Map 5 
             Map Operator Tree:
                 TableScan
-<<<<<<< HEAD
-                  alias: b
-=======
                   alias: a
-                  filterExpr: ((UDFToDouble(key) > 100.0D) and value is not null) (type: boolean)
->>>>>>> 6664c44c79... HIVE-21793: CBO retrieves column stats even if hive.stats.fetch.column.stats is set to false (Jesus Camacho Rodriguez, reviewed by Vineet Garg)
                   Statistics: Num rows: 500 Data size: 5312 Basic stats: COMPLETE Column stats: NONE
                   Filter Operator
                     predicate: ((UDFToDouble(key) > 100.0D) and value is not null) (type: boolean)
