@@ -394,7 +394,7 @@ public class Serializer {
     return vrb;
   }
 
-  private void writeList(ListVector arrowVector, ListColumnVector hiveVector, ListTypeInfo typeInfo, int size,
+  private static void writeList(ListVector arrowVector, ListColumnVector hiveVector, ListTypeInfo typeInfo, int size,
                          VectorizedRowBatch vectorizedRowBatch, boolean isNative) {
     final int OFFSET_WIDTH = 4;
     final TypeInfo elementTypeInfo = typeInfo.getListElementTypeInfo();
