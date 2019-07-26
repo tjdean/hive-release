@@ -742,13 +742,13 @@ public class TestInputOutputFormat {
     try {
       MockFileSystem fs = new MockFileSystem(conf);
       MockFileSystem.addGlobalFile(
-        new MockFile("mock:/a/delta_0000001_0000001_0000/bucket_00000", 1000, new byte[1], new MockBlock("host1")));
+        new MockFile("mock:/a/base_0000001/bucket_00000", 1000, new byte[1], new MockBlock("host1")));
       MockFileSystem.addGlobalFile(
-        new MockFile("mock:/a/delta_0000001_0000001_0000/bucket_00001", 1000, new byte[1], new MockBlock("host1")));
+        new MockFile("mock:/a/base_0000001/bucket_00001", 1000, new byte[1], new MockBlock("host1")));
       MockFileSystem.addGlobalFile(
-        new MockFile("mock:/a/delta_0000001_0000001_0000/bucket_00002", 1000, new byte[1], new MockBlock("host1")));
+        new MockFile("mock:/a/base_0000001/bucket_00002", 1000, new byte[1], new MockBlock("host1")));
       MockFileSystem.addGlobalFile(
-        new MockFile("mock:/a/delta_0000001_0000001_0000/bucket_00003", 1000, new byte[1], new MockBlock("host1")));
+        new MockFile("mock:/a/base_0000001/bucket_00003", 1000, new byte[1], new MockBlock("host1")));
       MockFileSystem.addGlobalFile(
         new MockFile("mock:/a/delta_0000002_0000002_0000/bucket_00000", 1000, new byte[1], new MockBlock("host1")));
       MockFileSystem.addGlobalFile(
@@ -757,7 +757,14 @@ public class TestInputOutputFormat {
         new MockFile("mock:/a/delta_0000002_0000002_0000/bucket_00002", 1000, new byte[1], new MockBlock("host1")));
       MockFileSystem.addGlobalFile(
         new MockFile("mock:/a/delta_0000002_0000002_0000/bucket_00003", 1000, new byte[1], new MockBlock("host1")));
-
+      MockFileSystem.addGlobalFile(
+          new MockFile("mock:/a/delta_0000003_0000003_0000/bucket_00000", 1000, new byte[1], new MockBlock("host1")));
+        MockFileSystem.addGlobalFile(
+          new MockFile("mock:/a/delta_0000003_0000003_0000/bucket_00001", 1000, new byte[1], new MockBlock("host1")));
+        MockFileSystem.addGlobalFile(
+          new MockFile("mock:/a/delta_0000003_0000003_0000/bucket_00002", 1000, new byte[1], new MockBlock("host1")));
+        MockFileSystem.addGlobalFile(
+          new MockFile("mock:/a/delta_0000003_0000003_0000/bucket_00003", 1000, new byte[1], new MockBlock("host1")));
       conf.set("bucket_count", "4");
       //set up props for read
       conf.setBoolean(hive_metastoreConstants.TABLE_IS_TRANSACTIONAL, true);
@@ -794,8 +801,8 @@ public class TestInputOutputFormat {
       int readsAfter = fs.statistics.getReadOps();
       System.out.println("STATS TRACE END - " + testCaseName.getMethodName());
       int delta = readsAfter - readsBefore;
-      // 16 without HIVE-19588, 8 with HIVE-19588
-      assertEquals(8, delta);
+      //HIVE-16812 adds 1 read of the footer of each file
+      assertEquals(12, delta);
     } finally {
       MockFileSystem.clearGlobalFiles();
     }

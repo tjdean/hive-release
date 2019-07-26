@@ -41,6 +41,7 @@ import org.apache.hadoop.hive.metastore.txn.CompactionInfo;
 import org.apache.hadoop.hive.ql.io.AcidUtils;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.util.StringUtils;
+import org.apache.hive.common.util.Ref;
 
 import java.io.IOException;
 import java.security.PrivilegedExceptionAction;
@@ -326,7 +327,8 @@ public class Cleaner extends CompactorThread {
   private void removeFiles(String location, ValidWriteIdList writeIdList, CompactionInfo ci)
           throws IOException, NoSuchObjectException {
     Path locPath = new Path(location);
-    AcidUtils.Directory dir = AcidUtils.getAcidState(locPath, conf, writeIdList);
+    AcidUtils.Directory dir = AcidUtils.getAcidState(locPath, conf, writeIdList, Ref.from(
+        false), false, null, false);
     List<FileStatus> obsoleteDirs = dir.getObsolete();
     List<Path> filesToDelete = new ArrayList<Path>(obsoleteDirs.size());
     StringBuilder extraDebugInfo = new StringBuilder("[");
