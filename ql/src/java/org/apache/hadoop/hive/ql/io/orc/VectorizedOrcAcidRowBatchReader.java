@@ -49,6 +49,12 @@ import org.apache.hadoop.hive.shims.HadoopShims;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.Reporter;
+import org.apache.hive.common.util.Ref;
+import org.apache.orc.ColumnStatistics;
+import org.apache.orc.IntegerColumnStatistics;
+import org.apache.orc.OrcConf;
+import org.apache.orc.StripeInformation;
+import org.apache.orc.StripeStatistics;
 import org.apache.orc.impl.AcidStats;
 import org.apache.orc.impl.OrcAcidUtils;
 import org.slf4j.Logger;
@@ -336,7 +342,7 @@ public class VectorizedOrcAcidRowBatchReader
         //statementId is from directory name (or 0 if there is none)
       .statementId(syntheticTxnInfo.statementId).bucket(bucketId));
     AcidUtils.Directory directoryState = AcidUtils.getAcidState( syntheticTxnInfo.folder, conf,
-        validWriteIdList, false, true);
+        validWriteIdList, Ref.from(false), true, null, false);
     for (HadoopShims.HdfsFileStatusWithId f : directoryState.getOriginalFiles()) {
       int bucketIdFromPath = AcidUtils.parseBucketId(f.getFileStatus().getPath());
       if (bucketIdFromPath != bucketId) {
@@ -877,7 +883,7 @@ public class VectorizedOrcAcidRowBatchReader
       /**
        * see {@link BucketCodec}
        */
-      private int bucketProperty; 
+      private int bucketProperty;
       private long rowId;
       DeleteRecordKey() {
         this.originalWriteId = -1;

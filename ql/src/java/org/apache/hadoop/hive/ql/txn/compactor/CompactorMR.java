@@ -251,7 +251,8 @@ public class CompactorMR {
     // and discovering that in getSplits is too late as we then have no way to pass it to our
     // mapper.
 
-    AcidUtils.Directory dir = AcidUtils.getAcidState(new Path(sd.getLocation()), conf, writeIds, false, true);
+    AcidUtils.Directory dir = AcidUtils.getAcidState(new Path(sd.getLocation()), conf, writeIds, Ref.from(false), true,
+        null, false);
     List<AcidUtils.ParsedDelta> parsedDeltas = dir.getCurrentDirectories();
     int maxDeltastoHandle = conf.getIntVar(HiveConf.ConfVars.COMPACTOR_MAX_NUM_DELTA);
     if(parsedDeltas.size() > maxDeltastoHandle) {
@@ -276,7 +277,8 @@ public class CompactorMR {
           maxDeltastoHandle, -1, conf, txnHandler, ci.id, jobName);
       }
       //now recompute state since we've done minor compactions and have different 'best' set of deltas
-      dir = AcidUtils.getAcidState(new Path(sd.getLocation()), conf, writeIds);
+      dir = AcidUtils.getAcidState(new Path(sd.getLocation()), conf, writeIds, Ref.from(false), false,
+          null, false);
     }
 
     StringableList dirsToSearch = new StringableList();
@@ -327,7 +329,7 @@ public class CompactorMR {
     LOG.debug("Going to delete directories for aborted transactions for MM table "
         + t.getDbName() + "." + t.getTableName());
     AcidUtils.Directory dir = AcidUtils.getAcidState(new Path(sd.getLocation()),
-        conf, writeIds, Ref.from(false), false, t.getParameters());
+        conf, writeIds, Ref.from(false), false, t.getParameters(), false);
     removeFilesForMmTable(conf, dir);
 
     // Then, actually do the compaction.
@@ -825,7 +827,7 @@ public class CompactorMR {
             dir.getName().startsWith(AcidUtils.DELETE_DELTA_PREFIX)) {
           boolean sawBase = dir.getName().startsWith(AcidUtils.BASE_PREFIX);
           boolean isRawFormat = !dir.getName().startsWith(AcidUtils.DELETE_DELTA_PREFIX)
-            && AcidUtils.MetaDataFile.isRawFormat(dir, fs);//deltes can't be raw format
+            && AcidUtils.MetaDataFile.isRawFormat(dir, fs, null);//deltes can't be raw format
 
           FileStatus[] files = fs.listStatus(dir, isRawFormat ? AcidUtils.originalBucketFilter
             : AcidUtils.bucketFileFilter);
