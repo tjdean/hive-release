@@ -6,7 +6,6 @@ set tez.grouping.max-size=2;
 set hive.exec.dynamic.partition.mode=nonstrict;
 set hive.support.concurrency=true;
 set hive.txn.manager=org.apache.hadoop.hive.ql.lockmgr.DbTxnManager;
-set mapreduce.map.memory.mb=128;
 
 
 drop table load0_mm;
