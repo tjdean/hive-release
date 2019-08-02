@@ -30,4 +30,11 @@ public class ReplConst {
   public static final String REPL_DATA_LOCATION_CHANGED = "REPL_DATA_LOCATION_CHANGED";
 
   public static final String TRUE = "true";
+
+  /**
+   * A table which is target of replication will have this property set. The property serves two
+   * purposes, 1. identifies the tables being replicated into and 2. records the event id of the
+   * last event affecting this table.
+   */
+  public static final String REPL_TARGET_TABLE_PROPERTY = "repl.last.id";
 }

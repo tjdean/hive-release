@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.common.ValidReaderWriteIdList;
+import org.apache.hadoop.hive.common.repl.ReplConst;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.MetaStoreThread;
 import org.apache.hadoop.hive.metastore.ObjectStore;
@@ -171,7 +172,7 @@ public class StatsUpdaterThread extends Thread implements MetaStoreThread {
   }
 
   @VisibleForTesting
-  boolean runOneIteration() {
+  public boolean runOneIteration() {
     List<FullTableName> fullTableNames;
     try {
       fullTableNames = getTablesToCheck();
@@ -215,6 +216,17 @@ public class StatsUpdaterThread extends Thread implements MetaStoreThread {
     // Check if the table should be skipped.
     String skipParam = table.getParameters().get(SKIP_STATS_AUTOUPDATE_PROPERTY);
     if ("true".equalsIgnoreCase(skipParam)) return null;
+
+    // If the table is being replicated into,
+    // 1. the stats are also replicated from the source, so we don't need those to be calculated
+    //    on the target again
+    // 2. updating stats requires a writeId to be created. Hence writeIds on source and target
+    //    can get out of sync when stats are updated. That can cause consistency issues.
+    String replTrgtParam = table.getParameters().get(ReplConst.REPL_TARGET_TABLE_PROPERTY);
+    if (replTrgtParam != null && !replTrgtParam.isEmpty()) {
+      LOG.debug("Skipping table {} since it is being replicated into", table);
+      return null;
+    }
 
     // Note: ideally we should take a lock here to pretend to be a real reader.
     //       For now, this check is going to have race potential; it may run a spurious analyze.

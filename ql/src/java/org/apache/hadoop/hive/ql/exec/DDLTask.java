@@ -68,6 +68,7 @@ import org.apache.hadoop.hive.common.FileUtils;
 import org.apache.hadoop.hive.common.StatsSetupConst;
 import org.apache.hadoop.hive.common.ValidTxnList;
 import org.apache.hadoop.hive.common.ValidTxnWriteIdList;
+import org.apache.hadoop.hive.common.repl.ReplConst;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.hadoop.hive.conf.Constants;
 import org.apache.hadoop.hive.conf.HiveConf;
@@ -4780,6 +4781,14 @@ public class DDLTask extends Task<DDLWork> implements Serializable {
       db.alterTable(tbl.getCatName(), tbl.getDbName(), tbl.getTableName(), tbl, false,
               environmentContext, true, writeId);
     } else {
+      // Some HMS background tasks skip processing tables being replicated into. Set the
+      // replication property while creating the table so that they can identify such tables right
+      // from the beginning. Set it to 0, which is lesser than any eventId ever created. This will
+      // soon be overwritten by an actual value.
+      if (crtTbl.getReplicationSpec().isInReplicationScope() &&
+              !tbl.getParameters().containsKey(ReplConst.REPL_TARGET_TABLE_PROPERTY)) {
+        tbl.getParameters().put(ReplConst.REPL_TARGET_TABLE_PROPERTY, "0");
+      }
       if ((foreignKeys != null && foreignKeys.size() > 0) ||
           (primaryKeys != null && primaryKeys.size() > 0) ||
           (uniqueConstraints != null && uniqueConstraints.size() > 0) ||
