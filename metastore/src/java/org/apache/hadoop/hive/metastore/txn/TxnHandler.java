@@ -42,6 +42,7 @@ import org.apache.hadoop.hive.common.ValidReadTxnList;
 import org.apache.hadoop.hive.common.ValidTxnList;
 import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.conf.HiveConfUtil;
+import org.apache.hadoop.hive.metastore.DatabaseProduct;
 import org.apache.hadoop.hive.metastore.HouseKeeperService;
 import org.apache.hadoop.hive.metastore.Warehouse;
 import org.apache.hadoop.hive.metastore.api.*;
@@ -2165,44 +2166,6 @@ abstract class TxnHandler implements TxnStore, TxnStore.MutexAPI {
       LOG.error(msg, e);
       throw new IllegalStateException(msg, e);
     }
-  }
-
-  /**
-   * Determine the database product type
-   * @param conn database connection
-   * @return database product type
-   */
-  private DatabaseProduct determineDatabaseProduct(Connection conn) {
-    if (dbProduct == null) {
-      try {
-        String s = conn.getMetaData().getDatabaseProductName();
-        if (s == null) {
-          String msg = "getDatabaseProductName returns null, can't determine database product";
-          LOG.error(msg);
-          throw new IllegalStateException(msg);
-        } else if (s.equals("Apache Derby")) {
-          dbProduct = DatabaseProduct.DERBY;
-        } else if (s.equals("Microsoft SQL Server")) {
-          dbProduct = DatabaseProduct.SQLSERVER;
-        } else if (s.equals("MySQL")) {
-          dbProduct = DatabaseProduct.MYSQL;
-        } else if (s.equals("Oracle")) {
-          dbProduct = DatabaseProduct.ORACLE;
-        } else if (s.equals("PostgreSQL")) {
-          dbProduct = DatabaseProduct.POSTGRES;
-        } else {
-          String msg = "Unrecognized database product name <" + s + ">";
-          LOG.error(msg);
-          throw new IllegalStateException(msg);
-        }
-
-      } catch (SQLException e) {
-        String msg = "Unable to get database product name: " + e.getMessage();
-        LOG.error(msg);
-        throw new IllegalStateException(msg);
-      }
-    }
-    return dbProduct;
   }
 
   private static class LockInfo {

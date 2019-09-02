@@ -89,6 +89,8 @@ class MetaStoreDirectSql {
 
   private static final Log LOG = LogFactory.getLog(MetaStoreDirectSql.class);
   private final PersistenceManager pm;
+  private final String schema;
+
   /**
    * We want to avoid db-specific code in this class and stick with ANSI SQL. However:
    * 1) mysql and postgres are differently ansi-incompatible (mysql by default doesn't support
@@ -108,7 +110,7 @@ class MetaStoreDirectSql {
   private final boolean isCompatibleDatastore;
   private final boolean isAggregateStatsCacheEnabled;
   private AggregateStatsCache aggrStatsCache;
-  public MetaStoreDirectSql(PersistenceManager pm, Configuration conf) {
+  public MetaStoreDirectSql(PersistenceManager pm, Configuration conf, String schema) {
     this.pm = pm;
     this.schema = schema;
     DatabaseProduct dbType = null;
@@ -370,7 +372,7 @@ class MetaStoreDirectSql {
     // Derby and Oracle do not interpret filters ANSI-properly in some cases and need a workaround.
     boolean dbHasJoinCastBug = DatabaseProduct.hasJoinOperationOrderBug(dbType);
     String sqlFilter = PartitionFilterGenerator.generateSqlFilter(
-        table, tree, params, joins, dbHasJoinCastBug, dbType);
+        table, tree, params, joins, dbHasJoinCastBug, dbType, schema);
     if (sqlFilter == null) {
       return null; // Cannot make SQL filter to push down.
     }
@@ -911,7 +913,11 @@ class MetaStoreDirectSql {
       this.dbHasJoinCastBug = dbHasJoinCastBug;
       this.filterBuffer = new FilterBuilder(false);
       this.dbType = dbType;
-    }
+      this.PARTITION_KEY_VALS = getFullyQualifiedName(schema, "PARTITION_KEY_VALS");
+      this.PARTITIONS = getFullyQualifiedName(schema, "PARTITIONS");
+      this.DBS = getFullyQualifiedName(schema, "DBS");
+      this.TBLS = getFullyQualifiedName(schema, "TBLS");
+}
 
     /**
      * Generate the ANSI SQL92 filter for the given expression tree
@@ -928,7 +934,7 @@ class MetaStoreDirectSql {
         return "";
       }
       PartitionFilterGenerator visitor = new PartitionFilterGenerator(
-          table, params, joins, dbHasJoinCastBug, dbType);
+          table, params, joins, dbHasJoinCastBug, dbType, schema);
       tree.accept(visitor);
       if (visitor.filterBuffer.hasError()) {
         LOG.info("Unable to push down SQL filter: " + visitor.filterBuffer.getErrorMessage());
