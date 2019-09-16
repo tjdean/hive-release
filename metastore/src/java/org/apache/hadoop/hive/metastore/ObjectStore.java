@@ -1815,20 +1815,32 @@ public class ObjectStore implements RawStore, Configurable {
       throws MetaException, NoSuchObjectException {
     if (partNames.isEmpty()) return;
     boolean success = false;
-    openTransaction();
-    try {
-      // Delete all things.
-      dropPartitionGrantsNoTxn(dbName, tblName, partNames);
-      dropPartitionAllColumnGrantsNoTxn(dbName, tblName, partNames);
-      dropPartitionColumnStatisticsNoTxn(dbName, tblName, partNames);
 
-      // CDs are reused; go thry partition SDs, detach all CDs from SDs, then remove unused CDs.
-      for (MColumnDescriptor mcd : detachCdsFromSdsNoTxn(dbName, tblName, partNames)) {
-        removeUnusedColumnDescriptor(mcd);
-      }
-      dropPartitionsNoTxn(dbName, tblName, partNames);
+    if (partNames.isEmpty()) {
+      return;
+    }
+    openTransaction();
+
+    try {
+      Batchable.runBatched(batchSize, partNames, new Batchable<String, Void>() {
+        @Override
+        public List<Void> run(List<String> input) throws MetaException {
+          // Delete all things.
+          dropPartitionGrantsNoTxn(dbName, tblName, input);
+          dropPartitionAllColumnGrantsNoTxn(dbName, tblName, input);
+          dropPartitionColumnStatisticsNoTxn(dbName, tblName, input);
+
+          // CDs are reused; go try partition SDs, detach all CDs from SDs, then remove unused CDs.
+          for (MColumnDescriptor mcd : detachCdsFromSdsNoTxn(dbName, tblName, input)) {
+            removeUnusedColumnDescriptor(mcd);
+          }
+          dropPartitionsNoTxn(dbName, tblName, input);
+          return Collections.emptyList();
+        }
+      });
+
       if (!(success = commitTransaction())) {
-        throw new MetaException("Failed to drop partitions"); // Should not happen?
+        throw new MetaException("Failed to drop partitions");
       }
     } finally {
       if (!success) {
@@ -2420,21 +2432,31 @@ public class ObjectStore implements RawStore, Configurable {
    * @param partNames Partition names to get the objects for.
    * @return Resulting partitions.
    */
-  private List<Partition> getPartitionsViaOrmFilter(
-      String dbName, String tblName, List<String> partNames) throws MetaException {
+  private List<Partition> getPartitionsViaOrmFilter(String dbName, String tblName,
+      List<String> partNames) throws MetaException {
+
     if (partNames.isEmpty()) {
-      return new ArrayList<Partition>();
+      return Collections.emptyList();
     }
-    Out<Query> query = new Out<Query>();
-    List<MPartition> mparts = null;
-    try {
-      mparts = getMPartitionsViaOrmFilter(dbName, tblName, partNames, query);
-      return convertToParts(dbName, tblName, mparts);
-    } finally {
-      if (query.val != null) {
-        query.val.closeAll();
+    return Batchable.runBatched(batchSize, partNames, new Batchable<String, Partition>() {
+      @Override
+      public List<Partition> run(List<String> input) throws MetaException {
+        ObjectPair<Query, Map<String, String>> queryWithParams =
+            getPartQueryWithParams(dbName, tblName, input);
+
+        Query query = queryWithParams.getFirst();
+        query.setResultClass(MPartition.class);
+        query.setClass(MPartition.class);
+        query.setOrdering("partitionName ascending");
+
+        @SuppressWarnings("unchecked")
+        List<MPartition> mparts = (List<MPartition>) query.executeWithMap(queryWithParams.getSecond());
+        List<Partition> partitions = convertToParts(dbName, tblName, mparts);
+        query.closeAll();
+
+        return partitions;
       }
-    }
+    });
   }
 
   private void dropPartitionsNoTxn(String dbName, String tblName, List<String> partNames) {
