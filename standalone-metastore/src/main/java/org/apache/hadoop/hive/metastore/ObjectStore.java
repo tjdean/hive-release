@@ -9950,6 +9950,7 @@ public class ObjectStore implements RawStore, Configurable {
   }
 
   private void prepareQuotes() throws SQLException {
+    // TODO: db2-support
     if (dbType == DatabaseProduct.MYSQL) {
       assert pm.currentTransaction().isActive();
       JDOConnection jdoConn = pm.getDataStoreConnection();

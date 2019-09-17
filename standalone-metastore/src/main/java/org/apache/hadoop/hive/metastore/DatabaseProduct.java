@@ -23,7 +23,7 @@ import java.sql.SQLTransactionRollbackException;
 
 /** Database product infered via JDBC. */
 public enum DatabaseProduct {
-  DERBY, MYSQL, POSTGRES, ORACLE, SQLSERVER, OTHER;
+  DERBY, MYSQL, POSTGRES, ORACLE, SQLSERVER, DB2, OTHER;
 
   /**
    * Determine the database product type
@@ -45,6 +45,8 @@ public enum DatabaseProduct {
       return ORACLE;
     } else if (productName.contains("postgresql")) {
       return POSTGRES;
+    } else if (productName.contains("db2")) {
+      return DB2;
     } else {
       return OTHER;
     }
@@ -52,7 +54,8 @@ public enum DatabaseProduct {
 
   public static boolean isDeadlock(DatabaseProduct dbProduct, SQLException e) {
     return e instanceof SQLTransactionRollbackException
-        || ((dbProduct == MYSQL || dbProduct == POSTGRES || dbProduct == SQLSERVER)
+        // TODO: db2-support: see https://www.ibm.com/support/knowledgecenter/en/SSEPGG_11.5.0/com.ibm.db2.luw.messages.doc/doc/rdb2stt.html
+        || ((dbProduct == MYSQL || dbProduct == POSTGRES || dbProduct == SQLSERVER || dbProduct == DB2)
             && "40001".equals(e.getSQLState()))
         || (dbProduct == POSTGRES && "40P01".equals(e.getSQLState()))
         || (dbProduct == ORACLE && (e.getMessage() != null && (e.getMessage().contains("deadlock detected")
@@ -63,6 +66,7 @@ public enum DatabaseProduct {
    * Whether the RDBMS has restrictions on IN list size (explicit, or poor perf-based).
    */
   public static boolean needsInBatching(DatabaseProduct dbType) {
+    // TODO: db2-support: see https://stackoverflow.com/questions/25599900/what-is-the-upper-limit-for-the-predicate-where-in-db2
     return dbType == ORACLE || dbType == SQLSERVER;
   }
 
